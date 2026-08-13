@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareerHub</title>
+    <style>
+      body {
+        margin: 0;
+        width: 340px;
+        font-family: Inter, system-ui, sans-serif;
+        background: #0b1020;
+        color: #f4f7ff;
+      }
+      .wrap {
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+      .card {
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.08);
+        border-radius: 16px;
+        padding: 12px;
+      }
+      label { display:block; font-size: 12px; color: rgba(244,247,255,0.7); margin-bottom: 6px; }
+      input, textarea, select, button {
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(7,10,24,0.55);
+        color: #f4f7ff;
+        padding: 10px 12px;
+      }
+      textarea { min-height: 88px; resize: vertical; }
+      button { cursor: pointer; background: linear-gradient(135deg, #5b4fe8, #796df0); border: 0; }
+      .muted { color: rgba(244,247,255,0.72); font-size: 12px; }
+      .row { display: grid; gap: 8px; }
+      .inline { display:flex; gap:8px; }
+      .inline > * { flex: 1; }
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="row">
+          <div class="muted">Portal</div>
+          <div id="portalName">Loading...</div>
+          <div id="portalTier" class="muted"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <label for="fields">Fields to fill</label>
+          <input id="fields" value="fullName, headline, summary, location, portfolio" />
+          <label for="notes">Portal note</label>
+          <textarea id="notes" placeholder="Optional note for this site"></textarea>
+          <div class="inline">
+            <button id="apply">Apply autofill</button>
+            <button id="editProfile">Edit profile</button>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button id="report">Report map issue</button>
+          </div>
+          <div id="status" class="muted">Ready</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div class="muted">Payload preview</div>
+          <pre id="payload">{}</pre>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

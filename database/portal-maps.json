@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "maps": {
+    "LinkedIn": {
+      "fullName": "input[aria-label*='Full name'], input[placeholder*='Full name'], input[name*='fullName']",
+      "firstName": "input[aria-label*='First name'], input[placeholder*='First name'], input[name*='firstName']",
+      "lastName": "input[aria-label*='Last name'], input[placeholder*='Last name'], input[name*='lastName']",
+      "email": "input[aria-label*='Email'], input[placeholder*='Email'], input[type='email']",
+      "phone": "input[aria-label*='Phone'], input[placeholder*='Phone'], input[name*='phone']",
+      "linkedin": "input[aria-label*='LinkedIn'], input[placeholder*='LinkedIn']",
+      "github": "input[aria-label*='GitHub'], input[placeholder*='GitHub']",
+      "resume": "input[type='file'], input[accept*='pdf'], input[accept*='doc']"
+    },
+    "Naukri": {
+      "fullName": "input[placeholder*='Name'], input[name*='name'], input[aria-label*='Name']",
+      "email": "input[placeholder*='Email'], input[name*='email'], input[type='email']",
+      "phone": "input[placeholder*='Mobile'], input[name*='mobile'], input[name*='phone']",
+      "resume": "input[type='file'][name*='resume'], input[type='file']",
+      "college": "input[placeholder*='College'], input[name*='college']"
+    }
+  }
+}

@@ -1,0 +1,214 @@
+/* Scroll-triggered animations using AOS */
+[data-aos] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) 0.1s,
+              transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) 0.1s;
+}
+
+[data-aos].aos-animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fade-in variants */
+[data-aos="fade-in"] {
+  opacity: 0;
+  transform: none;
+}
+
+[data-aos="fade-up"] {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+[data-aos="fade-down"] {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+[data-aos="fade-left"] {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+[data-aos="fade-right"] {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/* Zoom animations */
+[data-aos="zoom-in"] {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+[data-aos="zoom-out"] {
+  opacity: 0;
+  transform: scale(1.1);
+}
+
+/* Flip animation */
+[data-aos="flip-left"] {
+  opacity: 0;
+  transform: perspective(1000px) rotateY(90deg);
+}
+
+[data-aos="flip-right"] {
+  opacity: 0;
+  transform: perspective(1000px) rotateY(-90deg);
+}
+
+/* Stagger delays */
+[data-aos-delay="100"] {
+  transition-delay: 0.1s, 0.1s;
+}
+
+[data-aos-delay="200"] {
+  transition-delay: 0.2s, 0.2s;
+}
+
+[data-aos-delay="300"] {
+  transition-delay: 0.3s, 0.3s;
+}
+
+[data-aos-delay="400"] {
+  transition-delay: 0.4s, 0.4s;
+}
+
+[data-aos-delay="500"] {
+  transition-delay: 0.5s, 0.5s;
+}
+
+/* Floating animation */
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.floating {
+  animation: floating 4s ease-in-out infinite;
+}
+
+/* Glow pulse animation */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(46, 233, 200, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(46, 233, 200, 0.6);
+  }
+}
+
+.glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Gradient shift animation */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.gradient-shift {
+  background-size: 200% 100%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-dark) 50%, var(--surface) 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Page transition */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+/* Bounce animation */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.bounce {
+  animation: bounce 1s ease-in-out infinite;
+}
+
+/* Spin animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 2s linear infinite;
+}
+
+/* Text reveal animation */
+@keyframes text-reveal {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.text-reveal {
+  animation: text-reveal 0.8s ease-out forwards;
+}
+
+/* Gradient border animation */
+@keyframes gradient-border {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+.gradient-border-animate {
+  animation: gradient-border 6s linear infinite;
+}

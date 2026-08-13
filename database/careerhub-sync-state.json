@@ -1,0 +1,32 @@
+{
+  "profile": {
+    "fullName": "",
+    "firstName": "",
+    "lastName": "",
+    "age": 0,
+    "dob": "",
+    "fatherName": "",
+    "motherName": "",
+    "email": "",
+    "phone": "",
+    "address": "",
+    "city": "",
+    "state": "",
+    "country": "",
+    "zip": "",
+    "headline": "",
+    "summary": "",
+    "education": "",
+    "college": "",
+    "experience": "",
+    "skills": "",
+    "linkedin": "",
+    "github": "",
+    "portfolio": "",
+    "resumeDraft": "",
+    "targetRole": ""
+  },
+  "version": 0,
+  "updatedAt": 0,
+  "origin": "init"
+}

@@ -1,0 +1,452 @@
+/* Tablet Screens (640px - 1024px) */
+@media (max-width: 1024px) {
+  .container {
+    width: calc(100% - 32px);
+  }
+
+  section {
+    padding: 80px 0;
+  }
+
+  section:first-child {
+    padding-top: 120px;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .steps-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .step-divider {
+    display: none;
+  }
+
+  .footer-content {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+  }
+
+  .pricing-card.featured {
+    transform: scale(1);
+  }
+}
+
+/* Mobile Screens (< 640px) */
+@media (max-width: 768px) {
+  .container {
+    width: calc(100% - 24px);
+  }
+
+  section {
+    padding: 60px 0;
+  }
+
+  section:first-child {
+    padding-top: 100px;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+  }
+
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .features-grid,
+  .journey-grid,
+  .testimonials-carousel,
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .steps-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .step {
+    padding: 0;
+  }
+
+  /* Hide divider on mobile */
+  .step-divider {
+    display: none;
+  }
+
+  .cta-input-group {
+    flex-direction: column;
+  }
+
+  .cta-input {
+    width: 100%;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .footer-status {
+    justify-content: flex-start;
+  }
+
+  .card,
+  .glass-card,
+  .feature-card,
+  .journey-card,
+  .testimonial-card,
+  .pricing-card {
+    padding: 20px;
+  }
+
+  .feature-card {
+    padding: 24px;
+  }
+
+  .journey-card {
+    padding: 24px;
+  }
+
+  .faq-button {
+    padding: 16px 20px;
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+  }
+
+  .portal-marquee {
+    padding: 30px 0;
+  }
+
+  .marquee-content {
+    gap: 24px;
+  }
+
+  .portal-logo {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .testimonial-quote {
+    font-size: 1rem;
+  }
+
+  .price {
+    font-size: 2rem;
+  }
+
+  .feature-list {
+    gap: 10px;
+  }
+
+  .feature-list li {
+    font-size: 0.9rem;
+  }
+
+  /* Navigation adjustments */
+  nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav-links {
+    display: none;
+  }
+}
+
+/* Small Mobile Screens (< 480px) */
+@media (max-width: 480px) {
+  .container {
+    width: calc(100% - 16px);
+  }
+
+  section {
+    padding: 40px 0;
+  }
+
+  section:first-child {
+    padding-top: 80px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+  }
+
+  .section-title {
+    font-size: 1.35rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+  }
+
+  .hero-ctas {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+
+  .badge-small {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
+
+  .backend-status {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card,
+  .glass-card,
+  .feature-card {
+    padding: 16px;
+  }
+
+  .feature-icon {
+    font-size: 2rem;
+    height: 48px;
+  }
+
+  .feature-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .feature-card p {
+    font-size: 0.9rem;
+  }
+
+  .journey-card {
+    padding: 16px;
+  }
+
+  .journey-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .step-number {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+
+  .step h3 {
+    font-size: 1.1rem;
+  }
+
+  .step p {
+    font-size: 0.9rem;
+  }
+
+  .testimonial-card {
+    padding: 16px;
+  }
+
+  .testimonial-quote {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+
+  .testimonial-author strong {
+    font-size: 0.95rem;
+  }
+
+  .testimonial-author p {
+    font-size: 0.85rem;
+  }
+
+  .pricing-card {
+    padding: 20px;
+  }
+
+  .price {
+    font-size: 1.75rem;
+  }
+
+  .price span {
+    font-size: 0.65em;
+  }
+
+  .faq-button {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+  }
+
+  .faq-answer p {
+    padding: 0 16px 16px;
+    font-size: 0.9rem;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-section h4 {
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+
+  .footer-section a {
+    font-size: 0.85rem;
+  }
+
+  .footer-bottom {
+    font-size: 0.85rem;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+  section {
+    padding: 40px 0;
+  }
+
+  h1,
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2),
+       (min-resolution: 192dpi) {
+  /* Optimize animations for high DPI */
+  body::before {
+    background-size: 100%;
+  }
+
+  .shimmer {
+    background-size: 500px 100%;
+  }
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .card,
+  .feature-card {
+    transform: none !important;
+  }
+
+  .btn:hover,
+  .card:hover,
+  .feature-card:hover {
+    transform: none;
+  }
+
+  .btn:active {
+    opacity: 0.8;
+  }
+
+  .portal-logo:hover {
+    transform: none;
+  }
+
+  .portal-marquee {
+    animation-play-state: running;
+  }
+
+  .portal-marquee:active {
+    animation-play-state: paused;
+  }
+}
+
+/* Print styles */
+@media print {
+  body::before {
+    display: none;
+  }
+
+  nav,
+  footer {
+    display: none;
+  }
+
+  section {
+    page-break-inside: avoid;
+  }
+
+  .btn {
+    border: 1px solid #000;
+  }
+
+  .glass-card,
+  .card {
+    border: 1px solid #000;
+    background: white;
+    color: black;
+  }
+}
+
+/* Landscape to Portrait transition */
+@media (orientation: portrait) and (max-width: 1024px) {
+  .hero-ctas {
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    flex: 0 1 calc(50% - 6px);
+  }
+}

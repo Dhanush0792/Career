@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#050816" />
+  <title>CareerHub | One profile. Every application.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --void:#050816;
+      --panel:#0d1226;
+      --panel2:#131a36;
+      --indigo:#6c5ce0;
+      --indigo2:#9c8cff;
+      --teal:#2fe8c8;
+      --magenta:#ff5fa8;
+      --amber:#f5a623;
+      --ink:#f3f5fc;
+      --muted:#8b93ac;
+      --glass:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.12);
+      --shadow:0 40px 120px rgba(0,0,0,.55);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--void);
+      color:var(--ink);
+      font-family:Inter,system-ui,sans-serif;
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;z-index:-3;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(108,92,224,.28), transparent 25%),
+        radial-gradient(circle at 80% 15%, rgba(47,232,200,.18), transparent 24%),
+        radial-gradient(circle at 60% 88%, rgba(255,95,168,.12), transparent 20%),
+        linear-gradient(180deg, rgba(5,8,22,.02), rgba(5,8,22,.82));
+    }
+    .noise{
+      position:fixed;inset:0;pointer-events:none;z-index:-2;opacity:.045;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:999;border-radius:50%;transform:translate(-50%,-50%);}
+    .cursor-dot{width:7px;height:7px;background:var(--teal);box-shadow:0 0 16px var(--teal)}
+    .cursor-ring{width:36px;height:36px;border:1px solid rgba(255,255,255,.28);transition:width .2s,height .2s,border-color .2s,background .2s}
+    .cursor-ring.hover{width:62px;height:62px;border-color:var(--teal);background:rgba(47,232,200,.08)}
+    @media(max-width:900px){body{cursor:auto}.cursor-dot,.cursor-ring{display:none}}
+    .progress{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--indigo),var(--teal),var(--magenta));z-index:500;box-shadow:0 0 12px var(--teal)}
+    .loader{position:fixed;inset:0;z-index:1000;background:var(--void);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .7s,visibility .7s}
+    .loader.done{opacity:0;visibility:hidden}
+    .loader .pct{font-family:"IBM Plex Mono";font-size:44px}
+    .loader .bar{width:220px;height:2px;background:rgba(255,255,255,.1);overflow:hidden}
+    .loader .bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--indigo),var(--teal))}
+    .container{width:min(1240px,calc(100% - 40px));margin:0 auto}
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:200;
+      backdrop-filter:blur(18px);background:rgba(5,8,22,.45);
+      border-bottom:1px solid rgba(255,255,255,.06)
+    }
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 0}
+    .brand{display:flex;align-items:center;gap:10px;font-family:Syne;font-weight:800;letter-spacing:-.02em}
+    .brand-mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--indigo),var(--teal));display:grid;place-items:center;color:var(--void);font-size:14px}
+    .nav-links{display:flex;gap:28px}
+    .nav-links a{color:var(--muted);font-size:13.5px;text-decoration:none}
+    .nav-links a:hover{color:var(--ink)}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      padding:12px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.12);
+      text-decoration:none;color:var(--ink);background:rgba(255,255,255,.05)
+    }
+    .btn.primary{background:linear-gradient(135deg,var(--indigo),var(--indigo2));color:white;border-color:transparent}
+    .btn:hover{transform:translateY(-1px)}
+    section{padding:140px 0;position:relative}
+    .eyebrow{font-family:"IBM Plex Mono";font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);display:flex;align-items:center;gap:8px;margin-bottom:18px}
+    .eyebrow::before{content:"";width:16px;height:1px;background:var(--teal)}
+    .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.7,.3,1),transform .8s cubic-bezier(.2,.7,.3,1)}
+    .reveal.in{opacity:1;transform:none}
+    .hero-pin{height:340vh;position:relative}
+    .hero-sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:center}
+    #particleCanvas{position:absolute;inset:0;z-index:0}
+    .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}
+    .hero-copy h1{font-family:Syne;font-size:clamp(3rem,7vw,7rem);line-height:.92;letter-spacing:-.06em;margin:14px 0 16px}
+    .hero-copy p{max-width:58ch;color:var(--muted);font-size:clamp(1.02rem,1.6vw,1.18rem);line-height:1.7}
+    .hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+    .badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+    .badge{padding:9px 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#edf1ff;font-size:.9rem}
+    .live-card{
+      position:absolute;right:5%;top:100px;z-index:4;width:min(360px,calc(100vw - 40px));
+      padding:18px;border-radius:24px;background:linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(20px);box-shadow:var(--shadow)
+    }
+    .live-card h3{font-family:Syne;font-size:1.35rem;margin:0 0 10px}
+    .live-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+    .live-row:last-child{border-bottom:0}
+    .live-row span:last-child{color:var(--muted)}
+    .stage-copy{position:absolute;left:0;right:0;top:54%;transform:translateY(-50%);text-align:center;z-index:3;padding:0 6%;opacity:0;transition:opacity .4s}
+    .stage-copy.active{opacity:1}
+    .stage-copy h2{font-family:Syne;font-size:clamp(2rem,4.8vw,4.2rem);line-height:1.03;margin-bottom:14px}
+    .stage-copy p{max-width:520px;margin:0 auto;color:var(--muted);line-height:1.7}
+    .stage-tag{font-family:"IBM Plex Mono";font-size:11.5px;color:var(--teal);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;display:block}
+    .dots{position:absolute;right:5%;top:50%;transform:translateY(-50%);z-index:4;display:flex;flex-direction:column;gap:12px}
+    .dot-ind{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}
+    .dot-ind.active{background:var(--teal);box-shadow:0 0 10px var(--teal);transform:scale(1.4)}
+    .scroll-cue{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:"IBM Plex Mono";font-size:10.5px;letter-spacing:.14em;color:var(--muted)}
+    .scroll-cue .line{width:1px;height:34px;background:linear-gradient(180deg,var(--teal),transparent);animation:cue 1.6s infinite}
+    @keyframes cue{0%,100%{opacity:.2;transform:translateY(-4px)}50%{opacity:1;transform:translateY(8px)}}
+    .glass{background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(20px);border-radius:24px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 16px 40px rgba(0,0,0,.24)}
+    .section-title{font-family:Syne;font-size:clamp(2rem,4.4vw,4rem);line-height:1.06;margin:0 0 16px}
+    .section-sub{max-width:700px;color:var(--muted);line-height:1.7;margin-bottom:46px}
+    .grid-12{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+    .span-4{grid-column:span 4}
+    .span-6{grid-column:span 6}
+    .span-12{grid-column:span 12}
+    .card{padding:22px}
+    .card h3{font-family:Syne;margin:10px 0 10px;font-size:1.35rem}
+    .card p{color:var(--muted);line-height:1.7}
+    .metric-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .metric{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:.82rem}
+    .carousel-stage{perspective:1400px;height:220px;position:relative}
+    .carousel-ring{position:absolute;left:50%;top:50%;width:1px;height:1px;transform-style:preserve-3d;animation:ring 28s linear infinite}
+    .carousel-stage:hover .carousel-ring{animation-play-state:paused}
+    @keyframes ring{to{transform:translate(-50%,-50%) rotateY(360deg)}}
+    .carousel-item{position:absolute;top:-46px;left:-92px;width:184px;height:92px;display:flex;align-items:center;justify-content:center;border-radius:18px;background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(14px);font-family:Syne;font-weight:700;font-size:18px;color:#edf1ff}
+    .tools-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+    @media(max-width:1100px){.tools-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:600px){.tools-grid{grid-template-columns:1fr}}
+    .flip{perspective:1200px;height:240px}
+    .flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+    .flip:hover .flip-inner{transform:rotateY(180deg)}
+    .flip-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:24px;padding:24px;display:flex;flex-direction:column}
+    .flip-back{transform:rotateY(180deg);justify-content:center;background:linear-gradient(160deg, rgba(108,92,224,.18), rgba(47,232,200,.08))}
+    .tool-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(47,232,200,.14);color:var(--teal);margin-bottom:18px}
+    .flip-front h3{font-size:17px;margin:0 0 8px}
+    .flip-front p,.flip-back p{font-size:13px;color:var(--muted);line-height:1.65}
+    .flip-back h4{font-family:Syne;font-size:15px;margin:0 0 10px;color:var(--teal)}
+    .flip-hint{margin-top:auto;font-family:"IBM Plex Mono";font-size:10px;letter-spacing:.12em;color:var(--muted)}
+    .flow-wrap{position:relative}
+    .flow-line{position:absolute;left:29px;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--indigo),var(--teal));opacity:.32}
+    .flow-step{display:grid;grid-template-columns:60px 1fr;gap:22px;margin-bottom:28px}
+    .flow-num{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-family:Syne;font-size:17px;background:var(--panel);border:1px solid var(--border)}
+    .flow-card{padding:24px 28px}
+    .flow-card h4{font-family:Syne;font-size:1.2rem;margin:0 0 8px}
+    .flow-meta{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+    .chip{font-family:"IBM Plex Mono";font-size:10px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--muted)}
+    .ext-section{display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:center}
+    @media(max-width:900px){.ext-section{grid-template-columns:1fr}}
+    .browser-mock{border-radius:20px;overflow:hidden;border:1px solid var(--border);box-shadow:0 50px 120px rgba(0,0,0,.6);transform:rotateY(-8deg) rotateX(4deg);transform-style:preserve-3d}
+    .browser-bar{background:var(--panel2);padding:13px 16px;display:flex;align-items:center;gap:8px}
+    .window-dot{width:10px;height:10px;border-radius:50%}
+    .window-dot.r{background:#e8555a}.window-dot.y{background:#f5a623}.window-dot.g{background:#2fe8c8}
+    .browser-url{margin-left:14px;flex:1;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 14px;font-size:11.5px;color:var(--muted);font-family:"IBM Plex Mono"}
+    .browser-body{background:linear-gradient(160deg,#161d38,#0a0e20);padding:40px 30px;min-height:350px;position:relative}
+    .fake-form{display:flex;flex-direction:column;gap:12px;max-width:320px}
+    .fake-field{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 15px;font-size:12.5px;color:var(--muted);transition:.35s}
+    .fake-field.filled{background:rgba(47,232,200,.1);border-color:rgba(47,232,200,.4);color:var(--ink)}
+    .popup{position:absolute;top:38px;right:24px;width:208px;padding:16px;z-index:5}
+    .popup-title{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:10px}
+    .popup-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal)}
+    .popup-sub{font-size:10.5px;color:var(--muted);margin-bottom:12px}
+    .popup-btn{width:100%;padding:10px;border-radius:10px;text-align:center;background:linear-gradient(135deg,var(--indigo),var(--teal));color:var(--void);font-weight:700;font-size:12px}
+    .timeline{display:grid;gap:18px}
+    .timeline-card{display:grid;grid-template-columns:160px 1fr;gap:18px;align-items:start}
+    .timeline-card .year{font-family:"IBM Plex Mono";color:var(--teal);letter-spacing:.12em;text-transform:uppercase}
+    .timeline-card .desc{color:var(--muted);line-height:1.75}
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    @media(max-width:900px){.pricing-grid{grid-template-columns:1fr}}
+    .price{padding:28px}
+    .price.featured{position:relative}
+    .price.featured::before{content:"";position:absolute;inset:-1px;border-radius:24px;padding:1px;background:conic-gradient(from 0deg,var(--indigo),var(--teal),var(--magenta),var(--indigo));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:border 6s linear infinite}
+    @keyframes border{to{filter:hue-rotate(360deg)}}
+    .price-tier{font-family:"IBM Plex Mono";font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:10px}
+    .price-amount{font-family:Syne;font-size:38px;margin-bottom:6px}
+    .price-desc{color:var(--muted);margin-bottom:20px;line-height:1.6}
+    .price-feat{list-style:none;display:flex;flex-direction:column;gap:10px;margin:0 0 24px;padding:0}
+    .price-feat li{display:flex;gap:10px;color:var(--ink);font-size:13.5px}
+    .price-feat li::before{content:"✓";color:var(--teal);font-weight:700}
+    .cta{text-align:center;padding:120px 0 70px}
+    .cta h2{font-family:Syne;font-size:clamp(2.1rem,5vw,4.2rem);margin:0 0 16px}
+    .cta p{max-width:540px;margin:0 auto 30px;color:var(--muted);line-height:1.75}
+    footer{padding:30px 0 46px;border-top:1px solid rgba(255,255,255,.06)}
+    .footer-inner{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;color:var(--muted)}
+    .footer-links{display:flex;gap:24px;flex-wrap:wrap}
+    .footer-links a{color:var(--muted);text-decoration:none;font-size:13px}
+    .footer-links a:hover{color:var(--ink)}
+    .live-glass{
+      position:absolute;left:5%;bottom:9%;
+      width:min(340px,calc(100vw - 40px));padding:18px;border-radius:24px;
+      background:rgba(255,255,255,.06);border:1px solid var(--border);backdrop-filter:blur(18px);box-shadow:var(--shadow);z-index:4
+    }
+    .live-glass h3{font-family:Syne;font-size:1.3rem;margin:0 0 10px}
+    .mini-note{font-family:"IBM Plex Mono";font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+    .glow-card{
+      position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;opacity:.55
+    }
+    .g1{width:420px;height:420px;background:rgba(108,92,224,.28);top:-120px;left:-80px}
+    .g2{width:360px;height:360px;background:rgba(47,232,200,.16);right:0;bottom:8%}
+    @media(max-width:1080px){
+      .hero-grid,.ext-section,.timeline-card{grid-template-columns:1fr}
+      .live-glass{position:relative;left:auto;bottom:auto;width:auto;margin:20px 0 0}
+      .dots{display:none}
+    }
+    @media(max-width:760px){
+      .container{width:min(100% - 24px,1240px)}
+      .nav-inner{flex-direction:column;align-items:flex-start}
+      .nav-links{display:none}
+      section{padding:110px 0}
+      .hero-pin{height:360vh}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation:none !important;transition:none !important;scroll-behavior:auto !important}
+    }
+  </style>
+</head>
+<body>
+  <div class="loader" id="loader"><div style="font-family:Syne;font-weight:800;letter-spacing:.32em;color:#8b93ac">CAREERHUB</div><div class="pct" id="loaderPct">0%</div><div class="bar"><span id="loaderBar"></span></div></div>
+  <div class="cursor-dot" id="curDot"></div>
+  <div class="cursor-ring" id="curRing"></div>
+  <div class="noise"></div>
+  <div class="progress" id="progress"></div>
+
+  <nav>
+    <div class="container nav-inner">
+      <div class="brand"><div class="brand-mark">C</div>CareerHub</div>
+      <div class="nav-links">
+        <a href="#platform">Platform</a>
+        <a href="#tools">Tools</a>
+        <a href="#flow">Flow</a>
+        <a href="#extension">Extension</a>
+        <a href="#pricing">Pricing</a>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <a class="btn" href="#flow">See flow</a>
+        <a class="btn primary" href="#platform">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero-pin">
+    <div class="hero-sticky">
+      <canvas id="particleCanvas"></canvas>
+      <div class="container hero-grid">
+        <div class="hero-copy reveal">
+          <div class="eyebrow">One profile. Every application.</div>
+          <h1>From student <span style="color:var(--teal)">to employee</span> with one living profile.</h1>
+          <p>CareerHub turns a student profile into a resume engine, an autofill brain, a tracker, and a portal-aware application system. The story is built as a premium launch experience, not a flat brochure.</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#platform">Explore the system</a>
+            <a class="btn" href="#extension">See autofill</a>
+          </div>
+          <div class="badges">
+            <span class="badge">Glass + glow</span>
+            <span class="badge">Pinned scrollytelling</span>
+            <span class="badge">3D / Three.js hero</span>
+            <span class="badge">Portal maps</span>
+          </div>
+        </div>
+      </div>
+      <div class="live-card reveal">
+        <h3>Live Sync</h3>
+        <div class="live-row"><span>Backend</span><span id="backendState">checking...</span></div>
+        <div class="live-row"><span>Version</span><span id="backendVersion">0</span></div>
+        <div class="live-row"><span>Updated</span><span id="backendUpdated">—</span></div>
+        <div class="live-row"><span>Origin</span><span id="backendOrigin">—</span></div>
+      </div>
+      <div class="stage-copy active" data-stage="0">
+        <span class="stage-tag">Stage 01 — scattered</span>
+        <h2>Your details are everywhere.</h2>
+        <p>Education, experience, and skills spread across tabs, resumes, and forms. The hero starts in chaos.</p>
+      </div>
+      <div class="stage-copy" data-stage="1">
+        <span class="stage-tag">Stage 02 — assembled</span>
+        <h2>One profile. Every detail once.</h2>
+        <p>Everything is normalized into a single profile so the rest of the product can stay consistent.</p>
+      </div>
+      <div class="stage-copy" data-stage="2">
+        <span class="stage-tag">Stage 03 — matched</span>
+        <h2>Scored, filled, submitted.</h2>
+        <p>The profile becomes a resume, an ATS score, and an autofill action that the user can review and approve.</p>
+      </div>
+      <div class="dots">
+        <div class="dot-ind active" data-dot="0"></div>
+        <div class="dot-ind" data-dot="1"></div>
+        <div class="dot-ind" data-dot="2"></div>
+      </div>
+      <div class="scroll-cue"><span>Scroll</span><div class="line"></div></div>
+      <div class="glow-card g1"></div>
+      <div class="glow-card g2"></div>
+    </div>
+  </section>
+
+  <section id="platform">
+    <div class="container">
+      <div class="eyebrow reveal">Platform</div>
+      <h2 class="section-title reveal">Built like a product ecosystem, not a landing page.</h2>
+      <p class="section-sub reveal">The homepage is the story layer for the full CareerHub system: profile, resume, autofill, tracker, and portal playbooks. Every card below maps to the actual product idea.</p>
+      <div class="grid-12">
+        <div class="glass card span-4 reveal">
+          <div class="eyebrow">01 · Profile Core</div>
+          <h3>Encrypted single source of truth</h3>
+          <p>One structured profile powers every downstream page and action, with live sync and conflict handling.</p>
+        </div>
+        <div class="glass card span-4 reveal">
+          <div class="eyebrow">02 · Resume</div>
+          <h3>ATS-aware drafting</h3>
+          <p>Build a resume from the profile, score it against a role, and fix gaps before applying.</p>
+        </div>
+        <div class="glass card span-4 reveal">
+          <div class="eyebrow">03 · Autofill</div>
+          <h3>Portal-aware mapping</h3>
+          <p>Dedicated maps for priority portals and ATS engines, with a safe fallback path for unknown sites.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tools">
+    <div class="container">
+      <div class="eyebrow reveal">Toolkit</div>
+      <h2 class="section-title reveal">All the surfaces the idea needs.</h2>
+      <p class="section-sub reveal">The cards flip on hover. This section describes the product pages that exist across the system.</p>
+      <div class="tools-grid">
+        <div class="flip reveal"><div class="flip-inner">
+          <div class="flip-face glass flip-front"><div class="tool-icon">R</div><h3>Resume Builder</h3><p>Generate polished drafts from the profile and export with confidence.</p><div class="flip-hint">Hover to flip</div></div>
+          <div class="flip-face glass flip-back"><h4>Resume Builder</h4><p>Profile data becomes a real resume document, tuned for job applications and ATS checks.</p></div>
+        </div></div>
+        <div class="flip reveal"><div class="flip-inner">
+          <div class="flip-face glass flip-front"><div class="tool-icon">A</div><h3>ATS Checker</h3><p>See role fit, keyword gaps, and structure quality at a glance.</p><div class="flip-hint">Hover to flip</div></div>
+          <div class="flip-face glass flip-back"><h4>ATS Checker</h4><p>Helps the user understand how close the current resume is to the target role.</p></div>
+        </div></div>
+        <div class="flip reveal"><div class="flip-inner">
+          <div class="flip-face glass flip-front"><div class="tool-icon">F</div><h3>Auto-Fill</h3><p>Detect the portal and fill the visible form fields from the profile.</p><div class="flip-hint">Hover to flip</div></div>
+          <div class="flip-face glass flip-back"><h4>Auto-Fill</h4><p>Never auto-submits. The user reviews all changes before clicking the portal’s own submit button.</p></div>
+        </div></div>
+        <div class="flip reveal"><div class="flip-inner">
+          <div class="flip-face glass flip-front"><div class="tool-icon">T</div><h3>Tracker</h3><p>Log applications, notes, and progress in one place.</p><div class="flip-hint">Hover to flip</div></div>
+          <div class="flip-face glass flip-back"><h4>Tracker</h4><p>Real-time sync keeps the application history visible without manual entry.</p></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="flow">
+    <div class="container">
+      <div class="eyebrow reveal">How it works</div>
+      <h2 class="section-title reveal">From blank profile to submitted application.</h2>
+      <div class="flow-wrap">
+        <div class="flow-line"></div>
+        <div class="flow-step reveal"><div class="flow-num">01</div><div class="flow-card glass"><h4>Build your profile once</h4><p>Capture the user’s core identity, education, and work history in one encrypted profile.</p><div class="flow-meta"><span class="chip">Encrypted</span><span class="chip">Synced</span></div></div></div>
+        <div class="flow-step reveal"><div class="flow-num">02</div><div class="flow-card glass"><h4>Generate the resume</h4><p>Turn the profile into a resume draft, then score it against the target role.</p><div class="flow-meta"><span class="chip">ATS fit</span><span class="chip">Live preview</span></div></div></div>
+        <div class="flow-step reveal"><div class="flow-num">03</div><div class="flow-card glass"><h4>Open the portal</h4><p>The extension detects the site, loads the appropriate map, and fills only what it can verify.</p><div class="flow-meta"><span class="chip">Portal-aware</span><span class="chip">Review first</span></div></div></div>
+        <div class="flow-step reveal"><div class="flow-num">04</div><div class="flow-card glass"><h4>Submit and track</h4><p>The application is logged automatically into the tracker so progress never gets lost.</p><div class="flow-meta"><span class="chip">Real-time</span><span class="chip">No manual entry</span></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="extension">
+    <div class="container">
+      <div class="ext-section">
+        <div>
+          <div class="eyebrow reveal">Extension</div>
+          <h2 class="section-title reveal">Click once. Watch the form fill itself.</h2>
+          <p class="section-sub reveal" style="margin-bottom:0">The mock browser below shows the visual behavior we want: portal detection, safe fill animation, and a human review-first flow.</p>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:16px;margin-top:24px;padding:0">
+            <li class="reveal"><strong>Confidence scoring</strong> — low-confidence fields are flagged, not guessed.</li>
+            <li class="reveal"><strong>Sequential fill animation</strong> — watch every field populate as the engine works.</li>
+            <li class="reveal"><strong>No auto-submit</strong> — the portal’s own submit button stays with the user.</li>
+            <li class="reveal"><strong>Undo-ready</strong> — a bad fill can be reverted instantly.</li>
+          </ul>
+        </div>
+        <div class="reveal">
+          <div class="browser-mock" id="browserMock">
+            <div class="browser-bar">
+              <div class="window-dot r"></div><div class="window-dot y"></div><div class="window-dot g"></div>
+              <div class="browser-url">naukri.com/apply/backend-developer</div>
+            </div>
+            <div class="browser-body">
+              <div class="fake-form" id="fakeForm">
+                <div class="fake-field">Full name</div>
+                <div class="fake-field">Mobile number</div>
+                <div class="fake-field">Email address</div>
+                <div class="fake-field">Highest qualification</div>
+                <div class="fake-field">Current location</div>
+              </div>
+              <div class="popup glass">
+                <div class="popup-title"><span class="popup-dot"></span> Portal recognized</div>
+                <div class="popup-sub">Naukri.com · 14 fields detected</div>
+                <div class="popup-btn" id="useBtn">Use profile</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="security">
+    <div class="container">
+      <div class="eyebrow reveal">Trust</div>
+      <h2 class="section-title reveal">Your data is the product. Treat it like one.</h2>
+      <p class="section-sub reveal">The architecture is meant to communicate seriousness: encryption, review-first automation, and no silent submission.</p>
+      <div class="grid-12">
+        <div class="glass card span-4 reveal"><h3>AES-256 at rest</h3><p>Profile data is encrypted and stored as structured state, not loose text.</p></div>
+        <div class="glass card span-4 reveal"><h3>TLS in transit</h3><p>The backend and frontend are wired to exchange shared state securely.</p></div>
+        <div class="glass card span-4 reveal"><h3>Human approval</h3><p>The extension fills, but the user submits. No silent completion.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="container">
+      <div class="eyebrow reveal">Access</div>
+      <h2 class="section-title reveal">Free to start. Built for an active search.</h2>
+      <p class="section-sub reveal">The pricing area signals product value without making the homepage feel like a SaaS template.</p>
+      <div class="pricing-grid">
+        <div class="glass price reveal">
+          <div class="price-tier">Free</div><div class="price-amount">₹0</div><div class="price-desc">Resume, profile, and starter sync tools.</div>
+          <ul class="price-feat"><li>Profile setup</li><li>Basic resume tools</li><li>Limited portal fills</li></ul>
+          <a class="btn" href="#platform">Start free</a>
+        </div>
+        <div class="glass price featured reveal">
+          <div class="price-tier">Pro pass</div><div class="price-amount">₹149 <span style="font-size:14px;color:var(--muted);font-family:Inter">/ 30 days</span></div><div class="price-desc">For an active job hunt with full autofill and tracking.</div>
+          <ul class="price-feat"><li>Unlimited ATS checks</li><li>Unlimited portal fills</li><li>Application tracking</li></ul>
+          <a class="btn primary" href="#extension">Use Pro flow</a>
+        </div>
+        <div class="glass price reveal">
+          <div class="price-tier">Campus</div><div class="price-amount">Custom</div><div class="price-desc">For colleges and placement cells.</div>
+          <ul class="price-feat"><li>Batch onboarding</li><li>Placement dashboards</li><li>Priority field-map requests</li></ul>
+          <a class="btn" href="#flow">Talk to us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2 class="reveal">Stop retyping the same details.</h2>
+      <p class="reveal">Build the profile once. Reuse it across resumes, portals, and tracker flows. That’s the product story the homepage should tell.</p>
+      <a class="btn primary reveal" href="#platform">Build my profile</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container footer-inner">
+      <div class="brand"><div class="brand-mark">C</div>CareerHub</div>
+      <div class="footer-links">
+        <a href="#platform">Platform</a><a href="#tools">Tools</a><a href="#extension">Extension</a><a href="#pricing">Pricing</a>
+      </div>
+      <div style="font-family:'IBM Plex Mono';font-size:12px;color:var(--muted)">Premium reference rebuild for CareerHub</div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const curDot = document.getElementById('curDot');
+    const curRing = document.getElementById('curRing');
+    const progress = document.getElementById('progress');
+    const loader = document.getElementById('loader');
+    const loaderPct = document.getElementById('loaderPct');
+    const loaderBar = document.getElementById('loaderBar');
+    const revealEls = document.querySelectorAll('.reveal');
+    const stageEls = document.querySelectorAll('.stage-copy');
+    const dotEls = document.querySelectorAll('.dot-ind');
+    const live = {
+      state: document.getElementById('backendState'),
+      version: document.getElementById('backendVersion'),
+      updated: document.getElementById('backendUpdated'),
+      origin: document.getElementById('backendOrigin')
+    };
+
+    let mx = 0, my = 0, rx = 0, ry = 0;
+    window.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      curDot.style.left = mx + 'px'; curDot.style.top = my + 'px';
+    });
+    (function ringLoop(){
+      rx += (mx - rx) * 0.18;
+      ry += (my - ry) * 0.18;
+      curRing.style.left = rx + 'px';
+      curRing.style.top = ry + 'px';
+      requestAnimationFrame(ringLoop);
+    })();
+    document.querySelectorAll('a,button,.btn,.flip,.popup-btn').forEach(el=>{
+      el.addEventListener('mouseenter', ()=>curRing.classList.add('hover'));
+      el.addEventListener('mouseleave', ()=>curRing.classList.remove('hover'));
+    });
+
+    document.querySelectorAll('.reveal').forEach(el=>{
+      new IntersectionObserver((entries, io) => {
+        entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+      }, {threshold:.16}).observe(el);
+    });
+
+    const loadAnim = setInterval(()=>{
+      const current = Math.min(100, (parseInt(loaderPct.textContent) || 0) + 13);
+      loaderPct.textContent = current + '%';
+      loaderBar.style.width = current + '%';
+      if(current >= 100){ clearInterval(loadAnim); setTimeout(()=>loader.classList.add('done'), 240); }
+    }, 120);
+
+    window.addEventListener('scroll', ()=>{
+      const h = document.documentElement;
+      progress.style.width = (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, {passive:true});
+
+    // Live backend state
+    async function loadLive(){
+      try{
+        const res = await fetch('http://localhost:8787/api/profile', {cache:'no-store'});
+        const state = await res.json();
+        live.state.textContent = 'connected';
+        live.version.textContent = 'v' + (state.version ?? 0);
+        live.updated.textContent = state.updatedAt ? new Date(state.updatedAt).toLocaleString() : '—';
+        live.origin.textContent = state.origin || 'unknown';
+      }catch(err){
+        live.state.textContent = 'offline';
+        live.version.textContent = '—';
+        live.updated.textContent = 'backend unavailable';
+        live.origin.textContent = '—';
+      }
+    }
+    try{
+      const es = new EventSource('http://localhost:8787/api/events');
+      es.addEventListener('profile', e => {
+        const state = JSON.parse(e.data);
+        live.state.textContent = 'live';
+        live.version.textContent = 'v' + (state.version ?? 0);
+        live.updated.textContent = state.updatedAt ? new Date(state.updatedAt).toLocaleString() : '—';
+        live.origin.textContent = state.origin || 'unknown';
+      });
+    }catch(err){ console.error(err); }
+    loadLive();
+
+    // Story motion
+    const story = document.querySelector('.hero-pin');
+    function storyProgress(){
+      const rect = story.getBoundingClientRect();
+      const total = story.offsetHeight - window.innerHeight;
+      const p = Math.min(1, Math.max(0, (-rect.top) / total));
+      return p;
+    }
+    function setStage(idx){
+      stageEls.forEach(s => s.classList.toggle('active', Number(s.dataset.stage) === idx));
+      dotEls.forEach(d => d.classList.toggle('active', Number(d.dataset.dot) === idx));
+    }
+
+    // Three.js hero: scatter -> student -> document -> ring
+    const canvas = document.getElementById('particleCanvas');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.2, 9);
+    const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const mobile = window.innerWidth < 760;
+    const N = mobile ? 1200 : 2600;
+    const lerp = (a,b,t)=>a+(b-a)*t;
+    const ease = t => t<.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2;
+    function genScatter(){
+      const arr = new Float32Array(N*3);
+      for(let i=0;i<N;i++){ arr[i*3]=(Math.random()-.5)*12; arr[i*3+1]=(Math.random()-.5)*12+1.4; arr[i*3+2]=(Math.random()-.5)*8; }
+      return arr;
+    }
+    function genStudent(){
+      const arr = new Float32Array(N*3);
+      for(let i=0;i<N;i++){
+        const a = Math.random()*Math.PI*2, r = Math.random();
+        const head = i < N*0.15;
+        if(head){
+          arr[i*3] = Math.cos(a)*0.5;
+          arr[i*3+1] = Math.sin(a)*0.5 + 3.2;
+          arr[i*3+2] = Math.sin(a*2)*0.2;
+        }else{
+          const y = lerp(2.5,-2.2,Math.random());
+          const rad = lerp(0.55,0.35,Math.random());
+          arr[i*3] = Math.cos(a)*rad + (Math.random()>.5 ? -.12 : .12);
+          arr[i*3+1] = y;
+          arr[i*3+2] = Math.sin(a)*rad*0.7;
+        }
+      }
+      return arr;
+    }
+    function genDoc(){
+      const arr = new Float32Array(N*3);
+      for(let i=0;i<N;i++){
+        const edge = Math.random() < .35;
+        let x, y;
+        if(edge){
+          const side = Math.floor(Math.random()*4);
+          if(side===0){ x=lerp(-1.3,1.3,Math.random()); y=1.7; }
+          else if(side===1){ x=lerp(-1.3,1.3,Math.random()); y=-1.7; }
+          else if(side===2){ x=-1.3; y=lerp(-1.7,1.7,Math.random()); }
+          else { x=1.3; y=lerp(-1.7,1.7,Math.random()); }
+        }else{ x=(Math.random()-.5)*2.5; y=(Math.random()-.5)*3.3; }
+        arr[i*3]=x; arr[i*3+1]=y+.6; arr[i*3+2]=(Math.random()-.5)*.08;
+      }
+      return arr;
+    }
+    function genRing(){
+      const arr = new Float32Array(N*3);
+      for(let i=0;i<N;i++){
+        const fill = Math.random() < .12;
+        const a = Math.random()*Math.PI*2;
+        const r = fill ? Math.random()*.32 : 1.55 + (Math.random()-.5)*.08;
+        arr[i*3] = Math.cos(a)*r;
+        arr[i*3+1] = Math.sin(a)*r + .6;
+        arr[i*3+2] = (Math.random()-.5)*.1;
+      }
+      return arr;
+    }
+    const scatter = genScatter();
+    const student = genStudent();
+    const doc = genDoc();
+    const ring = genRing();
+    const colors = new Float32Array(N*3);
+    const c1 = new THREE.Color(0x6c5ce0), c2 = new THREE.Color(0x2fe8c8), c3 = new THREE.Color(0xff5fa8);
+    for(let i=0;i<N;i++){
+      const y = student[i*3+1];
+      const t = Math.max(0, Math.min(1, (y + 2.3) / 5.6));
+      const c = Math.random() < .06 ? c3.clone() : c1.clone().lerp(c2, t);
+      colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
+    }
+    const positions = new Float32Array(N*3); positions.set(scatter);
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    geom.setAttribute('color', new THREE.BufferAttribute(colors,3));
+    const material = new THREE.PointsMaterial({size: mobile ? 0.055 : 0.045, vertexColors:true, transparent:true, opacity:.95, depthWrite:false, blending:THREE.AdditiveBlending});
+    const points = new THREE.Points(geom, material);
+    const group = new THREE.Group(); group.add(points); scene.add(group);
+    let mouseX = 0, mouseY = 0;
+    window.addEventListener('mousemove', e => { mouseX = (e.clientX / window.innerWidth - .5); mouseY = (e.clientY / window.innerHeight - .5); });
+    let introT = 0, introDone = false;
+    function startIntro(){ const st = performance.now(), dur = 2400; (function step(t){ const p = Math.min(1,(t-st)/dur); introT = ease(p); if(p<1) requestAnimationFrame(step); else introDone = true; })(st); }
+    startIntro();
+    function animate(){
+      requestAnimationFrame(animate);
+      const rawP = storyProgress();
+      const p = rawP;
+      const stage = p > .62 ? 2 : p > .28 ? 1 : 0;
+      setStage(stage);
+      let temp;
+      if(!introDone){
+        temp = scatter.map((v,i) => lerp(v, student[i], introT));
+      }else if(p <= .5){
+        const t = ease(p / .5);
+        temp = student.map((v,i) => lerp(v, doc[i], t));
+      }else{
+        const t = ease((p - .5) / .5);
+        temp = doc.map((v,i) => lerp(v, ring[i], t));
+      }
+      geom.attributes.position.array.set(temp);
+      geom.attributes.position.needsUpdate = true;
+      camera.position.z = lerp(9, 6.1, p);
+      group.rotation.y += .002;
+      group.rotation.y += (mouseX * .4 - group.rotation.y * .02) * .02;
+      group.rotation.x = lerp(group.rotation.x, -mouseY * .22, .05);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Extension demo fill
+    const useBtn = document.getElementById('useBtn');
+    const fakeFields = document.querySelectorAll('#fakeForm .fake-field');
+    const vals = ['Aditya Rao','+91 98xxxxxx21','aditya.rao@email.com','B.Tech Computer Science','Hyderabad, Telangana'];
+    function runFill(){
+      fakeFields.forEach(f=>f.classList.remove('filled'));
+      fakeFields.forEach((f,i)=>setTimeout(()=>{f.textContent=vals[i];f.classList.add('filled');}, i*240+160));
+    }
+    useBtn.addEventListener('click', runFill);
+    new IntersectionObserver((entries, io)=>{ entries.forEach(en=>{ if(en.isIntersecting){ setTimeout(runFill,500); io.disconnect(); } }); }, {threshold:.35}).observe(document.getElementById('extension'));
+
+    // Loader done after assets settle
+    setTimeout(()=>loader.classList.add('done'), 1800);
+    window.addEventListener('resize', ()=>{ camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+  </script>
+</body>
+</html>

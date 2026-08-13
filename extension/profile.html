@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CareerHub - Edit Profile</title>
+    <style>
+      body { font-family: Inter, system-ui, sans-serif; background: #f6f8fb; color: #111; margin: 0; padding: 20px; }
+      .wrap { max-width: 900px; margin: 0 auto; }
+      label { display:block; margin-top: 12px; font-size: 13px; }
+      input, textarea { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid #dfe6f2; }
+      textarea { min-height: 120px; }
+      button { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: #5b4fe8; color: white; border: none; cursor: pointer; }
+      .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .muted { color: #6b7280; font-size: 13px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h2>CareerHub — Edit Profile</h2>
+      <div class="muted">Edit fields you want autofill to use. Click Save to persist and sync.</div>
+      <div class="row">
+        <div>
+          <label>Full name</label>
+          <input id="fullName" />
+        </div>
+        <div>
+          <label>Email</label>
+          <input id="email" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>First name</label>
+          <input id="firstName" />
+        </div>
+        <div>
+          <label>Last name</label>
+          <input id="lastName" />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Phone</label>
+          <input id="phone" />
+        </div>
+        <div>
+          <label>DOB</label>
+          <input id="dob" type="date" />
+        </div>
+      </div>
+      <label>Headline</label>
+      <input id="headline" />
+      <label>Summary</label>
+      <textarea id="summary"></textarea>
+      <label>Education / College</label>
+      <textarea id="education"></textarea>
+      <label>Experience</label>
+      <textarea id="experience"></textarea>
+      <div class="row">
+        <div>
+          <label>LinkedIn</label>
+          <input id="linkedin" />
+        </div>
+        <div>
+          <label>GitHub</label>
+          <input id="github" />
+        </div>
+      </div>
+      <label>Portfolio / Website</label>
+      <input id="portfolio" />
+      <div style="display:flex; gap:12px;">
+        <button id="save">Save & Sync</button>
+        <button id="close">Close</button>
+      </div>
+      <div id="status" class="muted"></div>
+      <div id="conflictUI" style="display:none; margin-top:20px; padding:16px; background:rgba(255,100,100,0.1); border-radius:12px; border:1px solid rgba(255,100,100,0.3);">
+        <h3 style="margin-top:0;">Conflict detected</h3>
+        <p class="muted">Another device or user changed this profile. Choose how to proceed.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+          <button id="conflictUseServer" style="background:#2ee9c8; border:0; border-radius:8px; color:white; padding:8px 12px; cursor:pointer;">Use server state</button>
+          <button id="conflictKeepLocal" style="background:#e8547b; border:0; border-radius:8px; color:white; padding:8px 12px; cursor:pointer;">Keep my changes</button>
+          <button id="conflictReload" style="background:#666; border:0; border-radius:8px; color:white; padding:8px 12px; cursor:pointer;">Reload</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="profile.js"></script>
+  </body>
+</html>

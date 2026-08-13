@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "CareerHub Autofill",
+  "version": "0.1.0",
+  "description": "CareerHub profile sync, portal coverage, and safe autofill helpers.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CareerHub"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["storage", "activeTab", "scripting", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+  ,
+  "applications": {
+    "gecko": {
+      "id": "careerhub_autofill@careerhub.local",
+      "strict_min_version": "109.0"
+    }
+  }
+}
+
