@@ -9,5 +9,25 @@
     "createdAt": 1786711538360,
     "lastSync": 1786711538397,
     "passcodeHash": "1fff4b993a48bbd69248c7986db7966b2342656cbbd5fb1a01a6a24d0923cc74"
+  },
+  {
+    "id": "u_0n89pch3tr59",
+    "email": "candidate@jobxapply.app",
+    "name": "John Candidate",
+    "passwordHash": "$2b$10$SD0Fz8B7hDajx5uAMJQeq.VHJ4UNTTFgPubiUTaPADdrsyfzuNa/2",
+    "role": "user",
+    "tier": "free",
+    "createdAt": 1786712391362,
+    "lastSync": 1786712391362
+  },
+  {
+    "id": "u_pa52u5ad0x",
+    "email": "admin@jobxapply.app",
+    "name": "System Admin",
+    "passwordHash": "$2b$10$SD0Fz8B7hDajx5uAMJQeq.IQnTWfhBckmZ3SeohqYAhA.iLrRoMsi",
+    "role": "admin",
+    "tier": "paid",
+    "createdAt": 1786712391450,
+    "lastSync": 1786712391450
   }
 ]
