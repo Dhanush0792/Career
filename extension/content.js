@@ -47,20 +47,38 @@ function scoreElementForKey(el, key) {
       if (label) checks.push(normalize(label.textContent));
     }
   } catch (e) {}
-  const surrounding = normalize(el.closest("label")?.textContent || "") + " " + normalize(el.closest("div")?.innerText || "");
+  let surrounding = "";
+  const closestLabel = el.closest("label");
+  if (closestLabel) {
+    surrounding = normalize(closestLabel.textContent);
+  } else {
+    const parent = el.parentElement;
+    if (parent) {
+      const fullText = normalize(parent.textContent || "");
+      if (fullText.length < 150) {
+        surrounding = fullText;
+      }
+    }
+  }
   checks.push(surrounding);
 
+  let maxScore = 0;
   const aliases = FIELD_ALIASES[key] || [];
   for (const a of aliases) {
     const needle = normalize(a);
     for (const c of checks) {
       if (!c) continue;
-      if (c === needle) return 10;
-      if (c.includes(needle)) return 8;
-      if (needle.includes(c)) return 6;
+      let score = 0;
+      if (c === needle) score = 10;
+      else if (c.includes(needle)) score = 8;
+      else if (needle.includes(c)) score = 6;
+      
+      if (score > maxScore) {
+        maxScore = score;
+      }
     }
   }
-  return 0;
+  return maxScore;
 }
 
 function findBestElementForKey(key) {
@@ -211,6 +229,26 @@ document.addEventListener("click", (e) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "jobxapply:insertText") {
+    try {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.contentEditable === "true")) {
+        if (activeEl.contentEditable === "true") {
+          activeEl.textContent = message.text;
+        } else {
+          activeEl.value = message.text;
+        }
+        activeEl.dispatchEvent(new Event("input", { bubbles: true }));
+        activeEl.dispatchEvent(new Event("change", { bubbles: true }));
+        sendResponse({ ok: true });
+      } else {
+        sendResponse({ ok: false, error: "No focused field" });
+      }
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
   if (message?.type === "jobxapply:getPageText") {
     try {
       const clone = document.body.cloneNode(true);

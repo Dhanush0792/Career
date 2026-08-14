@@ -84,6 +84,7 @@ document.getElementById("profileSelect").addEventListener("change", async (e) =>
     els.status.textContent = "Profile swapped.";
     await refreshPreview();
     await runLocalAtsMatch();
+    await renderSmartAnswers();
   } else {
     els.status.textContent = "Swap failed: " + (res?.error || "unknown");
   }
@@ -286,7 +287,12 @@ async function runLocalAtsMatch() {
       
       profileSkills.forEach(skill => {
         const skillTokens = skill.toLowerCase().split(/\s+/);
-        const isFound = skillTokens.some(t => textSet.has(t) || [...textSet].some(jw => jw.includes(t) || t.includes(jw)));
+        const isFound = skillTokens.some(t => {
+          if (t.length <= 3) {
+            return textSet.has(t);
+          }
+          return textSet.has(t) || [...textSet].some(jw => jw.includes(t) || t.includes(jw));
+        });
         (isFound ? matched : missing).push(skill);
       });
       
@@ -308,7 +314,69 @@ async function runLocalAtsMatch() {
   }
 }
 
+async function renderSmartAnswers() {
+  const profile = await loadProfile();
+  const answers = profile.answers || [];
+  
+  const card = document.getElementById("smartAnswersCard");
+  const list = document.getElementById("smartAnswersList");
+  if (!card || !list) return;
+  
+  if (!Array.isArray(answers) || answers.length === 0) {
+    card.style.display = "none";
+    return;
+  }
+  
+  list.innerHTML = "";
+  answers.forEach(item => {
+    const btn = document.createElement("button");
+    btn.style.background = "rgba(91,79,232,0.1)";
+    btn.style.border = "1px solid rgba(91,79,232,0.3)";
+    btn.style.color = "var(--text)";
+    btn.style.padding = "4px 8px";
+    btn.style.fontFamily = "var(--mono)";
+    btn.style.fontSize = "9px";
+    btn.style.borderRadius = "4px";
+    btn.style.cursor = "pointer";
+    btn.style.transition = "all 0.15s";
+    btn.textContent = `#${item.tag}`;
+    
+    btn.addEventListener("mouseover", () => {
+      btn.style.borderColor = "var(--green)";
+      btn.style.background = "rgba(47,221,196,0.08)";
+    });
+    btn.addEventListener("mouseout", () => {
+      btn.style.borderColor = "rgba(91,79,232,0.3)";
+      btn.style.background = "rgba(91,79,232,0.1)";
+    });
+    
+    btn.addEventListener("click", async () => {
+      // Clipboard fallback
+      navigator.clipboard.writeText(item.answer).catch(() => {});
+      
+      const tab = await getActiveTab();
+      if (tab) {
+        chrome.tabs.sendMessage(tab.id, { 
+          type: "jobxapply:insertText", 
+          text: item.answer 
+        }, (resp) => {
+          if (resp?.ok) {
+            els.status.textContent = `Pasted answer: #${item.tag}`;
+          } else {
+            els.status.textContent = `Copied #${item.tag} to clipboard (click a field first)`;
+          }
+        });
+      }
+    });
+    
+    list.appendChild(btn);
+  });
+  
+  card.style.display = "block";
+}
+
 await loadPortalInfo();
 await populateProfileDropdown();
 await refreshPreview();
 await runLocalAtsMatch();
+await renderSmartAnswers();

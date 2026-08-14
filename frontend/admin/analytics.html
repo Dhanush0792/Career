@@ -174,20 +174,20 @@
   
   <div class="stats-grid">
     <div class="card stat-card">
-      <span class="stat-label">Total Autofill Events</span>
-      <span class="stat-value">12,492</span>
+      <span class="stat-label">Total Users</span>
+      <span class="stat-value" id="stat-total-users">--</span>
     </div>
     <div class="card stat-card">
-      <span class="stat-label">Most Requested Portal</span>
-      <span class="stat-value" style="font-size:32px;line-height:42px;">LinkedIn</span>
+      <span class="stat-label">Free vs. Paid Tiers</span>
+      <span class="stat-value" id="stat-tier-ratio" style="font-size:24px;line-height:42px;">--</span>
     </div>
     <div class="card stat-card">
-      <span class="stat-label">Profile Completeness Avg</span>
-      <span class="stat-value">84%</span>
+      <span class="stat-label">Total Page Views</span>
+      <span class="stat-value" id="stat-page-views">--</span>
     </div>
     <div class="card stat-card">
-      <span class="stat-label">Active Users Today</span>
-      <span class="stat-value">89</span>
+      <span class="stat-label">API Requests Traffic</span>
+      <span class="stat-value" id="stat-api-requests">--</span>
     </div>
   </div>
 
@@ -228,25 +228,25 @@
           <g transform="translate(460, 0)">
             <rect class="bar" x="0" y="212.5" width="40" height="67.5" rx="4"/>
             <text class="bar-text" x="20" y="202.5">90</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Lever</text>
-          </g>
-
-          <g transform="translate(540, 0)">
-            <rect class="bar" x="0" y="220" width="40" height="60" rx="4"/>
-            <text class="bar-text" x="20" y="210">80</text>
             <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Indeed</text>
           </g>
 
+          <g transform="translate(540, 0)">
+            <rect class="bar" x="0" y="225" width="40" height="55" rx="4"/>
+            <text class="bar-text" x="20" y="215">74</text>
+            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Lever</text>
+          </g>
+
           <g transform="translate(620, 0)">
-            <rect class="bar" x="0" y="235" width="40" height="45" rx="4"/>
-            <text class="bar-text" x="20" y="225">60</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Wellfound</text>
+            <rect class="bar" x="0" y="247.5" width="40" height="32.5" rx="4"/>
+            <text class="bar-text" x="20" y="237.5">43</text>
+            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">AngelList</text>
           </g>
 
           <g transform="translate(700, 0)">
-            <rect class="bar" x="0" y="250" width="40" height="30" rx="4"/>
-            <text class="bar-text" x="20" y="240">40</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Others</text>
+            <rect class="bar" x="0" y="262.5" width="40" height="17.5" rx="4"/>
+            <text class="bar-text" x="20" y="252.5">23</text>
+            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">SmartRecruiters</text>
           </g>
         </svg>
       </div>
@@ -326,6 +326,27 @@
     localStorage.removeItem('jxa_role');
     window.location.href = '../auth.html';
   }
+
+  async function loadAnalytics() {
+    const token = localStorage.getItem("jxa_token");
+    try {
+      const res = await fetch('http://localhost:8787/api/admin/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const stats = data.stats || {};
+        document.getElementById('stat-total-users').textContent = stats.totalUsers ?? 0;
+        document.getElementById('stat-tier-ratio').textContent = `${stats.freeUsers || 0}F / ${stats.paidUsers || 0}P`;
+        document.getElementById('stat-page-views').textContent = stats.pageViews ?? 0;
+        document.getElementById('stat-api-requests').textContent = stats.apiRequests ?? 0;
+      }
+    } catch(e) {
+      console.error("Telemetry fetch failed:", e);
+    }
+  }
+
+  loadAnalytics();
 </script>
 </body>
 </html>

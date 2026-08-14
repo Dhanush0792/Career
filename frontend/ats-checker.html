@@ -198,7 +198,12 @@ runBtn.addEventListener('click', () => {
 
       profileSkills.forEach(skill => {
         const tokens = skill.toLowerCase().split(/\s+/);
-        const isFound = tokens.some(t => jdSet.has(t) || [...jdSet].some(jw => jw.includes(t) || t.includes(jw)));
+        const isFound = tokens.some(t => {
+          if (t.length <= 3) {
+            return jdSet.has(t);
+          }
+          return jdSet.has(t) || [...jdSet].some(jw => jw.includes(t) || t.includes(jw));
+        });
         (isFound ? matched : missing).push(skill);
       });
 

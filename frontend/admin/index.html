@@ -249,22 +249,41 @@
 <div class="container">
   <h1><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Admin Command Center</h1>
 
-  <div class="stats-grid">
+  <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
     <div class="card stat-card">
       <span class="stat-label">Total Users</span>
       <span class="stat-value" id="stat-users">--</span>
     </div>
     <div class="card stat-card">
-      <span class="stat-label">Total Profiles Synced</span>
-      <span class="stat-value" id="stat-profiles">412</span>
+      <span class="stat-label">Free Tiers</span>
+      <span class="stat-value" id="stat-free-users" style="color:var(--muted)">--</span>
     </div>
     <div class="card stat-card">
-      <span class="stat-label">Total Applications Logged</span>
-      <span class="stat-value" id="stat-apps">1,894</span>
+      <span class="stat-label">Paid Operatives</span>
+      <span class="stat-value" id="stat-paid-users" style="color:var(--success)">--</span>
     </div>
     <div class="card stat-card">
-      <span class="stat-label">Active SSE Connections</span>
-      <span class="stat-value" id="stat-sse">12</span>
+      <span class="stat-label">Page Views</span>
+      <span class="stat-value" id="stat-page-views" style="color:var(--alert)">--</span>
+    </div>
+  </div>
+
+  <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+    <div class="card stat-card">
+      <span class="stat-label">API Requests Traffic</span>
+      <span class="stat-value" id="stat-api-requests">--</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Profiles Synced</span>
+      <span class="stat-value" id="stat-profiles">--</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Applications Tracker</span>
+      <span class="stat-value" id="stat-apps">--</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Pending Map Reports</span>
+      <span class="stat-value" id="stat-sse">--</span>
     </div>
   </div>
 
@@ -280,7 +299,7 @@
       </div>
       <div class="info-row">
         <span class="info-label">Server Version</span>
-        <span class="info-val">v1.2.0-beta</span>
+        <span class="info-val">v1.2.0</span>
       </div>
       <div class="info-row">
         <span class="info-label">Environment</span>
@@ -288,7 +307,7 @@
       </div>
       <div class="info-row">
         <span class="info-label">Uptime Estimate</span>
-        <span class="info-val">4 days, 12 hrs</span>
+        <span class="info-val">Online</span>
       </div>
     </div>
 
@@ -372,6 +391,10 @@
   async function checkHealth() {
     const badge = document.getElementById('server-status');
     const usersStat = document.getElementById('stat-users');
+    const freeUsersStat = document.getElementById('stat-free-users');
+    const paidUsersStat = document.getElementById('stat-paid-users');
+    const pageViewsStat = document.getElementById('stat-page-views');
+    const apiRequestsStat = document.getElementById('stat-api-requests');
     const profilesStat = document.getElementById('stat-profiles');
     const appsStat = document.getElementById('stat-apps');
     const sseStat = document.getElementById('stat-sse');
@@ -398,9 +421,13 @@
         const data = await res.json();
         if (data.stats) {
           usersStat.textContent = data.stats.totalUsers ?? 0;
+          freeUsersStat.textContent = data.stats.freeUsers ?? 0;
+          paidUsersStat.textContent = data.stats.paidUsers ?? 0;
+          pageViewsStat.textContent = data.stats.pageViews ?? 0;
+          apiRequestsStat.textContent = data.stats.apiRequests ?? 0;
           profilesStat.textContent = data.stats.totalProfiles ?? 0;
           appsStat.textContent = data.stats.totalApplications ?? 0;
-          sseStat.textContent = data.stats.pendingReports ?? 0; // Show pending reports in SSE slot for utility
+          sseStat.textContent = data.stats.pendingReports ?? 0;
         }
       }
     } catch(e) {

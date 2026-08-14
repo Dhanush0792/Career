@@ -224,6 +224,7 @@
           <th>Profile Version</th>
           <th>Last Sync</th>
           <th>Role</th>
+          <th>Subscription Tier</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -248,8 +249,8 @@
   }
 
   const mockUsers = [
-    { email: 'admin@jobxapply.app', name: 'System Admin', version: 'v2.4', sync: '2 mins ago', role: 'admin', id: 'm1' },
-    { email: 'johndoe@example.com', name: 'John Doe', version: 'v1.1', sync: '5 hours ago', role: 'user', id: 'm2' }
+    { email: 'admin@jobxapply.app', name: 'System Admin', version: 'v2.4', sync: '2 mins ago', role: 'admin', id: 'm1', tier: 'paid' },
+    { email: 'johndoe@example.com', name: 'John Doe', version: 'v1.1', sync: '5 hours ago', role: 'user', id: 'm2', tier: 'free' }
   ];
 
   let loadedUsers = [];
@@ -271,7 +272,8 @@
             name: u.name || "Unnamed User",
             version: "v1.0",
             sync: u.lastSync ? new Date(u.lastSync).toLocaleString() : "Never",
-            role: u.role
+            role: u.role,
+            tier: u.tier || "free"
           }));
         }
       }
@@ -294,7 +296,7 @@
     tbody.innerHTML = '';
     
     if (users.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;">No users found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px;">No users found.</td></tr>`;
       return;
     }
 
@@ -309,6 +311,12 @@
         <td class="td-mono">${u.sync}</td>
         <td><span class="role-badge ${roleClass}">${u.role}</span></td>
         <td>
+          <select class="select-input" style="padding:4px 8px; font-size:11px; font-family:var(--mono);" onchange="updateTier('${u.id}', this.value)">
+            <option value="free" ${u.tier === 'free' ? 'selected' : ''}>FREE</option>
+            <option value="paid" ${u.tier === 'paid' ? 'selected' : ''}>PAID</option>
+          </select>
+        </td>
+        <td>
           <div class="action-buttons">
             <button class="btn-action" onclick="alert('Viewing profiles under client encryption is disabled. Data is protected by client passcode keys.')">View</button>
             <button class="btn-action" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)" onclick="deleteUser('${u.id}')">Delete</button>
@@ -317,6 +325,33 @@
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  async function updateTier(id, tier) {
+    if (id.startsWith('m')) {
+      alert("Simulated user records cannot be updated.");
+      return;
+    }
+    try {
+      const token = localStorage.getItem("jxa_token");
+      const res = await fetch(`http://localhost:8787/api/admin/users/${id}/tier`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tier })
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        alert("User tier updated successfully!");
+        loadUsers();
+      } else {
+        alert("Update failed: " + (data.error || "Server error"));
+      }
+    } catch (e) {
+      alert("Network error updating user tier: " + e.message);
+    }
   }
 
   async function deleteUser(id) {

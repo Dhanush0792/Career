@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply // Resume Builder</title>
+<title>JobXApply // LaTeX Resume Builder</title>
+<meta name="description" content="Generate, customize, and edit premium ATS-compliant LaTeX resumes with live preview.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
 <script src="shared-shell.js"></script>
 <style>
@@ -15,14 +16,11 @@
   --s1:      rgba(255, 255, 255, 0.07);
   --s2:      rgba(7, 10, 24, 0.6);
   --border:  rgba(255, 255, 255, 0.12);
-  --border2: rgba(255, 255, 255, 0.2);
   --white:   #ffffff;
   --text:    #f4f7ff;
   --muted:   rgba(244, 247, 255, 0.65);
   --dim:     rgba(244, 247, 255, 0.4);
   --orange:  #5B4FE8;
-  --orange2: rgba(91, 79, 232, 0.15);
-  --orange3: rgba(91, 79, 232, 0.06);
   --green:   #2FDDC4;
   --mono:    'JetBrains Mono', monospace;
   --display: 'Barlow Condensed', sans-serif;
@@ -81,7 +79,7 @@ body::after {
 /* Split Pane Layout */
 .pane-wrap {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 380px 1fr;
   height: calc(100vh - 56px);
 }
 .left-pane {
@@ -90,17 +88,18 @@ body::after {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   overflow-y: auto;
   position: relative;
   z-index: 10;
 }
 .right-pane {
-  background: #111111;
-  padding: 40px;
+  background: #070a18;
+  padding: 24px;
   overflow-y: auto;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   position: relative;
   z-index: 5;
 }
@@ -113,26 +112,59 @@ body::after {
   color: var(--orange);
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
+  margin-top: 8px;
 }
-.template-select {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-.template-option {
-  border: 1px solid var(--border);
-  padding: 12px;
+.control-label {
   font-family: var(--mono);
   font-size: 10px;
-  text-align: center;
-  cursor: pointer;
-  background: var(--s2);
   color: var(--muted);
+  text-transform: uppercase;
 }
-.template-option.active {
+.select-input {
+  background: rgba(7, 10, 24, 0.8);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 10px;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+}
+.select-input:focus {
   border-color: var(--orange);
-  color: var(--orange);
+}
+
+/* Tab controls */
+.tab-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  width: 720px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  color: var(--white);
+  border-bottom-color: var(--orange);
 }
 
 /* Printable A4 Page styling */
@@ -141,72 +173,82 @@ body::after {
   min-height: 980px;
   background: #ffffff;
   color: #000000;
-  padding: 50px;
+  padding: 40px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
+  border-radius: 4px;
 }
+
+/* Visual Theme Classes for Browser Preview */
+.cv-page.serif { font-family: 'PT Serif', serif; }
+.cv-page.minimal { font-family: 'Inter', sans-serif; }
+
 .cv-header {
-  border-bottom: 2px solid #000000;
-  padding-bottom: 12px;
-}
-.cv-name {
-  font-family: 'Inter', sans-serif;
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 8px;
   margin-bottom: 4px;
 }
-.cv-headline {
-  font-size: 14px;
-  font-weight: 600;
-  color: #444444;
-  margin-bottom: 8px;
+.cv-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
 }
 .cv-contact {
-  font-family: var(--mono);
+  font-family: var(--body);
   font-size: 10px;
-  color: #666666;
+  color: #333333;
   display: flex;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 .cv-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 .cv-section-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  border-bottom: 1px solid #dddddd;
-  padding-bottom: 4px;
-  letter-spacing: 0.05em;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 2px;
+  letter-spacing: 0.02em;
   color: #000000;
+  margin-bottom: 4px;
 }
 .cv-body-text {
-  font-size: 12px;
-  line-height: 1.6;
-  color: #333333;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #111111;
+  white-space: pre-wrap;
 }
-.cv-item {
-  margin-bottom: 12px;
+
+/* Source editor block */
+.source-pane {
+  width: 720px;
+  height: 980px;
+  display: none;
+  position: relative;
 }
-.cv-item-title {
-  font-weight: 700;
-  font-size: 12px;
-  display: flex;
-  justify-content: space-between;
-}
-.cv-item-sub {
-  font-style: italic;
+.source-area {
+  width: 100%;
+  height: 100%;
+  background: #070a18;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--green);
+  font-family: var(--mono);
   font-size: 11px;
-  color: #666666;
-  margin-bottom: 4px;
+  padding: 16px;
+  outline: none;
+  resize: none;
+  line-height: 1.5;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
 }
 
 /* Button */
@@ -220,19 +262,35 @@ body::after {
   font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
-  height: 40px;
+  height: 38px;
   border: 1px solid;
   cursor: pointer;
   width: 100%;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 .btn-primary {
   background: var(--orange);
-  color: var(--black);
+  color: var(--white);
   border-color: var(--orange);
 }
 .btn-primary:hover {
-  background: var(--black);
+  background: transparent;
   color: var(--orange);
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--border);
+}
+.btn-secondary:hover {
+  color: var(--white);
+  border-color: var(--white);
+}
+
+/* Premium Spinner animation */
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* PRINT CSS OVERRIDES */
@@ -242,7 +300,7 @@ body::after {
     padding-top: 0 !important;
   }
   body::after { display: none !important; }
-  .nav, .left-pane {
+  .nav, .left-pane, .tab-header, #loading-overlay, #validation-overlay {
     display: none !important;
   }
   .pane-wrap {
@@ -252,135 +310,1288 @@ body::after {
   .right-pane {
     padding: 0 !important;
     background: #ffffff !important;
+    overflow: visible !important;
+    display: block !important;
   }
   .cv-page {
     box-shadow: none !important;
     width: 100% !important;
+    margin: 0 !important;
     padding: 0 !important;
+    border: none !important;
+    overflow: visible !important;
   }
 }
 </style>
-
-  <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
 
-<nav class="nav">
-  <div class="nav__inner">
-    <a href="dashboard.html" class="logo">
-      <span class="logo__bracket">[</span> CH // RESUME BUILDER <span class="logo__bracket">]</span>
-    </a>
-    <div class="nav__links">
-      <a href="resume-builder.html" class="nav__link active">Resume</a>
-      <a href="ats-checker.html" class="nav__link">ATS Scorer</a>
-      <a href="cover-letter.html" class="nav__link">Cover Letter</a>
-      <a href="extension-setup.html" class="nav__link">Extension Setup</a>
-      <a href="autofill-lab.html" class="nav__link">Autofill Lab</a>
+<nav class="nav" id="main-nav"></nav>
+
+<!-- Validation Modal -->
+<div id="validation-overlay" style="position: fixed; inset: 0; background: rgba(7, 10, 24, 0.85); backdrop-filter: blur(16px); z-index: 9999; display: none; align-items: center; justify-content: center;">
+  <div class="card" style="width: 420px; padding: 32px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); text-align: center; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+    <div style="font-size: 32px; margin-bottom: 12px;">📋</div>
+    <h3 style="font-family: var(--display); font-size: 22px; font-weight: 900; text-transform: uppercase; color: var(--white); margin-bottom: 10px; letter-spacing: 0.05em;">Profile Incomplete</h3>
+    <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 24px;">
+      To build and preview resumes, please complete your profile data first. We use this information to populate layouts automatically.
+    </p>
+    <div style="display: flex; gap: 12px;">
+      <button class="btn btn-primary" onclick="window.location.href='profile-setup.html'" style="flex: 1;">Proceed</button>
+      <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'" style="flex: 1;">Cancel</button>
     </div>
   </div>
-</nav>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" style="position: fixed; inset: 0; background: #070a18; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.5s ease;">
+  <div style="width: 50px; height: 50px; border: 3px solid rgba(91,79,232,0.1); border-top-color: var(--orange); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+  <div id="loading-text" style="font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;">
+    Accessing secure sync vault...
+  </div>
+</div>
 
 <div class="pane-wrap">
   <!-- Left Side: Controls -->
   <div class="left-pane">
-    <div class="pane-title">TEMPLATE STYLES</div>
-    <div class="template-select">
-      <button class="template-option active" id="btn-tmpl-minimal">MINIMAL ATS</button>
-      <button class="template-option" id="btn-tmpl-bold">EXECUTIVE</button>
+    <div class="pane-title">LaTeX Layout Styles</div>
+    
+    <div class="control-group">
+      <label class="control-label" for="select-template">Format Style</label>
+      <select class="select-input" id="select-template">
+        <option value="standard">1. Standard Professional (Provided Layout)</option>
+        <option value="serif">2. Classic Serif (Double Divider)</option>
+        <option value="timeline">3. Left-Aligned Timeline Column</option>
+        <option value="twocol">4. Compact Dual Grid</option>
+        <option value="executive">5. Executive Top Separator</option>
+        <option value="minimal">6. Minimalist Sans-Serif</option>
+        <option value="academic">7. Academic Outline (Centered Headers)</option>
+        <option value="matrix">8. Technical Matrix Outline</option>
+        <option value="bulletless">9. Bulletless Paragraph Lead-ins</option>
+        <option value="spaced">10. Letterspaced Bold Titles</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="select-role">Target Role Override</label>
+      <select class="select-input" id="select-role">
+        <option value="profile">Default (Use Profile Summary & Skills)</option>
+        <option value="software">Software Engineering</option>
+        <option value="qa">Quality Assurance Analyst</option>
+        <option value="java">Java Developer</option>
+        <option value="python">Python & Data Specialist</option>
+        <option value="marketing">Marketing & Content</option>
+        <option value="video">Video & Creative Production</option>
+        <option value="customer">Customer Support</option>
+        <option value="sales">Sales & Accounts</option>
+        <option value="bd">Business Development</option>
+        <option value="mba">MBA & Operations Management</option>
+      </select>
+    </div>
+
+    <!-- Candidate level display -->
+    <div style="font-family:var(--mono); font-size:10px; color:var(--muted); background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border:1px solid var(--border);">
+      Classified Level: <span id="candidate-level" style="color:var(--green); font-weight:700;">-</span>
+    </div>
+
+    <!-- Section Editors -->
+    <div class="pane-title">Section Editors</div>
+    
+    <div class="control-group">
+      <label class="control-label" for="edit-name">Full Name</label>
+      <input type="text" class="select-input" id="edit-name" style="cursor: text;">
     </div>
     
-    <div class="pane-title" style="margin-top:20px;">PDF ACTIONS</div>
-    <button class="btn btn-primary" onclick="window.print()">&rsaquo; EXPORT ATS RESUME (PDF)</button>
+    <div class="control-group">
+      <label class="control-label" for="edit-email">Email Address</label>
+      <input type="email" class="select-input" id="edit-email" style="cursor: text;">
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-phone">Phone Number</label>
+      <input type="text" class="select-input" id="edit-phone" style="cursor: text;">
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-summary">Professional Summary</label>
+      <textarea class="select-input" id="edit-summary" style="height: 100px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-education">Education Details</label>
+      <textarea class="select-input" id="edit-education" style="height: 120px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-experience">Experience Details</label>
+      <textarea class="select-input" id="edit-experience" style="height: 150px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-projects">Projects</label>
+      <textarea class="select-input" id="edit-projects" style="height: 100px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-skills">Skills</label>
+      <textarea class="select-input" id="edit-skills" style="height: 100px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-certifications">Certifications</label>
+      <textarea class="select-input" id="edit-certifications" style="height: 80px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-additional">Additional Information</label>
+      <textarea class="select-input" id="edit-additional" style="height: 60px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="edit-languages">Languages & Interests</label>
+      <textarea class="select-input" id="edit-languages" style="height: 60px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
     
-    <div class="pane-title" style="margin-top:20px;">PROFILE SUMMARY</div>
-    <div style="font-family:var(--mono); font-size:10px; color:var(--muted); line-height:1.6;">
-      This layout updates automatically from your profile edits. Go to <a href="profile-setup.html" style="color:var(--orange); text-decoration:underline;">Profile Setup</a> to edit fields.
+    <div class="pane-title">LaTeX Document Actions</div>
+    <button class="btn btn-primary" id="btn-copy-latex">&rsaquo; Copy LaTeX Code</button>
+    <button class="btn btn-secondary" id="btn-download-latex">&rsaquo; Download .tex File</button>
+    
+    <div class="pane-title">PDF Operations</div>
+    <button class="btn btn-secondary" onclick="window.print()">&rsaquo; Export PDF via Print</button>
+    
+    <div style="font-family:var(--mono); font-size:10px; color:var(--dim); line-height:1.6; margin-top: auto;">
+      Premium layout, perfectly formatted, only black text that fits in one or two pages.
     </div>
   </div>
 
-  <!-- Right Side: Preview -->
+  <!-- Right Side: Preview & Tabs -->
   <div class="right-pane">
+    <div class="tab-header">
+      <button class="tab-btn active" id="btn-tab-visual">Visual Preview</button>
+      <button class="tab-btn" id="btn-tab-source">LaTeX Source Code</button>
+    </div>
+
+    <!-- Tab 1: Visual -->
     <div class="cv-page" id="cv-preview">
-      
       <div class="cv-header">
         <h2 class="cv-name" id="cv-name">[Your Name]</h2>
-        <div class="cv-headline" id="cv-headline">[Your Headline]</div>
-        <div class="cv-contact">
+        <div class="cv-contact" id="cv-contact">
           <span id="cv-email">EMAIL: [not set]</span>
           <span id="cv-phone">PHONE: [not set]</span>
-          <span id="cv-location">LOCATION: [not set]</span>
+          <span id="cv-links">LINKS: [not set]</span>
         </div>
       </div>
       
-      <div class="cv-section">
-        <div class="cv-section-title">Professional Summary</div>
-        <p class="cv-body-text" id="cv-summary">[Complete your profile to populate this section]</p>
+      <div class="cv-section" id="sec-summary">
+        <div class="cv-section-title">Summary</div>
+        <p class="cv-body-text" id="cv-summary">[Summary]</p>
       </div>
 
-      <div class="cv-section">
-        <div class="cv-section-title">Educational Background</div>
-        <p class="cv-body-text" id="cv-education">[Not set — add in Profile]</p>
+      <div class="cv-section" id="sec-education">
+        <div class="cv-section-title">Education</div>
+        <div class="cv-body-text" id="cv-education">[Education]</div>
       </div>
 
-      <div class="cv-section">
-        <div class="cv-section-title">Core Competencies</div>
-        <p class="cv-body-text" id="cv-skills">[Not set — add in Profile]</p>
+      <div class="cv-section" id="sec-experience">
+        <div class="cv-section-title">Experience</div>
+        <div class="cv-body-text" id="cv-experience">[Experience]</div>
       </div>
 
-      <div class="cv-section">
-        <div class="cv-section-title">Professional History</div>
-        <div class="cv-body-text" id="cv-experience" style="white-space: pre-wrap;">[Not set — add in Profile]</div>
+      <div class="cv-section" id="sec-projects">
+        <div class="cv-section-title">Projects</div>
+        <div class="cv-body-text" id="cv-projects">[Projects]</div>
       </div>
 
+      <div class="cv-section" id="sec-skills">
+        <div class="cv-section-title">Skills</div>
+        <div class="cv-body-text" id="cv-skills">[Skills]</div>
+      </div>
+
+      <div class="cv-section" id="sec-certifications">
+        <div class="cv-section-title">Certifications</div>
+        <div class="cv-body-text" id="cv-certifications">[Certifications]</div>
+      </div>
+
+      <div class="cv-section" id="sec-additional">
+        <div class="cv-section-title">Additional Information</div>
+        <div class="cv-body-text" id="cv-additional">[Additional Info]</div>
+      </div>
+
+      <div class="cv-section" id="sec-languages">
+        <div class="cv-section-title">Languages & Interests</div>
+        <div class="cv-body-text" id="cv-languages">[Languages & Interests]</div>
+      </div>
+    </div>
+
+    <!-- Tab 2: LaTeX Source -->
+    <div class="source-pane" id="source-preview">
+      <textarea class="source-area" id="latex-editor" readonly></textarea>
     </div>
   </div>
 </div>
 
 <script>
 requireAuth();
+renderNav(document.getElementById('main-nav'), 'resume-builder.html');
 
-// Inject nav — resume-builder.html does not have a nav element yet; add one before the pane-wrap
-document.addEventListener('DOMContentLoaded', () => {
-  const navEl = document.querySelector('.nav') || document.querySelector('nav');
-  if (navEl) renderNav(navEl, 'resume-builder.html');
-});
+// State
+let activeProfile = {};
+let generatedLatex = "";
+let candidateLevel = "student"; // classified level: student, experienced, transition
 
-async function load() {
-  const state = await loadProfile();
-  const p = state?.profile || {};
-  const empty = (v) => !v || !String(v).trim();
+// Form inputs references
+const editors = {
+  name: document.getElementById('edit-name'),
+  email: document.getElementById('edit-email'),
+  phone: document.getElementById('edit-phone'),
+  summary: document.getElementById('edit-summary'),
+  education: document.getElementById('edit-education'),
+  experience: document.getElementById('edit-experience'),
+  projects: document.getElementById('edit-projects'),
+  skills: document.getElementById('edit-skills'),
+  certifications: document.getElementById('edit-certifications'),
+  additional: document.getElementById('edit-additional'),
+  languages: document.getElementById('edit-languages')
+};
 
-  document.getElementById('cv-name').textContent     = empty(p.fullName)   ? '[Your Name — edit Profile]'    : p.fullName;
-  document.getElementById('cv-headline').textContent = empty(p.headline)   ? '[Headline — edit Profile]'      : p.headline;
-  document.getElementById('cv-email').textContent    = 'EMAIL: ' + (empty(p.email)   ? '[not set]' : p.email.toUpperCase());
-  document.getElementById('cv-phone').textContent    = 'PHONE: ' + (empty(p.phone)   ? '[not set]' : p.phone);
-  document.getElementById('cv-location').textContent = 'LOCATION: ' + (empty(p.city || p.country) ? '[not set]' : (p.city ? p.city + ', ' : '') + (p.country || ''));
-  document.getElementById('cv-summary').textContent   = empty(p.summary)   ? '[Summary — edit Profile]'       : p.summary;
-  document.getElementById('cv-education').textContent = empty(p.education) ? '[Education — edit Profile]'     : p.education;
-  document.getElementById('cv-skills').textContent    = empty(p.skills)    ? '[Skills — edit Profile]'        : p.skills;
-  document.getElementById('cv-experience').textContent= empty(p.experience)? '[Experience — edit Profile]'    : p.experience;
+// LaTeX Escaper
+function escapeLatex(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/\\/g, '\\textbackslash{}')
+    .replace(/([&%$#_{}])/g, '\\$1')
+    .replace(/\^/g, '\\textasciicircum{}')
+    .replace(/~/g, '\\textasciitilde{}')
+    .replace(/\n/g, '\\\\ ');
 }
-load();
 
-// Template switches
-const btnMinimal = document.getElementById('btn-tmpl-minimal');
-const btnBold = document.getElementById('btn-tmpl-bold');
-const cvPage = document.getElementById('cv-preview');
+// LaTeX bullet block formatter helper
+function formatBulletsToLatex(text) {
+  if (!text) return "";
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const items = [];
+  lines.forEach(l => {
+    if (l.startsWith('-') || l.startsWith('*') || l.startsWith('•')) {
+      items.push(`  \\item ${escapeLatex(l.substring(1).trim())}`);
+    } else {
+      items.push(`  \\item ${escapeLatex(l)}`);
+    }
+  });
+  if (items.length === 0) return "";
+  return `\\begin{itemize}\n${items.join('\n')}\n\\end{itemize}`;
+}
 
-btnMinimal.addEventListener('click', () => {
-  btnMinimal.classList.add('active');
-  btnBold.classList.remove('active');
-  cvPage.style.fontFamily = "'Inter', sans-serif";
-  cvPage.style.color = '#000000';
-  document.querySelector('.cv-header').style.borderBottom = '2px solid #000000';
+// LaTeX experience tabular builder
+function formatExperienceToLatex(text) {
+  if (!text) return "";
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let output = "";
+  let inBullets = false;
+  let bulletLines = [];
+
+  const closeBullets = () => {
+    if (inBullets && bulletLines.length > 0) {
+      output += `\\begin{itemize}[leftmargin=0.3in]\n${bulletLines.map(l => `  \\item ${l}`).join('\n')}\n\\end{itemize}\n`;
+      bulletLines = [];
+      inBullets = false;
+    }
+  };
+
+  lines.forEach(l => {
+    if (l.startsWith('-') || l.startsWith('*') || l.startsWith('•')) {
+      inBullets = true;
+      bulletLines.push(escapeLatex(l.substring(1).trim()));
+    } else {
+      closeBullets();
+      if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
+        let parts = l.split(/  +/);
+        if (parts.length < 2) parts = l.split('\t');
+        if (parts.length >= 2) {
+          const title = escapeLatex(parts[0].trim());
+          const date = escapeLatex(parts[parts.length - 1].trim());
+          output += `\\begin{tabularx}{\\linewidth}{X r}\n\\textbf{${title}} & ${date} \\\\\n\\end{tabularx}\n`;
+        } else {
+          output += `\\begin{tabularx}{\\linewidth}{X r}\n\\textbf{${escapeLatex(l)}} & \\\\\n\\end{tabularx}\n`;
+        }
+      } else {
+        output += `\\noindent ${escapeLatex(l)} \\\\[4pt]\n`;
+      }
+    }
+  });
+  closeBullets();
+  return output;
+}
+
+// LaTeX education tabular builder
+function formatEducationToLatex(text) {
+  if (!text) return "";
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let output = "\\begin{tabularx}{\\linewidth}{X r}\n";
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.includes('--') || line.match(/(\d{4})/)) {
+      let parts = line.split(/  +/);
+      if (parts.length < 2) parts = line.split('\t');
+      if (parts.length >= 2) {
+        output += `\\textbf{${escapeLatex(parts[0].trim())}} & ${escapeLatex(parts[parts.length - 1].trim())} \\\\\n`;
+      } else {
+        output += `\\textbf{${escapeLatex(line)}} & \\\\\n`;
+      }
+    } else {
+      output += `${escapeLatex(line)} \\\\[6pt]\n`;
+    }
+  }
+  output += "\\end{tabularx}";
+  return output;
+}
+
+// Resume Parser from plaintext draft
+function parseResumeDraft(rawText) {
+  const sections = {
+    summary: "",
+    education: "",
+    experience: "",
+    projects: "",
+    skills: "",
+    certifications: "",
+    additional: "",
+    languages: ""
+  };
+  
+  if (!rawText) return sections;
+  
+  const headerRegex = /^(Summary|Education|Experience|Projects|Skills|Certifications|Additional Information|Languages \& Interests|Languages|Interests)/im;
+  const lines = rawText.split('\n');
+  let currentSection = null;
+  let sectionLines = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    const match = line.match(headerRegex);
+    if (match) {
+      if (currentSection) {
+        sections[currentSection] = sectionLines.join('\n');
+      }
+      const foundHeader = match[0].toLowerCase();
+      if (foundHeader.includes("summary")) currentSection = "summary";
+      else if (foundHeader.includes("education")) currentSection = "education";
+      else if (foundHeader.includes("experience")) currentSection = "experience";
+      else if (foundHeader.includes("projects")) currentSection = "projects";
+      else if (foundHeader.includes("skills")) currentSection = "skills";
+      else if (foundHeader.includes("certifications")) currentSection = "certifications";
+      else if (foundHeader.includes("additional")) currentSection = "additional";
+      else if (foundHeader.includes("language") || foundHeader.includes("interest")) currentSection = "languages";
+      
+      sectionLines = [];
+    } else {
+      if (currentSection) {
+        sectionLines.push(line);
+      }
+    }
+  }
+  if (currentSection) {
+    sections[currentSection] = sectionLines.join('\n');
+  }
+  
+  return sections;
+}
+
+// Classify Candidate Experience Level dynamically
+function classifyExperienceLevel(profile) {
+  const expText = (profile.experience || "").trim().toLowerCase();
+  const eduText = (profile.education || "").trim().toLowerCase();
+  
+  if (!expText || expText.length < 10) {
+    return "student";
+  }
+  
+  const expLines = expText.split('\n').filter(l => l.trim().length > 5);
+  
+  if (expText.includes("intern") && expLines.length <= 2) {
+    return "student";
+  }
+  
+  if (expLines.length >= 3 || expText.match(/(years|yrs|\b202[0-4]|\b201)/)) {
+    return "experienced";
+  }
+  
+  return "transition";
+}
+
+// 10 Target Roles x 4 summaries/skills Library (Student, Experienced, Transition, General)
+const ROLE_LIBRARY = {
+  software: {
+    student: {
+      summary: "Ambitious Software Engineering graduate with strong academic foundations in algorithm design, data structures, and full-stack development. Eager to contribute to software delivery teams and learn cutting-edge production frameworks.",
+      skills: "Technical Skills: Java, C, SQL/MySQL, Git, GitHub.\nDevelopment Core: Data structures, database systems design, code documentation.\nProcess Skills: Agile/Scrum methodologies, team collaboration."
+    },
+    experienced: {
+      summary: "Results-oriented Software Engineer with a proven track record of designing scalable web architectures, microservices API performance improvements, and leading agile sprint execution.",
+      skills: "Technical Skills: Java, C, Python, SQL/MySQL, Git, Docker, Kubernetes.\nSystem Design: Microservices, REST APIs, database clustering, system performance tuning.\nProcess Skills: Agile coordination, code reviews, SLA metrics tracking."
+    },
+    transition: {
+      summary: "Adaptable professional pivoting into Software Engineering. Combines analytical problem-solving skills from previous technical roles with self-taught expertise in modern programming stacks.",
+      skills: "Technical Skills: Java, C, SQL/MySQL, Git, HTML/CSS.\nSystems Core: Information verification, script validation, testing protocols.\nTransferable Skills: Technical documentation, SLA compliance, cross-team coordination."
+    },
+    general: {
+      summary: "Dedicated developer focused on writing clean, maintainable code, implementing robust database schemas, and building responsive client-side web applications.",
+      skills: "Technical Skills: Java, C, SQL/MySQL, Git.\nWeb Core: Frontend-backend integrations, systems deployment.\nProcess Skills: Documentation, quality checks."
+    }
+  },
+  qa: {
+    student: {
+      summary: "Detail-focused engineering graduate interested in manual and automated software testing. Experienced in mapping out user flows, drafting test plans, and logging system exceptions.",
+      skills: "Testing Core: Automated testing, unit tests, integration validation.\nTools: Selenium, JUnit, Google Sheets, Jira.\nAnalytical Skills: Test coverage checks, defect tracking."
+    },
+    experienced: {
+      summary: "QA Engineer with extensive experience in automated test suite authoring, CI/CD pipeline verification, regression analysis, and cross-browser responsiveness checks.",
+      skills: "Automated QA: Cypress, Selenium, Cucumber, Jest.\nCI/CD & Tools: Jenkins, Docker, Git, JIRA.\nQuality Ops: Regression testing, bug triage, SLA metrics compliance."
+    },
+    transition: {
+      summary: "Analytical investigator transitioning to Quality Assurance. Brings high attention to detail, process compliance experience, and troubleshooting capabilities from past administrative roles.",
+      skills: "QA Core: Test scenarios creation, bug logging, database integrity checks.\nTools: MySQL, Google Sheets, Notion.\nTransferable Skills: High-precision validation, stakeholder reporting."
+    },
+    general: {
+      summary: "Quality-driven analyst committed to verifying system reliability, drafting end-to-end user scenarios, and raising software stability thresholds.",
+      skills: "QA Skills: Automated scripting, manual testing matrix creation.\nTools: JIRA, Git, SQL/MySQL.\nProcess: Issue tracking, report compilation."
+    }
+  },
+  java: {
+    student: {
+      summary: "Graduate developer with solid foundations in Object-Oriented Programming, Java SE/EE, and SQL query creation. Comfortable building desktop applications and working with relational databases.",
+      skills: "Core Java: OOP principles, multithreading basics, JDBC connectors.\nDatabase & Tools: SQL/MySQL, Git, Eclipse IDE.\nDesign: Basic patterns mapping, documentation."
+    },
+    experienced: {
+      summary: "Senior Java Developer with expertise in Spring Boot microservices, multithreading optimizations, Hibernate ORM mappings, and secure enterprise application integrations.",
+      skills: "Java Tech: Spring Framework, Hibernate ORM, JUnit, Maven.\nDatabase & Cloud: MySQL, PostgreSQL, Docker, AWS.\nArchitecture: Microservices architecture, API gateway patterns."
+    },
+    transition: {
+      summary: "Skilled backend practitioner transitioning focus to enterprise Java stacks. Combines analytical systems design experience with deep hands-on training in object-oriented architectures.",
+      skills: "Backend Java: JVM internals, database integration patterns, Git.\nTools: IntelliJ IDEA, SQL, Google Sheets.\nProcess Skills: Document compliance, modular design, SLA compliance."
+    },
+    general: {
+      summary: "Java Engineer focused on writing robust, structured backend business logic, optimizing database query executions, and maintaining system integrations.",
+      skills: "Java Core: Spring Boot framework, unit testing, MySQL integration.\nTools: Git, Jenkins, Maven.\nProcess: API documentation, performance metrics check."
+    }
+  },
+  python: {
+    student: {
+      summary: "Data-driven graduate with practical knowledge of Python scripting, data visualization libraries, and mathematical modeling. Enthusiastic about analytics pipeline automation.",
+      skills: "Python Core: NumPy, Pandas, Matplotlib scripting.\nData & Querying: SQL/MySQL, Jupyter Notebook, Git.\nAnalytical Skills: Statistical charts compilation, information verification."
+    },
+    experienced: {
+      summary: "Experienced Data Specialist proficient in Python backend automation, ETL pipeline design, regression analysis modeling, and database warehousing tools.",
+      skills: "Python Stack: Django, Flask, Pandas, Scikit-Learn.\nDatabase & Big Data: PostgreSQL, Redshift, Spark, Docker.\nAnalytics: Machine learning modeling, statistical inference, dashboards mapping."
+    },
+    transition: {
+      summary: "Logical analyst transitioning to Python and Data Operations. Brings strong quantitative skills, system audits background, and automated scripting proficiency.",
+      skills: "Python Scripting: ETL processing, regex data cleaning, SQL integrations.\nTools: Google Sheets, Notion, Git.\nTransferable Skills: Data verification, operational report creation."
+    },
+    general: {
+      summary: "Technical practitioner focused on building clean Python automation scripts, optimizing database queries, and preparing structured analytics reports.",
+      skills: "Python Core: Script optimization, Pandas analysis frameworks.\nData: MySQL, PostgreSQL, CSV warehousing.\nProcess: Operational automation, report mapping."
+    }
+  },
+  marketing: {
+    student: {
+      summary: "Creative graduate trained in digital branding, social media metrics tracking, and content creation. Passionate about campaign analytics and scaling audience reach.",
+      skills: "Creative Skills: SEO optimization, copywriting, social media graphics.\nTools: Google Analytics, Canva, Trello.\nOperations: Brand voice uniformity checks, marketing database logs."
+    },
+    experienced: {
+      summary: "Strategic Growth Marketer with a track record of managing multi-channel digital acquisition funnels, optimizing SEO campaigns, and running A/B conversion tests.",
+      skills: "Growth Marketing: Customer acquisition, SEO/SEM management, PPC ads tracking.\nAnalytics: SQL, Google Analytics, HubSpot, Excel.\nLeadership: Campaign budget allocation, agency steering, SLA tracking."
+    },
+    transition: {
+      summary: "Communicative professional transitioning to Digital Marketing. Combines research, user communication skills, and creative writing background to build target audience campaigns.",
+      skills: "Marketing Skills: Copywriting, competitor catalog review, audience mapping.\nTools: Notion, Trello, Google Sheets.\nTransferable Skills: Interpersonal communications, project mapping."
+    },
+    general: {
+      summary: "Results-driven marketing professional focused on audience engagement, brand messaging uniformity, and data-backed channel optimization.",
+      skills: "Marketing Tech: Email marketing systems, content pipelines planning.\nAnalytics: Google Analytics, Excel spreadsheets.\nProcess: Competitor analysis, campaign tracking."
+    }
+  },
+  video: {
+    student: {
+      summary: "Creative graduate trained in video editing software, timeline formatting, sound design, and visual asset preparation. Eager to support media post-production pipelines.",
+      skills: "Video Editing: Premiere Pro, DaVinci Resolve basics.\nCreative Assets: Sound syncing, color correction, asset file formatting.\nProcess: File archiving schedules, storyboard mapping."
+    },
+    experienced: {
+      summary: "Experienced Video Producer and Editor with a history of delivering high-quality commercial assets, narrative edits, visual effects, and color grading projects.",
+      skills: "Post-Production: Premiere Pro, After Effects, DaVinci Resolve.\nCreative Direction: Storyboard direction, color grading, audio layout mastering.\nOperations: Media asset library management, project timeline schedules."
+    },
+    transition: {
+      summary: "Creative visualist pivoting to digital video production. Brings solid project management skills, storyboarding experience, and graphic assets handling capabilities.",
+      skills: "Visual Editing: Timeline editing, audio alignment, graphic asset layout.\nTools: Premiere Pro, Google Sheets, Trello.\nTransferable Skills: Customer collaboration, feedback loops management."
+    },
+    general: {
+      summary: "Visual editor dedicated to translating scripts into engaging video timelines, managing post-production assets, and ensuring premium sound designs.",
+      skills: "Video Ops: Timeline rendering, compression formatting.\nTools: Creative Cloud Suite, Notion.\nProcess: Media catalog management, project delivery trackers."
+    }
+  },
+  customer: {
+    student: {
+      summary: "Empathetic graduate with strong communication skills and a process-oriented mindset. Eager to resolve client inquiries, comply with SLAs, and coordinate issue escalations.",
+      skills: "Customer Support: Email formatting, chat support frameworks, queue monitoring.\nCRM & Tools: Salesforce basics, Google Sheets, MS Office.\nProcess: Incident validation, escalation protocols compliance."
+    },
+    experienced: {
+      summary: "Customer Service professional with extensive experience managing high-volume ticketing systems, improving SLA resolution times, and training support cohorts.",
+      skills: "Support Operations: Helpdesk team leading, CSAT metrics tracking, ticket routing.\nSystems: Zendesk, Salesforce, JIRA, Google Analytics.\nKPI Compliance: SLA speed-of-resolution, customer loyalty optimization."
+    },
+    transition: {
+      summary: "Customer-focused professional transitioning to support operations. Brings high patience, analytical problem-solving, and CRM management experience from previous hospitality roles.",
+      skills: "Support Skills: Ticketing workflows, query logging, user troubleshooting.\nTools: MS Office, Google Sheets, Slack.\nTransferable Skills: De-escalation tactics, customer empathy, details verify."
+    },
+    general: {
+      summary: "Dedicated support agent focused on query resolution, email/chat correspondence, and maintaining customer satisfaction index metrics.",
+      skills: "Customer Support: Ticketing management systems, email queues.\nTools: Salesforce, MS Office.\nProcess: Escalation compliance, record mapping updates."
+    }
+  },
+  sales: {
+    student: {
+      summary: "Goal-driven graduate eager to launch a career in sales operations. Strong communication skills, relationship-building abilities, and comfortable managing deals dashboards.",
+      skills: "Sales Core: Lead verification, pipeline logging, customer discovery call prep.\nTools: Salesforce, Google Sheets, MS PowerPoint.\nInterpersonal: Dynamic pitch presentations, active listening."
+    },
+    experienced: {
+      summary: "Sales Specialist with a history of qualifying enterprise leads, managing B2B account portfolios, and negotiating deal closings to exceed quotas.",
+      skills: "B2B Sales: Deal pipeline optimization, key accounts management.\nCRM & Analytics: Salesforce, HubSpot, SQL query tracking.\nNegotiation: Contract terms structuring, sales lifecycle speed checks."
+    },
+    transition: {
+      summary: "Relationship builder transitioning to enterprise account management. Brings deep product knowledge, target customer empathy, and contract negotiation experience.",
+      skills: "Sales Support: Account research, outreach templates drafting.\nTools: Trello, Google Sheets, Salesforce.\nTransferable Skills: Client relationships management, presentation creation."
+    },
+    general: {
+      summary: "Sales professional focused on managing candidate pipelines, customer relationship management tools, and closing deal structures.",
+      skills: "Sales Operations: CRM logging updates, target list generation.\nTools: Salesforce, Excel spreadsheets.\nProcess: Competitor analysis, deal pipeline tracking."
+    }
+  },
+  bd: {
+    student: {
+      summary: "Enthusiastic graduate with background research capabilities and partner relationship management skills. Eager to identify growth opportunities and qualify target leads.",
+      skills: "BD Core: Outbound email lead lists, competitor data check.\nTools: Google Sheets, LinkedIn Sales Navigator, Notion.\nCommunication: Partner introduction calls preparation."
+    },
+    experienced: {
+      summary: "BD Manager with proven record of scaling corporate partnerships, identifying market channels, and orchestrating outreach campaigns to secure pipeline deals.",
+      skills: "BD Strategy: Partnership development cycles, enterprise pricing checks.\nTools: Salesforce, HubSpot, LinkedIn Navigator.\nMetrics: Partner acquisition costs, deals pipeline volume."
+    },
+    transition: {
+      summary: "Strategic researcher pivoting to Business Development operations. Combines competitor analysis, account mapping, and negotiation capabilities from analytics roles.",
+      skills: "BD Operations: Partner profiling, channel qualification, deals log updates.\nTools: Google Sheets, Notion, Slack.\nTransferable: Data audit, presentation design."
+    },
+    general: {
+      summary: "Growth-oriented analyst focused on target market research, partner relations, and lead generation cycles.",
+      skills: "BD Ops: Partner acquisition lists, email pipeline campaigns.\nTools: CRM tools, Excel sheets.\nProcess: Competitor landscape monitoring."
+    }
+  },
+  mba: {
+    student: {
+      summary: "Business administration graduate with training in operational modeling, project planning spreadsheets, and presentation drafting. Ready to support business operations.",
+      skills: "Business Core: Financial metrics analysis, project milestones tracking.\nTools: MS Excel, Google Slides, Notion, Trello.\nProcess: Operation process flowcharts, meeting minutes management."
+    },
+    experienced: {
+      summary: "Operations Lead with experience managing cross-functional project sprints, optimizing supply chains, and driving organizational productivity metrics.",
+      skills: "Operations Management: Supply chain planning, Agile roadmap coordination.\nSystems: JIRA, SAP, SQL, Excel.\nMethodologies: Lean Six Sigma, workflow automation, SLA tracking."
+    },
+    transition: {
+      summary: "Organized leader transitioning to corporate management. Brings strong project coordination, resource allocation, and budget auditing skills.",
+      skills: "Management Support: Project timeline tracking, operational audits.\nTools: Trello, Notion, Slack.\nTransferable: Operational risk analysis, team lead protocols."
+    },
+    general: {
+      summary: "Management professional focused on process improvement checklists, team roadmap coordination, and corporate KPI audits.",
+      skills: "Business Operations: Sprint metrics tracking, resource planning.\nTools: MS Office, JIRA.\nProcess: Project management checklist validation."
+    }
+  }
+};
+
+// 10 Black-and-White Premium LaTeX Templates
+const LATEX_TEMPLATES = {
+  standard: `% Template 1: Standard Professional (Provided Layout)
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.65in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{hyperref}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt} 
+
+% Section rule
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
+\\setlist[itemize]{leftmargin=0.15in, itemsep=0.2em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
+  {\\small
+    \\href{mailto:{{EMAIL}}}{ {{EMAIL}} } \\,|\\ {{PHONE}} \\,|\\ {{LINKS}}
+  }
+\\end{center}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  serif: `% Template 2: Classic Serif (Double Divider)
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.65in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\usepackage{times}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries\\centering}{}{0em}{}[\\hrule\\vspace{1pt}\\hrule]
+\\titlespacing*{\\section}{0pt}{0.8em}{0.6em}
+\\setlist[itemize]{leftmargin=0.2in, itemsep=0.15em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{center}
+
+\\section*{Summary}
+\\noindent {{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  timeline: `% Template 3: Left-Aligned Timeline Column
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.6in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
+\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
+
+\\begin{document}
+
+{\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\
+{\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\vspace{3mm}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  twocol: `% Template 4: Compact Dual Grid
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.6in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\usepackage{multicol}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{0.5em}{0.3em}
+\\setlist[itemize]{leftmargin=0.15in, itemsep=0.1em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[3pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{center}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\begin{multicols}{2}
+\\section*{Education}
+{{EDUCATION}}
+
+\\columnbreak
+
+\\section*{Skills}
+{{SKILLS}}
+\\end{multicols}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  executive: `% Template 5: Executive Top Separator
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.65in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{\\rule{\\textwidth}{1pt}\\\\}[]
+\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
+\\setlist[itemize]{leftmargin=0.2in, itemsep=0.15em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{center}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  minimal: `% Template 6: Minimalist Sans-Serif
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.65in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\renewcommand{\\familydefault}{\\sfdefault}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{0.5em}{0.3em}
+\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[3pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{center}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  academic: `% Template 7: Academic Outline
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.7in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries\\centering}{}{0em}{}[\\hrule]
+\\titlespacing*{\\section}{0pt}{0.8em}{0.5em}
+\\setlist[itemize]{leftmargin=0.2in, itemsep=0.2em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{center}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  matrix: `% Template 8: Technical Matrix Outline
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.65in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
+\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
+
+\\begin{document}
+
+\\begin{flushleft}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{flushleft}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  bulletless: `% Template 9: Bulletless Paragraph Lead-ins
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.65in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
+\\setlist[itemize]{leftmargin=0.2in, itemsep=0.2em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{center}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`,
+
+  spaced: `% Template 10: Letterspaced Bold Titles
+\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.65in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt}
+
+\\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{0.7em}{0.4em}
+\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
+  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
+\\end{center}
+
+\\section*{Summary}
+{{SUMMARY}}
+
+\\section*{Education}
+{{EDUCATION}}
+
+\\section*{Experience}
+{{EXPERIENCE}}
+
+\\section*{Projects}
+{{PROJECTS}}
+
+\\section*{Skills}
+{{SKILLS}}
+
+\\section*{Certifications}
+{{CERTIFICATIONS}}
+
+\\section*{Additional Information}
+{{ADDITIONAL_INFORMATION}}
+
+\\section*{Languages \\& Interests}
+{{LANGUAGES_INTERESTS}}
+
+\\end{document}`
+};
+
+// Workspace Render Engine (Live Preview)
+function renderResumeWorkspace() {
+  const tmplKey = document.getElementById("select-template").value;
+  const roleKey = document.getElementById("select-role").value;
+  
+  // Resolve summary and skills dynamically from inputs (allowing live changes)
+  let resolvedName = editors.name.value;
+  let resolvedEmail = editors.email.value;
+  let resolvedPhone = editors.phone.value;
+  let resolvedSummary = editors.summary.value;
+  let resolvedSkills = editors.skills.value;
+  let resolvedEdu = editors.education.value;
+  let resolvedExp = editors.experience.value;
+  let resolvedProjects = editors.projects.value;
+  let resolvedCerts = editors.certifications.value;
+  let resolvedAdditional = editors.additional.value;
+  let resolvedLang = editors.languages.value;
+  
+  // 1. Render Visual DOM preview panel
+  document.getElementById('cv-name').textContent = resolvedName || 'Dhanush Siddilingam';
+  document.getElementById('cv-email').textContent = 'EMAIL: ' + (resolvedEmail || 'dhanushsiddilingam27@gmail.com').toUpperCase();
+  document.getElementById('cv-phone').textContent = 'PHONE: ' + (resolvedPhone || '+91-8187007696');
+  
+  const linkedin = activeProfile.linkedin || "linkedin.com/in/dhanush-siddilingam";
+  const github = activeProfile.github || "github.com/Dhanush0792";
+  document.getElementById('cv-links').textContent = `LINKEDIN: ${linkedin} | GITHUB: ${github}`;
+  
+  document.getElementById('cv-summary').textContent = resolvedSummary || '[Summary]';
+  document.getElementById('cv-education').textContent = resolvedEdu || '[Education]';
+  document.getElementById('cv-experience').textContent = resolvedExp || '[Experience]';
+  
+  const toggleSec = (id, val) => {
+    const el = document.getElementById(id);
+    if (!val || !val.trim()) {
+      el.style.display = "none";
+    } else {
+      el.style.display = "flex";
+      el.querySelector(".cv-body-text").textContent = val;
+    }
+  };
+  
+  toggleSec('sec-projects', resolvedProjects);
+  toggleSec('sec-skills', resolvedSkills);
+  toggleSec('sec-certifications', resolvedCerts);
+  toggleSec('sec-additional', resolvedAdditional);
+  toggleSec('sec-languages', resolvedLang);
+  
+  const cvPreview = document.getElementById("cv-preview");
+  cvPreview.className = "cv-page " + tmplKey;
+
+  // 2. Compile LaTeX Document Source Code
+  let template = LATEX_TEMPLATES[tmplKey] || LATEX_TEMPLATES.standard;
+  
+  const latexName = escapeLatex(resolvedName || "Dhanush Siddilingam");
+  const latexEmail = escapeLatex(resolvedEmail || "dhanushsiddilingam27@gmail.com");
+  const latexPhone = escapeLatex(resolvedPhone || "+91-8187007696");
+  
+  const linksParts = [];
+  linksParts.push(`\\href{https://${linkedin}}{${linkedin}}`);
+  linksParts.push(`\\href{https://${github}}{${github}}`);
+  const latexLinks = linksParts.join(" \\,|\\ ");
+  
+  const latexSummary = escapeLatex(resolvedSummary);
+  const latexEdu = formatEducationToLatex(resolvedEdu);
+  const latexExp = formatExperienceToLatex(resolvedExp);
+  const latexProjects = formatBulletsToLatex(resolvedProjects);
+  const latexSkills = formatBulletsToLatex(resolvedSkills);
+  const latexCerts = formatBulletsToLatex(resolvedCerts);
+  const latexAdditional = formatBulletsToLatex(resolvedAdditional);
+  const latexLang = formatBulletsToLatex(resolvedLang);
+  
+  generatedLatex = template
+    .replace("{{FULL_NAME}}", latexName)
+    .replace("{{EMAIL}}", latexEmail)
+    .replace("{{PHONE}}", latexPhone)
+    .replace("{{LINKS}}", latexLinks)
+    .replace("{{SUMMARY}}", latexSummary)
+    .replace("{{EDUCATION}}", latexEdu)
+    .replace("{{EXPERIENCE}}", latexExp)
+    .replace("{{PROJECTS}}", latexProjects)
+    .replace("{{SKILLS}}", latexSkills)
+    .replace("{{CERTIFICATIONS}}", latexCerts)
+    .replace("{{ADDITIONAL_INFORMATION}}", latexAdditional)
+    .replace("{{LANGUAGES_INTERESTS}}", latexLang);
+    
+  document.getElementById("latex-editor").value = generatedLatex;
+}
+
+// Add input event listeners to all section editors for live updates
+Object.keys(editors).forEach(key => {
+  editors[key].addEventListener('input', renderResumeWorkspace);
 });
-btnBold.addEventListener('click', () => {
-  btnBold.classList.add('active');
-  btnMinimal.classList.remove('active');
-  cvPage.style.fontFamily = "'JetBrains Mono', monospace";
-  cvPage.style.color = '#1f2937';
-  document.querySelector('.cv-header').style.borderBottom = '2px dashed var(--primary)';
+
+// Selector events
+document.getElementById("select-template").addEventListener("change", renderResumeWorkspace);
+document.getElementById("select-role").addEventListener("change", (e) => {
+  const roleKey = e.target.value;
+  if (roleKey !== "profile" && ROLE_LIBRARY[roleKey]) {
+    // Lookup role summary based on dynamic candidate classified level (student, experienced, transition)
+    const levelKey = candidateLevel || "general";
+    const selected = ROLE_LIBRARY[roleKey][levelKey] || ROLE_LIBRARY[roleKey]["general"];
+    editors.summary.value = selected.summary;
+    editors.skills.value = selected.skills;
+  } else {
+    // Reset to loaded profile values
+    const parsed = parseResumeDraft(activeProfile.resumeDraft || "");
+    editors.summary.value = parsed.summary || activeProfile.summary || "";
+    editors.skills.value = parsed.skills || activeProfile.skills || "";
+  }
+  renderResumeWorkspace();
 });
+
+// Tabs management
+const tabVisualBtn = document.getElementById("btn-tab-visual");
+const tabSourceBtn = document.getElementById("btn-tab-source");
+const cvPreviewBlock = document.getElementById("cv-preview");
+const sourcePreviewBlock = document.getElementById("source-preview");
+
+tabVisualBtn.addEventListener("click", () => {
+  tabVisualBtn.classList.add("active");
+  tabSourceBtn.classList.remove("active");
+  cvPreviewBlock.style.display = "flex";
+  sourcePreviewBlock.style.display = "none";
+});
+
+tabSourceBtn.addEventListener("click", () => {
+  tabSourceBtn.classList.add("active");
+  tabVisualBtn.classList.remove("active");
+  cvPreviewBlock.style.display = "none";
+  sourcePreviewBlock.style.display = "block";
+});
+
+// Operations Handlers
+document.getElementById("btn-copy-latex").addEventListener("click", () => {
+  const text = document.getElementById("latex-editor").value;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("LaTeX code copied to clipboard!", "success");
+  }).catch(() => {
+    showToast("Failed to copy code.", "error");
+  });
+});
+
+document.getElementById("btn-download-latex").addEventListener("click", () => {
+  const text = document.getElementById("latex-editor").value;
+  const blob = new Blob([text], { type: "text/plain" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `resume_${(editors.name.value || "document").replace(/\s+/g, "_").toLowerCase()}.tex`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+  showToast("LaTeX document downloaded!", "success");
+});
+
+// Startup load
+(async () => {
+  const state = await loadProfile();
+  activeProfile = state?.profile || {};
+  
+  // Validation Check: if profile has no name, block and show validation modal
+  if (!activeProfile.fullName || !activeProfile.fullName.trim()) {
+    document.getElementById("loading-overlay").style.display = "none";
+    document.getElementById("validation-overlay").style.display = "flex";
+    return;
+  }
+  
+  // Classify candidate level dynamically
+  candidateLevel = classifyExperienceLevel(activeProfile);
+  document.getElementById("candidate-level").textContent = candidateLevel.toUpperCase();
+  
+  // Setup parsing loading overlay messages
+  const loadingText = document.getElementById("loading-text");
+  const loadingOverlay = document.getElementById("loading-overlay");
+  
+  const loadingSequence = [
+    { text: "Accessing secure sync vault...", delay: 0 },
+    { text: "Decrypting candidate profile...", delay: 400 },
+    { text: "Parsing your information...", delay: 800 },
+    { text: "Arranging and preparing your resume...", delay: 1200 },
+    { text: "Readying visual preview panels...", delay: 1600 }
+  ];
+  
+  loadingSequence.forEach(step => {
+    setTimeout(() => {
+      loadingText.textContent = step.text;
+    }, step.delay);
+  });
+  
+  // Complete loading and reveal workspace
+  setTimeout(() => {
+    // Populate form inputs
+    const parsed = parseResumeDraft(activeProfile.resumeDraft || "");
+    editors.name.value = activeProfile.fullName || "";
+    editors.email.value = activeProfile.email || "";
+    editors.phone.value = activeProfile.phone || "";
+    
+    editors.summary.value = parsed.summary || activeProfile.summary || "";
+    editors.education.value = parsed.education || activeProfile.education || "";
+    editors.experience.value = parsed.experience || activeProfile.experience || "";
+    editors.projects.value = parsed.projects || "";
+    editors.skills.value = parsed.skills || activeProfile.skills || "";
+    editors.certifications.value = parsed.certifications || "";
+    editors.additional.value = parsed.additional || "";
+    editors.languages.value = parsed.languages || "";
+    
+    renderResumeWorkspace();
+    
+    // Fade out loader
+    loadingOverlay.style.opacity = "0";
+    setTimeout(() => {
+      loadingOverlay.style.display = "none";
+    }, 500);
+  }, 2100);
+})();
 </script>
 </body>
 </html>

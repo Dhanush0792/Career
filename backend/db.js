@@ -48,6 +48,23 @@ function saveReports(reports) {
   }
 }
 
+const TELEMETRY_FILE = path.join(__dirname, "..", "database", "telemetry.json");
+
+function loadTelemetry() {
+  try {
+    if (fs.existsSync(TELEMETRY_FILE)) {
+      return JSON.parse(fs.readFileSync(TELEMETRY_FILE, "utf8"));
+    }
+  } catch (e) {}
+  return { pageViews: 0, apiRequests: 0 };
+}
+
+function saveTelemetry(data) {
+  try {
+    fs.writeFileSync(TELEMETRY_FILE, JSON.stringify(data, null, 2), "utf8");
+  } catch (e) {}
+}
+
 // User helper
 function getUserFilePath(userId) {
   return path.join(USERS_DIR, `${userId}.json`);
@@ -92,6 +109,7 @@ module.exports = {
       name: name || "",
       passwordHash,
       role,
+      tier: "free",
       createdAt: Date.now(),
       lastSync: Date.now()
     };
@@ -210,18 +228,47 @@ module.exports = {
     return null;
   },
 
+  async updateUserTier(userId, tier) {
+    const registry = loadRegistry();
+    const user = registry.find(u => u.id === userId);
+    if (user) {
+      user.tier = tier;
+      saveRegistry(registry);
+      return true;
+    }
+    return false;
+  },
+
+  async recordTelemetryHit(metric) {
+    const tel = loadTelemetry();
+    if (tel[metric] !== undefined) {
+      tel[metric]++;
+    } else {
+      tel[metric] = 1;
+    }
+    saveTelemetry(tel);
+  },
+
   // Telemetry Stats
   async getStats() {
     const registry = loadRegistry();
     const reports = loadReports();
+    const tel = loadTelemetry();
 
     let totalApps = 0;
     let profilesCount = 0;
+    let freeCount = 0;
+    let paidCount = 0;
 
     registry.forEach(u => {
       const data = loadUserData(u.id);
       if (data.profile) profilesCount++;
       if (Array.isArray(data.applications)) totalApps += data.applications.length;
+      if (u.tier === "paid" || u.tier === "pro" || u.tier === "operative" || u.tier === "command") {
+        paidCount++;
+      } else {
+        freeCount++;
+      }
     });
 
     return {
@@ -229,7 +276,11 @@ module.exports = {
       totalProfiles: profilesCount,
       totalApplications: totalApps,
       totalReports: reports.length,
-      pendingReports: reports.filter(r => r.status === "pending").length
+      pendingReports: reports.filter(r => r.status === "pending").length,
+      freeUsers: freeCount,
+      paidUsers: paidCount,
+      pageViews: tel.pageViews || 0,
+      apiRequests: tel.apiRequests || 0
     };
   }
 };

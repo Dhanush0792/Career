@@ -261,6 +261,7 @@ select.form-input { cursor:pointer; }
         <div class="metric-row"><span class="metric-label">Fields Filled</span><span class="metric-val" id="m-fields">—</span></div>
         <div class="metric-row"><span class="metric-label">Applications Logged</span><span class="metric-val" id="m-apps">—</span></div>
         <div class="metric-row"><span class="metric-label">Sync Origin</span><span class="metric-val" id="m-origin">—</span></div>
+        <div class="metric-row"><span class="metric-label">Account Tier</span><span class="metric-val" id="m-tier" style="color:var(--success); font-weight:700;">—</span></div>
       </div>
       <div class="console-box" id="console">
         <div class="console-line">[SYS_INIT] Dashboard online. Connecting to sync server...</div>
@@ -338,6 +339,7 @@ function renderProfileState(state) {
   document.getElementById('m-fields').textContent = `${count} / ${total}`;
   document.getElementById('m-apps').textContent = loadApplications().length;
   document.getElementById('m-origin').textContent = state?.origin || '—';
+  document.getElementById('m-tier').textContent = (state?.tier || 'free').toUpperCase();
 
   // Populate profiles select dropdown
   const select = document.getElementById('active-profile-select');
@@ -541,6 +543,13 @@ document.addEventListener('jobxapply:offline', () => {
 });
 
 (async () => {
+  // Telemetry page view hit
+  fetch('http://localhost:8787/api/telemetry/hit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ metric: 'pageViews' })
+  }).catch(() => {});
+
   const state = await loadProfile();
   renderProfileState(state);
   renderTracker();

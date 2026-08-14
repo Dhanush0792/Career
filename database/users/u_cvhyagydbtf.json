@@ -1,0 +1,36 @@
+{
+  "profile": {
+    "profiles": {
+      "default": {
+        "fullName": "Aryan Rawat",
+        "headline": "Senior Staff Engineer",
+        "targetRole": "Solutions Architect",
+        "encryptedBlob": {
+          "ciphertext": "4N8KMq9fvJL+uFZ9qoyN/8nPD9mukPuZJiTggBg5HBDCjt2ROQKay56n/8uCfr6TCg+uQVl9qhQdwP4iqFpJQvhaRNIUinBYAMkqV3qL/YnuRI6gOH3lrRQNC45gKfRCKzdVvDNxPCNNCYhLYVSR79Z0H4Cv9Cbnjp5JBE0UB2WUGpb1Vf5JhRcDExS0XNgungAB0vnCVQDFgJr3YwbVIHyG",
+          "iv": "dnuAbwAoyKliREa+",
+          "salt": "zzTgl6YeURpx83O/QIUHTg=="
+        },
+        "id": "default",
+        "profileName": "Default Profile"
+      }
+    },
+    "activeProfileId": "default",
+    "profile": {
+      "fullName": "Aryan Rawat",
+      "headline": "Senior Staff Engineer",
+      "targetRole": "Solutions Architect",
+      "encryptedBlob": {
+        "ciphertext": "4N8KMq9fvJL+uFZ9qoyN/8nPD9mukPuZJiTggBg5HBDCjt2ROQKay56n/8uCfr6TCg+uQVl9qhQdwP4iqFpJQvhaRNIUinBYAMkqV3qL/YnuRI6gOH3lrRQNC45gKfRCKzdVvDNxPCNNCYhLYVSR79Z0H4Cv9Cbnjp5JBE0UB2WUGpb1Vf5JhRcDExS0XNgungAB0vnCVQDFgJr3YwbVIHyG",
+        "iv": "dnuAbwAoyKliREa+",
+        "salt": "zzTgl6YeURpx83O/QIUHTg=="
+      },
+      "id": "default",
+      "profileName": "Default Profile"
+    },
+    "passcodeHash": "",
+    "version": 2,
+    "updatedAt": 1786711538394,
+    "origin": "server"
+  },
+  "applications": []
+}

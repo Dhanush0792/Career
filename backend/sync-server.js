@@ -293,6 +293,11 @@ function broadcastMaps(maps) {
 const server = http.createServer(async (req, res) => {
   writeCorsHeaders(req, res);
 
+  // Increment apiRequests telemetry
+  if (req.url && req.url.startsWith("/api/")) {
+    db.recordTelemetryHit("apiRequests").catch(() => {});
+  }
+
   // Preflight
   if (req.method === "OPTIONS") {
     res.writeHead(204);
@@ -302,6 +307,23 @@ const server = http.createServer(async (req, res) => {
 
   // Parse URL
   const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+
+  // POST Telemetry Hit
+  if (req.method === "POST" && urlObj.pathname === "/api/telemetry/hit") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const incoming = JSON.parse(body || "{}");
+        const metric = incoming.metric || "pageViews";
+        await db.recordTelemetryHit(metric);
+        sendJson(res, 200, { ok: true });
+      } catch (e) {
+        sendJson(res, 400, { ok: false, error: e.message });
+      }
+    });
+    return;
+  }
 
   // Static Health check
   if (req.method === "GET" && urlObj.pathname === "/api/status") {
@@ -437,13 +459,17 @@ const server = http.createServer(async (req, res) => {
         profile: profile.profile,
         version: profile.version || 1,
         updatedAt: profile.updatedAt || Date.now(),
-        origin: profile.origin || "server"
+        origin: profile.origin || "server",
+        tier: activeUser.tier || "free",
+        role: activeUser.role || "user"
       });
     } else {
       sendJson(res, 200, {
         profile: { fullName: "", email: activeUser.email },
         version: 0,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        tier: activeUser.tier || "free",
+        role: activeUser.role || "user"
       });
     }
     return;
@@ -592,16 +618,46 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // DELETE User
-  if (req.method === "DELETE" && urlObj.pathname.startsWith("/api/admin/users/")) {
-    const userIdToDelete = urlObj.pathname.substring("/api/admin/users/".length);
-    if (!userIdToDelete) {
-      sendJson(res, 400, { ok: false, error: "User ID is required" });
+  // DELETE User / Update User Subscription Tier
+  if (urlObj.pathname.startsWith("/api/admin/users/")) {
+    const remainingPath = urlObj.pathname.substring("/api/admin/users/".length);
+    
+    // Check if it's tier update path: {userId}/tier
+    if (remainingPath.endsWith("/tier")) {
+      const userId = remainingPath.substring(0, remainingPath.lastIndexOf("/tier"));
+      if (!userId) {
+        sendJson(res, 400, { ok: false, error: "User ID is required" });
+        return;
+      }
+      let body = "";
+      req.on("data", chunk => { body += chunk; });
+      req.on("end", async () => {
+        try {
+          const incoming = JSON.parse(body || "{}");
+          const tier = incoming.tier || "free";
+          const success = await db.updateUserTier(userId, tier);
+          if (success) {
+            sendJson(res, 200, { ok: true, message: `User ${userId} tier updated to ${tier}` });
+          } else {
+            sendJson(res, 404, { ok: false, error: "User not found" });
+          }
+        } catch (e) {
+          sendJson(res, 400, { ok: false, error: e.message });
+        }
+      });
       return;
     }
-    await db.deleteUser(userIdToDelete);
-    sendJson(res, 200, { ok: true, message: `User ${userIdToDelete} successfully deleted` });
-    return;
+
+    // Default to Delete User
+    if (req.method === "DELETE") {
+      const userIdToDelete = remainingPath;
+      if (!userIdToDelete) {
+        sendJson(res, 400, { ok: false, error: "User ID is required" });
+        return;
+      }
+      await db.deleteUser(userIdToDelete);
+      sendJson(res, 200, { ok: true, message: `User ${userIdToDelete} successfully deleted` });
+    }
   }
 
   // GET Field Reports Queue

@@ -128,6 +128,28 @@ body::after {
   </div>
 
   <div class="settings-section">
+    <h2 class="section-title">Smart Answer Library</h2>
+    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:16px;">
+      Store answers to recurring essay questions. These are encrypted client-side and can be pasted directly into portal textareas from the extension popup.
+    </p>
+    
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:16px;">
+      <div class="form-group" style="display:grid; grid-template-columns:150px 1fr; gap:12px; margin-bottom:0;">
+        <input type="text" id="qna-tag" class="form-input" placeholder="Tag (e.g. salary)" style="max-width:100%;">
+        <input type="text" id="qna-question" class="form-input" placeholder="Question prompt (optional)" style="max-width:100%;">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <textarea id="qna-answer" class="form-input" placeholder="Your Answer text..." style="max-width:100%; height:80px; resize:vertical; font-family:var(--body);"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="addSmartAnswer()" style="align-self:flex-start;">Add to Library</button>
+    </div>
+
+    <div id="smart-answers-list" style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font-size:11px; color:var(--dim); font-style:italic;">Loading library...</div>
+    </div>
+  </div>
+
+  <div class="settings-section">
     <h2 class="section-title">Data Export</h2>
     <div class="data-row">
       <span class="data-label">Export Profile Data (JSON)</span>
@@ -195,6 +217,97 @@ function loadSettings() {
       document.getElementById('disp-name').innerText = prof.personal.fullName;
     }
   } catch(e){}
+  loadSmartAnswers();
+}
+
+let activeProfile = {};
+
+async function loadSmartAnswers() {
+  const state = await loadProfile();
+  activeProfile = state?.profile || {};
+  if (!Array.isArray(activeProfile.answers)) {
+    activeProfile.answers = [];
+  }
+  renderSmartAnswers();
+}
+
+function renderSmartAnswers() {
+  const container = document.getElementById('smart-answers-list');
+  container.innerHTML = '';
+  
+  if (activeProfile.answers.length === 0) {
+    container.innerHTML = '<div style="font-size:11px; color:var(--dim); font-style:italic;">No answers saved yet.</div>';
+    return;
+  }
+  
+  activeProfile.answers.forEach((item, index) => {
+    const div = document.createElement('div');
+    div.className = 'data-row';
+    div.style.alignItems = 'flex-start';
+    div.style.flexDirection = 'column';
+    div.style.gap = '6px';
+    div.style.padding = '12px 0';
+    
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+        <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:var(--success);">#${item.tag}</span>
+        <button class="btn btn-danger" onclick="deleteSmartAnswer(${index})" style="height:24px; padding:2px 8px; font-size:9px;">Delete</button>
+      </div>
+      ${item.question ? `<div style="font-size:11px; color:var(--muted); font-style:italic;">Q: ${item.question}</div>` : ''}
+      <div style="font-size:12px; color:var(--white); white-space:pre-wrap; background:rgba(0,0,0,0.15); width:100%; padding:8px; border-radius:4px; border:1px solid rgba(255,255,255,0.03);">${item.answer}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function addSmartAnswer() {
+  const tagInput = document.getElementById('qna-tag');
+  const questionInput = document.getElementById('qna-question');
+  const answerInput = document.getElementById('qna-answer');
+  
+  const tag = tagInput.value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
+  const question = questionInput.value.trim();
+  const answer = answerInput.value.trim();
+  
+  if (!tag) return showToast('Please enter a valid tag (alphanumeric, dashes, underscores)', 'error');
+  if (!answer) return showToast('Answer text cannot be empty', 'error');
+  
+  if (activeProfile.answers.some(item => item.tag.toLowerCase() === tag.toLowerCase())) {
+    return showToast(`Tag "#${tag}" already exists`, 'error');
+  }
+  
+  activeProfile.answers.push({
+    id: 'ans_' + Math.random().toString(36).substr(2, 9),
+    tag: tag,
+    question: question,
+    answer: answer
+  });
+  
+  showToast('Saving to secure sync vault...');
+  const res = await saveProfile(activeProfile);
+  if (res?.ok) {
+    showToast('Smart Answer added successfully!');
+    tagInput.value = '';
+    questionInput.value = '';
+    answerInput.value = '';
+    renderSmartAnswers();
+  } else {
+    showToast('Failed to save: ' + (res?.error || 'unknown'), 'error');
+  }
+}
+
+async function deleteSmartAnswer(index) {
+  if (confirm('Delete this answer from your secure vault?')) {
+    activeProfile.answers.splice(index, 1);
+    showToast('Saving changes...');
+    const res = await saveProfile(activeProfile);
+    if (res?.ok) {
+      showToast('Smart Answer deleted');
+      renderSmartAnswers();
+    } else {
+      showToast('Failed to save changes', 'error');
+    }
+  }
 }
 
 function savePasscode() {

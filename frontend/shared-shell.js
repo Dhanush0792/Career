@@ -699,7 +699,7 @@ const DEFAULT_PROFILE_FIELDS = [
   "fullName", "firstName", "lastName", "age", "dob", "fatherName", "motherName",
   "email", "phone", "address", "city", "state", "country", "zip", "headline",
   "summary", "education", "college", "experience", "skills", "linkedin", "github",
-  "portfolio", "resumeDraft", "targetRole"
+  "portfolio", "resumeDraft", "targetRole", "answers"
 ];
 
 function uint8ToBase64(uint8) {
