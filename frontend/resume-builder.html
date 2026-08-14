@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Resume Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js"></script>
+<style>
+:root {
+  --black:   #0B1020;
+  --s1:      rgba(255, 255, 255, 0.07);
+  --s2:      rgba(7, 10, 24, 0.6);
+  --border:  rgba(255, 255, 255, 0.12);
+  --border2: rgba(255, 255, 255, 0.2);
+  --white:   #ffffff;
+  --text:    #f4f7ff;
+  --muted:   rgba(244, 247, 255, 0.65);
+  --dim:     rgba(244, 247, 255, 0.4);
+  --orange:  #5B4FE8;
+  --orange2: rgba(91, 79, 232, 0.15);
+  --orange3: rgba(91, 79, 232, 0.06);
+  --green:   #2FDDC4;
+  --mono:    'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body:    'Inter', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--body);
+  background: var(--black);
+  color: var(--text);
+  min-height: 100vh;
+  padding-top: 56px;
+  overflow: hidden;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91, 79, 232, 0.12) 0%, transparent 45%),
+                    radial-gradient(circle at 85% 75%, rgba(47, 221, 196, 0.07) 0%, transparent 45%);
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  z-index: 1; pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* Nav */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 56px;
+  background: rgba(0,0,0,.92);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  z-index: 1000;
+  display: flex; align-items: center;
+}
+.nav__inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 20px;
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+  color: var(--white);
+}
+.logo__bracket { color: var(--orange); }
+.nav__links { display: flex; gap: 8px; }
+.nav__link {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--muted); padding: 8px 16px;
+  text-transform: uppercase;
+}
+.nav__link:hover { color: var(--orange); }
+.nav__link.active { color: var(--orange); }
+
+/* Split Pane Layout */
+.pane-wrap {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  height: calc(100vh - 56px);
+}
+.left-pane {
+  border-right: 1px solid var(--border);
+  background: var(--s1);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  position: relative;
+  z-index: 10;
+}
+.right-pane {
+  background: #111111;
+  padding: 40px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 5;
+}
+
+.pane-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  color: var(--orange);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.template-select {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.template-option {
+  border: 1px solid var(--border);
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--s2);
+  color: var(--muted);
+}
+.template-option.active {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+/* Printable A4 Page styling */
+.cv-page {
+  width: 720px;
+  min-height: 980px;
+  background: #ffffff;
+  color: #000000;
+  padding: 50px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.cv-header {
+  border-bottom: 2px solid #000000;
+  padding-bottom: 12px;
+}
+.cv-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.cv-headline {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444444;
+  margin-bottom: 8px;
+}
+.cv-contact {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #666666;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.cv-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cv-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid #dddddd;
+  padding-bottom: 4px;
+  letter-spacing: 0.05em;
+  color: #000000;
+}
+.cv-body-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #333333;
+}
+.cv-item {
+  margin-bottom: 12px;
+}
+.cv-item-title {
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+.cv-item-sub {
+  font-style: italic;
+  font-size: 11px;
+  color: #666666;
+  margin-bottom: 4px;
+}
+
+/* Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  height: 40px;
+  border: 1px solid;
+  cursor: pointer;
+  width: 100%;
+}
+.btn-primary {
+  background: var(--orange);
+  color: var(--black);
+  border-color: var(--orange);
+}
+.btn-primary:hover {
+  background: var(--black);
+  color: var(--orange);
+}
+
+/* PRINT CSS OVERRIDES */
+@media print {
+  body {
+    background: #ffffff !important;
+    padding-top: 0 !important;
+  }
+  body::after { display: none !important; }
+  .nav, .left-pane {
+    display: none !important;
+  }
+  .pane-wrap {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+  .right-pane {
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+  .cv-page {
+    box-shadow: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+}
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav__inner">
+    <a href="dashboard.html" class="logo">
+      <span class="logo__bracket">[</span> CH // RESUME BUILDER <span class="logo__bracket">]</span>
+    </a>
+    <div class="nav__links">
+      <a href="resume-builder.html" class="nav__link active">Resume</a>
+      <a href="ats-checker.html" class="nav__link">ATS Scorer</a>
+      <a href="cover-letter.html" class="nav__link">Cover Letter</a>
+      <a href="extension-setup.html" class="nav__link">Extension Setup</a>
+      <a href="autofill-lab.html" class="nav__link">Autofill Lab</a>
+    </div>
+  </div>
+</nav>
+
+<div class="pane-wrap">
+  <!-- Left Side: Controls -->
+  <div class="left-pane">
+    <div class="pane-title">TEMPLATE STYLES</div>
+    <div class="template-select">
+      <button class="template-option active" id="btn-tmpl-minimal">MINIMAL ATS</button>
+      <button class="template-option" id="btn-tmpl-bold">EXECUTIVE</button>
+    </div>
+    
+    <div class="pane-title" style="margin-top:20px;">PDF ACTIONS</div>
+    <button class="btn btn-primary" onclick="window.print()">&rsaquo; EXPORT ATS RESUME (PDF)</button>
+    
+    <div class="pane-title" style="margin-top:20px;">PROFILE SUMMARY</div>
+    <div style="font-family:var(--mono); font-size:10px; color:var(--muted); line-height:1.6;">
+      This layout updates automatically from your profile edits. Go to <a href="profile-setup.html" style="color:var(--orange); text-decoration:underline;">Profile Setup</a> to edit fields.
+    </div>
+  </div>
+
+  <!-- Right Side: Preview -->
+  <div class="right-pane">
+    <div class="cv-page" id="cv-preview">
+      
+      <div class="cv-header">
+        <h2 class="cv-name" id="cv-name">[Your Name]</h2>
+        <div class="cv-headline" id="cv-headline">[Your Headline]</div>
+        <div class="cv-contact">
+          <span id="cv-email">EMAIL: [not set]</span>
+          <span id="cv-phone">PHONE: [not set]</span>
+          <span id="cv-location">LOCATION: [not set]</span>
+        </div>
+      </div>
+      
+      <div class="cv-section">
+        <div class="cv-section-title">Professional Summary</div>
+        <p class="cv-body-text" id="cv-summary">[Complete your profile to populate this section]</p>
+      </div>
+
+      <div class="cv-section">
+        <div class="cv-section-title">Educational Background</div>
+        <p class="cv-body-text" id="cv-education">[Not set — add in Profile]</p>
+      </div>
+
+      <div class="cv-section">
+        <div class="cv-section-title">Core Competencies</div>
+        <p class="cv-body-text" id="cv-skills">[Not set — add in Profile]</p>
+      </div>
+
+      <div class="cv-section">
+        <div class="cv-section-title">Professional History</div>
+        <div class="cv-body-text" id="cv-experience" style="white-space: pre-wrap;">[Not set — add in Profile]</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+requireAuth();
+
+// Inject nav — resume-builder.html does not have a nav element yet; add one before the pane-wrap
+document.addEventListener('DOMContentLoaded', () => {
+  const navEl = document.querySelector('.nav') || document.querySelector('nav');
+  if (navEl) renderNav(navEl, 'resume-builder.html');
+});
+
+async function load() {
+  const state = await loadProfile();
+  const p = state?.profile || {};
+  const empty = (v) => !v || !String(v).trim();
+
+  document.getElementById('cv-name').textContent     = empty(p.fullName)   ? '[Your Name — edit Profile]'    : p.fullName;
+  document.getElementById('cv-headline').textContent = empty(p.headline)   ? '[Headline — edit Profile]'      : p.headline;
+  document.getElementById('cv-email').textContent    = 'EMAIL: ' + (empty(p.email)   ? '[not set]' : p.email.toUpperCase());
+  document.getElementById('cv-phone').textContent    = 'PHONE: ' + (empty(p.phone)   ? '[not set]' : p.phone);
+  document.getElementById('cv-location').textContent = 'LOCATION: ' + (empty(p.city || p.country) ? '[not set]' : (p.city ? p.city + ', ' : '') + (p.country || ''));
+  document.getElementById('cv-summary').textContent   = empty(p.summary)   ? '[Summary — edit Profile]'       : p.summary;
+  document.getElementById('cv-education').textContent = empty(p.education) ? '[Education — edit Profile]'     : p.education;
+  document.getElementById('cv-skills').textContent    = empty(p.skills)    ? '[Skills — edit Profile]'        : p.skills;
+  document.getElementById('cv-experience').textContent= empty(p.experience)? '[Experience — edit Profile]'    : p.experience;
+}
+load();
+
+// Template switches
+const btnMinimal = document.getElementById('btn-tmpl-minimal');
+const btnBold = document.getElementById('btn-tmpl-bold');
+const cvPage = document.getElementById('cv-preview');
+
+btnMinimal.addEventListener('click', () => {
+  btnMinimal.classList.add('active');
+  btnBold.classList.remove('active');
+  cvPage.style.fontFamily = "'Inter', sans-serif";
+  cvPage.style.color = '#000000';
+  document.querySelector('.cv-header').style.borderBottom = '2px solid #000000';
+});
+btnBold.addEventListener('click', () => {
+  btnBold.classList.add('active');
+  btnMinimal.classList.remove('active');
+  cvPage.style.fontFamily = "'JetBrains Mono', monospace";
+  cvPage.style.color = '#1f2937';
+  document.querySelector('.cv-header').style.borderBottom = '2px dashed var(--primary)';
+});
+</script>
+</body>
+</html>

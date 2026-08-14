@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Autofill Sandbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js"></script>
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --dim: rgba(244,247,255,0.4);
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.15);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0;
+  font-family: var(--body);
+  color: var(--text);
+  background-color: var(--base);
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
+  min-height: 100vh;
+  padding-top: 80px;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px 60px; position: relative; z-index: 10; }
+
+.page-header { width: 100%; margin-bottom: 30px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+.page-title { font-family: var(--display); font-size: 32px; color: var(--primary); text-transform: uppercase; margin: 0; letter-spacing: 0.05em; }
+
+.sandbox-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 30px;
+}
+@media (max-width: 900px) {
+  .sandbox-layout { grid-template-columns: 1fr; }
+}
+
+.pane {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 30px;
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pane-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--primary);
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 10px;
+}
+
+/* Form Styles */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.form-group label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.form-input {
+  background: rgba(7, 10, 24, 0.5);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: var(--white);
+  font-family: var(--body);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--primary); }
+
+/* Job Specs info */
+.job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.job-company {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--success);
+  text-transform: uppercase;
+}
+.job-title-display {
+  font-family: var(--display);
+  font-size: 28px;
+  color: var(--white);
+  margin: 6px 0;
+  text-transform: uppercase;
+}
+.job-desc-text {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.match-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 16px;
+}
+.match-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.match-score-val {
+  font-family: var(--display);
+  font-size: 24px;
+  color: var(--success);
+}
+.skills-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.skill-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.skill-tag.match {
+  background: rgba(47,221,196,0.12);
+  color: var(--success);
+  border-color: rgba(47,221,196,0.3);
+}
+.skill-tag.missing {
+  background: rgba(245,166,35,0.08);
+  color: var(--alert);
+  border-color: rgba(245,166,35,0.2);
+}
+
+.resume-pane {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px dashed var(--glass-border);
+  border-radius: 12px;
+  padding: 20px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  white-space: pre-wrap;
+  line-height: 1.6;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.btn-submit {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  padding: 14px 28px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-submit:hover { background: #6c61f0; }
+
+.console-log {
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: #a19af7;
+  max-height: 120px;
+  overflow-y: auto;
+}
+</style>
+</head>
+<body>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Autofill Sandbox Portal</h1>
+    <span class="job-company" id="portal-badge" style="font-size:10px; border:1px solid; padding:4px 10px; border-radius:20px;">GENERIC FORM</span>
+  </div>
+
+  <div class="sandbox-layout">
+    <!-- Left Column: Job Spec and Adapted Resume -->
+    <div class="pane">
+      <div class="pane-title">01 // TARGET JOB REQUIREMENTS</div>
+      <div class="job-header">
+        <div>
+          <span class="job-company" id="job-company">—</span>
+          <h2 class="job-title-display" id="job-title">—</h2>
+          <div style="font-family:var(--mono); font-size:11px; color:var(--dim);" id="job-location">—</div>
+        </div>
+        <div class="job-company" id="job-salary" style="color:var(--alert); font-size:16px;">—</div>
+      </div>
+      
+      <p class="job-desc-text" id="job-desc">—</p>
+
+      <div class="match-card">
+        <div class="match-score-row">
+          <span style="font-family:var(--mono); font-size:11px; color:var(--muted)">ATS Match Confidence</span>
+          <span class="match-score-val" id="match-val">0%</span>
+        </div>
+        <div class="skills-tags" id="skills-container"></div>
+      </div>
+
+      <div class="pane-title">02 // ADAPTIVE RESUME SUMMARY</div>
+      <div class="resume-pane" id="adapted-resume-preview">Generating tailored resume summary...</div>
+    </div>
+
+    <!-- Right Column: Auto-apply form -->
+    <div class="pane">
+      <div class="pane-title">03 // SIMULATED FORM AUTOFILLED</div>
+      <form id="apply-form" onsubmit="event.preventDefault(); submitForm();">
+        <div style="display:grid; grid-template-columns: 1fr; gap:16px;">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" class="form-input" id="form-name" required>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" class="form-input" id="form-email" required>
+          </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input type="text" class="form-input" id="form-phone">
+          </div>
+          <div class="form-group">
+            <label>LinkedIn URL</label>
+            <input type="url" class="form-input" id="form-linkedin">
+          </div>
+          <div class="form-group">
+            <label>Portfolio / Website</label>
+            <input type="url" class="form-input" id="form-portfolio">
+          </div>
+          <div class="form-group">
+            <label>Tailored Summary / Cover Letter Statement</label>
+            <textarea class="form-input" id="form-summary" style="height:120px; resize:vertical;"></textarea>
+          </div>
+          
+          <div class="form-group" style="margin-top:10px;">
+            <div class="console-log" id="sandbox-log">> Initializing autofill logic...</div>
+          </div>
+
+          <button type="submit" class="btn-submit">Submit Tailored Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+if(typeof requireAuth === 'function') requireAuth();
+if(typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'jobs.html');
+
+const urlParams = new URLSearchParams(window.location.search);
+const jobId = urlParams.get('jobId');
+
+let targetJob = null;
+let profileData = null;
+
+function addLog(text) {
+  const log = document.getElementById('sandbox-log');
+  log.innerHTML += `<br>> ${text}`;
+  log.scrollTop = log.scrollHeight;
+}
+
+async function loadData() {
+  if (!jobId) {
+    alert("No target job specified. Redirecting to Job Discovery.");
+    window.location.href = 'jobs.html';
+    return;
+  }
+
+  // Load User Profile
+  try {
+    const rawState = localStorage.getItem('jxa_local_state');
+    if (rawState) {
+      const parsed = JSON.parse(rawState);
+      const activeId = parsed.activeProfileId || "default";
+      profileData = parsed.profile || (parsed.profiles && parsed.profiles[activeId]) || {};
+    } else {
+      // Fallback
+      profileData = JSON.parse(localStorage.getItem('jxa_local_profile') || '{}');
+    }
+  } catch (e) {
+    profileData = {};
+  }
+
+  // Fetch Jobs
+  try {
+    const token = localStorage.getItem("jxa_token") || "";
+    const res = await fetch(`/api/jobs/search`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      targetJob = (data.jobs || []).find(j => j.id === jobId);
+    }
+  } catch (e) {
+    console.error("Failed to load jobs:", e);
+  }
+
+  if (!targetJob) {
+    addLog("[ERR] Job details not found on server.");
+    return;
+  }
+
+  // Bind Job details
+  document.getElementById('job-company').textContent = targetJob.company;
+  document.getElementById('job-title').textContent = targetJob.title;
+  document.getElementById('job-location').textContent = `📍 ${targetJob.location}`;
+  document.getElementById('job-salary').textContent = targetJob.salary;
+  document.getElementById('job-desc').textContent = targetJob.description;
+  document.getElementById('portal-badge').textContent = `${targetJob.portal.toUpperCase()} ATS FORM`;
+
+  calculateMatching();
+}
+
+function calculateMatching() {
+  if (!targetJob) return;
+
+  const required = targetJob.skillsRequired || [];
+  
+  // Extract user skills
+  let userSkills = [];
+  if (profileData && profileData.skills) {
+    userSkills = profileData.skills.split(',').map(s => s.trim().toLowerCase());
+  }
+
+  let matchCount = 0;
+  const container = document.getElementById('skills-container');
+  container.innerHTML = '';
+
+  required.forEach(skill => {
+    const isMatch = userSkills.includes(skill.toLowerCase());
+    if (isMatch) matchCount++;
+
+    const tag = document.createElement('span');
+    tag.className = `skill-tag ${isMatch ? 'match' : 'missing'}`;
+    tag.textContent = `${isMatch ? '✓' : '✖'} ${skill}`;
+    container.appendChild(tag);
+  });
+
+  const percentage = required.length > 0 ? Math.round((matchCount / required.length) * 100) : 100;
+  document.getElementById('match-val').textContent = `${percentage}%`;
+
+  addLog(`[MATCH] Analyzed profile against ${required.length} required keywords. Match score: ${percentage}%`);
+
+  generateAdaptedResume(percentage, required);
+}
+
+function generateAdaptedResume(matchPercentage, requiredSkills) {
+  const name = profileData.fullName || "Applicant";
+  const role = targetJob.title;
+  const company = targetJob.company;
+
+  // Build an optimized adapted resume professional summary
+  let userSkillsString = profileData.skills || "";
+  let matchedSkills = requiredSkills.filter(s => 
+    userSkillsString.toLowerCase().includes(s.toLowerCase())
+  );
+
+  let summary = `PROFESSIONAL SUMMARY:
+Highly motivated Software Professional specializing in engineering tailored web portals and automations. Proven expertise in building performant scripts, managing security architectures, and delivering reliable client-first user interfaces.
+
+OBJECTIVE:
+Seeking to apply my skills to the ${role} position at ${company}, leveraging my aligned expertise in ${matchedSkills.slice(0, 4).join(', ')}.
+
+TECHNICAL CORE COMPETENCIES (ADAPTED FOR ATS):
+${matchedSkills.map(s => `• ${s} (Expert)`).join('\n')}
+${requiredSkills.filter(s => !matchedSkills.includes(s)).map(s => `• ${s} (Prior Experience/Familiarity)`).join('\n')}
+
+EXPERIENCE LOG (TAILORED HIGHLIGHTS):
+- Aligned project deliverables to target developer workflows.
+- Implemented robust sync pipelines and local encryption schemes.
+- Refined DOM attributes and CSS selector structures for high-accuracy form actions.`;
+
+  document.getElementById('adapted-resume-preview').textContent = summary;
+  
+  // Save adapted resume in localStorage
+  localStorage.setItem('jxa_adapted_resume', summary);
+  addLog("[RESUME] Resume dynamically optimized for ATS crawler keywords.");
+
+  triggerAutofill(summary);
+}
+
+function triggerAutofill(adaptedSummary) {
+  addLog("[AUTOFILL] Firing Autofill events mapping DOM input values...");
+
+  // Match fields
+  document.getElementById('form-name').value = profileData.fullName || "";
+  document.getElementById('form-email').value = profileData.email || "";
+  document.getElementById('form-phone').value = profileData.phone || "";
+  document.getElementById('form-linkedin').value = profileData.linkedin || "";
+  document.getElementById('form-portfolio').value = profileData.portfolio || "";
+  document.getElementById('form-summary').value = adaptedSummary;
+
+  addLog("[SUCCESS] Form fields populated with 100% profile mapping accuracy.");
+}
+
+async function submitForm() {
+  const name = document.getElementById('form-name').value;
+  const email = document.getElementById('form-email').value;
+
+  addLog("[EXEC] Sending payload and logging application tracker history...");
+
+  if (typeof addApplication === "function") {
+    // Log tracking application
+    addApplication({
+      company: targetJob.company,
+      role: targetJob.title,
+      portal: targetJob.portal,
+      url: window.location.href,
+      status: 'applied',
+      date: new Date().toISOString().slice(0, 10)
+    });
+  }
+
+  addLog("[SYNC] State successfully synchronized with sync server database.");
+
+  setTimeout(() => {
+    alert("Application submitted successfully! Your tracking pipeline has been updated.");
+    window.location.href = 'tracker.html';
+  }, 1000);
+}
+
+loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // How It Works</title>
+<meta name="description" content="Learn how to deploy JobXApply in under 10 minutes and automate your job search.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --dim: rgba(244,247,255,0.4);
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.15);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+body { 
+  margin: 0;
+  background-color: var(--base);
+  color: var(--text);
+  font-family: var(--body);
+  padding-top: 100px;
+  padding-bottom: 100px;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 10; }
+h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-transform: uppercase; margin-top: 0; color: var(--white); }
+h1 { font-size: 56px; letter-spacing: 0.02em; margin-bottom: 16px; text-align: center; }
+.hero-subtitle { text-align: center; font-size: 18px; color: var(--muted); max-width: 600px; margin: 0 auto 60px; }
+a { color: inherit; text-decoration: none; }
+
+.timeline { display: flex; flex-direction: column; gap: 40px; position: relative; margin-bottom: 80px; }
+.timeline::before { content: ''; position: absolute; left: 28px; top: 0; bottom: 0; width: 2px; background: var(--glass-border); z-index: -1; }
+
+.step { display: flex; gap: 32px; align-items: flex-start; }
+.step-number { flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%; background: var(--base); border: 2px solid var(--primary); color: var(--primary); display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: 24px; font-weight: 700; box-shadow: 0 0 20px rgba(91,79,232,0.2); }
+.step-content { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 32px; flex: 1; }
+.step-title { font-size: 24px; margin-bottom: 12px; }
+.step-desc { color: var(--muted); line-height: 1.6; font-size: 16px; margin: 0; }
+
+.faq-section { margin-bottom: 80px; }
+.faq-title { font-size: 32px; text-align: center; margin-bottom: 40px; }
+.faq-item { border-bottom: 1px solid var(--glass-border); padding: 24px 0; }
+.faq-q { font-family: var(--display); font-size: 20px; letter-spacing: 0.02em; margin-bottom: 8px; color: var(--white); }
+.faq-a { color: var(--muted); line-height: 1.6; font-size: 15px; }
+
+.cta-section { text-align: center; }
+.btn-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--primary); color: var(--white); font-family: var(--mono); font-size: 14px; font-weight: 700; padding: 16px 32px; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn-primary:hover { background: #4a3fd6; transform: translateY(-2px); }
+
+@media (max-width: 768px) {
+  h1 { font-size: 40px; }
+  .step { flex-direction: column; gap: 16px; }
+  .timeline::before { left: 28px; }
+}
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+<script src="public-nav.js"></script>
+
+<div class="container">
+  <h1>DEPLOYED IN <br><span style="color:var(--primary)">UNDER 10 MINUTES</span></h1>
+  <p class="hero-subtitle">Stop re-entering the same information over and over. A simple, one-time setup automates your job hunt across the entire internet.</p>
+
+  <div class="timeline">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h3 class="step-title">Create Your Account</h3>
+        <p class="step-desc">Sign up and set your secure sync passcode. Your data is encrypted locally using this passcode before it ever touches our servers.</p>
+      </div>
+    </div>
+    
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h3 class="step-title">Build Your Master Profile</h3>
+        <p class="step-desc">Input your name, education, work history, skills, links, and multiple resume variants. Fill it once, and you are done forever.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h3 class="step-title">Install the Extension</h3>
+        <p class="step-desc">Download and load the unpacked extension into Chrome, Edge, or Firefox. Link it to your account using your passcode in under 60 seconds.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <h3 class="step-title">Open Any Job Listing</h3>
+        <p class="step-desc">Navigate to LinkedIn Easy Apply, Naukri, Greenhouse, Lever, Workday, or any other portal. The extension icon will activate automatically.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">5</div>
+      <div class="step-content">
+        <h3 class="step-title">Click Autofill</h3>
+        <p class="step-desc">JobXApply's engine detects the portal, matches your profile data to the form fields, and types it in for you with proper event triggers.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">6</div>
+      <div class="step-content">
+        <h3 class="step-title">Review & Submit</h3>
+        <p class="step-desc">You are always in control. Review the filled fields, make any custom tweaks for the specific role, and submit the application at your own pace.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="faq-section">
+    <h2 class="faq-title">Frequently Asked Questions</h2>
+    <div class="faq-item">
+      <div class="faq-q">Does it automatically submit applications without my permission?</div>
+      <div class="faq-a">No. JobXApply is designed to fill out the tedious forms for you, but it will never hit the final "Submit" button. We believe human review is essential before firing off an application.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is my personal data secure?</div>
+      <div class="faq-a">Yes. We use AES-256 local encryption. Your data is encrypted using your passcode on your device before syncing. We cannot read your plaintext career history or personal details.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Which browsers are supported?</div>
+      <div class="faq-a">The extension is fully compatible with Chromium-based browsers (Chrome, Edge, Brave). We also offer developer support for Mozilla Firefox.</div>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <a href="auth.html" class="btn-primary">Start your mission ›</a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Extension Setup</title>
+<meta name="description" content="Install the JobXApply browser extension to autofill job application forms across LinkedIn, Naukri, Greenhouse, Workday, and 50+ portals.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js"></script>
+<style>
+body { padding-top: 80px; }
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width: 1000px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; }
+.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
+.page-title { font-family:var(--display); font-size:36px; font-weight:900; text-transform:uppercase; color:var(--white); }
+.page-title em { font-style:normal; color:var(--primary); }
+
+/* Browser detection hero */
+.detect-banner {
+  display:flex; align-items:center; gap:20px;
+  border:1px solid var(--glass-border); background:rgba(255,255,255,.05);
+  padding:24px 28px; border-radius:16px; margin-top:28px; margin-bottom:24px;
+  backdrop-filter:blur(16px);
+}
+.browser-icon {
+  width:56px; height:56px; border-radius:50%;
+  border:2px solid var(--glass-border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; background:rgba(91,79,232,.1);
+  flex-shrink:0;
+}
+.detect-info { flex:1; }
+.detect-label { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:4px; }
+.detect-browser { font-family:var(--display); font-size:24px; font-weight:900; color:var(--white); text-transform:uppercase; }
+.detect-sub { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+.add-btn {
+  display:inline-flex; align-items:center; gap:10px;
+  height:52px; padding:0 28px;
+  background:var(--primary); color:var(--white);
+  font-family:var(--mono); font-size:12px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  border:none; border-radius:14px; cursor:pointer;
+  box-shadow:0 8px 24px rgba(91,79,232,.35);
+  transition:all .2s; text-decoration:none; flex-shrink:0;
+}
+.add-btn:hover { background:rgba(91,79,232,.85); transform:translateY(-1px); box-shadow:0 12px 30px rgba(91,79,232,.45); }
+.add-btn:active { transform:translateY(0); }
+.add-btn svg { width:18px; height:18px; }
+
+/* Layout grid */
+.setup-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media(max-width:700px) { .setup-grid { grid-template-columns:1fr; } }
+
+/* Cards */
+.card {
+  border:1px solid var(--glass-border); background:rgba(255,255,255,.05);
+  padding:24px; border-radius:16px; display:flex; flex-direction:column; gap:14px;
+  backdrop-filter:blur(16px);
+}
+.card--full { grid-column:1/-1; }
+.card__title {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:.12em; color:var(--primary); text-transform:uppercase;
+  border-bottom:1px solid var(--glass-border); padding-bottom:8px;
+}
+
+/* Step list */
+.step-list { display:flex; flex-direction:column; gap:12px; }
+.step {
+  display:flex; gap:14px; align-items:flex-start;
+  padding:12px; border:1px solid rgba(255,255,255,.06);
+  border-radius:10px; background:rgba(7,10,24,.4);
+}
+.step__num {
+  width:28px; height:28px; border-radius:50%;
+  background:var(--primary); color:#fff;
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.step__num.done { background:var(--success); }
+.step__num.optional { background:rgba(255,255,255,.1); color:var(--muted); }
+.step__body { flex:1; }
+.step__title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--white); margin-bottom:3px; }
+.step__desc { font-family:var(--mono); font-size:10px; color:var(--muted); line-height:1.55; }
+.step__code {
+  margin-top:6px; padding:6px 10px;
+  background:rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.08);
+  border-radius:6px; font-family:var(--mono); font-size:10px;
+  color:var(--success); user-select:all;
+}
+.step__action { margin-top:8px; }
+
+/* Browser tabs */
+.browser-tabs { display:flex; gap:0; border-bottom:1px solid var(--glass-border); margin-bottom:16px; }
+.btab {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  color:var(--muted); padding:8px 16px; cursor:pointer;
+  border-bottom:2px solid transparent; transition:all .15s;
+  background:none; border-top:none; border-left:none; border-right:none;
+}
+.btab.active { color:var(--primary); border-bottom-color:var(--primary); }
+.btab-panel { display:none; }
+.btab-panel.active { display:block; }
+
+/* Portal list */
+.portal-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.portal-chip {
+  font-family:var(--mono); font-size:9px; font-weight:700;
+  padding:4px 12px; border-radius:4px; border:1px solid;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.chip-t1 { color:var(--success); border-color:rgba(47,221,196,.3); background:rgba(47,221,196,.07); }
+.chip-t2 { color:var(--primary); border-color:rgba(91,79,232,.3); background:rgba(91,79,232,.07); }
+.chip-t3 { color:var(--muted); border-color:rgba(255,255,255,.12); }
+
+/* Download button */
+.dl-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  height:44px; padding:0 22px;
+  background:transparent; color:var(--white);
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  border:1px solid var(--glass-border); border-radius:10px; cursor:pointer;
+  transition:all .2s;
+}
+.dl-btn:hover { border-color:var(--primary); color:var(--primary); }
+
+/* Console */
+.console-box {
+  background:#000; border:1px solid var(--glass-border);
+  padding:12px; font-family:var(--mono); font-size:10px;
+  color:var(--muted); height:90px; overflow-y:auto; line-height:1.5;
+  border-radius:8px; margin-top:4px;
+}
+.console-line { margin-bottom:2px; }
+.console-line.info { color:var(--primary); }
+.console-line.success { color:var(--success); }
+.console-line.warn { color:var(--alert); }
+
+/* Status indicator */
+.ext-status {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--mono); font-size:10px;
+  padding:4px 12px; border:1px solid; border-radius:4px;
+}
+.ext-status.connected { color:var(--success); border-color:rgba(47,221,196,.3); background:rgba(47,221,196,.07); }
+.ext-status.disconnected { color:var(--muted); border-color:rgba(255,255,255,.12); }
+.ext-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+.ext-dot.pulse { animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <div style="border-bottom:1px solid var(--glass-border); padding-bottom:20px;">
+    <div class="page-label">BROWSER EXTENSION SETUP</div>
+    <h1 class="page-title">INSTALL <em>AUTOFILL ENGINE</em></h1>
+  </div>
+
+  <!-- Browser Detection Hero -->
+  <div class="detect-banner" id="detect-banner">
+    <div class="browser-icon" id="browser-icon">🌐</div>
+    <div class="detect-info">
+      <div class="detect-label">Detected Browser</div>
+      <div class="detect-browser" id="browser-name">Detecting...</div>
+      <div class="detect-sub" id="browser-sub">Checking compatibility...</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+      <button class="add-btn" id="add-to-browser-btn" onclick="handleAddToBrowser()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 5v14M5 12l7 7 7-7"/>
+        </svg>
+        <span id="add-btn-label">ADD TO BROWSER</span>
+      </button>
+      <button class="dl-btn" id="download-btn" onclick="downloadExtension()">
+        ↓ DOWNLOAD ZIP
+      </button>
+    </div>
+  </div>
+
+  <div class="setup-grid">
+
+    <!-- Card 1: Installation Guide -->
+    <div class="card">
+      <div class="card__title">01 // INSTALL GUIDE</div>
+
+      <div class="browser-tabs" id="browser-tabs">
+        <button class="btab active" data-browser="chrome" onclick="switchBrowserTab('chrome')">Chrome</button>
+        <button class="btab" data-browser="firefox" onclick="switchBrowserTab('firefox')">Firefox</button>
+        <button class="btab" data-browser="edge" onclick="switchBrowserTab('edge')">Edge</button>
+      </div>
+
+      <!-- Chrome steps -->
+      <div class="btab-panel active" id="panel-chrome">
+        <div class="step-list">
+          <div class="step">
+            <div class="step__num">1</div>
+            <div class="step__body">
+              <div class="step__title">DOWNLOAD EXTENSION</div>
+              <div class="step__desc">Click "Download ZIP" above and save the file to your computer.</div>
+              <div class="step__action"><button class="dl-btn" onclick="downloadExtension()" style="height:34px;padding:0 14px;font-size:9px;">↓ Download Now</button></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <div class="step__body">
+              <div class="step__title">EXTRACT THE ZIP</div>
+              <div class="step__desc">Unzip the downloaded file into a folder you can remember (e.g. Desktop/jobxapply-ext).</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__body">
+              <div class="step__title">OPEN CHROME EXTENSIONS</div>
+              <div class="step__desc">In Chrome address bar, type and press Enter:</div>
+              <div class="step__code">chrome://extensions</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">4</div>
+            <div class="step__body">
+              <div class="step__title">ENABLE DEVELOPER MODE</div>
+              <div class="step__desc">Toggle "Developer mode" in the top-right corner of the Extensions page.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">5</div>
+            <div class="step__body">
+              <div class="step__title">LOAD UNPACKED</div>
+              <div class="step__desc">Click "Load unpacked" and select the <strong>extracted extension folder</strong> (the one containing manifest.json).</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num done">✓</div>
+            <div class="step__body">
+              <div class="step__title">PIN & PAIR</div>
+              <div class="step__desc">Pin the JobXApply icon to your toolbar. Then enter the pairing code below to connect with your profile.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Firefox steps -->
+      <div class="btab-panel" id="panel-firefox">
+        <div class="step-list">
+          <div class="step">
+            <div class="step__num">1</div>
+            <div class="step__body">
+              <div class="step__title">DOWNLOAD EXTENSION</div>
+              <div class="step__desc">Click "Download ZIP" and extract the folder.</div>
+              <div class="step__action"><button class="dl-btn" onclick="downloadExtension()" style="height:34px;padding:0 14px;font-size:9px;">↓ Download Now</button></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <div class="step__body">
+              <div class="step__title">OPEN FIREFOX DEBUGGING</div>
+              <div class="step__desc">In Firefox address bar, type:</div>
+              <div class="step__code">about:debugging#/runtime/this-firefox</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__body">
+              <div class="step__title">LOAD TEMPORARY ADD-ON</div>
+              <div class="step__desc">Click "Load Temporary Add-on" and select the <strong>manifest.json</strong> file inside the extracted folder.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num done">✓</div>
+            <div class="step__body">
+              <div class="step__title">PAIR YOUR ACCOUNT</div>
+              <div class="step__desc">The extension icon will appear. Enter the pairing code below to link your profile.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edge steps -->
+      <div class="btab-panel" id="panel-edge">
+        <div class="step-list">
+          <div class="step">
+            <div class="step__num">1</div>
+            <div class="step__body">
+              <div class="step__title">DOWNLOAD EXTENSION</div>
+              <div class="step__desc">Click "Download ZIP" and extract the folder.</div>
+              <div class="step__action"><button class="dl-btn" onclick="downloadExtension()" style="height:34px;padding:0 14px;font-size:9px;">↓ Download Now</button></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <div class="step__body">
+              <div class="step__title">OPEN EDGE EXTENSIONS</div>
+              <div class="step__desc">In Edge address bar, type:</div>
+              <div class="step__code">edge://extensions</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__body">
+              <div class="step__title">ENABLE DEVELOPER MODE</div>
+              <div class="step__desc">Toggle "Developer mode" in the lower-left side panel.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">4</div>
+            <div class="step__body">
+              <div class="step__title">LOAD UNPACKED</div>
+              <div class="step__desc">Click "Load unpacked" and select the extracted extension folder.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num done">✓</div>
+            <div class="step__body">
+              <div class="step__title">PIN & PAIR</div>
+              <div class="step__desc">Pin the JobXApply icon → enter pairing code below to link your profile.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Pairing / Status -->
+    <div class="card">
+      <div class="card__title">02 // PAIR WITH YOUR PROFILE</div>
+
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.6;">
+        After installing the extension, open its popup and enter this pairing code to link it with your JobXApply profile and sync server.
+      </div>
+
+      <div style="border:1px solid var(--glass-border); background:rgba(7,10,24,.6); border-radius:12px; padding:20px; text-align:center;">
+        <div style="font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; margin-bottom:8px;">ACTIVE PAIRING CODE</div>
+        <div id="pairing-code" style="font-family:'JetBrains Mono',monospace; font-size:32px; font-weight:700; color:var(--primary); letter-spacing:.2em;">CB-000000</div>
+        <div style="font-family:var(--mono); font-size:9px; color:var(--dim); margin-top:6px;" id="code-expiry">Expires in 5:00</div>
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button class="dl-btn" onclick="regenerateCode()" style="flex:1;justify-content:center;">↻ NEW CODE</button>
+        <button class="dl-btn" onclick="copyCode()" id="copy-btn" style="flex:1;justify-content:center;">⊕ COPY CODE</button>
+      </div>
+
+      <!-- Extension connection status -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--glass-border);">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">Extension Status</div>
+        <div class="ext-status disconnected" id="ext-status-badge">
+          <span class="ext-dot"></span>
+          <span id="ext-status-text">NOT CONNECTED</span>
+        </div>
+      </div>
+
+      <button class="add-btn" id="simulate-pair-btn" onclick="simulatePairing()" style="width:100%;justify-content:center;height:44px;font-size:10px;">
+        SIMULATE EXTENSION PAIRING
+      </button>
+
+      <div class="console-box" id="console">
+        <div class="console-line">[SYS_INIT] Pairing system ready. Install the extension and enter the code.</div>
+      </div>
+    </div>
+
+    <!-- Card 3: Supported Portals (full width) -->
+    <div class="card card--full">
+      <div class="card__title">03 // SUPPORTED JOB PORTALS</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px;">
+        The extension detects which portal you are on and chooses the most accurate fill strategy. Tier 1 portals use dedicated field maps; Tier 2 uses ATS-specific selectors; Tier 3 uses the universal heuristic engine.
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--success);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">TIER 1 — DEDICATED MAP</div>
+          <div class="portal-chips">
+            <span class="portal-chip chip-t1">LinkedIn</span>
+            <span class="portal-chip chip-t1">Naukri</span>
+            <span class="portal-chip chip-t1">Wellfound</span>
+            <span class="portal-chip chip-t1">Indeed</span>
+            <span class="portal-chip chip-t1">Internshala</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--primary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">TIER 2 — ATS PATTERN MAP</div>
+          <div class="portal-chips">
+            <span class="portal-chip chip-t2">Greenhouse</span>
+            <span class="portal-chip chip-t2">Workday</span>
+            <span class="portal-chip chip-t2">Lever</span>
+            <span class="portal-chip chip-t2">Ashby</span>
+            <span class="portal-chip chip-t2">iCIMS</span>
+            <span class="portal-chip chip-t2">SmartRecruiters</span>
+            <span class="portal-chip chip-t2">Freshteam</span>
+            <span class="portal-chip chip-t2">Taleo</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;">TIER 3 — UNIVERSAL ENGINE</div>
+          <div class="portal-chips">
+            <span class="portal-chip chip-t3">Any Website</span>
+            <span class="portal-chip chip-t3">Company Portals</span>
+            <span class="portal-chip chip-t3">Custom ATS</span>
+            <span class="portal-chip chip-t3">Unknown Forms</span>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:8px;line-height:1.5;">
+            Confidence-scoring engine scans every input on the page using labels, names, placeholders, and aria attributes.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: How autofill works -->
+    <div class="card card--full">
+      <div class="card__title">04 // HOW AUTOFILL WORKS</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;">
+        <div style="padding:16px;border-right:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:24px;margin-bottom:8px;">⊕</div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px;">DETECT</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5;">Extension detects the portal by URL pattern and picks the right fill engine</div>
+        </div>
+        <div style="padding:16px;border-right:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:24px;margin-bottom:8px;">◈</div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px;">MAP</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5;">Scans form fields using CSS selectors or heuristic scoring against your profile data</div>
+        </div>
+        <div style="padding:16px;border-right:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:24px;margin-bottom:8px;">◎</div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px;">PREVIEW</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5;">Shows you exactly what will be filled — field by field. You can modify any value before confirming</div>
+        </div>
+        <div style="padding:16px;border-right:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:24px;margin-bottom:8px;">✦</div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--success);text-transform:uppercase;margin-bottom:4px;">FILL</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5;">On your approval, values are typed into each field with proper React/Vue/Angular event triggers</div>
+        </div>
+        <div style="padding:16px;text-align:center;">
+          <div style="font-size:24px;margin-bottom:8px;">🛡</div>
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--alert);text-transform:uppercase;margin-bottom:4px;">YOU SUBMIT</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5;">The extension NEVER auto-submits. You review the filled form and click submit yourself</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+requireAuth();
+renderNav(document.getElementById('main-nav'), 'extension-setup.html');
+
+const consoleBox = document.getElementById('console');
+
+function addLog(text, cls = '') {
+  const line = document.createElement('div');
+  line.className = 'console-line ' + cls;
+  line.textContent = text;
+  consoleBox.appendChild(line);
+  consoleBox.scrollTop = consoleBox.scrollHeight;
+}
+
+// ── Browser Detection ────────────────────────────────────────────────────────
+function detectBrowser() {
+  const ua = navigator.userAgent;
+  const iconEl  = document.getElementById('browser-icon');
+  const nameEl  = document.getElementById('browser-name');
+  const subEl   = document.getElementById('browser-sub');
+  const btnLabel = document.getElementById('add-btn-label');
+
+  let browser = 'Chrome';
+  let icon = '🌐';
+  let compatible = true;
+  let sub = 'Chromium-based · Full support';
+
+  if (/Edg\//.test(ua)) {
+    browser = 'Microsoft Edge'; icon = '🔷'; sub = 'Chromium-based · Full support';
+    switchBrowserTab('edge');
+  } else if (/Firefox\//.test(ua)) {
+    browser = 'Mozilla Firefox'; icon = '🦊'; sub = 'Gecko-based · Full support';
+    switchBrowserTab('firefox');
+  } else if (/OPR\//.test(ua)) {
+    browser = 'Opera'; icon = '🔴'; sub = 'Chromium-based · Full support';
+  } else if (/Chrome\//.test(ua)) {
+    browser = 'Google Chrome'; icon = '🟡'; sub = 'Chromium-based · Full support';
+  } else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) {
+    browser = 'Safari'; icon = '🧭'; compatible = false;
+    sub = 'Safari has limited extension support. Use Chrome or Firefox.';
+  } else {
+    browser = 'Unknown Browser'; icon = '🌐'; sub = 'Install Chrome or Firefox for full support.';
+  }
+
+  iconEl.textContent = icon;
+  nameEl.textContent = browser.toUpperCase();
+  subEl.textContent = sub;
+  btnLabel.textContent = `ADD TO ${browser.split(' ')[1] || browser}`.toUpperCase();
+
+  addLog(`[DETECT] Browser identified: ${browser}.`, 'info');
+  if (!compatible) {
+    addLog(`[WARN] ${browser} has limited extension support. Chrome or Firefox recommended.`, 'warn');
+    document.getElementById('add-to-browser-btn').style.opacity = '.5';
+  }
+
+  return browser;
+}
+detectBrowser();
+
+// ── Add to Browser button ────────────────────────────────────────────────────
+function handleAddToBrowser() {
+  const ua = navigator.userAgent;
+  addLog('[ACTION] Opening browser extension manager...', 'info');
+
+  if (/Firefox\//.test(ua)) {
+    window.open('about:debugging#/runtime/this-firefox', '_blank');
+    addLog('[GUIDE] Opened Firefox Debugging page. Click "Load Temporary Add-on" and select manifest.json.', 'info');
+  } else if (/Edg\//.test(ua)) {
+    window.open('edge://extensions', '_blank');
+    addLog('[GUIDE] Opened Edge Extensions page. Enable Developer Mode → Load Unpacked.', 'info');
+  } else {
+    window.open('chrome://extensions', '_blank');
+    addLog('[GUIDE] Opened Chrome Extensions page. Enable Developer Mode → Load Unpacked.', 'info');
+  }
+
+  setTimeout(() => {
+    addLog('[TIP] Select the extracted JobXApply extension folder (the one with manifest.json).', 'info');
+  }, 800);
+}
+
+// ── Download Extension ───────────────────────────────────────────────────────
+function downloadExtension() {
+  addLog('[DOWNLOAD] Requesting extension package from server...', 'info');
+
+  // Try server zip endpoint first
+  fetch('http://localhost:8787/api/extension/download', { method: 'HEAD' })
+    .then(res => {
+      if (res.ok) {
+        window.location.href = 'http://localhost:8787/api/extension/download';
+        addLog('[DOWNLOAD] Extension package downloaded successfully.', 'success');
+      } else {
+        throw new Error('Server returned ' + res.status);
+      }
+    })
+    .catch(() => {
+      addLog('[DOWNLOAD] Server offline. Please manually copy the extension/ folder from the project directory.', 'warn');
+      showToast('Server offline — copy the extension/ folder manually.', 'error');
+
+      // Show fallback instruction
+      const tip = document.createElement('div');
+      tip.className = 'console-line warn';
+      tip.textContent = '[PATH] Project extension folder: d:\\Projects\\JobXApply\\extension\\';
+      consoleBox.appendChild(tip);
+      consoleBox.scrollTop = consoleBox.scrollHeight;
+    });
+}
+
+// ── Browser Tab Switcher ─────────────────────────────────────────────────────
+function switchBrowserTab(browser) {
+  document.querySelectorAll('.btab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.btab-panel').forEach(p => p.classList.remove('active'));
+  const tab = document.querySelector(`.btab[data-browser="${browser}"]`);
+  const panel = document.getElementById(`panel-${browser}`);
+  if (tab) tab.classList.add('active');
+  if (panel) panel.classList.add('active');
+}
+
+// ── Pairing Code ─────────────────────────────────────────────────────────────
+let codeValue = '';
+let expiryTimer = null;
+let expirySeconds = 300;
+
+function generateCode() {
+  const rand = Math.floor(100000 + Math.random() * 900000);
+  codeValue = 'CB-' + rand;
+  document.getElementById('pairing-code').textContent = codeValue;
+  localStorage.setItem('jxa_extension_coupled', 'false');
+  localStorage.setItem('jxa_pairing_code', codeValue);
+  localStorage.setItem('jxa_pairing_expires', Date.now() + 300000);
+  resetExpiry();
+  addLog(`[HANDSHAKE] New code issued: ${codeValue}. Valid for 5 minutes.`, 'info');
+}
+
+function resetExpiry() {
+  if (expiryTimer) clearInterval(expiryTimer);
+  expirySeconds = 300;
+  updateExpiryDisplay();
+  expiryTimer = setInterval(() => {
+    expirySeconds--;
+    updateExpiryDisplay();
+    if (expirySeconds <= 0) {
+      clearInterval(expiryTimer);
+      generateCode(); // auto-regenerate
+    }
+  }, 1000);
+}
+
+function updateExpiryDisplay() {
+  const m = Math.floor(expirySeconds / 60);
+  const s = expirySeconds % 60;
+  document.getElementById('code-expiry').textContent = `Expires in ${m}:${String(s).padStart(2,'0')}`;
+}
+
+function regenerateCode() {
+  generateCode();
+}
+
+function copyCode() {
+  navigator.clipboard?.writeText(codeValue).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ COPIED';
+    setTimeout(() => btn.textContent = '⊕ COPY CODE', 2000);
+    addLog('[COPY] Code copied to clipboard.', 'success');
+  }).catch(() => {
+    showToast('Copy failed — select the code manually.', 'error');
+  });
+}
+
+// Initial code
+generateCode();
+
+// ── Simulate Pairing ──────────────────────────────────────────────────────────
+function simulatePairing() {
+  const btn = document.getElementById('simulate-pair-btn');
+  btn.disabled = true;
+  addLog('[HANDSHAKE] Receiving incoming pairing request...', 'info');
+
+  setTimeout(() => {
+    addLog(`[HANDSHAKE] Code matched: ${codeValue}`, 'info');
+    setTimeout(() => {
+      addLog('[HANDSHAKE] Exchanging AES session key...', 'info');
+      setTimeout(() => {
+        localStorage.setItem('jxa_extension_coupled', 'true');
+        addLog('[SUCCESS] Extension paired. Sync active.', 'success');
+        setExtStatus(true);
+        btn.disabled = false;
+        showToast('Extension paired successfully!', 'success');
+      }, 900);
+    }, 700);
+  }, 600);
+}
+
+function setExtStatus(connected) {
+  const badge = document.getElementById('ext-status-badge');
+  const text  = document.getElementById('ext-status-text');
+  const dot   = badge.querySelector('.ext-dot');
+  if (connected) {
+    badge.className = 'ext-status connected';
+    text.textContent = 'CONNECTED';
+    dot.classList.add('pulse');
+  } else {
+    badge.className = 'ext-status disconnected';
+    text.textContent = 'NOT CONNECTED';
+    dot.classList.remove('pulse');
+  }
+}
+
+// Restore status from storage
+if (localStorage.getItem('jxa_extension_coupled') === 'true') {
+  setExtStatus(true);
+  addLog('[STATUS] Extension previously paired. Sync active.', 'success');
+}
+</script>
+</body>
+</html>

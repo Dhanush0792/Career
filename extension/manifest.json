@@ -1,31 +1,46 @@
 {
   "manifest_version": 3,
-  "name": "CareerHub Autofill",
+  "name": "JobXApply Autofill",
   "version": "0.1.0",
-  "description": "CareerHub profile sync, portal coverage, and safe autofill helpers.",
+  "description": "JobXApply profile sync, portal coverage, and safe autofill helpers.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "CareerHub"
+    "default_title": "JobXApply",
+    "default_icon": "icon.png"
   },
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["storage", "activeTab", "scripting", "tabs"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
-  ]
-  ,
+  ],
   "applications": {
     "gecko": {
-      "id": "careerhub_autofill@careerhub.local",
+      "id": "jobxapply_autofill@jobxapply.local",
       "strict_min_version": "109.0"
     }
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
   }
 }
-

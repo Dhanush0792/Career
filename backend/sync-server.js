@@ -2,8 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const PORT = 8787;
-const STATE_FILE = path.join(__dirname, "..", "database", "careerhub-sync-state.json");
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8787;
+const STATE_FILE = process.env.STATE_FILE || path.join(__dirname, "..", "database", "jobxapply-sync-state.json");
 const SCHEMA_FILE = path.join(__dirname, "..", "database", "profile-schema.json");
 const MAPS_FILE = path.join(__dirname, "..", "database", "portal-maps.json");
 
@@ -41,12 +41,12 @@ function loadState() {
     const parsed = JSON.parse(raw);
     return normalizeState(parsed);
   } catch {
-    return {
+    return normalizeState({
       profile: { ...DEFAULT_PROFILE },
       version: 0,
       updatedAt: 0,
       origin: "init"
-    };
+    });
   }
 }
 
@@ -55,14 +55,27 @@ function saveState(nextState) {
 }
 
 function normalizeProfile(profile = {}) {
-  const normalized = { ...DEFAULT_PROFILE };
+  const normalized = {};
   for (const key of Object.keys(DEFAULT_PROFILE)) {
-    const val = profile[key];
-    if (typeof DEFAULT_PROFILE[key] === "number") {
-      normalized[key] = Number.isFinite(Number(val)) ? Number(val) : DEFAULT_PROFILE[key];
-    } else {
-      normalized[key] = typeof val === "string" ? val.trim() : (val == null ? "" : String(val));
+    if (profile[key] !== undefined) {
+      const val = profile[key];
+      if (typeof DEFAULT_PROFILE[key] === "number") {
+        normalized[key] = Number.isFinite(Number(val)) ? Number(val) : DEFAULT_PROFILE[key];
+      } else {
+        normalized[key] = typeof val === "string" ? val.trim() : (val == null ? "" : String(val));
+      }
     }
+  }
+  
+  if (typeof profile.id === "string") normalized.id = profile.id;
+  if (typeof profile.profileName === "string") normalized.profileName = profile.profileName;
+
+  if (profile.encryptedBlob && typeof profile.encryptedBlob === "object") {
+    normalized.encryptedBlob = {
+      ciphertext: typeof profile.encryptedBlob.ciphertext === "string" ? profile.encryptedBlob.ciphertext : "",
+      iv: typeof profile.encryptedBlob.iv === "string" ? profile.encryptedBlob.iv : "",
+      salt: typeof profile.encryptedBlob.salt === "string" ? profile.encryptedBlob.salt : ""
+    };
   }
   return normalized;
 }
@@ -92,8 +105,44 @@ function loadPortalMaps() {
 loadPortalMaps();
 
 function normalizeState(candidate = {}) {
+  let profiles = {};
+  let activeProfileId = typeof candidate.activeProfileId === "string" ? candidate.activeProfileId : "default";
+
+  if (candidate.profiles && typeof candidate.profiles === "object") {
+    for (const key of Object.keys(candidate.profiles)) {
+      const p = candidate.profiles[key] || {};
+      profiles[key] = normalizeProfile(p);
+      profiles[key].id = key;
+      profiles[key].profileName = typeof p.profileName === "string" ? p.profileName : `Profile (${key})`;
+    }
+  } else {
+    // Legacy single-profile migration
+    const legacyProfile = normalizeProfile(candidate.profile || candidate);
+    legacyProfile.id = "default";
+    legacyProfile.profileName = "Default Profile";
+    profiles = { "default": legacyProfile };
+    activeProfileId = "default";
+  }
+
+  if (!profiles[activeProfileId]) {
+    const keys = Object.keys(profiles);
+    activeProfileId = keys.length ? keys[0] : "default";
+  }
+
+  if (Object.keys(profiles).length === 0) {
+    profiles["default"] = {
+      id: "default",
+      profileName: "Default Profile",
+      fullName: ""
+    };
+    activeProfileId = "default";
+  }
+
   return {
-    profile: normalizeProfile(candidate.profile || candidate),
+    profiles,
+    activeProfileId,
+    profile: profiles[activeProfileId],
+    passcodeHash: typeof candidate.passcodeHash === "string" ? candidate.passcodeHash : "",
     version: Number.isFinite(Number(candidate.version)) ? Number(candidate.version) : 0,
     updatedAt: Number.isFinite(Number(candidate.updatedAt)) ? Number(candidate.updatedAt) : 0,
     origin: typeof candidate.origin === "string" ? candidate.origin : "unknown"
@@ -107,33 +156,104 @@ function validateProfile(profile) {
   }
   if ((profile.fullName || "").length > 120) errors.push("fullName too long");
   if ((profile.headline || "").length > 160) errors.push("headline too long");
-  if ((profile.summary || "").length > 1200) errors.push("summary too long");
-  if ((profile.location || "").length > 120) errors.push("location too long");
-  if ((profile.portfolio || "").length > 280) errors.push("portfolio too long");
-  if ((profile.resumeDraft || "").length > 20000) errors.push("resumeDraft too long");
   if ((profile.targetRole || "").length > 160) errors.push("targetRole too long");
-  if (profile.email && String(profile.email).length > 280) errors.push("email too long");
-  // run AJV validation to get structured errors when available
-  if (ajvValidate) {
-    const valid = ajvValidate(profile);
-    if (!valid && Array.isArray(ajvValidate.errors)) {
-      for (const err of ajvValidate.errors) {
-        errors.push(`${err.instancePath || err.schemaPath || "profile"} ${err.message}`);
+
+  if (!profile.encryptedBlob) {
+    if ((profile.summary || "").length > 1200) errors.push("summary too long");
+    if ((profile.location || "").length > 120) errors.push("location too long");
+    if ((profile.portfolio || "").length > 280) errors.push("portfolio too long");
+    if ((profile.resumeDraft || "").length > 20000) errors.push("resumeDraft too long");
+    if (profile.email && String(profile.email).length > 280) errors.push("email too long");
+    // run AJV validation to get structured errors when available
+    if (ajvValidate) {
+      const valid = ajvValidate(profile);
+      if (!valid && Array.isArray(ajvValidate.errors)) {
+        for (const err of ajvValidate.errors) {
+          errors.push(`${err.instancePath || err.schemaPath || "profile"} ${err.message}`);
+        }
       }
+    }
+  } else {
+    const blob = profile.encryptedBlob;
+    if (typeof blob.ciphertext !== "string" || !blob.ciphertext) errors.push("encryptedBlob.ciphertext must be a string");
+    if (typeof blob.iv !== "string" || !blob.iv) errors.push("encryptedBlob.iv must be a string");
+    if (typeof blob.salt !== "string" || !blob.salt) errors.push("encryptedBlob.salt must be a string");
+  }
+  return errors;
+}
+
+function validateState(nextState) {
+  const errors = [];
+  if (!nextState.profiles || typeof nextState.profiles !== "object" || Object.keys(nextState.profiles).length === 0) {
+    errors.push("profiles must be a non-empty object");
+    return errors;
+  }
+  if (typeof nextState.activeProfileId !== "string" || !nextState.activeProfileId) {
+    errors.push("activeProfileId must be a non-empty string");
+  } else if (!nextState.profiles[nextState.activeProfileId]) {
+    errors.push(`activeProfileId '${nextState.activeProfileId}' not found in profiles`);
+  }
+
+  for (const key of Object.keys(nextState.profiles)) {
+    const p = nextState.profiles[key];
+    const pErrors = validateProfile(p);
+    for (const err of pErrors) {
+      errors.push(`Profile '${key}': ${err}`);
     }
   }
   return errors;
 }
 
-let state = loadState();
-const clients = new Set();
+const db = require("./db");
+const auth = require("./auth-handler");
+const handleJobsSearch = require("./routes-jobs");
+
+const clients = new Set(); // Set of objects: { userId, res }
+
+function writeCorsHeaders(req, res) {
+  const origin = req.headers.origin;
+  if (origin) {
+    if (origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://") || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+}
+
+async function getRequestUser(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+  const token = authHeader.substring(7).trim();
+  // Try JWT decode
+  const decoded = auth.verifyToken(req);
+  if (decoded) {
+    return await db.getUserById(decoded.userId);
+  }
+  // Try passcode hash fallback
+  return await db.getUserByPasscodeHash(token);
+}
 
 function sendJson(res, code, payload) {
-  res.writeHead(code, {
+  const headers = {
     "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    "Access-Control-Allow-Origin": "*"
-  });
+    "Cache-Control": "no-store"
+  };
+  const currentOrigin = res.getHeader("Access-Control-Allow-Origin");
+  if (currentOrigin) {
+    headers["Access-Control-Allow-Origin"] = currentOrigin;
+    headers["Access-Control-Allow-Methods"] = res.getHeader("Access-Control-Allow-Methods") || "GET,POST,DELETE,OPTIONS";
+    headers["Access-Control-Allow-Headers"] = res.getHeader("Access-Control-Allow-Headers") || "Content-Type,Authorization";
+    headers["Access-Control-Allow-Credentials"] = "true";
+  } else {
+    headers["Access-Control-Allow-Origin"] = "*";
+  }
+  res.writeHead(code, headers);
   res.end(JSON.stringify(payload));
 }
 
@@ -145,195 +265,364 @@ function sendHtml(res, code, html) {
   res.end(html);
 }
 
-function broadcast(event) {
-  const data = `event: profile\nid: ${event.version}\ndata: ${JSON.stringify(event)}\n\n`;
-  for (const res of clients) {
-    res.write(data);
+function broadcast(userId, dataPayload, eventName = "profile") {
+  const message = `event: ${eventName}\nid: ${dataPayload.version || Date.now()}\ndata: ${JSON.stringify(dataPayload)}\n\n`;
+  for (const client of clients) {
+    if (client.userId === userId) {
+      try {
+        client.res.write(message);
+      } catch (e) {
+        console.error("SSE write failed, removing client");
+        clients.delete(client);
+      }
+    }
   }
 }
 
 function broadcastMaps(maps) {
-  const data = `event: maps\nid: ${maps.version || 0}\ndata: ${JSON.stringify(maps)}\n\n`;
-  for (const res of clients) {
-    res.write(data);
+  const message = `event: maps\nid: ${maps.version || 0}\ndata: ${JSON.stringify(maps)}\n\n`;
+  for (const client of clients) {
+    try {
+      client.res.write(message);
+    } catch (e) {
+      clients.delete(client);
+    }
   }
 }
 
-function updateState(incoming, origin = "client") {
-  const nextProfile = normalizeProfile(incoming.profile || incoming);
-  const errors = validateProfile(nextProfile);
-  if (errors.length) {
-    return { ok: false, errors };
-  }
-  const nextVersion = Number.isFinite(Number(incoming.version)) ? Number(incoming.version) : 0;
-  if (nextVersion && nextVersion < state.version) {
-    return { ok: false, conflict: true, current: state };
-  }
-  state = {
-    profile: nextProfile,
-    version: Math.max(state.version, nextVersion) + 1,
-    updatedAt: Date.now(),
-    origin
-  };
-  saveState(state);
-  broadcast(state);
-  return { ok: true, state };
-}
+const server = http.createServer(async (req, res) => {
+  writeCorsHeaders(req, res);
 
-const server = http.createServer((req, res) => {
-  if (req.method === "GET" && (req.url === "/" || req.url === "/index.html")) {
-    sendHtml(res, 200, `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CareerHub Sync Server</title>
-    <style>
-      :root { color-scheme: dark; }
-      * { box-sizing: border-box; }
-      body { margin: 0; font-family: Inter, Segoe UI, sans-serif; background: #050816; color: #f4f8ff; }
-      main { max-width: 1100px; margin: 0 auto; padding: 28px; display: grid; gap: 18px; }
-      .hero { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 18px; }
-      .card { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 20px; box-shadow: 0 18px 40px rgba(0,0,0,.25); backdrop-filter: blur(18px); }
-      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-      .row { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
-      .row:last-child { border-bottom: 0; }
-      .muted { color: rgba(244,248,255,.72); }
-      .pill { display: inline-flex; padding: 4px 10px; border-radius: 999px; background: rgba(47,233,200,.14); color: #baf9ef; font-size: 12px; }
-      pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
-      button { border: 0; border-radius: 12px; padding: 10px 14px; background: linear-gradient(135deg, #5b4fe8, #2ee9c8); color: white; cursor: pointer; }
-      .hint { color: rgba(244,248,255,.66); line-height: 1.6; }
-      h1, h2, h3, p { margin-top: 0; }
-      @media (max-width: 900px) { .hero, .grid { grid-template-columns: 1fr; } }
-    </style>
-  </head>
-  <body>
-    <main>
-      <section class="card hero">
-        <div>
-          <div class="pill">Live Sync</div>
-          <h1 style="margin-top:14px;font-size:clamp(2rem,5vw,3.6rem);letter-spacing:-0.05em;">CareerHub Sync Server</h1>
-          <p class="hint">This page shows the actual shared state used by the frontend and extension. It updates from server events and a manual refresh.</p>
-          <div class="row"><span>Profile API</span><span><code>/api/profile</code></span></div>
-          <div class="row"><span>Event stream</span><span><code>/api/events</code></span></div>
-          <div class="row"><span>Version</span><span id="version" class="pill">0</span></div>
-        </div>
-        <div class="card" style="background:rgba(255,255,255,.04);">
-          <h2>Live Fields</h2>
-          <div class="row"><span>Name</span><span id="fullName" class="muted">—</span></div>
-          <div class="row"><span>Headline</span><span id="headline" class="muted">—</span></div>
-          <div class="row"><span>Location</span><span id="location" class="muted">—</span></div>
-          <div class="row"><span>Portfolio</span><span id="portfolio" class="muted">—</span></div>
-        </div>
-      </section>
-      <section class="grid">
-        <div class="card">
-          <h2>More Fields</h2>
-          <div class="row"><span>Target role</span><span id="targetRole" class="muted">—</span></div>
-          <div class="row"><span>Summary</span><span id="summary" class="muted">—</span></div>
-          <div class="row"><span>Resume draft</span><span id="resumeDraft" class="muted">—</span></div>
-          <div class="row"><span>Updated</span><span id="updatedAt" class="muted">—</span></div>
-        </div>
-        <div class="card">
-          <h2>Operations</h2>
-          <p class="hint">This is the backend view of the same profile state. If the frontend or extension changes it, this card updates too.</p>
-          <div class="row" style="align-items:center;">
-            <span>Manual refresh</span>
-            <button id="refresh">Refresh now</button>
-          </div>
-          <div class="row" style="align-items:center;">
-            <span>Current origin</span>
-            <span id="origin" class="pill">init</span>
-          </div>
-        </div>
-      </section>
-      <section class="card">
-        <h2>Raw State</h2>
-        <pre id="rawState" class="muted">Loading…</pre>
-      </section>
-    </main>
-    <script>
-      const $ = (id) => document.getElementById(id);
-      function render(state) {
-        $("version").textContent = String(state?.version ?? 0);
-        $("fullName").textContent = state?.profile?.fullName || "—";
-        $("headline").textContent = state?.profile?.headline || "—";
-        $("location").textContent = state?.profile?.location || "—";
-        $("portfolio").textContent = state?.profile?.portfolio || "—";
-        $("targetRole").textContent = state?.profile?.targetRole || "—";
-        $("summary").textContent = state?.profile?.summary || "—";
-        $("resumeDraft").textContent = state?.profile?.resumeDraft || "—";
-        $("updatedAt").textContent = state?.updatedAt ? new Date(state.updatedAt).toLocaleString() : "—";
-        $("origin").textContent = state?.origin || "unknown";
-        $("rawState").textContent = JSON.stringify(state, null, 2);
+  // Preflight
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // Parse URL
+  const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+
+  // Static Health check
+  if (req.method === "GET" && urlObj.pathname === "/api/status") {
+    const stats = await db.getStats();
+    sendJson(res, 200, { ok: true, status: "online", users: stats.totalUsers, version: "1.2.0" });
+    return;
+  }
+
+  // Authentication routes
+  if (req.method === "POST" && urlObj.pathname === "/api/auth/register") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const payload = JSON.parse(body || "{}");
+        await auth.registerUser(req, res, payload);
+      } catch (e) {
+        sendJson(res, 400, { ok: false, error: "Invalid JSON format" });
       }
-      async function refresh() {
-        const response = await fetch('/api/profile', { cache: 'no-store' });
-        const state = await response.json();
-        render(state);
+    });
+    return;
+  }
+
+  if (req.method === "POST" && urlObj.pathname === "/api/auth/login") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const payload = JSON.parse(body || "{}");
+        await auth.loginUser(req, res, payload);
+      } catch (e) {
+        sendJson(res, 400, { ok: false, error: "Invalid JSON format" });
       }
-      $("refresh").addEventListener("click", refresh);
-      const source = new EventSource('/api/events');
-      source.addEventListener('profile', (event) => {
-        render(JSON.parse(event.data));
+    });
+    return;
+  }
+
+  // Public Jobs Proxy Search
+  if (req.method === "GET" && urlObj.pathname === "/api/jobs/search") {
+    await handleJobsSearch(req, res, urlObj);
+    return;
+  }
+
+  // Public extension download
+  if (req.method === "GET" && urlObj.pathname === "/api/extension/download") {
+    const zipPath = path.join(__dirname, "jobxapply-extension.zip");
+    if (fs.existsSync(zipPath)) {
+      res.writeHead(200, {
+        "Content-Type": "application/zip",
+        "Content-Disposition": "attachment; filename=jobxapply-extension.zip"
       });
-      refresh();
-    </script>
-  </body>
-</html>`);
+      fs.createReadStream(zipPath).pipe(res);
+    } else {
+      sendJson(res, 404, { ok: false, error: "Extension zip package not found" });
+    }
     return;
   }
 
-  if (req.method === "GET" && req.url === "/maps-editor") {
-    sendHtml(res, 200, `<!doctype html>
-<html>
-<head><meta charset="utf-8"><title>Maps Editor</title>
-<style>body{font-family:Inter,Segoe UI,Arial;margin:20px;background:#f6f8fb;color:#111}textarea{width:100%;height:60vh;font-family:monospace}</style>
-</head>
-<body>
-<h1>Portal Maps Editor</h1>
-<p>View and edit <code>database/portal-maps.json</code>. Save to push changes to the server.</p>
-<textarea id="maps">Loading...</textarea>
-<div style="margin-top:8px"><button id="save">Save maps</button> <span id="status"></span></div>
-<script>
-async function load(){ const r=await fetch('/api/maps'); const j=await r.json(); document.getElementById('maps').value=JSON.stringify(j, null, 2);} 
-async function save(){ document.getElementById('status').textContent='Saving...'; const body=document.getElementById('maps').value; try{ const r=await fetch('/api/maps',{method:'POST',headers:{'Content-Type':'application/json'},body}); const j=await r.json(); if(r.ok){ document.getElementById('status').textContent='Saved'; } else { document.getElementById('status').textContent='Error: '+(j.error||'unknown'); } }catch(e){ document.getElementById('status').textContent='Error: '+e.message }
-}
-document.getElementById('save').addEventListener('click',save);
-load();
-</script>
-</body>
-</html>`);
-    return;
-  }
-
-  if (req.method === "GET" && req.url === "/api/profile") {
-    sendJson(res, 200, state);
-    return;
-  }
-
-  if (req.method === "GET" && req.url === "/api/maps") {
-    // Serve the versioned portal maps
+  // Public portal maps view
+  if (req.method === "GET" && urlObj.pathname === "/api/maps") {
     sendJson(res, 200, portalMaps);
     return;
   }
 
-  if (req.method === "POST" && req.url === "/api/maps") {
-    // Replace maps file (simple admin endpoint for prototype)
+  // Public broken field report submission
+  if (req.method === "POST" && urlObj.pathname === "/api/report") {
     let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > 1_000_000) req.destroy();
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const payload = JSON.parse(body || "{}");
+        const entry = await db.createReport(payload);
+        sendJson(res, 200, { ok: true, report: entry });
+      } catch (e) {
+        sendJson(res, 400, { ok: false, error: e.message });
+      }
     });
+    return;
+  }
+
+  // ── Protected Authenticated Routes ────────────────────────────────────────
+
+  let activeUser = await getRequestUser(req);
+  const usersList = await db.getUsersList();
+  const isUninitialized = usersList.length === 0;
+
+  let isUnauthProfileRequest = false;
+  
+  if (urlObj.pathname === "/api/profile" && req.method === "GET") {
+    if (isUninitialized) {
+      sendJson(res, 200, {
+        profile: { fullName: "", email: "" },
+        version: 0,
+        updatedAt: Date.now()
+      });
+      return;
+    }
+    if (!activeUser && usersList.length > 0) {
+      activeUser = usersList[0];
+      isUnauthProfileRequest = true;
+    }
+  }
+
+  if (isUninitialized && urlObj.pathname === "/api/profile" && req.method === "POST") {
+    // Handled in POST /api/profile below
+  } else if (!activeUser && urlObj.pathname.startsWith("/api/")) {
+    if (urlObj.pathname !== "/api/events") {
+      sendJson(res, 401, { ok: false, error: "Unauthorized access: Invalid or missing token" });
+      return;
+    }
+  }
+
+  // GET User Profile
+  if (req.method === "GET" && urlObj.pathname === "/api/profile") {
+    let profile = await db.getProfile(activeUser.id);
+    if (profile) {
+      if (isUnauthProfileRequest) {
+        const activeId = profile.activeProfileId || "default";
+        const activeProfile = profile.profile || (profile.profiles && profile.profiles[activeId]) || {};
+        const { encryptedBlob, email, phone, address, city, state, country, zip, ...publicProfile } = activeProfile;
+        
+        sendJson(res, 200, {
+          profile: publicProfile,
+          version: profile.version || 1,
+          updatedAt: profile.updatedAt || Date.now(),
+          origin: profile.origin || "server"
+        });
+        return;
+      }
+      sendJson(res, 200, {
+        profiles: profile.profiles,
+        activeProfileId: profile.activeProfileId,
+        profile: profile.profile,
+        version: profile.version || 1,
+        updatedAt: profile.updatedAt || Date.now(),
+        origin: profile.origin || "server"
+      });
+    } else {
+      sendJson(res, 200, {
+        profile: { fullName: "", email: activeUser.email },
+        version: 0,
+        updatedAt: Date.now()
+      });
+    }
+    return;
+  }
+
+  // POST Update Profile
+  if (req.method === "POST" && urlObj.pathname === "/api/profile") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const incoming = JSON.parse(body || "{}");
+        
+        const currentUsers = await db.getUsersList();
+        if (currentUsers.length === 0) {
+          if (!incoming.passcodeHash) {
+            return sendJson(res, 400, { ok: false, error: "Passcode hash is required to initialize the server" });
+          }
+          const defaultUser = await db.createUser({
+            email: "default@jobxapply.local",
+            name: "Default Profile",
+            passwordHash: ""
+          });
+          await db.updateUserPasscodeHash(defaultUser.id, incoming.passcodeHash);
+          activeUser = defaultUser;
+        }
+
+        const stateData = normalizeState(incoming);
+        stateData.version = (stateData.version || 0) + 1;
+        stateData.updatedAt = Date.now();
+        stateData.origin = incoming.origin || "server";
+
+        const errors = validateState(stateData);
+        if (errors.length) {
+          return sendJson(res, 400, { ok: false, errors });
+        }
+
+        if (incoming.passcodeHash) {
+          await db.updateUserPasscodeHash(activeUser.id, incoming.passcodeHash);
+        }
+
+        await db.saveProfile(activeUser.id, stateData);
+
+        const responsePayload = {
+          profiles: stateData.profiles,
+          activeProfileId: stateData.activeProfileId,
+          profile: stateData.profile,
+          version: stateData.version,
+          updatedAt: stateData.updatedAt,
+          origin: stateData.origin
+        };
+
+        broadcast(activeUser.id, responsePayload);
+
+        sendJson(res, 200, { ok: true, state: responsePayload });
+      } catch (err) {
+        sendJson(res, 400, { ok: false, error: err.message });
+      }
+    });
+    return;
+  }
+
+  // GET Applications Tracker
+  if (req.method === "GET" && urlObj.pathname === "/api/tracker") {
+    const apps = await db.getApplications(activeUser.id);
+    sendJson(res, 200, { ok: true, applications: apps });
+    return;
+  }
+
+  // POST Sync Applications Tracker
+  if (req.method === "POST" && urlObj.pathname === "/api/tracker") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", async () => {
+      try {
+        const payload = JSON.parse(body || "{}");
+        if (!Array.isArray(payload.applications)) {
+          return sendJson(res, 400, { ok: false, error: "applications must be an array" });
+        }
+        await db.saveApplications(activeUser.id, payload.applications);
+        broadcast(activeUser.id, payload.applications, "tracker");
+        sendJson(res, 200, { ok: true, syncedCount: payload.applications.length });
+      } catch (e) {
+        sendJson(res, 400, { ok: false, error: e.message });
+      }
+    });
+    return;
+  }
+
+  // SSE Stream Events
+  if (req.method === "GET" && urlObj.pathname === "/api/events") {
+    const token = urlObj.searchParams.get("token");
+    let sseUser = null;
+    if (token) {
+      // Decode JWT
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        sseUser = await db.getUserById(decoded.userId);
+      } catch (_) {
+        // Fallback to passcode hash
+        sseUser = await db.getUserByPasscodeHash(token);
+      }
+    }
+    if (!sseUser) {
+      sendJson(res, 401, { ok: false, error: "Unauthorized SSE subscription" });
+      return;
+    }
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "Access-Control-Allow-Origin": res.getHeader("Access-Control-Allow-Origin") || "*"
+    });
+    res.write("\n");
+
+    const clientWrapper = { userId: sseUser.id, res };
+    clients.add(clientWrapper);
+
+    req.on("close", () => {
+      clients.delete(clientWrapper);
+    });
+    return;
+  }
+
+  // ── Admin-Only Routes ───────────────────────────────────────────────────
+
+  if (urlObj.pathname.startsWith("/api/admin/") || urlObj.pathname === "/api/reports" || (urlObj.pathname === "/api/maps" && req.method === "POST")) {
+    if (!activeUser || activeUser.role !== "admin") {
+      sendJson(res, 403, { ok: false, error: "Forbidden: Admin privileges required" });
+      return;
+    }
+  }
+
+  // GET Admin Telemetry Stats
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/stats") {
+    const stats = await db.getStats();
+    sendJson(res, 200, { ok: true, stats });
+    return;
+  }
+
+  // GET User List
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/users") {
+    const users = await db.getUsersList();
+    sendJson(res, 200, { ok: true, users });
+    return;
+  }
+
+  // DELETE User
+  if (req.method === "DELETE" && urlObj.pathname.startsWith("/api/admin/users/")) {
+    const userIdToDelete = urlObj.pathname.substring("/api/admin/users/".length);
+    if (!userIdToDelete) {
+      sendJson(res, 400, { ok: false, error: "User ID is required" });
+      return;
+    }
+    await db.deleteUser(userIdToDelete);
+    sendJson(res, 200, { ok: true, message: `User ${userIdToDelete} successfully deleted` });
+    return;
+  }
+
+  // GET Field Reports Queue
+  if (req.method === "GET" && urlObj.pathname === "/api/reports") {
+    const reports = await db.getReports();
+    sendJson(res, 200, { ok: true, reports });
+    return;
+  }
+
+  // POST Save live portal maps
+  if (req.method === "POST" && urlObj.pathname === "/api/maps") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
     req.on("end", () => {
       try {
         const incoming = JSON.parse(body || "{}");
-        // basic shape check
-        if (!incoming || typeof incoming !== 'object') {
-          sendJson(res, 400, { ok: false, error: 'invalid maps payload' });
+        if (!incoming || typeof incoming !== "object") {
+          sendJson(res, 400, { ok: false, error: "Invalid maps payload" });
           return;
         }
-        fs.writeFileSync(MAPS_FILE, JSON.stringify(incoming, null, 2), 'utf8');
+        fs.writeFileSync(MAPS_FILE, JSON.stringify(incoming, null, 2), "utf8");
         loadPortalMaps();
         broadcastMaps(portalMaps);
         sendJson(res, 200, { ok: true, maps: portalMaps });
@@ -344,79 +633,9 @@ load();
     return;
   }
 
-  if (req.method === "POST" && req.url === "/api/report") {
-    // store simple map issue reports
-    let body = "";
-    req.on("data", (chunk) => { body += chunk; if (body.length > 1_000_000) req.destroy(); });
-    req.on("end", () => {
-      try {
-        const incoming = JSON.parse(body || "{}");
-        const reportFile = path.join(__dirname, "..", "database", "map-reports.json");
-        let reports = [];
-        try { reports = JSON.parse(fs.readFileSync(reportFile, 'utf8') || '[]'); } catch (e) { reports = []; }
-        const entry = { id: Date.now(), createdAt: Date.now(), payload: incoming };
-        reports.push(entry);
-        fs.writeFileSync(reportFile, JSON.stringify(reports, null, 2), 'utf8');
-        sendJson(res, 200, { ok: true, report: entry });
-      } catch (e) {
-        sendJson(res, 400, { ok: false, error: e.message });
-      }
-    });
-    return;
-  }
-
-  if (req.method === "GET" && req.url === "/api/events") {
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "Access-Control-Allow-Origin": "*"
-    });
-    res.write("\n");
-    clients.add(res);
-    req.on("close", () => clients.delete(res));
-    return;
-  }
-
-  if (req.method === "POST" && req.url === "/api/profile") {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-      if (body.length > 1_000_000) req.destroy();
-    });
-    req.on("end", () => {
-      try {
-        const incoming = JSON.parse(body || "{}");
-        const result = updateState(incoming, incoming.origin || "client");
-        if (!result.ok) {
-          if (result.conflict) {
-            sendJson(res, 409, { ok: false, conflict: true, current: result.current });
-            return;
-          }
-          sendJson(res, 400, { ok: false, errors: result.errors });
-          return;
-        }
-        sendJson(res, 200, { ok: true, state: result.state });
-      } catch (error) {
-        sendJson(res, 400, { ok: false, error: error.message });
-      }
-    });
-    return;
-  }
-
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    });
-    res.end();
-    return;
-  }
-
   sendJson(res, 404, { ok: false, error: "Not found" });
 });
 
 server.listen(PORT, () => {
-  console.log(`CareerHub sync server running on http://localhost:${PORT}`);
+  console.log(`JobXApply sync server running on http://localhost:${PORT}`);
 });

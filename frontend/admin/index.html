@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerHub Admin // Command Center</title>
+<meta name="description" content="Admin Command Center">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style-glass.css">
+<script src="../shared-shell.js"></script>
+<style>
+  :root {
+    --base: #0B1020;
+    --primary: #5B4FE8;
+    --success: #2FDDC4;
+    --alert: #F5A623;
+    --white: #ffffff;
+    --text: #f4f7ff;
+    --muted: rgba(244,247,255,0.65);
+    --dim: rgba(244,247,255,0.4);
+    --glass-bg: rgba(255,255,255,0.05);
+    --glass-border: rgba(255,255,255,0.15);
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  body { 
+    padding-top: 70px; 
+    background-color: var(--base);
+    color: var(--text);
+    font-family: var(--body);
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
+    min-height: 100vh;
+    margin: 0;
+  }
+  body::after {
+    content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 10; }
+  
+  h1 {
+    font-family: var(--display);
+    font-size: 36px;
+    color: var(--alert);
+    text-transform: uppercase;
+    margin: 0 0 32px 0;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    backdrop-filter: blur(16px);
+    padding: 24px;
+  }
+  
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  
+  .stat-value {
+    font-family: var(--display);
+    font-size: 42px;
+    color: var(--white);
+    line-height: 1;
+  }
+  
+  .card-header {
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--alert);
+    text-transform: uppercase;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .health-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(47,221,196,0.1);
+    color: var(--success);
+    border: 1px solid rgba(47,221,196,0.3);
+  }
+  .health-badge.offline {
+    background: rgba(245,166,35,0.1);
+    color: var(--alert);
+    border-color: rgba(245,166,35,0.3);
+  }
+  .health-badge::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+  }
+  
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.1);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--muted); }
+  .info-val { color: var(--white); }
+  
+  .quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: rgba(245,166,35,0.05);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 10px;
+    color: var(--white);
+    text-decoration: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    transition: all 0.2s ease;
+  }
+  .action-btn:hover {
+    background: rgba(245,166,35,0.15);
+    border-color: var(--alert);
+    transform: translateY(-2px);
+  }
+  
+  .log-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .log-item {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    display: flex;
+    gap: 12px;
+  }
+  .log-time { color: var(--muted); width: 65px; }
+  .log-msg { color: var(--white); flex: 1; }
+  .log-status { color: var(--success); }
+  
+  .info-box {
+    background: rgba(91,79,232,0.1);
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .info-box-icon {
+    font-size: 24px;
+    color: var(--primary);
+  }
+  .info-box-content h3 { margin: 0 0 8px 0; font-family: var(--display); font-size: 18px; color: var(--white); }
+  .info-box-content p { margin: 0 0 12px 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+  .code-snippet {
+    background: rgba(0,0,0,0.3);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--success);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  @media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .grid-layout { grid-template-columns: 1fr; }
+  }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<!-- Admin Nav -->
+<nav style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.9);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;">
+  <div style="max-width:1400px;margin:0 auto;padding:0 20px;width:100%;display:flex;align-items:center;gap:24px;">
+    <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#F5A623;text-decoration:none;">[CH ADMIN]</a>
+    <div style="display:flex;gap:4px;flex:1;">
+      <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F5A623;padding:8px 14px;text-decoration:none;text-transform:uppercase;background:rgba(245,166,35,0.1);border-radius:6px;">Overview</a>
+      <a href="users.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Users</a>
+      <a href="portal-maps.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Portal Maps</a>
+      <a href="reports.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Reports</a>
+      <a href="analytics.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Analytics</a>
+    </div>
+    <a href="../dashboard.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);text-decoration:none;text-transform:uppercase;padding:8px 14px;">← Back to App</a>
+    <button onclick="logout()" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,247,255,0.45);border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:8px;background:transparent;cursor:pointer;transition:all 0.2s;">LOGOUT</button>
+  </div>
+</nav>
+
+<div class="container">
+  <h1><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Admin Command Center</h1>
+
+  <div class="stats-grid">
+    <div class="card stat-card">
+      <span class="stat-label">Total Users</span>
+      <span class="stat-value" id="stat-users">--</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Total Profiles Synced</span>
+      <span class="stat-value" id="stat-profiles">412</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Total Applications Logged</span>
+      <span class="stat-value" id="stat-apps">1,894</span>
+    </div>
+    <div class="card stat-card">
+      <span class="stat-label">Active SSE Connections</span>
+      <span class="stat-value" id="stat-sse">12</span>
+    </div>
+  </div>
+
+  <div class="grid-layout">
+    <div class="card">
+      <h2 class="card-header">
+        Server Health
+        <span class="health-badge" id="server-status">CHECKING...</span>
+      </h2>
+      <div class="info-row">
+        <span class="info-label">API Endpoint</span>
+        <span class="info-val">http://localhost:8787/api</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Server Version</span>
+        <span class="info-val">v1.2.0-beta</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Environment</span>
+        <span class="info-val" style="color:var(--alert)">PROTOTYPE / DEV</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Uptime Estimate</span>
+        <span class="info-val">4 days, 12 hrs</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-header">Quick Actions</h2>
+      <div class="quick-actions">
+        <a href="portal-maps.html" class="action-btn">
+          Edit Portal Maps
+          <span>→</span>
+        </a>
+        <a href="reports.html" class="action-btn">
+          Review Field Reports
+          <span>→</span>
+        </a>
+        <a href="users.html" class="action-btn">
+          Manage Users
+          <span>→</span>
+        </a>
+        <a href="analytics.html" class="action-btn">
+          View Analytics
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-header">Recent Sync Log (Simulated)</h2>
+    <ul class="log-list">
+      <li class="log-item">
+        <span class="log-time">09:54:12</span>
+        <span class="log-msg">Profile delta received from usr_9x21</span>
+        <span class="log-status">SUCCESS</span>
+      </li>
+      <li class="log-item">
+        <span class="log-time">09:51:05</span>
+        <span class="log-msg">New extension install connected (v2.1.0)</span>
+        <span class="log-status">SUCCESS</span>
+      </li>
+      <li class="log-item">
+        <span class="log-time">09:44:30</span>
+        <span class="log-msg">Application logged: Software Engineer at Stripe</span>
+        <span class="log-status">SUCCESS</span>
+      </li>
+      <li class="log-item">
+        <span class="log-time">09:30:11</span>
+        <span class="log-msg">Failed to match portal rules for 'unknown-ats.com'</span>
+        <span class="log-status" style="color:var(--alert)">WARNING</span>
+      </li>
+      <li class="log-item">
+        <span class="log-time">09:12:45</span>
+        <span class="log-msg">User usr_8a12 authenticated successfully</span>
+        <span class="log-status">SUCCESS</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="info-box">
+    <div class="info-box-icon">ℹ️</div>
+    <div class="info-box-content">
+      <h3>How to manage admin access</h3>
+      <p>In this local prototype, authentication is simulated via local storage. To elevate a user to admin or revoke access, modify the local storage payload.</p>
+      <div class="code-snippet">localStorage.setItem('jxa_role', 'admin');</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  requireAuth();
+  
+  if (localStorage.getItem('jxa_role') !== 'admin') {
+    window.location.href = '../dashboard.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('jxa_token');
+    localStorage.removeItem('jxa_role');
+    window.location.href = '../auth.html';
+  }
+
+  async function checkHealth() {
+    const badge = document.getElementById('server-status');
+    const usersStat = document.getElementById('stat-users');
+    const profilesStat = document.getElementById('stat-profiles');
+    const appsStat = document.getElementById('stat-apps');
+    const sseStat = document.getElementById('stat-sse');
+    
+    try {
+      const res = await fetch('http://localhost:8787/api/status');
+      if(res.ok) {
+        badge.textContent = 'ONLINE';
+        badge.className = 'health-badge';
+      } else {
+        throw new Error('Not OK');
+      }
+    } catch (e) {
+      badge.textContent = 'OFFLINE';
+      badge.className = 'health-badge offline';
+    }
+
+    try {
+      const token = localStorage.getItem("jxa_token");
+      const res = await fetch('http://localhost:8787/api/admin/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if(res.ok) {
+        const data = await res.json();
+        if (data.stats) {
+          usersStat.textContent = data.stats.totalUsers ?? 0;
+          profilesStat.textContent = data.stats.totalProfiles ?? 0;
+          appsStat.textContent = data.stats.totalApplications ?? 0;
+          sseStat.textContent = data.stats.pendingReports ?? 0; // Show pending reports in SSE slot for utility
+        }
+      }
+    } catch(e) {
+      console.error("Telemetry fetch failed:", e);
+    }
+  }
+
+  checkHealth();
+</script>
+</body>
+</html>

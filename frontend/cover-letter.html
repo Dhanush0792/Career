@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Cover Letter Generator</title>
+<meta name="description" content="Generate a tailored cover letter from your master profile.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js"></script>
+<style>
+body { padding-top: 80px; }
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width:1000px; margin:0 auto; padding:0 20px; position:relative; z-index:10; }
+.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
+.page-title { font-family:var(--display); font-size:36px; font-weight:900; text-transform:uppercase; color:var(--white); }
+.page-title em { font-style:normal; color:var(--primary); }
+.grid { display:grid; grid-template-columns:360px 1fr; gap:24px; margin-top:32px; }
+.card { border:1px solid var(--glass-border); background:rgba(255,255,255,.05); padding:24px; display:flex; flex-direction:column; gap:14px; border-radius:14px; backdrop-filter:blur(16px); }
+.card__title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; }
+.text-area { width:100%; height:160px; background:rgba(7,10,24,.6); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:12px; outline:none; resize:none; border-radius:8px; }
+.text-area:focus { border-color:var(--primary); }
+.form-row { display:flex; flex-direction:column; gap:6px; }
+.form-row label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+.form-row input { background:rgba(7,10,24,.6); border:1px solid var(--glass-border); padding:10px 14px; font-family:var(--mono); font-size:11px; color:var(--white); outline:none; border-radius:8px; }
+.form-row input:focus { border-color:var(--primary); }
+.gen-btn { width:100%; height:46px; background:var(--primary); color:var(--white); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; border:1px solid var(--primary); cursor:pointer; border-radius:12px; transition:all .2s; }
+.gen-btn:hover { background:rgba(91,79,232,.85); }
+.gen-btn:disabled { opacity:.45; cursor:not-allowed; }
+.output-letter-box { width:100%; min-height:400px; background:#ffffff; color:#1a1a1a; font-family:'Inter',sans-serif; font-size:13px; line-height:1.75; padding:36px; border:1px solid var(--glass-border); border-radius:10px; outline:none; overflow-y:auto; }
+.console-box { background:#000; border:1px solid var(--glass-border); padding:12px; font-family:var(--mono); font-size:10px; color:var(--muted); height:90px; overflow-y:auto; line-height:1.5; border-radius:8px; }
+.console-line { margin-bottom:2px; }
+.console-line.info { color:var(--primary); }
+.console-line.success { color:var(--success); }
+.console-line.warn { color:var(--alert); }
+.export-row { display:flex; gap:10px; }
+.export-btn { flex:1; height:40px; background:transparent; color:var(--muted); font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; border:1px solid var(--glass-border); cursor:pointer; border-radius:8px; transition:all .2s; }
+.export-btn:hover { color:var(--white); border-color:var(--glass-border); background:rgba(255,255,255,.04); }
+@media (max-width:720px) { .grid { grid-template-columns:1fr; } }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <div style="border-bottom:1px solid var(--glass-border); padding-bottom:20px; margin-bottom:4px;">
+    <div class="page-label">COVER LETTER DRAFT ENGINE</div>
+    <h1 class="page-title">COVER LETTER <em>TAILORING</em></h1>
+  </div>
+
+  <div class="grid">
+    <!-- Left: Inputs -->
+    <div class="card">
+      <div class="card__title">01 // TARGET JOB DETAILS</div>
+
+      <div id="profile-banner" style="display:none;" class="warn-banner">
+        ⚠ Some profile fields are missing.
+        <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Complete Profile →</a>
+      </div>
+
+      <div class="form-row">
+        <label>Company Name</label>
+        <input type="text" id="company-input" placeholder="e.g. Acme Corp" maxlength="120">
+      </div>
+      <div class="form-row">
+        <label>Role / Position</label>
+        <input type="text" id="role-input" placeholder="e.g. Frontend Engineer" maxlength="120">
+      </div>
+
+      <textarea class="text-area" id="jd-input" placeholder="Optional: Paste key requirements from the job description to personalise the letter further..."></textarea>
+
+      <button class="gen-btn" id="gen-btn">› GENERATE COVER LETTER</button>
+
+      <div class="console-box" id="console">
+        <div class="console-line">[SYS_INIT] Generator ready. Enter job details and click Generate.</div>
+      </div>
+    </div>
+
+    <!-- Right: Output -->
+    <div class="card">
+      <div class="card__title">02 // EDITABLE LETTER PREVIEW</div>
+      <div class="output-letter-box" contenteditable="true" id="letter-output">
+        [Your letter will appear here. The text is fully editable before export.]
+      </div>
+      <div class="export-row">
+        <button class="export-btn" onclick="exportText()">EXPORT .TXT</button>
+        <button class="export-btn" onclick="window.print()">PRINT / PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+requireAuth();
+renderNav(document.getElementById('main-nav'), 'cover-letter.html');
+
+const consoleBox = document.getElementById('console');
+const genBtn = document.getElementById('gen-btn');
+const outputBox = document.getElementById('letter-output');
+
+function addLog(text, cls = '') {
+  const line = document.createElement('div');
+  line.className = 'console-line ' + cls;
+  line.textContent = text;
+  consoleBox.appendChild(line);
+  consoleBox.scrollTop = consoleBox.scrollHeight;
+}
+
+let userProfile = {};
+
+(async () => {
+  const state = await loadProfile();
+  userProfile = state?.profile || {};
+
+  const missing = [];
+  if (!userProfile.fullName?.trim()) missing.push('Full Name');
+  if (!userProfile.targetRole?.trim()) missing.push('Target Role');
+  if (!userProfile.summary?.trim()) missing.push('Summary');
+
+  if (missing.length > 0) {
+    document.getElementById('profile-banner').style.display = 'flex';
+    addLog('[WARN] Profile incomplete — missing: ' + missing.join(', '), 'warn');
+  } else {
+    addLog('[SYS_LOAD] Profile loaded. Ready to generate.', 'info');
+  }
+
+  // Pre-fill role from profile target role if available
+  if (userProfile.targetRole) {
+    document.getElementById('role-input').value = userProfile.targetRole;
+  }
+})();
+
+genBtn.addEventListener('click', () => {
+  const company = document.getElementById('company-input').value.trim();
+  const role    = document.getElementById('role-input').value.trim();
+  const jdExtra = document.getElementById('jd-input').value.trim();
+
+  if (!company && !role) {
+    addLog('[WARN] Enter at least a company name or role.', 'warn');
+    return;
+  }
+
+  genBtn.disabled = true;
+  consoleBox.innerHTML = '';
+  addLog('[GEN] Loading profile data...');
+
+  setTimeout(() => {
+    addLog('[GEN] Assembling letter template...', 'info');
+    setTimeout(() => {
+
+      // Use real profile values; show placeholder text if missing
+      const name    = userProfile.fullName?.trim()    || '[Your Name]';
+      const jobRole = role    || userProfile.targetRole?.trim() || '[Position]';
+      const companyName = company || '[Company Name]';
+      const summary = userProfile.summary?.trim()     || '';
+      const headline = userProfile.headline?.trim()   || '';
+      const linkedin  = userProfile.linkedin?.trim()  || '';
+      const phone     = userProfile.phone?.trim()     || '';
+      const email     = userProfile.email?.trim()     || '';
+      const today     = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+      // Build the letter from real data
+      const hasContext = summary || headline;
+      const contextPara = hasContext
+        ? `\n\n${summary || headline}`
+        : '\n\n[Add a professional summary to your profile to personalise this section.]';
+
+      const jdPara = jdExtra
+        ? `\n\nHaving reviewed the role requirements, I am confident that my background aligns well with the key expectations: ${jdExtra.slice(0, 200)}${jdExtra.length > 200 ? '...' : ''}`
+        : '';
+
+      const contactLine = [phone, email, linkedin].filter(Boolean).join(' · ');
+
+      const letter = `${today}
+
+To the Hiring Team at ${companyName},
+
+Dear Hiring Manager,
+
+I am writing to express my genuine interest in the ${jobRole} position at ${companyName}. I believe my background and experience make me a strong candidate for this role.${contextPara}${jdPara}
+
+I would welcome the opportunity to discuss how my qualifications and approach align with your team's goals. Thank you for your time and consideration.
+
+Sincerely,
+${name}${contactLine ? '\n' + contactLine : ''}`;
+
+      outputBox.innerText = letter;
+      addLog('[GEN] Letter generated from your profile data.', 'success');
+      genBtn.disabled = false;
+
+    }, 900);
+  }, 500);
+});
+
+function exportText() {
+  const text = outputBox.innerText;
+  if (!text.trim() || text.startsWith('[Your letter')) {
+    showToast('Generate a letter first.', 'error');
+    return;
+  }
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'JobXApply_Cover_Letter.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Cover letter exported.', 'success');
+}
+</script>
+</body>
+</html>

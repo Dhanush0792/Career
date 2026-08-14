@@ -1,342 +1,237 @@
-// Custom cursor tracking
-const customCursorSetup = () => {
-  const cursor = {
-    el: document.createElement('div'),
-    x: 0,
-    y: 0,
-    vx: 0,
-    vy: 0
-  };
+/* ============================================================
+   INTERACTIONS.JS — Mouse Parallax, 3D Tilt, Custom Cursor
+   CareerBridge · Vermillion Edge
+   ============================================================ */
 
-  cursor.el.className = 'custom-cursor';
-  cursor.el.innerHTML = `
-    <div class="cursor-dot"></div>
-    <div class="cursor-ring"></div>
-  `;
-  document.body.appendChild(cursor.el);
+'use strict';
 
-  const dot = cursor.el.querySelector('.cursor-dot');
-  const ring = cursor.el.querySelector('.cursor-ring');
+// ── Custom Cursor ─────────────────────────────────────────────
+(function initCursor() {
+  const dot  = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  if (!dot || !ring) return;
 
-  document.addEventListener('mousemove', (e) => {
-    cursor.x = e.clientX;
-    cursor.y = e.clientY;
+  // Only on non-touch devices
+  if (window.matchMedia('(hover: none)').matches) {
+    dot.style.display = 'none';
+    ring.style.display = 'none';
+    return;
+  }
+
+  let mx = -100, my = -100;
+  let rx = -100, ry = -100;
+  let rafId = null;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX;
+    my = e.clientY;
+    if (!rafId) rafId = requestAnimationFrame(moveCursor);
   });
 
-  const animate = () => {
-    dot.style.transform = `translate(${cursor.x - 3.5}px, ${cursor.y - 3.5}px)`;
-    cursor.vx += (cursor.x - cursor.vx) * 0.2;
-    cursor.vy += (cursor.y - cursor.vy) * 0.2;
-    ring.style.transform = `translate(${cursor.vx - 18}px, ${cursor.vy - 18}px)`;
-    requestAnimationFrame(animate);
-  };
+  function moveCursor() {
+    rafId = null;
+    dot.style.left  = mx + 'px';
+    dot.style.top   = my + 'px';
+    // Ring lags behind slightly
+    rx += (mx - rx) * 0.18;
+    ry += (my - ry) * 0.18;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    rafId = requestAnimationFrame(moveCursor);
+  }
 
-  animate();
+  // Hover state on interactive elements
+  const hoverEls = document.querySelectorAll(
+    'a, button, .glass-card, .faq-trigger, .pricing-card, .marquee-item, [role="button"]'
+  );
 
-  // Add hover effect to interactive elements
-  const interactiveElements = document.querySelectorAll('a, button, .btn, input, textarea, [role="button"]');
-  
-  interactiveElements.forEach(element => {
-    element.addEventListener('mouseenter', () => {
-      ring.classList.add('hover');
+  hoverEls.forEach(el => {
+    el.addEventListener('mouseenter', () => ring.classList.add('is-hovering'));
+    el.addEventListener('mouseleave', () => ring.classList.remove('is-hovering'));
+  });
+
+  // Hide when cursor leaves window
+  document.addEventListener('mouseleave', () => {
+    dot.style.opacity = '0';
+    ring.style.opacity = '0';
+  });
+  document.addEventListener('mouseenter', () => {
+    dot.style.opacity = '1';
+    ring.style.opacity = '1';
+  });
+})();
+
+
+// ── Hero Dashboard Panel — Mouse Parallax ────────────────────
+(function initHeroParallax() {
+  const panel = document.querySelector('.dashboard-panel');
+  const hero  = document.querySelector('.hero');
+  if (!panel || !hero) return;
+
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  let baseX = -12, baseY = 4;
+  let targetX = baseX, targetY = baseY;
+  let currentX = baseX, currentY = baseY;
+  let animating = false;
+
+  hero.addEventListener('mousemove', e => {
+    const rect = hero.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+
+    // Subtle: max ±6 degrees from base
+    targetX = baseX + dx * 6;
+    targetY = baseY - dy * 4;
+
+    if (!animating) {
+      animating = true;
+      requestAnimationFrame(animatePanel);
+    }
+  });
+
+  hero.addEventListener('mouseleave', () => {
+    targetX = baseX;
+    targetY = baseY;
+  });
+
+  function animatePanel() {
+    const lerpFactor = 0.06;
+    currentX += (targetX - currentX) * lerpFactor;
+    currentY += (targetY - currentY) * lerpFactor;
+
+    panel.style.transform =
+      `perspective(1000px) rotateY(${currentX}deg) rotateX(${currentY}deg)`;
+
+    const diff = Math.abs(currentX - targetX) + Math.abs(currentY - targetY);
+    if (diff > 0.01) {
+      requestAnimationFrame(animatePanel);
+    } else {
+      animating = false;
+      // Resume float animation
+      panel.style.transform = '';
+    }
+  }
+})();
+
+
+// ── Card 3D Tilt on Hover ─────────────────────────────────────
+(function initCardTilt() {
+  const cards = document.querySelectorAll('.glass-card[data-tilt]');
+  if (!cards.length) return;
+
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  const MAX_TILT = 8; // degrees
+
+  cards.forEach(card => {
+    let isInside = false;
+    let animId = null;
+    let targetRX = 0, targetRY = 0;
+    let currentRX = 0, currentRY = 0;
+
+    card.addEventListener('mouseenter', () => {
+      isInside = true;
+      card.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease';
+      if (!animId) animId = requestAnimationFrame(animateTilt);
     });
-    
-    element.addEventListener('mouseleave', () => {
-      ring.classList.remove('hover');
-    });
-  });
 
-  // Hide custom cursor on touch devices
-  document.addEventListener('touchstart', () => {
-    cursor.el.style.display = 'none';
-  });
-
-  document.addEventListener('mousemove', () => {
-    cursor.el.style.display = 'block';
-  });
-};
-
-// Floating animation for elements
-const setupFloatingAnimation = () => {
-  const floatingElements = document.querySelectorAll('[data-floating]');
-  
-  floatingElements.forEach((element, index) => {
-    const delay = index * 0.1;
-    element.style.animation = `floating ${3 + index}s ease-in-out ${delay}s infinite`;
-  });
-};
-
-// Glow effect on mouse move
-const setupGlowEffect = () => {
-  const glowElements = document.querySelectorAll('[data-glow]');
-  
-  document.addEventListener('mousemove', (e) => {
-    glowElements.forEach(element => {
-      const rect = element.getBoundingClientRect();
-      const distance = Math.sqrt(
-        Math.pow(e.clientX - rect.left, 2) + Math.pow(e.clientY - rect.top, 2)
-      );
-      const maxDistance = 200;
-      
-      if (distance < maxDistance) {
-        const intensity = 1 - distance / maxDistance;
-        element.style.boxShadow = `0 0 ${20 * intensity}px rgba(46, 233, 200, ${0.3 * intensity})`;
-      } else {
-        element.style.boxShadow = 'none';
-      }
-    });
-  });
-};
-
-// Card tilt effect
-const setupCardTilt = () => {
-  const tiltCards = document.querySelectorAll('[data-tilt]');
-  
-  tiltCards.forEach(card => {
-    card.addEventListener('mousemove', (e) => {
+    card.addEventListener('mousemove', e => {
       const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      
-      const rotateX = (y - centerY) / 20;
-      const rotateY = -(x - centerX) / 20;
-      
-      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / (rect.width / 2);
+      const dy = (e.clientY - cy) / (rect.height / 2);
+
+      targetRX = -dy * MAX_TILT;
+      targetRY =  dx * MAX_TILT;
     });
-    
+
     card.addEventListener('mouseleave', () => {
-      card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+      isInside = false;
+      targetRX = 0;
+      targetRY = 0;
+      card.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+    });
+
+    function animateTilt() {
+      const lerpFactor = isInside ? 0.12 : 0.08;
+      currentRX += (targetRX - currentRX) * lerpFactor;
+      currentRY += (targetRY - currentRY) * lerpFactor;
+
+      const tZ = isInside ? -6 : 0;
+      card.style.transform =
+        `perspective(800px) rotateX(${currentRX}deg) rotateY(${currentRY}deg) translateY(${tZ}px)`;
+
+      const diff = Math.abs(currentRX) + Math.abs(currentRY);
+      if (diff > 0.05 || isInside) {
+        animId = requestAnimationFrame(animateTilt);
+      } else {
+        card.style.transform = '';
+        card.style.transition = '';
+        animId = null;
+      }
+    }
+  });
+})();
+
+
+// ── Marquee Pause on Hover ────────────────────────────────────
+// (Handled via CSS: .marquee-track:hover .marquee-inner { animation-play-state: paused; })
+// JS fallback for touch devices if needed
+(function initMarquee() {
+  const tracks = document.querySelectorAll('.marquee-track');
+  if (!tracks.length) return;
+
+  tracks.forEach(track => {
+    const inner = track.querySelector('.marquee-inner');
+    if (!inner) return;
+
+    track.addEventListener('touchstart', () => {
+      inner.style.animationPlayState = 'paused';
+    }, { passive: true });
+
+    track.addEventListener('touchend', () => {
+      inner.style.animationPlayState = 'running';
+    }, { passive: true });
+  });
+})();
+
+
+// ── Smooth anchor scroll ─────────────────────────────────────
+(function initSmoothScroll() {
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', e => {
+      const id = anchor.getAttribute('href').slice(1);
+      const target = document.getElementById(id);
+      if (!target) return;
+      e.preventDefault();
+
+      const navHeight = document.querySelector('.nav')?.offsetHeight || 80;
+      const top = target.getBoundingClientRect().top + window.scrollY - navHeight - 24;
+      window.scrollTo({ top, behavior: 'smooth' });
     });
   });
-};
+})();
 
-// Ripple effect on click
-const setupRippleEffect = () => {
-  const rippleElements = document.querySelectorAll('[data-ripple]');
-  
-  rippleElements.forEach(element => {
-    element.addEventListener('click', (e) => {
-      const ripple = document.createElement('span');
-      const rect = element.getBoundingClientRect();
-      const size = Math.max(rect.width, rect.height);
-      const x = e.clientX - rect.left - size / 2;
-      const y = e.clientY - rect.top - size / 2;
-      
-      ripple.style.width = ripple.style.height = size + 'px';
-      ripple.style.left = x + 'px';
-      ripple.style.top = y + 'px';
-      ripple.className = 'ripple';
-      
-      element.appendChild(ripple);
-      
-      setTimeout(() => ripple.remove(), 600);
-    });
-  });
-};
 
-// Text highlight on scroll
-const setupTextHighlight = () => {
-  const highlightElements = document.querySelectorAll('[data-highlight]');
-  
-  const highlightObserver = new IntersectionObserver((entries) => {
+// ── ATS Ring Animation on scroll into view ────────────────────
+(function initATSRing() {
+  const ring = document.querySelector('.ats-ring-fill');
+  if (!ring) return;
+
+  let fired = false;
+  const observer = new IntersectionObserver(entries => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('highlighted');
+      if (entry.isIntersecting && !fired) {
+        fired = true;
+        ring.style.animation = 'ring-fill 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        observer.disconnect();
       }
     });
   }, { threshold: 0.5 });
-  
-  highlightElements.forEach(el => highlightObserver.observe(el));
-};
 
-// Particle background interaction
-const setupParticleInteraction = () => {
-  const particleCanvas = document.getElementById('particles');
-  if (!particleCanvas) return;
-
-  const ctx = particleCanvas.getContext('2d');
-  particleCanvas.width = window.innerWidth;
-  particleCanvas.height = window.innerHeight;
-
-  const particles = [];
-  const particleCount = Math.floor((window.innerWidth * window.innerHeight) / 8000);
-
-  class Particle {
-    constructor() {
-      this.x = Math.random() * particleCanvas.width;
-      this.y = Math.random() * particleCanvas.height;
-      this.vx = (Math.random() - 0.5) * 0.5;
-      this.vy = (Math.random() - 0.5) * 0.5;
-      this.radius = Math.random() * 1.5 + 0.5;
-      this.opacity = Math.random() * 0.5 + 0.2;
-    }
-
-    update() {
-      this.x += this.vx;
-      this.y += this.vy;
-
-      if (this.x < 0 || this.x > particleCanvas.width) this.vx *= -1;
-      if (this.y < 0 || this.y > particleCanvas.height) this.vy *= -1;
-    }
-
-    draw() {
-      ctx.fillStyle = `rgba(91, 79, 232, ${this.opacity})`;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  for (let i = 0; i < particleCount; i++) {
-    particles.push(new Particle());
-  }
-
-  const animate = () => {
-    ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-
-    particles.forEach(particle => {
-      particle.update();
-      particle.draw();
-    });
-
-    requestAnimationFrame(animate);
-  };
-
-  animate();
-
-  window.addEventListener('resize', () => {
-    particleCanvas.width = window.innerWidth;
-    particleCanvas.height = window.innerHeight;
-  });
-};
-
-// Scroll-triggered counter
-const setupScrollCounters = () => {
-  const counters = document.querySelectorAll('[data-counter]');
-  
-  counters.forEach(counter => {
-    const target = parseInt(counter.dataset.counter);
-    const duration = parseInt(counter.dataset.duration) || 2000;
-    
-    const counterObserver = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        let current = 0;
-        const increment = target / (duration / 16);
-        
-        const timer = setInterval(() => {
-          current += increment;
-          if (current >= target) {
-            counter.textContent = target;
-            clearInterval(timer);
-          } else {
-            counter.textContent = Math.floor(current);
-          }
-        }, 16);
-        
-        counterObserver.unobserve(counter);
-      }
-    }, { threshold: 0.5 });
-    
-    counterObserver.observe(counter);
-  });
-};
-
-// Add custom CSS for interactions
-const style = document.createElement('style');
-style.textContent = `
-  .custom-cursor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 999;
-    display: none;
-  }
-
-  @media (hover: hover) {
-    .custom-cursor {
-      display: block;
-    }
-
-    * {
-      cursor: none;
-    }
-  }
-
-  .cursor-dot {
-    position: fixed;
-    width: 8px;
-    height: 8px;
-    background: #2ee9c8;
-    border-radius: 50%;
-    box-shadow: 0 0 12px rgba(46, 233, 200, 0.8);
-    pointer-events: none;
-    z-index: 999;
-  }
-
-  .cursor-ring {
-    position: fixed;
-    width: 40px;
-    height: 40px;
-    border: 1.5px solid rgba(46, 233, 200, 0.3);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 999;
-    transition: border-color 0.3s ease;
-  }
-
-  .cursor-ring.hover {
-    border-color: #2ee9c8;
-    box-shadow: 0 0 15px rgba(46, 233, 200, 0.5);
-  }
-
-  .ripple {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.7);
-    transform: scale(0);
-    animation: ripple-animation 0.6s ease-out;
-    pointer-events: none;
-  }
-
-  @keyframes ripple-animation {
-    to {
-      transform: scale(4);
-      opacity: 0;
-    }
-  }
-
-  [data-tilt] {
-    transition: transform 0.3s cubic-bezier(0.23, 1, 0.320, 1);
-  }
-
-  .highlighted {
-    background: linear-gradient(120deg, transparent, rgba(46, 233, 200, 0.3), transparent);
-    animation: highlight-shimmer 2s ease-in-out;
-  }
-
-  @keyframes highlight-shimmer {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-`;
-document.head.appendChild(style);
-
-// Initialize all interactions
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.matchMedia('(hover: hover)').matches) {
-    customCursorSetup();
-  }
-  setupFloatingAnimation();
-  setupGlowEffect();
-  setupCardTilt();
-  setupRippleEffect();
-  setupTextHighlight();
-  setupParticleInteraction();
-  setupScrollCounters();
-
-  console.log('Interactive effects initialized.');
-});
+  observer.observe(ring);
+})();

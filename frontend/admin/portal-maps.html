@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply Admin // Portal Maps</title>
+<meta name="description" content="Live Portal Map Editor">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style-glass.css">
+<script src="../shared-shell.js"></script>
+<style>
+  :root {
+    --base: #0B1020;
+    --primary: #5B4FE8;
+    --success: #2FDDC4;
+    --alert: #F5A623;
+    --white: #ffffff;
+    --text: #f4f7ff;
+    --muted: rgba(244,247,255,0.65);
+    --dim: rgba(244,247,255,0.4);
+    --glass-bg: rgba(255,255,255,0.05);
+    --glass-border: rgba(255,255,255,0.15);
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  body { 
+    padding-top: 56px; 
+    background-color: var(--base);
+    color: var(--text);
+    font-family: var(--body);
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  body::after {
+    content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+  
+  .layout {
+    display: flex;
+    flex: 1;
+    position: relative;
+    z-index: 10;
+    height: calc(100vh - 56px);
+  }
+  
+  .sidebar {
+    width: 260px;
+    background: rgba(11,16,32,0.8);
+    border-right: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .sidebar-header h2 {
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--alert);
+    margin: 0 0 12px 0;
+    text-transform: uppercase;
+  }
+  
+  .btn-new-portal {
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--alert);
+    color: var(--alert);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-new-portal:hover {
+    background: rgba(245,166,35,0.1);
+  }
+  
+  .portal-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .portal-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: var(--mono);
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .portal-item:hover { background: rgba(255,255,255,0.05); }
+  .portal-item.active {
+    background: rgba(245,166,35,0.1);
+    border-left: 3px solid var(--alert);
+    padding-left: 17px;
+  }
+  .tier-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.1);
+  }
+  .tier-1 { color: #2FDDC4; background: rgba(47,221,196,0.1); border: 1px solid rgba(47,221,196,0.3); }
+  .tier-2 { color: #5B4FE8; background: rgba(91,79,232,0.1); border: 1px solid rgba(91,79,232,0.3); }
+  .tier-3 { color: #F5A623; background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); }
+  
+  .editor-main {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  
+  .editor-title {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .editor-meta {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  
+  .btn-save {
+    background: var(--alert);
+    color: var(--base);
+    border: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245,166,35,0.3);
+  }
+  
+  .fields-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  
+  .fields-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .fields-table th {
+    text-align: left;
+    font-family: var(--display);
+    font-size: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .fields-table td {
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.1);
+  }
+  
+  .input-field {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .input-field:focus {
+    border-color: var(--alert);
+    outline: none;
+  }
+  
+  .btn-add-field {
+    background: transparent;
+    border: 1px dashed rgba(255,255,255,0.3);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: all 0.2s;
+  }
+  .btn-add-field:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: var(--white);
+  }
+  
+  .btn-delete {
+    background: transparent;
+    border: none;
+    color: var(--alert);
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .btn-delete:hover { opacity: 1; }
+  
+  .tester-card {
+    background: rgba(91,79,232,0.05);
+    border: 1px solid rgba(91,79,232,0.3);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  
+  .tester-card h3 {
+    margin: 0 0 16px 0;
+    font-family: var(--display);
+    font-size: 18px;
+    color: var(--primary);
+    text-transform: uppercase;
+  }
+  
+  .tester-flex {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .tester-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 0 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  
+  .log-console {
+    background: #000;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #0f0;
+    height: 100px;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+  
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--success);
+    color: #000;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 2000;
+  }
+  .toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .toast.error {
+    background: var(--alert);
+  }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<!-- Admin Nav -->
+<nav style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.9);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;">
+  <div style="max-width:1400px;margin:0 auto;padding:0 20px;width:100%;display:flex;align-items:center;gap:24px;">
+    <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#F5A623;text-decoration:none;">[CH ADMIN]</a>
+    <div style="display:flex;gap:4px;flex:1;">
+      <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Overview</a>
+      <a href="users.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Users</a>
+      <a href="portal-maps.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F5A623;padding:8px 14px;text-decoration:none;text-transform:uppercase;background:rgba(245,166,35,0.1);border-radius:6px;">Portal Maps</a>
+      <a href="reports.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Reports</a>
+      <a href="analytics.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Analytics</a>
+    </div>
+    <a href="../dashboard.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);text-decoration:none;text-transform:uppercase;padding:8px 14px;">← Back to App</a>
+    <button onclick="logout()" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,247,255,0.45);border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:8px;background:transparent;cursor:pointer;transition:all 0.2s;">LOGOUT</button>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Portals</h2>
+      <button class="btn-new-portal" onclick="alert('Add portal functionality in development.')">+ ADD NEW PORTAL</button>
+    </div>
+    <ul class="portal-list" id="portal-list">
+      <li style="padding: 20px; color: var(--muted); font-size: 12px; text-align: center;">Loading maps...</li>
+    </ul>
+  </aside>
+
+  <main class="editor-main" id="editor-main">
+    <div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      Select a portal from the sidebar to edit its mapping rules.
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast">Saved successfully!</div>
+
+<script>
+  requireAuth();
+  
+  if (localStorage.getItem('jxa_role') !== 'admin') {
+    window.location.href = '../dashboard.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('jxa_token');
+    localStorage.removeItem('jxa_role');
+    window.location.href = '../auth.html';
+  }
+
+  let mapsData = null;
+  let activePortalId = null;
+
+  async function loadMaps() {
+    try {
+      const res = await fetch('http://localhost:8787/api/maps');
+      if (res.ok) {
+        const rawData = await res.json();
+        // Bridge object structure to the editor's array expectation
+        const portals = Object.keys(rawData.maps || {}).map(name => {
+          let tier = 2;
+          const t1 = ["LinkedIn", "Naukri", "Wellfound", "Indeed", "Internshala"];
+          if (t1.includes(name)) tier = 1;
+          
+          let pattern = ".*";
+          if (name === "LinkedIn") pattern = "linkedin\\.com/jobs";
+          else if (name === "Naukri") pattern = "naukri\\.com";
+          else if (name === "Indeed") pattern = "indeed\\.com";
+          else if (name === "Wellfound") pattern = "wellfound\\.com";
+          
+          const fields = {};
+          Object.keys(rawData.maps[name]).forEach(k => {
+            fields[k] = { selector: rawData.maps[name][k] };
+          });
+
+          return {
+            name,
+            tier,
+            urlPattern: pattern,
+            fields
+          };
+        });
+        
+        mapsData = { version: rawData.version || 2, portals };
+        renderSidebar();
+      } else {
+        throw new Error('Failed to load maps');
+      }
+    } catch (e) {
+      document.getElementById('portal-list').innerHTML = `<li style="padding:20px;color:var(--alert);font-size:12px;">Failed to connect to Maps API: ${e.message}</li>`;
+    }
+  }
+
+  function renderSidebar() {
+    const list = document.getElementById('portal-list');
+    list.innerHTML = '';
+    
+    if (!mapsData || !mapsData.portals) return;
+    
+    mapsData.portals.forEach((p, idx) => {
+      const li = document.createElement('li');
+      li.className = `portal-item ${idx === activePortalId ? 'active' : ''}`;
+      li.innerHTML = `
+        <span>${p.name}</span>
+        <span class="tier-badge tier-${p.tier}">T${p.tier}</span>
+      `;
+      li.onclick = () => selectPortal(idx);
+      list.appendChild(li);
+    });
+  }
+
+  function selectPortal(idx) {
+    activePortalId = idx;
+    renderSidebar();
+    
+    const p = mapsData.portals[idx];
+    const main = document.getElementById('editor-main');
+    
+    let rowsHtml = '';
+    if (p.fields) {
+      Object.keys(p.fields).forEach(key => {
+        rowsHtml += `
+          <tr>
+            <td style="width:30%"><input type="text" class="input-field" value="${key}" data-key="${key}"></td>
+            <td style="width:60%"><input type="text" class="input-field" value="${p.fields[key].selector.replace(/"/g, '&quot;')}" data-val="true"></td>
+            <td style="width:10%;text-align:right;"><button class="btn-delete" onclick="this.closest('tr').remove()" title="Remove field">✖</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    main.innerHTML = `
+      <div class="editor-header">
+        <div>
+          <h1 class="editor-title">
+            ${p.name}
+            <span class="tier-badge tier-${p.tier}" style="font-size:14px;padding:4px 10px;">TIER ${p.tier}</span>
+          </h1>
+          <div class="editor-meta">URL Pattern: <code>${p.urlPattern}</code></div>
+        </div>
+        <button class="btn-save" onclick="savePortal()">Save Changes</button>
+      </div>
+      
+      <div class="fields-card">
+        <table class="fields-table">
+          <thead>
+            <tr>
+              <th>Field Key</th>
+              <th>CSS Selector / Rule</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="fields-tbody">
+            ${rowsHtml}
+          </tbody>
+        </table>
+        <button class="btn-add-field" onclick="addFieldRow()">+ Add Field</button>
+      </div>
+      
+      <div class="tester-card">
+        <h3>Test Selector Engine</h3>
+        <div class="tester-flex">
+          <input type="text" class="input-field" id="test-url" placeholder="Paste a job application URL here..." style="flex:1;">
+          <button class="tester-btn" onclick="testUrl()">TEST</button>
+        </div>
+        <div class="log-console" id="log-console">
+          > Ready to test URLs against portal map patterns...
+        </div>
+      </div>
+    `;
+  }
+  
+  function addFieldRow() {
+    const tbody = document.getElementById('fields-tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="width:30%"><input type="text" class="input-field" placeholder="e.g. firstName"></td>
+      <td style="width:60%"><input type="text" class="input-field" placeholder="CSS selector"></td>
+      <td style="width:10%;text-align:right;"><button class="btn-delete" onclick="this.closest('tr').remove()" title="Remove field">✖</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  async function savePortal() {
+    if (activePortalId === null || !mapsData) return;
+    
+    // Read current state from the table rows
+    const rows = document.querySelectorAll('#fields-tbody tr');
+    const newFields = {};
+    
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const key = inputs[0].value.trim();
+      const selector = inputs[1].value.trim();
+      if (key && selector) {
+        newFields[key] = { selector };
+      }
+    });
+    
+    // Update local state
+    mapsData.portals[activePortalId].fields = newFields;
+    
+    // Compile portals array back to the backend maps object structure
+    const updatedMaps = {};
+    mapsData.portals.forEach(p => {
+      const fieldsObj = {};
+      Object.keys(p.fields).forEach(k => {
+        fieldsObj[k] = p.fields[k].selector;
+      });
+      updatedMaps[p.name] = fieldsObj;
+    });
+
+    const payload = {
+      version: (mapsData.version || 2) + 1,
+      maps: updatedMaps
+    };
+
+    try {
+      const token = localStorage.getItem("jxa_token");
+      const res = await fetch('http://localhost:8787/api/maps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const resData = await res.json();
+      if (res.ok && resData.ok) {
+        mapsData.version = payload.version;
+        showToast('Saved successfully!');
+      } else {
+        alert("Error saving: " + (resData.error || 'Server rejected request'));
+      }
+    } catch (e) {
+      alert("Error saving maps: " + e.message);
+    }
+  }
+  
+  function testUrl() {
+    const url = document.getElementById('test-url').value;
+    const log = document.getElementById('log-console');
+    
+    if(!url) {
+      log.innerHTML += '<br>> Error: Please enter a URL';
+      log.scrollTop = log.scrollHeight;
+      return;
+    }
+    
+    log.innerHTML += `<br>> Testing URL: ${url}`;
+    
+    const p = mapsData.portals[activePortalId];
+    try {
+      const regex = new RegExp(p.urlPattern);
+      if (regex.test(url)) {
+        log.innerHTML += `<br>> <span style="color:#2FDDC4">MATCH!</span> Pattern ${p.urlPattern} matches. Tier ${p.tier} engine would fire.`;
+      } else {
+        log.innerHTML += `<br>> <span style="color:#F5A623">NO MATCH.</span> Pattern ${p.urlPattern} failed to match.`;
+      }
+    } catch(e) {
+      log.innerHTML += `<br>> <span style="color:#F5A623">Error in regex pattern.</span>`;
+    }
+    log.scrollTop = log.scrollHeight;
+  }
+  
+  function showToast(msg, isError=false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = isError ? 'toast error show' : 'toast show';
+    setTimeout(() => { t.className = 'toast'; }, 3000);
+  }
+
+  loadMaps();
+</script>
+</body>
+</html>

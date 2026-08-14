@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Portals Directory</title>
+<meta name="description" content="Explore the 50+ supported job portals mapped by JobXApply's target acquisition engine.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --dim: rgba(244,247,255,0.4);
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.15);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+body { 
+  margin: 0;
+  background-color: var(--base);
+  color: var(--text);
+  font-family: var(--body);
+  padding-top: 100px;
+  padding-bottom: 100px;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 10; }
+h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-transform: uppercase; margin-top: 0; color: var(--white); }
+h1 { font-size: 56px; letter-spacing: 0.02em; margin-bottom: 16px; text-align: center; }
+.hero-subtitle { text-align: center; font-size: 18px; color: var(--muted); max-width: 600px; margin: 0 auto 60px; }
+a { color: inherit; text-decoration: none; }
+.card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 24px; transition: transform 0.3s ease, border-color 0.3s ease; }
+.card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.3); }
+.btn-primary { display: inline-flex; align-items: center; justify-content: center; background: var(--primary); color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700; padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn-primary:hover { background: #4a3fd6; transform: translateY(-2px); }
+.btn-ghost { display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.btn-ghost:hover { background: var(--glass-bg); transform: translateY(-2px); }
+
+.search-bar { display: flex; max-width: 600px; margin: 0 auto 60px; position: relative; }
+.search-bar input { width: 100%; background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--white); padding: 16px 24px; border-radius: 30px; font-family: var(--body); font-size: 16px; outline: none; backdrop-filter: blur(16px); transition: border-color 0.3s; }
+.search-bar input:focus { border-color: var(--primary); }
+
+.section-title { font-size: 32px; color: var(--primary); margin-bottom: 24px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; margin-bottom: 60px; }
+
+.portal-name { font-size: 24px; font-family: var(--display); letter-spacing: 0.02em; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.tier-badge { font-family: var(--mono); font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: 700; }
+.tier-1-badge { background: rgba(47,221,196,0.15); color: var(--success); border: 1px solid rgba(47,221,196,0.3); }
+.tier-2-badge { background: rgba(91,79,232,0.15); color: #a59eff; border: 1px solid rgba(91,79,232,0.3); }
+.tier-3-badge { background: rgba(245,166,35,0.15); color: var(--alert); border: 1px solid rgba(245,166,35,0.3); }
+
+.mapped-fields { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+.mapped-fields span { display: inline-block; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; margin: 0 4px 4px 0; border: 1px solid rgba(255,255,255,0.1); }
+
+.portal-link { font-family: var(--mono); font-size: 12px; color: var(--primary); font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; }
+.portal-link:hover { text-decoration: underline; }
+
+.universal-card { grid-column: 1 / -1; display: flex; flex-direction: column; md:flex-row; gap: 24px; align-items: center; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(91,79,232,0.1) 100%); }
+.universal-content { flex: 1; }
+
+.cta-section { text-align: center; margin-top: 80px; padding: 60px 24px; background: var(--glass-bg); border-radius: 24px; border: 1px solid var(--glass-border); }
+
+@media (max-width: 768px) {
+  h1 { font-size: 40px; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+<script src="public-nav.js"></script>
+
+<div class="container">
+  <h1>TARGET ACQUISITION<br><span style="color:var(--primary)">50+ PORTALS MAPPED</span></h1>
+  <p class="hero-subtitle">Our intelligent extension natively hooks into these platforms to automate your job application process with 99% accuracy.</p>
+
+  <div class="search-bar">
+    <input type="text" id="portal-search" placeholder="Search for a portal (e.g., LinkedIn, Greenhouse)..." onkeyup="filterPortals()">
+  </div>
+
+  <h2 class="section-title">Tier 1: Dedicated Maps</h2>
+  <div class="grid" id="tier1-grid">
+    <div class="card portal-card">
+      <div class="portal-name">LinkedIn <span class="tier-badge tier-1-badge">TIER 1</span></div>
+      <div class="mapped-fields">
+        <span>fullName</span> <span>email</span> <span>phone</span> <span>resume</span> <span>coverLetter</span>
+      </div>
+      <a href="#" class="portal-link">Try LinkedIn Easy Apply ›</a>
+    </div>
+    <div class="card portal-card">
+      <div class="portal-name">Naukri <span class="tier-badge tier-1-badge">TIER 1</span></div>
+      <div class="mapped-fields">
+        <span>profileTitle</span> <span>skills</span> <span>experience</span> <span>education</span> <span>ctc</span>
+      </div>
+      <a href="#" class="portal-link">Try Naukri ›</a>
+    </div>
+    <div class="card portal-card">
+      <div class="portal-name">Wellfound <span class="tier-badge tier-1-badge">TIER 1</span></div>
+      <div class="mapped-fields">
+        <span>pitch</span> <span>links</span> <span>availability</span> <span>role</span>
+      </div>
+      <a href="#" class="portal-link">Try Wellfound ›</a>
+    </div>
+    <div class="card portal-card">
+      <div class="portal-name">Indeed <span class="tier-badge tier-1-badge">TIER 1</span></div>
+      <div class="mapped-fields">
+        <span>name</span> <span>email</span> <span>cv</span> <span>certifications</span>
+      </div>
+      <a href="#" class="portal-link">Try Indeed ›</a>
+    </div>
+    <div class="card portal-card">
+      <div class="portal-name">Internshala <span class="tier-badge tier-1-badge">TIER 1</span></div>
+      <div class="mapped-fields">
+        <span>education</span> <span>projects</span> <span>availability</span> <span>location</span>
+      </div>
+      <a href="#" class="portal-link">Try Internshala ›</a>
+    </div>
+  </div>
+
+  <h2 class="section-title">Tier 2: ATS-Pattern Maps</h2>
+  <div class="grid" id="tier2-grid">
+    <div class="card portal-card"><div class="portal-name">Greenhouse <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Workday <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Lever <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Ashby <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">iCIMS <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">SmartRecruiters <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Taleo <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Freshteam <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Glassdoor <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Monster <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">Rippling <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+    <div class="card portal-card"><div class="portal-name">BambooHR <span class="tier-badge tier-2-badge">TIER 2</span></div></div>
+  </div>
+
+  <h2 class="section-title">Tier 3: Universal Engine</h2>
+  <div class="grid">
+    <div class="card universal-card">
+      <div class="universal-content">
+        <h3 style="font-size:28px;margin-bottom:12px;">Universal Fallback</h3>
+        <p style="color:var(--muted);line-height:1.6;margin-bottom:20px;">If an ATS isn't explicitly mapped in Tier 1 or 2, JobXApply's heuristic engine steps in. It analyzes HTML forms on the fly, scores field inputs based on labeling, and attempts an intelligent autofill for any site.</p>
+        <span class="tier-badge tier-3-badge">EXPERIMENTAL ENGINE</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-section">
+    <h2 style="font-size:36px;margin-bottom:16px;">Missing Your Target?</h2>
+    <p style="color:var(--muted);max-width:500px;margin:0 auto 32px;">We constantly add new portals. Let us know which one you're aiming for next.</p>
+    <a href="contact.html" class="btn-primary">Request a Portal</a>
+  </div>
+</div>
+
+<script>
+function filterPortals() {
+  const input = document.getElementById('portal-search').value.toLowerCase();
+  const cards = document.querySelectorAll('.portal-card');
+  
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase();
+    if(text.includes(input)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+</body>
+</html>

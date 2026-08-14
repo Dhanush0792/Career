@@ -1,6 +1,6 @@
 {
   "profile": {
-    "fullName": "",
+    "fullName": "Aryan Rawat",
     "firstName": "",
     "lastName": "",
     "age": 0,
@@ -14,7 +14,7 @@
     "state": "",
     "country": "",
     "zip": "",
-    "headline": "",
+    "headline": "Senior Staff Engineer",
     "summary": "",
     "education": "",
     "college": "",
@@ -24,9 +24,9 @@
     "github": "",
     "portfolio": "",
     "resumeDraft": "",
-    "targetRole": ""
+    "targetRole": "Solutions Architect"
   },
-  "version": 0,
-  "updatedAt": 0,
-  "origin": "init"
+  "version": 2,
+  "updatedAt": 1786621646260,
+  "origin": "client"
 }

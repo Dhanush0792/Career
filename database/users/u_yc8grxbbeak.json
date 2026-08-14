@@ -1,0 +1,48 @@
+{
+  "profile": {
+    "profiles": {
+      "default": {
+        "fullName": "Legacy Developer",
+        "headline": "Legacy Engineer",
+        "targetRole": "Fullstack Developer",
+        "id": "default",
+        "profileName": "Default Profile",
+        "encryptedBlob": {
+          "ciphertext": "FhE0Ft12IIrl/mellPQCyMiBMA93uVWeNqIvy24o2k3kWluN00TuIU30nYWpRE0EmDQvTw3lm4mSRBSsjQ5Cbq4MuJ7Z0Y3e4tKdYQ7Wtw==",
+          "iv": "8hdI1YZ3kKo6NEVn",
+          "salt": "viNF3RGJGO+4EIXXtxuSCg=="
+        }
+      },
+      "pm-profile": {
+        "fullName": "Aryan PM",
+        "headline": "Senior Product Manager",
+        "targetRole": "Product Manager",
+        "id": "pm-profile",
+        "profileName": "Product Manager Profile",
+        "encryptedBlob": {
+          "ciphertext": "stKW+ARsrMTcuyofybTCY6rxxNUnO17HyChuq1ojwq36o27O5iYNWZLU9Ll7sajrGPoihIlW6KVnktMGtVzW8Q8R2U8S1lByk/rd",
+          "iv": "PPbxshzCP8PZXztH",
+          "salt": "XWiQtcP8kZKlOHnDubHFvg=="
+        }
+      }
+    },
+    "activeProfileId": "pm-profile",
+    "profile": {
+      "fullName": "Aryan PM",
+      "headline": "Senior Product Manager",
+      "targetRole": "Product Manager",
+      "id": "pm-profile",
+      "profileName": "Product Manager Profile",
+      "encryptedBlob": {
+        "ciphertext": "stKW+ARsrMTcuyofybTCY6rxxNUnO17HyChuq1ojwq36o27O5iYNWZLU9Ll7sajrGPoihIlW6KVnktMGtVzW8Q8R2U8S1lByk/rd",
+        "iv": "PPbxshzCP8PZXztH",
+        "salt": "XWiQtcP8kZKlOHnDubHFvg=="
+      }
+    },
+    "passcodeHash": "",
+    "version": 2,
+    "updatedAt": 1786683308487,
+    "origin": "server"
+  },
+  "applications": []
+}

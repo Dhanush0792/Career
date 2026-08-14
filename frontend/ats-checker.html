@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // ATS Scorer</title>
+<meta name="description" content="Compare your resume skills against a job description to calculate an ATS compatibility score.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js"></script>
+<style>
+body { padding-top: 80px; }
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width:1000px; margin:0 auto; padding:0 20px; position:relative; z-index:10; }
+.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
+.page-title { font-family:var(--display); font-size:36px; font-weight:900; text-transform:uppercase; color:var(--white); margin-bottom:0; }
+.page-title em { font-style:normal; color:var(--primary); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:32px; }
+.card { border:1px solid var(--glass-border); background:rgba(255,255,255,.05); padding:24px; border-radius:14px; backdrop-filter:blur(16px); }
+.card__title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; margin-bottom:16px; }
+.text-area { width:100%; height:200px; background:rgba(7,10,24,.6); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:12px; outline:none; resize:vertical; border-radius:8px; }
+.text-area:focus { border-color:var(--primary); }
+.analyze-btn { grid-column:span 2; width:100%; height:48px; background:var(--primary); color:var(--white); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; border:1px solid var(--primary); cursor:pointer; border-radius:12px; margin-top:4px; transition:all .2s; }
+.analyze-btn:hover { background:rgba(91,79,232,.85); }
+.analyze-btn:disabled { opacity:.45; cursor:not-allowed; }
+.results-panel { grid-column:span 2; display:none; flex-direction:column; gap:20px; }
+.score-badge { display:flex; align-items:center; gap:24px; border:1px solid var(--glass-border); padding:20px; background:rgba(255,255,255,.04); border-radius:12px; }
+.score-val { font-family:var(--display); font-size:52px; font-weight:900; line-height:1; transition:color .3s; }
+.score-desc { font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; }
+.scanned-keywords { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.kw-box { border:1px solid var(--glass-border); padding:16px; background:rgba(255,255,255,.03); border-radius:10px; }
+.kw-title { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.1em; margin-bottom:10px; text-transform:uppercase; }
+.kw-tag { display:inline-block; font-family:var(--mono); font-size:9px; padding:3px 8px; margin:2px; border:1px solid; border-radius:4px; }
+.kw-tag.match { color:var(--success); border-color:rgba(47,221,196,.3); background:rgba(47,221,196,.07); }
+.kw-tag.missing { color:var(--primary); border-color:rgba(91,79,232,.3); background:rgba(91,79,232,.06); }
+.console-box { background:#000; border:1px solid var(--glass-border); padding:14px; font-family:var(--mono); font-size:10px; color:var(--muted); height:100px; overflow-y:auto; line-height:1.5; margin-top:4px; grid-column:span 2; border-radius:10px; }
+.console-line { margin-bottom:2px; }
+.console-line.info { color:var(--primary); }
+.console-line.success { color:var(--success); }
+.console-line.warn { color:var(--alert); }
+.profile-status-box { border:1px dashed var(--glass-border); padding:14px; background:rgba(7,10,24,.5); font-family:var(--mono); font-size:10px; color:var(--muted); border-radius:8px; line-height:1.6; }
+@media (max-width:680px) { .grid { grid-template-columns:1fr; } .analyze-btn, .results-panel, .console-box { grid-column:1; } .scanned-keywords { grid-template-columns:1fr; } }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <div style="border-bottom:1px solid var(--glass-border); padding-bottom:20px; margin-bottom:4px;">
+    <div class="page-label">ATS SCORE ANALYSIS</div>
+    <h1 class="page-title">RESUME COMPATIBILITY <em>TESTING</em></h1>
+  </div>
+
+  <div class="grid">
+    <!-- Left: JD input -->
+    <div class="card">
+      <div class="card__title">01 // TARGET JOB DESCRIPTION</div>
+      <textarea class="text-area" id="jd-input" placeholder="Paste the job description here. The system will extract keywords and compare them against your profile skills."></textarea>
+    </div>
+
+    <!-- Right: Profile preview -->
+    <div class="card">
+      <div class="card__title">02 // YOUR PROFILE SKILLS</div>
+      <div style="font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
+        Analyzing profile: <span id="res-name" style="color:var(--white)">Loading...</span>
+      </div>
+      <div class="profile-status-box">
+        SKILLS: <span id="res-skills" style="color:var(--white);">...</span>
+      </div>
+      <div id="skills-warn" style="display:none;" class="warn-banner" style="margin-top:12px;">
+        ⚠ No skills in your profile. <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Add skills →</a>
+      </div>
+    </div>
+
+    <button class="analyze-btn" id="run-check-btn">› ANALYZE COMPATIBILITY</button>
+
+    <div class="console-box" id="console">
+      <div class="console-line">[SYS_INIT] ATS analyzer loaded. Paste job description and click Analyze.</div>
+    </div>
+
+    <!-- Results (shown after analysis) -->
+    <div class="results-panel" id="results-panel">
+      <div class="score-badge">
+        <div class="score-val" id="score-number">—</div>
+        <div class="score-desc">
+          <span style="color:var(--white);font-weight:700;">ATS COMPATIBILITY SCORE</span><br>
+          Percentage of your profile skills that appear in the job description.<br>
+          <span id="score-detail" style="color:var(--dim);">—</span>
+        </div>
+      </div>
+      <div class="scanned-keywords">
+        <div class="kw-box">
+          <div class="kw-title" style="color:var(--success);">MATCHED IN JD</div>
+          <div id="matched-tags"></div>
+        </div>
+        <div class="kw-box">
+          <div class="kw-title" style="color:var(--primary);">NOT FOUND IN JD</div>
+          <div id="missing-tags"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+requireAuth();
+renderNav(document.getElementById('main-nav'), 'ats-checker.html');
+
+const consoleBox = document.getElementById('console');
+const runBtn = document.getElementById('run-check-btn');
+const resultsPanel = document.getElementById('results-panel');
+
+function addLog(text, cls = '') {
+  const line = document.createElement('div');
+  line.className = 'console-line ' + cls;
+  line.textContent = text;
+  consoleBox.appendChild(line);
+  consoleBox.scrollTop = consoleBox.scrollHeight;
+}
+
+let profileSkills = [];
+
+(async () => {
+  const state = await loadProfile();
+  const profile = state?.profile || {};
+  const name = profile.fullName || '';
+  const skillsRaw = profile.skills || '';
+  profileSkills = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+  const nameEl = document.getElementById('res-name');
+  const skillsEl = document.getElementById('res-skills');
+  const warnEl = document.getElementById('skills-warn');
+
+  if (!name) {
+    nameEl.innerHTML = '<a href="profile-setup.html" style="color:var(--alert);">[Name not set — Edit Profile]</a>';
+  } else {
+    nameEl.textContent = name.toUpperCase();
+  }
+
+  if (profileSkills.length === 0) {
+    skillsEl.innerHTML = '<span style="color:var(--muted);">None listed.</span>';
+    warnEl.style.display = 'flex';
+    addLog('[WARN] Profile has no skills. Add them in Profile to use ATS matching.', 'warn');
+  } else {
+    skillsEl.textContent = skillsRaw;
+    addLog('[SYS_LOAD] Profile loaded — ' + profileSkills.length + ' skill(s) available for matching.', 'info');
+  }
+})();
+
+runBtn.addEventListener('click', () => {
+  const jdText = document.getElementById('jd-input').value.trim();
+  if (!jdText) {
+    addLog('[WARN] Paste a job description first.', 'warn');
+    return;
+  }
+  if (profileSkills.length === 0) {
+    addLog('[WARN] No skills in profile to compare. Add skills in your Profile first.', 'warn');
+    showToast('Add skills to your profile first.', 'error');
+    return;
+  }
+
+  runBtn.disabled = true;
+  resultsPanel.style.display = 'none';
+  consoleBox.innerHTML = '';
+  addLog('[ANALYZE] Tokenizing job description...');
+
+  setTimeout(() => {
+    addLog('[ANALYZE] Matching against your profile skills...', 'info');
+    setTimeout(() => {
+      const stopWords = new Set([
+        'the','and','or','to','a','an','in','for','of','with','is','are','be',
+        'that','this','will','have','on','at','by','from','as','we','you','our',
+        'their','it','not','your','can','all','more','about','if','been','use',
+        'any','one','also','its','but','has','was','were','they','who','what',
+        'when','how','into','than','then','so','up','out','them','these','those',
+        'should','would','could','may','must','shall','do','does','did','get',
+        'per','role','work','team','job','experience','position','company',
+      ]);
+
+      const jdTokens = jdText.toLowerCase()
+        .replace(/[^a-z0-9\s.+#]/g, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 1 && !stopWords.has(w));
+      const jdSet = new Set(jdTokens);
+
+      const matched = [];
+      const missing = [];
+
+      profileSkills.forEach(skill => {
+        const tokens = skill.toLowerCase().split(/\s+/);
+        const isFound = tokens.some(t => jdSet.has(t) || [...jdSet].some(jw => jw.includes(t) || t.includes(jw)));
+        (isFound ? matched : missing).push(skill);
+      });
+
+      const matchedEl = document.getElementById('matched-tags');
+      const missingEl = document.getElementById('missing-tags');
+      matchedEl.innerHTML = '';
+      missingEl.innerHTML = '';
+
+      matched.forEach(s => { matchedEl.innerHTML += `<span class="kw-tag match">${s}</span>`; });
+      missing.forEach(s => { missingEl.innerHTML += `<span class="kw-tag missing">${s}</span>`; });
+
+      if (matched.length === 0 && missing.length === 0) {
+        matchedEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">No comparisons made.</span>';
+      }
+
+      const total = matched.length + missing.length;
+      const score = total > 0 ? Math.round((matched.length / total) * 100) : 0;
+      const scoreEl = document.getElementById('score-number');
+      scoreEl.textContent = total > 0 ? score + '%' : '—';
+      scoreEl.style.color = score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--alert)' : 'rgba(244,247,255,.4)';
+
+      document.getElementById('score-detail').textContent =
+        `${matched.length} of ${total} skills found in the job description.`;
+
+      addLog(`[DONE] ${matched.length} matched, ${missing.length} not found. Score: ${score}%.`, 'success');
+      resultsPanel.style.display = 'flex';
+      runBtn.disabled = false;
+    }, 800);
+  }, 500);
+});
+</script>
+</body>
+</html>

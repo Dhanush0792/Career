@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Contact</title>
+<meta name="description" content="Open channel. Contact the JobXApply team or request new portal mappings.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --dim: rgba(244,247,255,0.4);
+  --glass-bg: rgba(255,255,255,0.05);
+  --glass-border: rgba(255,255,255,0.15);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+* { box-sizing: border-box; }
+body { 
+  background: var(--base); 
+  color: var(--text); 
+  font-family: var(--body); 
+  padding-top: 70px; 
+  margin: 0;
+  min-height: 100vh; 
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%); 
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.container { max-width: 1000px; margin: 0 auto; padding: 60px 24px; position: relative; z-index: 10; }
+.hero { text-align: center; margin-bottom: 60px; }
+.hero h1 { font-family: var(--display); font-size: 4rem; margin: 0 0 16px; color: var(--white); text-transform: uppercase; letter-spacing: 2px; }
+
+.contact-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.contact-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 40px; backdrop-filter: blur(16px); }
+.contact-card h2 { font-family: var(--display); font-size: 2rem; color: var(--white); text-transform: uppercase; margin: 0 0 24px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-family: var(--mono); font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }
+.form-control { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px 16px; color: var(--white); font-family: var(--body); font-size: 1rem; transition: border-color 0.3s; }
+.form-control:focus { outline: none; border-color: var(--primary); }
+textarea.form-control { resize: vertical; min-height: 120px; }
+
+.btn-primary { background: var(--primary); color: var(--white); border: none; border-radius: 8px; padding: 14px 24px; font-family: var(--mono); font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; display: inline-block; transition: background 0.3s ease; width: 100%; text-align: center; }
+.btn-primary:hover { background: #6f65f0; }
+
+.info-box { background: rgba(47,221,196,0.05); border: 1px solid var(--success); border-radius: 14px; padding: 30px; margin-bottom: 30px; }
+.info-box h3 { font-family: var(--display); color: var(--success); font-size: 1.5rem; text-transform: uppercase; margin: 0 0 12px; }
+.info-box p { margin: 0 0 16px; font-size: 0.95rem; line-height: 1.6; color: var(--muted); }
+
+.support-info { font-size: 0.95rem; color: var(--muted); line-height: 1.6; }
+.support-info strong { color: var(--white); font-family: var(--mono); }
+
+.status-message { margin-top: 20px; padding: 12px; border-radius: 8px; font-family: var(--mono); font-size: 0.9rem; display: none; }
+.status-message.success { background: rgba(47,221,196,0.1); border: 1px solid var(--success); color: var(--success); display: block; }
+
+@media(max-width: 768px) {
+  .contact-layout { grid-template-columns: 1fr; }
+}
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+<script src="public-nav.js"></script>
+
+<div class="container">
+  <header class="hero">
+    <h1>Open Channel</h1>
+  </header>
+
+  <div class="contact-layout">
+    <div class="contact-card">
+      <h2>Send Transmission</h2>
+      <form id="contact-form">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" class="form-control" required placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" class="form-control" required placeholder="john@example.com">
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <select class="form-control" required id="subject-select">
+            <option value="General">General Inquiry</option>
+            <option value="Bug Report">Bug Report</option>
+            <option value="Portal Request">Portal Request</option>
+            <option value="Feature Request">Feature Request</option>
+            <option value="Partnership">Partnership</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea class="form-control" required placeholder="Enter your message..."></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Initiate Send</button>
+        <div id="form-status" class="status-message"></div>
+      </form>
+    </div>
+
+    <div>
+      <div class="info-box">
+        <h3>Request a Portal</h3>
+        <p>Encountered a job board that our extension doesn't currently support? Request a map deployment.</p>
+        <div class="form-group">
+          <label>Portal Name</label>
+          <input type="text" id="portal-name" class="form-control" placeholder="e.g. Workday Custom">
+        </div>
+        <div class="form-group">
+          <label>Portal URL</label>
+          <input type="url" id="portal-url" class="form-control" placeholder="https://...">
+        </div>
+        <button type="button" class="btn-primary" style="background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="requestPortal()">Submit Map Request</button>
+        <div id="portal-status" class="status-message" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="contact-card" style="padding:30px;">
+        <h2 style="font-size:1.5rem;margin-bottom:16px;">Support Specs</h2>
+        <div class="support-info">
+          <p><strong>Direct Link:</strong> <a href="mailto:missionhousehq@gmail.com" style="color:var(--text);">missionhousehq@gmail.com</a></p>
+          <p><strong>Response Time:</strong> Target SLA is under 24 hours for Operative and Command tiers. 48-72 hours for Recruit tier inquiries.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('contact-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('button');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    
+    // Simulate network delay
+    setTimeout(() => {
+      this.reset();
+      btn.textContent = 'Initiate Send';
+      btn.disabled = false;
+      
+      const status = document.getElementById('form-status');
+      status.textContent = '> Transmission successful. We will respond shortly.';
+      status.className = 'status-message success';
+      
+      setTimeout(() => {
+        status.className = 'status-message';
+      }, 5000);
+    }, 800);
+  });
+
+  function requestPortal() {
+    const name = document.getElementById('portal-name').value;
+    const url = document.getElementById('portal-url').value;
+    const status = document.getElementById('portal-status');
+    
+    if(!name || !url) {
+      status.textContent = '> Please provide both name and URL.';
+      status.className = 'status-message';
+      status.style.display = 'block';
+      status.style.color = 'var(--alert)';
+      status.style.borderColor = 'var(--alert)';
+      status.style.background = 'rgba(245,166,35,0.1)';
+      return;
+    }
+    
+    status.textContent = '> Processing...';
+    status.style.display = 'block';
+    
+    setTimeout(() => {
+      document.getElementById('portal-name').value = '';
+      document.getElementById('portal-url').value = '';
+      status.textContent = '> Map request logged. Our engineering team will review it.';
+      status.className = 'status-message success';
+      status.style.color = 'var(--success)';
+      status.style.borderColor = 'var(--success)';
+      status.style.background = 'rgba(47,221,196,0.1)';
+      
+      setTimeout(() => {
+        status.style.display = 'none';
+      }, 5000);
+    }, 600);
+  }
+</script>
+</body>
+</html>

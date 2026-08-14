@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js"></script>
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --dim: rgba(244,247,255,0.4);
+  --glass-bg: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.15);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+  --rejected: #eb5757;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0;
+  font-family: var(--body);
+  color: var(--text);
+  background-color: var(--base);
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
+  min-height: 100vh;
+  padding-top: 80px;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width: 800px; margin: 0 auto; padding: 0 24px 60px; position: relative; z-index: 10; }
+
+.page-header { margin-bottom: 30px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; }
+.page-title { font-family: var(--display); font-size: 36px; color: var(--primary); text-transform: uppercase; margin: 0; letter-spacing: 0.05em; }
+
+.settings-section {
+  background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 30px; margin-bottom: 24px;
+}
+.settings-section.danger { border-color: rgba(235, 87, 87, 0.4); }
+
+.section-title { font-family: var(--display); font-size: 20px; color: var(--white); text-transform: uppercase; margin: 0 0 20px 0; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+.danger .section-title { color: var(--rejected); }
+
+.data-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.data-row:last-child { border-bottom: none; }
+.data-label { color: var(--muted); font-size: 14px; }
+.data-val { font-family: var(--mono); color: var(--white); font-size: 14px; }
+
+.btn { padding: 10px 16px; border-radius: 6px; font-family: var(--mono); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: all 0.2s; border: none; }
+.btn-primary { background: var(--primary); color: var(--white); }
+.btn-primary:hover { background: #6c61f0; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--white); border: 1px solid var(--glass-border); }
+.btn-ghost:hover { background: var(--glass-bg); }
+.btn-danger { background: rgba(235, 87, 87, 0.1); color: var(--rejected); border: 1px solid rgba(235, 87, 87, 0.3); }
+.btn-danger:hover { background: rgba(235, 87, 87, 0.2); }
+
+.form-group { margin-bottom: 16px; }
+.form-input { width: 100%; max-width: 300px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--white); padding: 10px 12px; font-family: var(--mono); font-size: 14px; }
+.form-input:focus { outline: none; border-color: var(--primary); }
+
+.passcode-form { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+
+/* Toast */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast { background: var(--base); border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 8px; color: var(--white); font-family: var(--body); font-size: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideIn 0.3s ease forwards; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Account Settings</h1>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="section-title">Profile Snapshot</h2>
+    <div class="data-row">
+      <span class="data-label">Account Email</span>
+      <span class="data-val" id="disp-email">user@example.com</span>
+    </div>
+    <div class="data-row">
+      <span class="data-label">Full Name</span>
+      <span class="data-val" id="disp-name">-</span>
+    </div>
+    <div class="data-row">
+      <span class="data-label">Account Created</span>
+      <span class="data-val">Aug 14, 2026</span>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="section-title">Sync Vault Passcode</h2>
+    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">Your vault passcode encrypts local profile data before syncing it. We cannot recover this if lost.</p>
+    <div class="data-row">
+      <span class="data-label">Current Status</span>
+      <span class="data-val" style="color:var(--success);">Configured (••••••••)</span>
+    </div>
+    <div style="margin-top: 16px;">
+      <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'block'">Change Passcode</button>
+    </div>
+    <div class="passcode-form" id="passcode-form">
+      <div class="form-group">
+        <input type="password" class="form-input" id="new-passcode" placeholder="New Passcode">
+      </div>
+      <div class="form-group">
+        <input type="password" class="form-input" id="confirm-passcode" placeholder="Confirm Passcode">
+      </div>
+      <button class="btn btn-primary" onclick="savePasscode()">Save Passcode</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'none'" style="border:none;">Cancel</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="section-title">Data Export</h2>
+    <div class="data-row">
+      <span class="data-label">Export Profile Data (JSON)</span>
+      <button class="btn btn-ghost" onclick="exportProfile()">Export JSON</button>
+    </div>
+    <div class="data-row">
+      <span class="data-label">Export Applications (CSV)</span>
+      <button class="btn btn-ghost" onclick="exportApps()">Export CSV</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="section-title">Sync Status</h2>
+    <div class="data-row">
+      <span class="data-label">Last Sync</span>
+      <span class="data-val" id="disp-sync">Just now</span>
+    </div>
+    <div class="data-row">
+      <span class="data-label">Server Version</span>
+      <span class="data-val">v2.4.1</span>
+    </div>
+  </div>
+
+  <div class="settings-section danger">
+    <h2 class="section-title">Danger Zone</h2>
+    <div class="data-row">
+      <span class="data-label">Clear Applications Pipeline</span>
+      <button class="btn btn-danger" onclick="clearApps()">Clear Apps</button>
+    </div>
+    <div class="data-row">
+      <span class="data-label">Reset Local Profile Data</span>
+      <button class="btn btn-danger" onclick="resetProfile()">Reset Profile</button>
+    </div>
+    <div class="data-row">
+      <span class="data-label">Clear All Local Data & Logout</span>
+      <button class="btn btn-danger" onclick="factoryReset()">Erase Everything</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+if(typeof requireAuth === 'function') requireAuth();
+if(typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'settings.html');
+
+function showToast(msg, type='success') {
+  if(typeof window.showToast === 'function' && false) {
+    // skip fallback if provided by shell, but let's just use local for safety
+  }
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<span style="color:${type==='error'?'var(--alert)':'var(--success)'}">●</span> ${msg}`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function loadSettings() {
+  document.getElementById('disp-email').innerText = localStorage.getItem('jxa_user_email') || 'Unknown';
+  try {
+    const prof = JSON.parse(localStorage.getItem('jxa_local_profile'));
+    if(prof && prof.personal && prof.personal.fullName) {
+      document.getElementById('disp-name').innerText = prof.personal.fullName;
+    }
+  } catch(e){}
+}
+
+function savePasscode() {
+  const p1 = document.getElementById('new-passcode').value;
+  const p2 = document.getElementById('confirm-passcode').value;
+  if(!p1) return showToast('Passcode cannot be empty', 'error');
+  if(p1 !== p2) return showToast('Passcodes do not match', 'error');
+  
+  localStorage.setItem('jxa_passcode', p1);
+  showToast('Passcode updated successfully');
+  document.getElementById('passcode-form').style.display = 'none';
+  document.getElementById('new-passcode').value = '';
+  document.getElementById('confirm-passcode').value = '';
+}
+
+function exportProfile() {
+  const data = localStorage.getItem('jxa_local_profile') || '{}';
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'jobxapply_profile.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Profile exported');
+}
+
+function exportApps() {
+  const data = localStorage.getItem('jxa_applications') || '[]';
+  const apps = JSON.parse(data);
+  if(apps.length === 0) return showToast('No applications to export', 'error');
+  
+  const headers = ['Company', 'Role', 'Status', 'Date Applied'];
+  const rows = apps.map(a => `"${a.company}","${a.role}","${a.status}","${a.dateApplied}"`);
+  const csv = [headers.join(','), ...rows].join('\n');
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'jobxapply_apps.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Applications exported');
+}
+
+function clearApps() {
+  if(confirm('Delete all tracked applications? This cannot be undone.')) {
+    localStorage.removeItem('jxa_applications');
+    showToast('Applications cleared');
+  }
+}
+
+function resetProfile() {
+  if(confirm('Reset local profile data? You will lose any unsynced changes.')) {
+    localStorage.removeItem('jxa_local_profile');
+    showToast('Profile data reset');
+  }
+}
+
+function factoryReset() {
+  if(confirm('Are you absolutely sure? This will delete all local data and log you out.')) {
+    localStorage.clear();
+    window.location.href = 'auth.html';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadSettings);
+</script>
+</body>
+</html>

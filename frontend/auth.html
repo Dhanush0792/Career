@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Authentication Gateway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<style>
+:root {
+  --black:   #0B1020;
+  --s1:      rgba(255, 255, 255, 0.07);
+  --s2:      rgba(7, 10, 24, 0.6);
+  --border:  rgba(255, 255, 255, 0.12);
+  --border2: rgba(255, 255, 255, 0.2);
+  --white:   #ffffff;
+  --text:    #f4f7ff;
+  --muted:   rgba(244, 247, 255, 0.65);
+  --dim:     rgba(244, 247, 255, 0.4);
+  --orange:  #5B4FE8;
+  --orange3: rgba(91, 79, 232, 0.06);
+  --green:   #2FDDC4;
+  --mono:    'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body:    'Inter', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--body);
+  background: var(--black);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-image: radial-gradient(circle at 10% 20%, rgba(91, 79, 232, 0.15) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(47, 221, 196, 0.08) 0%, transparent 40%);
+  overflow: hidden;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  z-index: 1; pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.auth-container {
+  width: 100%;
+  max-width: 480px;
+  border: 1px solid var(--border);
+  background: var(--s1);
+  border-radius: 20px;
+  overflow: hidden;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 10;
+}
+.auth-header {
+  border-bottom: 1px solid var(--border);
+  display: flex;
+}
+.auth-tab {
+  flex: 1;
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-align: center;
+  color: var(--dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.auth-tab.active {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 2px solid var(--orange);
+}
+.auth-body {
+  padding: 32px;
+}
+.auth-title {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 24px;
+}
+.auth-title em {
+  font-style: normal;
+  color: var(--orange);
+}
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-group label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.form-input {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--white);
+  outline: none;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.form-input:focus {
+  border-color: var(--orange);
+}
+.auth-submit-btn {
+  width: 100%;
+  height: 48px;
+  background: var(--orange);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  border: 1px solid var(--orange);
+  cursor: pointer;
+  border-radius: 12px;
+  margin-top: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(91, 79, 232, 0.3);
+}
+.auth-submit-btn:hover {
+  background: rgba(91, 79, 232, 0.85);
+  box-shadow: 0 6px 20px rgba(91, 79, 232, 0.4);
+}
+.auth-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.auth-terminal {
+  background: #000;
+  border-top: 1px solid var(--border);
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  height: 100px;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+.term-line {
+  margin-bottom: 2px;
+}
+.term-line.info { color: var(--orange); }
+.term-line.success { color: var(--green); }
+
+.back-link {
+  display: inline-block;
+  margin-top: 24px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.back-link:hover {
+  color: var(--orange);
+}
+.form-input { width: 100%; }
+.pw-wrap { position: relative; }
+.pw-wrap .form-input { padding-right: 44px; width: 100%; }
+.pw-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--dim); font-size: 14px; padding: 4px;
+  transition: color .2s;
+}
+.pw-toggle:hover { color: var(--orange); }
+.field-error {
+  font-family: var(--mono); font-size: 9px; color: #ff6b6b;
+  margin-top: 4px; display: none;
+}
+.field-error.show { display: block; }
+.form-group.has-error .form-input { border-color: rgba(255,107,107,0.6); }
+.form-group.has-error .field-error { display: block; }
+.auth-links {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 16px;
+}
+.signup-only { display: none; }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<div class="auth-container">
+  <div class="auth-header">
+    <button class="auth-tab active" id="tab-login">01 // SIGN IN</button>
+    <button class="auth-tab" id="tab-signup">02 // SIGN UP</button>
+  </div>
+  
+  <div class="auth-body">
+    <h2 class="auth-title" id="auth-title">OPERATIVE <em>SIGN IN</em></h2>
+    
+    <form id="auth-form" onsubmit="return false;">
+      <div class="form-group signup-only" id="fg-name">
+        <label>Full Name</label>
+        <input type="text" class="form-input" id="auth-name" placeholder="Your full name" autocomplete="name">
+        <div class="field-error" id="err-name">Name is required for signup.</div>
+      </div>
+
+      <div class="form-group">
+        <label>Operative ID (Email)</label>
+        <input type="email" class="form-input" id="auth-email" placeholder="your@email.com" required autocomplete="email">
+        <div class="field-error" id="err-email">Enter a valid email address.</div>
+      </div>
+      
+      <div class="form-group">
+        <label>Access Code (Password)</label>
+        <div class="pw-wrap">
+          <input type="password" class="form-input" id="auth-password" placeholder="Min. 8 characters" required autocomplete="current-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('auth-password', this)" title="Show/hide password">👁</button>
+        </div>
+        <div class="field-error" id="err-password">Password must be at least 8 characters.</div>
+      </div>
+
+      <div class="form-group signup-only" id="fg-confirm">
+        <label>Confirm Password</label>
+        <div class="pw-wrap">
+          <input type="password" class="form-input" id="auth-confirm" placeholder="Repeat your password" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('auth-confirm', this)" title="Show/hide password">👁</button>
+        </div>
+        <div class="field-error" id="err-confirm">Passwords do not match.</div>
+      </div>
+      
+      <button type="submit" class="auth-submit-btn" id="auth-submit">AUTHENTICATE SYSTEM</button>
+
+      <div class="auth-links">
+        <a href="index.html" class="back-link">&lsaquo; RETURN HOME</a>
+        <a href="forgot-password.html" class="back-link" id="link-forgot">FORGOT PASSWORD?</a>
+      </div>
+    </form>
+  </div>
+  
+  <div class="auth-terminal" id="auth-terminal">
+    <div class="term-line">[SYS_INIT] Authentication interface loaded. Ready.</div>
+  </div>
+</div>
+
+<script>
+const tabLogin = document.getElementById('tab-login');
+const tabSignup = document.getElementById('tab-signup');
+const authTitle = document.getElementById('auth-title');
+const authSubmit = document.getElementById('auth-submit');
+const terminal = document.getElementById('auth-terminal');
+
+let mode = 'login';
+
+tabLogin.addEventListener('click', () => {
+  mode = 'login';
+  tabLogin.classList.add('active');
+  tabSignup.classList.remove('active');
+  authTitle.innerHTML = 'OPERATIVE <em>SIGN IN</em>';
+  authSubmit.textContent = 'AUTHENTICATE SYSTEM';
+  document.getElementById('link-forgot').style.display = '';
+  document.querySelectorAll('.signup-only').forEach(el => el.style.display = 'none');
+  addLog('[SYS_MODE] Switched to SIGN IN mode.');
+});
+
+tabSignup.addEventListener('click', () => {
+  mode = 'signup';
+  tabSignup.classList.add('active');
+  tabLogin.classList.remove('active');
+  authTitle.innerHTML = 'CREATE <em>NEW IDENTITY</em>';
+  authSubmit.textContent = 'PROVISION PROFILE';
+  document.getElementById('link-forgot').style.display = 'none';
+  document.querySelectorAll('.signup-only').forEach(el => el.style.display = 'flex');
+  addLog('[SYS_MODE] Switched to SIGN UP mode.');
+});
+
+function addLog(text, className = '') {
+  const line = document.createElement('div');
+  line.className = 'term-line ' + className;
+  line.textContent = text;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+function showError(id, show) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.toggle('show', show); }
+}
+
+function setGroupError(inputEl, hasError) {
+  inputEl.closest('.form-group').classList.toggle('has-error', hasError);
+}
+
+document.getElementById('auth-form').addEventListener('submit', () => {
+  const email    = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const confirm  = document.getElementById('auth-confirm')?.value || '';
+  const name     = document.getElementById('auth-name')?.value.trim() || '';
+
+  let valid = true;
+
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    setGroupError(document.getElementById('auth-email'), true);
+    valid = false;
+  } else { setGroupError(document.getElementById('auth-email'), false); }
+
+  if (!password || password.length < 8) {
+    setGroupError(document.getElementById('auth-password'), true);
+    valid = false;
+  } else { setGroupError(document.getElementById('auth-password'), false); }
+
+  if (mode === 'signup') {
+    if (!name) {
+      setGroupError(document.getElementById('auth-name'), true); valid = false;
+    } else { setGroupError(document.getElementById('auth-name'), false); }
+    if (confirm !== password) {
+      setGroupError(document.getElementById('auth-confirm'), true); valid = false;
+    } else { setGroupError(document.getElementById('auth-confirm'), false); }
+  }
+
+  if (!valid) { addLog('[AUTH_ERR] Validation failed. Correct errors above.', 'info'); return; }
+
+  authSubmit.disabled = true;
+  addLog(`[AUTH_EXEC] Initiating authentication for: ${email.toUpperCase()}...`);
+
+  const url = mode === 'login' ? `${SYNC_API}/auth/login` : `${SYNC_API}/auth/register`;
+  const bodyPayload = mode === 'login' 
+    ? { email, password } 
+    : { name, email, password };
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bodyPayload)
+  })
+  .then(async res => {
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Authentication rejected by system');
+    }
+    return data;
+  })
+  .then(async data => {
+    addLog('[AUTH_EXEC] Credential signature verified.', 'info');
+    addLog('[AUTH_EXEC] JWT Session key issued. PASS.', 'success');
+
+    // Store tokens & details in localStorage matching the JobXApply namespace
+    localStorage.setItem('jxa_token', data.token);
+    localStorage.setItem('jxa_user_email', data.user.email);
+    localStorage.setItem('jxa_role', data.user.role || 'user');
+
+    addLog('[SYS_QUERY] Checking master profile on sync network...', 'info');
+
+    try {
+      const profileRes = await fetch(`${SYNC_API}/profile`, {
+        headers: { 'Authorization': `Bearer ${data.token}` },
+        cache: 'no-store'
+      });
+      if (profileRes.ok) {
+        const stateData = await profileRes.json();
+        const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
+        
+        if (hasProfile) {
+          localStorage.setItem('jxa_local_profile', JSON.stringify(stateData.profile));
+          localStorage.setItem('jxa_local_state', JSON.stringify(stateData));
+          addLog('[SYS_QUERY] Existing profile loaded. Redirecting to dashboard...', 'success');
+          setTimeout(() => window.location.href = 'dashboard.html', 700);
+        } else {
+          addLog('[SYS_QUERY] Profile blank. Launching master profile setup wizard...', 'info');
+          setTimeout(() => window.location.href = 'profile-setup.html', 700);
+        }
+      } else {
+        addLog('[SYS_QUERY] Profile request failed. Initializing wizard...', 'info');
+        setTimeout(() => window.location.href = 'profile-setup.html', 700);
+      }
+    } catch (e) {
+      addLog('[SYS_QUERY] Remote sync error. Running setup wizard offline...', 'info');
+      setTimeout(() => window.location.href = 'profile-setup.html', 700);
+    }
+  })
+  .catch(err => {
+    addLog(`[AUTH_ERR] ${err.message}`, 'info');
+    authSubmit.disabled = false;
+  });
+});
+
+// Already logged in → skip auth page
+if (localStorage.getItem('jxa_token')) {
+  window.location.replace('dashboard.html');
+}
+
+// Prefill email from query params (e.g. from landing CTA)
+const urlParams = new URLSearchParams(window.location.search);
+const emailParam = urlParams.get('email');
+if (emailParam) {
+  document.getElementById('auth-email').value = emailParam;
+  mode = 'signup';
+  tabSignup.classList.add('active');
+  tabLogin.classList.remove('active');
+  authTitle.innerHTML = 'CREATE <em>NEW IDENTITY</em>';
+  authSubmit.textContent = 'PROVISION PROFILE';
+  addLog('[SYS_INIT] Email pre-loaded from landing page. Ready to register.');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerHub Admin // Reports</title>
+<meta name="description" content="Field Report Queue">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style-glass.css">
+<script src="../shared-shell.js"></script>
+<style>
+  :root {
+    --base: #0B1020;
+    --primary: #5B4FE8;
+    --success: #2FDDC4;
+    --alert: #F5A623;
+    --white: #ffffff;
+    --text: #f4f7ff;
+    --muted: rgba(244,247,255,0.65);
+    --dim: rgba(244,247,255,0.4);
+    --glass-bg: rgba(255,255,255,0.05);
+    --glass-border: rgba(255,255,255,0.15);
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  body { 
+    padding-top: 70px; 
+    background-color: var(--base);
+    color: var(--text);
+    font-family: var(--body);
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
+    min-height: 100vh;
+    margin: 0;
+  }
+  body::after {
+    content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 10; }
+  
+  h1 {
+    font-family: var(--display);
+    font-size: 36px;
+    color: var(--alert);
+    text-transform: uppercase;
+    margin: 0 0 12px 0;
+    letter-spacing: 0.02em;
+  }
+  
+  .page-desc {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+  
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-pill {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(16px);
+  }
+  .stat-pill-val { font-family: var(--display); font-size: 24px; color: var(--white); }
+  .stat-pill-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--muted); }
+  
+  .toolbar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 16px;
+    border-radius: 12px;
+    backdrop-filter: blur(16px);
+  }
+  
+  .select-input {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--glass-border);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    outline: none;
+    min-width: 150px;
+  }
+  
+  .table-container {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  
+  th {
+    font-family: var(--display);
+    font-size: 16px;
+    color: var(--alert);
+    text-transform: uppercase;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.2);
+  }
+  
+  td {
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  
+  .td-mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  
+  .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .status-pending { background: rgba(245,166,35,0.15); color: var(--alert); border: 1px solid rgba(245,166,35,0.3); }
+  .status-resolved { background: rgba(47,221,196,0.1); color: var(--success); border: 1px solid rgba(47,221,196,0.3); }
+  .status-escalated { background: rgba(91,79,232,0.15); color: #9D94FF; border: 1px solid rgba(91,79,232,0.3); }
+  
+  .code-cell {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: rgba(0,0,0,0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--white);
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .btn-action {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-action:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: var(--white);
+  }
+  .btn-action.primary {
+    background: rgba(47,221,196,0.1);
+    border-color: var(--success);
+    color: var(--success);
+  }
+  .btn-action.primary:hover {
+    background: var(--success);
+    color: #000;
+  }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<!-- Admin Nav -->
+<nav style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.9);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;">
+  <div style="max-width:1400px;margin:0 auto;padding:0 20px;width:100%;display:flex;align-items:center;gap:24px;">
+    <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#F5A623;text-decoration:none;">[CH ADMIN]</a>
+    <div style="display:flex;gap:4px;flex:1;">
+      <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Overview</a>
+      <a href="users.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Users</a>
+      <a href="portal-maps.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Portal Maps</a>
+      <a href="reports.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F5A623;padding:8px 14px;text-decoration:none;text-transform:uppercase;background:rgba(245,166,35,0.1);border-radius:6px;">Reports</a>
+      <a href="analytics.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Analytics</a>
+    </div>
+    <a href="../dashboard.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);text-decoration:none;text-transform:uppercase;padding:8px 14px;">← Back to App</a>
+    <button onclick="logout()" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,247,255,0.45);border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:8px;background:transparent;cursor:pointer;transition:all 0.2s;">LOGOUT</button>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>FIELD REPORT QUEUE</h1>
+  <p class="page-desc">Reports submitted by extension users when autofill fails on a portal.</p>
+  
+  <div class="stats-row">
+    <div class="stat-pill">
+      <span class="stat-pill-val">12</span>
+      <span class="stat-pill-label">Total Reports</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill-val" style="color:var(--alert)">4</span>
+      <span class="stat-pill-label">Pending</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-pill-val" style="color:var(--success)">8</span>
+      <span class="stat-pill-label">Resolved</span>
+    </div>
+  </div>
+  
+  <div class="toolbar">
+    <select class="select-input" id="filter-status">
+      <option value="all">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="resolved">Resolved</option>
+      <option value="escalated">Escalated</option>
+    </select>
+    <select class="select-input" id="filter-portal">
+      <option value="all">All Portals</option>
+      <option value="Workday">Workday</option>
+      <option value="Greenhouse">Greenhouse</option>
+      <option value="Lever">Lever</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Portal</th>
+          <th>Field</th>
+          <th>Selector Tried</th>
+          <th>Reporter Email</th>
+          <th>Submitted At</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reports-tbody">
+        <!-- populated by JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  requireAuth();
+  
+  if (localStorage.getItem('jxa_role') !== 'admin') {
+    window.location.href = '../dashboard.html';
+  }
+
+  function logout() {
+    localStorage.removeItem('jxa_token');
+    localStorage.removeItem('jxa_role');
+    window.location.href = '../auth.html';
+  }
+
+  const mockReports = [
+    { portal: 'Workday', field: 'experience_years', selector: 'input[name="exp"]', email: 'user1@example.com', time: '10 mins ago', status: 'pending' },
+    { portal: 'Greenhouse', field: 'github_url', selector: '#github_link', email: 'dev@test.com', time: '1 hour ago', status: 'pending' }
+  ];
+
+  async function loadReports() {
+    const token = localStorage.getItem("jxa_token");
+    let reports = mockReports;
+    try {
+      const res = await fetch('http://localhost:8787/api/reports', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.reports) {
+          reports = data.reports.map(r => ({
+            portal: r.portal || "Unknown",
+            field: r.field || "Unknown",
+            selector: r.selectorTried || "N/A",
+            email: r.reporterEmail || "anonymous",
+            time: r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "Recently",
+            status: r.status || "pending"
+          }));
+        }
+      }
+    } catch(e) {
+      console.log('Using mock reports catalog.', e);
+    }
+    
+    renderTable(reports);
+    
+    document.getElementById('filter-status').addEventListener('change', () => filterData(reports));
+    document.getElementById('filter-portal').addEventListener('change', () => filterData(reports));
+  }
+
+  function filterData(allReports) {
+    const s = document.getElementById('filter-status').value;
+    const p = document.getElementById('filter-portal').value;
+    
+    let filtered = allReports;
+    if (s !== 'all') filtered = filtered.filter(r => r.status === s);
+    if (p !== 'all') filtered = filtered.filter(r => p === 'Other' ? !['Workday','Greenhouse','Lever'].includes(r.portal) : r.portal === p);
+    
+    renderTable(filtered);
+  }
+
+  function renderTable(reports) {
+    const tbody = document.getElementById('reports-tbody');
+    tbody.innerHTML = '';
+    
+    if (reports.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px;">No reports found.</td></tr>`;
+      return;
+    }
+
+    reports.forEach(r => {
+      const tr = document.createElement('tr');
+      
+      let statusClass = 'status-pending';
+      if(r.status === 'resolved') statusClass = 'status-resolved';
+      if(r.status === 'escalated') statusClass = 'status-escalated';
+      
+      tr.innerHTML = `
+        <td style="font-weight:600;">${r.portal}</td>
+        <td class="td-mono">${r.field}</td>
+        <td><span class="code-cell">${r.selector}</span></td>
+        <td class="td-mono">${r.email}</td>
+        <td class="td-mono">${r.time}</td>
+        <td><span class="status-badge ${statusClass}">${r.status}</span></td>
+        <td>
+          <div class="action-buttons">
+            ${r.status !== 'resolved' ? `<button class="btn-action primary" onclick="alert('Marked resolved')">✔ Resolve</button>` : ''}
+            <a href="portal-maps.html" class="btn-action">Edit Map</a>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  loadReports();
+</script>
+</body>
+</html>

@@ -6,6 +6,8 @@ const FIELD_ALIASES = {
   lastname: ["last", "lastname", "surname", "family name"],
   age: ["age"],
   dob: ["dob", "date of birth", "birthdate", "birthday"],
+  fathername: ["father's name", "father name", "guardian name", "father"],
+  mothername: ["mother's name", "mother name", "mother"],
   email: ["email", "email address", "e-mail"],
   phone: ["phone", "phone number", "mobile", "mobile number", "telephone"],
   address: ["address", "street", "address1"],
@@ -117,17 +119,21 @@ function setValue(el, value) {
 function buildAutofillPayload(profile, requestedFields) {
   const fields = requestedFields && requestedFields.length ? requestedFields : Object.keys(profile || {});
   const payload = {};
+  const profileLower = {};
+  for (const [k, v] of Object.entries(profile || {})) {
+    profileLower[k.toLowerCase()] = v;
+  }
   for (const field of fields) {
     const key = normalize(field).replace(/\s+/g, "");
-    if (Object.prototype.hasOwnProperty.call(profile, key)) {
-      payload[key] = profile[key];
-    } else if (key === "resume") {
-      payload[key] = profile.resumeDraft || "";
+    if (key === "resume") {
+      payload[key] = profileLower["resumedraft"] || profileLower["resume"] || "";
+    } else if (profileLower[key] !== undefined) {
+      payload[key] = profileLower[key];
     } else {
       payload[key] = profile[field] || profile[key] || "";
     }
   }
-  return { createdAt: new Date().toISOString(), source: "careerhub-profile", fields, payload };
+  return { createdAt: new Date().toISOString(), source: "jobxapply-profile", fields, payload };
 }
 
 // Floating autofill button shown near focused inputs
@@ -152,7 +158,7 @@ function createAutofillButton() {
     if (!active) return;
     const key = guessKeyForElement(active);
     const response = await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: "careerhub:getProfile" }, (res) => resolve(res));
+      chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => resolve(res));
     });
     const profile = response?.profile || {};
     if (key) {
@@ -205,16 +211,31 @@ document.addEventListener("click", (e) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type === "careerhub:applyAutofill") {
+  if (message?.type === "jobxapply:getPageText") {
+    try {
+      const clone = document.body.cloneNode(true);
+      const removals = clone.querySelectorAll("script, style, head, iframe, noscript, svg, nav, footer, header");
+      removals.forEach(el => el.remove());
+      const cleanText = clone.innerText || clone.textContent || "";
+      sendResponse({ ok: true, text: cleanText });
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
+  if (message?.type === "jobxapply:toggleMappingMode") {
+    toggleMappingMode();
+    sendResponse({ ok: true });
+    return true;
+  }
+  if (message?.type === "jobxapply:applyAutofill") {
     const profile = message.profile || {};
     const payload = buildAutofillPayload(profile, message.fields || []);
-    // ask background for portal-specific map
-    chrome.runtime.sendMessage({ type: "careerhub:getPortalMap", url: location.href }, (resp) => {
+    chrome.runtime.sendMessage({ type: "jobxapply:getPortalMap", url: location.href }, (resp) => {
       const portalMap = resp?.map || {};
       const results = [];
       for (const [field, value] of Object.entries(payload.payload || {})) {
         let filled = false;
-        // check portal map first
         const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
         if (mapSelector) {
           try {
@@ -223,9 +244,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               results.push({ field, status: "filled", via: "map" });
               filled = true;
             }
-          } catch (e) {
-            // selector may be invalid, fall back
-          }
+          } catch (e) {}
         }
         if (!filled) {
           const el = findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
@@ -241,3 +260,288 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 });
+
+function getBaseDomain(hostname) {
+  const parts = hostname.replace("www.", "").split(".");
+  if (parts.length > 2) {
+    const pen = parts[parts.length - 2];
+    if (["co", "com", "net", "org", "gov", "edu"].includes(pen) && parts.length > 2) {
+      return parts.slice(-3).join(".");
+    }
+    return parts.slice(-2).join(".");
+  }
+  return parts.join(".");
+}
+
+let mapperStyles = null;
+function injectMapperStyles() {
+  if (mapperStyles) return;
+  mapperStyles = document.createElement("style");
+  mapperStyles.textContent = `
+    .jxa-mapper-hover {
+      outline: 2px solid #5b4fe8 !important;
+      outline-offset: 2px !important;
+      cursor: crosshair !important;
+      box-shadow: 0 0 12px rgba(91, 79, 232, 0.4) !important;
+    }
+    .jxa-mapper-mapped {
+      outline: 2px solid #2fddc4 !important;
+      outline-offset: 2px !important;
+      background-color: rgba(47, 221, 196, 0.04) !important;
+      box-shadow: 0 0 8px rgba(47, 221, 196, 0.2) !important;
+    }
+  `;
+  document.head.appendChild(mapperStyles);
+}
+
+function removeMapperStyles() {
+  if (mapperStyles) {
+    mapperStyles.remove();
+    mapperStyles = null;
+  }
+}
+
+function getUniqueSelector(el) {
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (el.name) return `${el.tagName.toLowerCase()}[name="${CSS.escape(el.name)}"]`;
+  
+  const path = [];
+  let current = el;
+  while (current && current.nodeType === Node.ELEMENT_NODE) {
+    let selector = current.tagName.toLowerCase();
+    if (current.id) {
+      selector += `#${CSS.escape(current.id)}`;
+      path.unshift(selector);
+      break;
+    } else {
+      let sibIndex = 0;
+      let sib = current.previousElementSibling;
+      while (sib) {
+        if (sib.tagName === current.tagName) sibIndex++;
+        sib = sib.previousElementSibling;
+      }
+      selector += `:nth-of-type(${sibIndex + 1})`;
+    }
+    path.unshift(selector);
+    current = current.parentElement;
+  }
+  return path.join(" > ");
+}
+
+let mapperBanner = null;
+let mapperModal = null;
+let isMappingActive = false;
+
+function showMapperBanner() {
+  if (mapperBanner) return;
+  mapperBanner = document.createElement("div");
+  mapperBanner.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; height: 48px;
+    background: #0b1020; border-bottom: 2px solid #5b4fe8;
+    color: #fff; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; z-index: 2147483647; font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  `;
+  
+  const labelDiv = document.createElement("div");
+  labelDiv.innerHTML = `<span style="font-weight:700; color:#5b4fe8; margin-right:8px;">JobXApply</span> <span style="color: rgba(255,255,255,0.7)">// Visual Selector Mapper (Click fields to map them)</span>`;
+  
+  const exitBtn = document.createElement("button");
+  exitBtn.textContent = "Exit Mapper";
+  exitBtn.style.cssText = `
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; color: #fff; padding: 6px 12px; cursor: pointer; font-size: 11px;
+    font-weight: 600; font-family: inherit; transition: background 0.2s;
+  `;
+  exitBtn.addEventListener("mouseover", () => exitBtn.style.background = "rgba(255,255,255,0.15)");
+  exitBtn.addEventListener("mouseout", () => exitBtn.style.background = "rgba(255,255,255,0.08)");
+  exitBtn.addEventListener("click", () => toggleMappingMode(false));
+  
+  mapperBanner.appendChild(labelDiv);
+  mapperBanner.appendChild(exitBtn);
+  document.body.appendChild(mapperBanner);
+  document.body.style.paddingTop = "48px";
+}
+
+function hideMapperBanner() {
+  if (mapperBanner) {
+    mapperBanner.remove();
+    mapperBanner = null;
+    document.body.style.paddingTop = "";
+  }
+}
+
+const MAPPER_FIELDS = [
+  "fullName", "firstName", "lastName", "age", "dob", "email", "phone",
+  "address", "city", "state", "country", "zip", "headline", "summary",
+  "education", "college", "experience", "skills", "linkedin", "github", "portfolio", "resume", "targetRole"
+];
+
+function showMappingModal(el, selector) {
+  if (mapperModal) mapperModal.remove();
+  
+  mapperModal = document.createElement("div");
+  mapperModal.style.cssText = `
+    position: fixed; inset: 0; background: rgba(5,8,22,0.8);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2147483647; font-family: system-ui, -apple-system, sans-serif;
+    backdrop-filter: blur(8px);
+  `;
+  
+  const container = document.createElement("div");
+  container.style.cssText = `
+    background: #0b1020; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px; padding: 24px; width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    max-height: 80vh; display: flex; flex-direction: column;
+  `;
+  
+  const title = document.createElement("div");
+  title.textContent = "Map Input Field";
+  title.style.cssText = "font-size: 14px; font-weight:700; color:#fff; margin-bottom: 4px; text-transform:uppercase;";
+  
+  const preview = document.createElement("div");
+  preview.textContent = selector;
+  preview.style.cssText = "font-size: 11px; color:rgba(255,255,255,0.5); font-family: monospace; word-break:break-all; margin-bottom: 16px;";
+  
+  const list = document.createElement("div");
+  list.style.cssText = "overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px; padding-right:4px;";
+  
+  MAPPER_FIELDS.forEach(f => {
+    const btn = document.createElement("button");
+    btn.textContent = f;
+    btn.style.cssText = `
+      text-align: left; padding: 8px 12px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.8);
+      cursor: pointer; font-size: 12px; transition: background 0.15s, border-color 0.15s;
+    `;
+    btn.addEventListener("mouseover", () => {
+      btn.style.background = "rgba(91,79,232,0.12)";
+      btn.style.borderColor = "rgba(91,79,232,0.3)";
+    });
+    btn.addEventListener("mouseout", () => {
+      btn.style.background = "rgba(255,255,255,0.04)";
+      btn.style.borderColor = "rgba(255,255,255,0.08)";
+    });
+    btn.addEventListener("click", () => {
+      const domain = getBaseDomain(window.location.hostname);
+      chrome.runtime.sendMessage({
+        type: "jobxapply:saveCustomMap",
+        domain,
+        field: f,
+        selector
+      }, () => {
+        el.classList.add("jxa-mapper-mapped");
+        showToastNotification(`Mapped field: ${f}`);
+        mapperModal.remove();
+        mapperModal = null;
+      });
+    });
+    list.appendChild(btn);
+  });
+  
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.style.cssText = `
+    margin-top: 12px; background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; color: #fff; padding: 8px; cursor: pointer; font-size: 12px;
+  `;
+  cancelBtn.addEventListener("click", () => {
+    mapperModal.remove();
+    mapperModal = null;
+  });
+  
+  container.appendChild(title);
+  container.appendChild(preview);
+  container.appendChild(list);
+  container.appendChild(cancelBtn);
+  mapperModal.appendChild(container);
+  document.body.appendChild(mapperModal);
+}
+
+function showToastNotification(text) {
+  const toast = document.createElement("div");
+  toast.textContent = text;
+  toast.style.cssText = `
+    position: fixed; bottom: 24px; right: 24px; background: #070a18;
+    border: 1px solid #2fddc4; border-radius: 12px; padding: 12px 20px;
+    color: #fff; font-family: sans-serif; font-size: 13px; z-index: 2147483647;
+    box-shadow: 0 8px 24px rgba(47, 221, 196, 0.2); transition: opacity 0.3s;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+function toggleMappingMode(forceState) {
+  isMappingActive = typeof forceState === "boolean" ? forceState : !isMappingActive;
+  
+  if (isMappingActive) {
+    injectMapperStyles();
+    showMapperBanner();
+    highlightExistingMappedFields();
+    
+    document.addEventListener("mouseover", handleMouseOver, true);
+    document.addEventListener("mouseout", handleMouseOut, true);
+    document.addEventListener("click", handleFieldClick, true);
+    showToastNotification("Visual Mapper Active. Click any field to map.");
+  } else {
+    hideMapperBanner();
+    removeMapperStyles();
+    if (mapperModal) {
+      mapperModal.remove();
+      mapperModal = null;
+    }
+    
+    document.removeEventListener("mouseover", handleMouseOver, true);
+    document.removeEventListener("mouseout", handleMouseOut, true);
+    document.removeEventListener("click", handleFieldClick, true);
+    
+    document.querySelectorAll(".jxa-mapper-hover, .jxa-mapper-mapped").forEach(el => {
+      el.classList.remove("jxa-mapper-hover", "jxa-mapper-mapped");
+    });
+  }
+}
+
+function handleMouseOver(e) {
+  const t = e.target;
+  if (t && t.matches && t.matches("input, select, textarea")) {
+    e.preventDefault();
+    e.stopPropagation();
+    t.classList.add("jxa-mapper-hover");
+  }
+}
+
+function handleMouseOut(e) {
+  const t = e.target;
+  if (t && t.matches && t.matches("input, select, textarea")) {
+    t.classList.remove("jxa-mapper-hover");
+  }
+}
+
+function handleFieldClick(e) {
+  const t = e.target;
+  if (t && t.matches && t.matches("input, select, textarea")) {
+    e.preventDefault();
+    e.stopPropagation();
+    t.classList.remove("jxa-mapper-hover");
+    
+    const selector = getUniqueSelector(t);
+    showMappingModal(t, selector);
+  }
+}
+
+function highlightExistingMappedFields() {
+  chrome.runtime.sendMessage({ type: "jobxapply:getPortalMap", url: location.href }, (resp) => {
+    const map = resp?.map || {};
+    for (const selector of Object.values(map)) {
+      try {
+        const el = document.querySelector(selector);
+        if (el) {
+          el.classList.add("jxa-mapper-mapped");
+        }
+      } catch(e) {}
+    }
+  });
+}

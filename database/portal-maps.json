@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "maps": {
     "LinkedIn": {
       "fullName": "input[aria-label*='Full name'], input[placeholder*='Full name'], input[name*='fullName']",
@@ -8,7 +8,6 @@
       "email": "input[aria-label*='Email'], input[placeholder*='Email'], input[type='email']",
       "phone": "input[aria-label*='Phone'], input[placeholder*='Phone'], input[name*='phone']",
       "linkedin": "input[aria-label*='LinkedIn'], input[placeholder*='LinkedIn']",
-      "github": "input[aria-label*='GitHub'], input[placeholder*='GitHub']",
       "resume": "input[type='file'], input[accept*='pdf'], input[accept*='doc']"
     },
     "Naukri": {
@@ -17,6 +16,36 @@
       "phone": "input[placeholder*='Mobile'], input[name*='mobile'], input[name*='phone']",
       "resume": "input[type='file'][name*='resume'], input[type='file']",
       "college": "input[placeholder*='College'], input[name*='college']"
+    },
+    "Wellfound": {
+      "fullName": "input[name*='name'], input[placeholder*='name'], input[aria-label*='name']",
+      "email": "input[name*='email'], input[type='email']",
+      "phone": "input[name*='phone'], input[name*='mobile']",
+      "resume": "input[type='file']",
+      "linkedin": "input[name*='linkedin'], input[placeholder*='linkedin']",
+      "portfolio": "input[name*='portfolio'], input[placeholder*='portfolio']"
+    },
+    "Indeed": {
+      "fullName": "input[id*='name'], input[name*='name'], input[placeholder*='name']",
+      "email": "input[type='email'], input[id*='email'], input[name*='email']",
+      "phone": "input[type='tel'], input[id*='phone'], input[name*='phone']",
+      "resume": "input[type='file']",
+      "city: ": "input[id*='city'], input[name*='city']",
+      "country": "input[id*='country'], input[name*='country']"
+    },
+    "Greenhouse": {
+      "fullName": "#first_name, #last_name, #name, input[name*='name'], input[name*='first_name']",
+      "email": "#email, input[name*='email']",
+      "phone": "#phone, input[name*='phone']",
+      "resume": "#resume_file, input[type='file']",
+      "linkedin": "input[placeholder*='LinkedIn'], input[name*='linkedin']"
+    },
+    "Lever": {
+      "fullName": "input[name*='name']",
+      "email: ": "input[name*='email']",
+      "phone": "input[name*='phone']",
+      "resume": "input[type='file']",
+      "linkedin": "input[name*='linkedin'], input[placeholder*='linkedin']"
     }
   }
 }

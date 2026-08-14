@@ -1,149 +1,69 @@
-/* Scroll-triggered animations using AOS */
-[data-aos] {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) 0.1s,
-              transform 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) 0.1s;
+/* ============================================================
+   ANIMATIONS.CSS — Keyframes & Motion
+   CareerBridge · Vermillion Edge
+   ============================================================ */
+
+/* ── Grain drift — imperceptible shift for living texture ───── */
+@keyframes grain-drift {
+  0%   { background-position: 0% 0%; }
+  10%  { background-position: -5% -10%; }
+  20%  { background-position: -15% 5%; }
+  30%  { background-position: 7% -25%; }
+  40%  { background-position: -5% 25%; }
+  50%  { background-position: -15% 10%; }
+  60%  { background-position: 15% 0%; }
+  70%  { background-position: 0% 15%; }
+  80%  { background-position: 3% 35%; }
+  90%  { background-position: -10% 10%; }
+  100% { background-position: 0% 0%; }
 }
 
-[data-aos].aos-animate {
-  opacity: 1;
-  transform: translateY(0);
+/* ── Float — gentle breathing for hero elements ─────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-7px) rotate(0.4deg); }
+  66%       { transform: translateY(-3px) rotate(-0.3deg); }
 }
 
-/* Fade-in variants */
-[data-aos="fade-in"] {
-  opacity: 0;
-  transform: none;
+@keyframes float-b {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  40%       { transform: translateY(-10px) rotate(-0.5deg); }
+  70%       { transform: translateY(-5px) rotate(0.4deg); }
 }
 
-[data-aos="fade-up"] {
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-[data-aos="fade-down"] {
-  opacity: 0;
-  transform: translateY(-30px);
-}
-
-[data-aos="fade-left"] {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-
-[data-aos="fade-right"] {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-/* Zoom animations */
-[data-aos="zoom-in"] {
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-[data-aos="zoom-out"] {
-  opacity: 0;
-  transform: scale(1.1);
-}
-
-/* Flip animation */
-[data-aos="flip-left"] {
-  opacity: 0;
-  transform: perspective(1000px) rotateY(90deg);
-}
-
-[data-aos="flip-right"] {
-  opacity: 0;
-  transform: perspective(1000px) rotateY(-90deg);
-}
-
-/* Stagger delays */
-[data-aos-delay="100"] {
-  transition-delay: 0.1s, 0.1s;
-}
-
-[data-aos-delay="200"] {
-  transition-delay: 0.2s, 0.2s;
-}
-
-[data-aos-delay="300"] {
-  transition-delay: 0.3s, 0.3s;
-}
-
-[data-aos-delay="400"] {
-  transition-delay: 0.4s, 0.4s;
-}
-
-[data-aos-delay="500"] {
-  transition-delay: 0.5s, 0.5s;
-}
-
-/* Floating animation */
-@keyframes floating {
+/* ── Pulse glow — vermillion heartbeat ──────────────────────── */
+@keyframes vermillion-pulse {
   0%, 100% {
-    transform: translateY(0px);
+    box-shadow: 0 0 0 0 rgba(192, 57, 43, 0);
   }
   50% {
-    transform: translateY(-20px);
+    box-shadow: 0 0 24px 4px rgba(192, 57, 43, 0.25);
   }
 }
 
-.floating {
-  animation: floating 4s ease-in-out infinite;
+/* ── Status dot — live indicator ────────────────────────────── */
+@keyframes status-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
 }
 
-/* Glow pulse animation */
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(46, 233, 200, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(46, 233, 200, 0.6);
-  }
+/* ── Marquee — infinite left scroll ─────────────────────────── */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
-.glow-pulse {
-  animation: glow-pulse 3s ease-in-out infinite;
-}
-
-/* Gradient shift animation */
-@keyframes gradient-shift {
-  0% {
-    background-position: 0% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-.gradient-shift {
-  background-size: 200% 100%;
-  animation: gradient-shift 8s ease infinite;
-}
-
-/* Shimmer animation for loading states */
+/* ── Shimmer — card highlight sweep ─────────────────────────── */
 @keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
-.shimmer {
-  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-dark) 50%, var(--surface) 75%);
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite;
-}
-
-/* Page transition */
-@keyframes page-enter {
+/* ── Fade up — base reveal (used by JS) ─────────────────────── */
+@keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(28px);
   }
   to {
     opacity: 1;
@@ -151,64 +71,116 @@
   }
 }
 
-.page-enter {
-  animation: page-enter 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+/* ── Blur reveal — text word entrance ───────────────────────── */
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0);
+  }
 }
 
-/* Bounce animation */
-@keyframes bounce {
+/* ── Hero dashboard panel float ─────────────────────────────── */
+@keyframes dashboard-float {
   0%, 100% {
-    transform: translateY(0);
+    transform: perspective(1000px) rotateX(4deg) rotateY(-12deg) translateY(0px);
   }
   50% {
-    transform: translateY(-10px);
+    transform: perspective(1000px) rotateX(4deg) rotateY(-12deg) translateY(-10px);
   }
 }
 
-.bounce {
-  animation: bounce 1s ease-in-out infinite;
+/* ── Ring spinner — ATS score ring ──────────────────────────── */
+@keyframes ring-fill {
+  from { stroke-dashoffset: 226; }
+  to   { stroke-dashoffset: 56; }
 }
 
-/* Spin animation */
-@keyframes spin {
+/* ── Progress bar fill ───────────────────────────────────────── */
+@keyframes bar-fill {
+  from { width: 0%; }
+  to   { width: var(--fill-w, 75%); }
+}
+
+/* ── Number count up ─────────────────────────────────────────── */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Scale in spring ─────────────────────────────────────────── */
+@keyframes scale-in {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: scale(0.88);
   }
   to {
-    transform: rotate(360deg);
-  }
-}
-
-.spin {
-  animation: spin 2s linear infinite;
-}
-
-/* Text reveal animation */
-@keyframes text-reveal {
-  0% {
-    opacity: 0;
-    clip-path: inset(0 100% 0 0);
-  }
-  100% {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
+    transform: scale(1);
   }
 }
 
-.text-reveal {
-  animation: text-reveal 0.8s ease-out forwards;
-}
-
-/* Gradient border animation */
-@keyframes gradient-border {
-  0% {
-    filter: hue-rotate(0deg);
+/* ── Slide in from left ──────────────────────────────────────── */
+@keyframes slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
   }
-  100% {
-    filter: hue-rotate(360deg);
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-.gradient-border-animate {
-  animation: gradient-border 6s linear infinite;
+/* ── Slide in from right ─────────────────────────────────────── */
+@keyframes slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Rotate gradient border ──────────────────────────────────── */
+@keyframes border-spin {
+  to { --angle: 360deg; }
+}
+
+/* ── Word reveal — staggered hero headline ───────────────────── */
+.word-reveal .word {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(10px);
+  animation: blur-in 0.7s var(--ease-out) forwards;
+}
+
+.word-reveal .word:nth-child(1) { animation-delay: 0.05s; }
+.word-reveal .word:nth-child(2) { animation-delay: 0.12s; }
+.word-reveal .word:nth-child(3) { animation-delay: 0.19s; }
+.word-reveal .word:nth-child(4) { animation-delay: 0.26s; }
+.word-reveal .word:nth-child(5) { animation-delay: 0.33s; }
+.word-reveal .word:nth-child(6) { animation-delay: 0.40s; }
+.word-reveal .word:nth-child(7) { animation-delay: 0.47s; }
+.word-reveal .word:nth-child(8) { animation-delay: 0.54s; }
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
 }

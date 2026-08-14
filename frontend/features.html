@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Features</title>
+<meta name="description" content="Explore the full mission toolkit of JobXApply, from profile sync to ATS tracking.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --dim: rgba(244,247,255,0.4);
+  --glass-bg: rgba(255,255,255,0.05);
+  --glass-border: rgba(255,255,255,0.15);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+* { box-sizing: border-box; }
+body { 
+  background: var(--base); 
+  color: var(--text); 
+  font-family: var(--body); 
+  margin: 0;
+  min-height: 100vh; 
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%); 
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 60px 24px; position: relative; z-index: 10; }
+.hero { text-align: center; margin-bottom: 80px; }
+.hero h1 { font-family: var(--display); font-size: 4.5rem; margin: 0 0 16px; color: var(--white); text-transform: uppercase; letter-spacing: 2px; }
+.hero p { font-size: 1.25rem; color: var(--muted); margin: 0 auto; max-width: 600px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; margin-bottom: 80px; }
+.card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 40px 32px; transition: transform 0.3s ease, border-color 0.3s ease; display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-6px); border-color: var(--primary); }
+.card-number { font-family: var(--mono); color: var(--primary); font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+.card h2 { font-family: var(--display); font-size: 1.8rem; text-transform: uppercase; margin: 0 0 16px; color: var(--white); letter-spacing: 1px; }
+.card p { font-size: 1rem; color: var(--muted); line-height: 1.6; margin: 0; }
+.extension-section { background: rgba(91,79,232,0.1); border: 1px solid var(--primary); border-radius: 14px; padding: 60px 40px; text-align: center; margin-bottom: 80px; backdrop-filter: blur(16px); }
+.extension-section h2 { font-family: var(--display); font-size: 2.5rem; text-transform: uppercase; margin: 0 0 20px; color: var(--white); letter-spacing: 1px; }
+.extension-section p { font-size: 1.1rem; color: var(--text); line-height: 1.6; max-width: 700px; margin: 0 auto 30px; }
+.cta-section { text-align: center; padding: 60px 0; }
+.cta-section h2 { font-family: var(--display); font-size: 3rem; text-transform: uppercase; margin: 0 0 24px; color: var(--white); }
+.btn-primary { background: var(--primary); color: var(--white); border: none; border-radius: 8px; padding: 14px 32px; font-family: var(--mono); font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.3s ease, transform 0.2s; box-shadow: 0 4px 14px rgba(91,79,232,0.4); }
+.btn-primary:hover { background: #6f65f0; transform: scale(1.02); }
+@media(max-width: 768px) {
+  .hero h1 { font-size: 3rem; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+<script src="public-nav.js"></script>
+
+<div class="container">
+  <header class="hero">
+    <h1>Full Mission Toolkit</h1>
+    <p>Six capabilities. One system. Built for the modern job seeker to optimize, automate, and dominate the application process.</p>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <div class="card-number">CAPABILITY_01</div>
+      <h2>Profile Sync</h2>
+      <p>Your master profile propagates everywhere automatically. Protected with AES encryption. Update your experience once, and watch it cascade seamlessly across all integrated tools and portal extensions.</p>
+    </div>
+    
+    <div class="card">
+      <div class="card-number">CAPABILITY_02</div>
+      <h2>Resume Builder</h2>
+      <p>Generate ATS-optimized resumes on the fly. Features intelligent section scoring, role-specific content adaptation, and pristine PDF exports that ensure your application passes initial machine screenings.</p>
+    </div>
+    
+    <div class="card">
+      <div class="card-number">CAPABILITY_03</div>
+      <h2>Autofill Engine</h2>
+      <p>Supports 50+ job portals with a 3-tier fallback strategy (Dedicated Map → ATS Pattern → Heuristic Fallback). Fill complex, multi-page application forms with a single click and zero manual data entry.</p>
+    </div>
+    
+    <div class="card">
+      <div class="card-number">CAPABILITY_04</div>
+      <h2>ATS Checker</h2>
+      <p>Extract JD keywords instantly. Get exact skill coverage percentages, comprehensive missing keyword lists, and a real readiness model that grades your alignment before you submit.</p>
+    </div>
+    
+    <div class="card">
+      <div class="card-number">CAPABILITY_05</div>
+      <h2>Application Tracker</h2>
+      <p>Maintain oversight with a kanban-style pipeline. Track current application status, schedule automated follow-up dates, and maintain full chronological logs of your timeline events.</p>
+    </div>
+    
+    <div class="card">
+      <div class="card-number">CAPABILITY_06</div>
+      <h2>Cover Letter Engine</h2>
+      <p>Generate job-description-matched, tone-adjustable cover letters driven by your core profile. Instantly adapt to company culture and export ready-to-send documents that stand out.</p>
+    </div>
+  </section>
+
+  <section class="extension-section">
+    <h2>The Browser Extension</h2>
+    <p>The JobXApply extension is the connective tissue of our toolkit. It injects our autofill engine directly into job portals, parses job descriptions on the fly for ATS checking, and syncs your application statuses back to your main tracker without you ever leaving the job board.</p>
+    <a href="extension-landing.html" class="btn-primary" style="background: transparent; border: 2px solid var(--primary); box-shadow: none;">Learn About the Extension</a>
+  </section>
+
+  <section class="cta-section">
+    <h2>Ready to deploy?</h2>
+    <p style="color: var(--muted); margin-bottom: 30px; font-size: 1.2rem;">Stop entering the same data 30+ times. Automate your career today.</p>
+    <a href="auth.html" class="btn-primary">Start Free Today</a>
+  </section>
+</div>
+</body>
+</html>

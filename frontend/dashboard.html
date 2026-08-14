@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Dashboard</title>
+<meta name="description" content="JobXApply command dashboard — your career operating system at a glance.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js"></script>
+<style>
+body { padding-top: 80px; }
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+  opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width:1200px; margin:0 auto; padding:0 20px; position:relative; z-index:10; }
+.page-header {
+  display:flex; justify-content:space-between; align-items:flex-end;
+  border-bottom:1px solid var(--glass-border); padding-bottom:20px; margin-bottom:32px;
+}
+.page-header__label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
+.page-header__name { font-family:var(--display); font-size:38px; font-weight:900; text-transform:uppercase; color:var(--white); }
+.page-header__name span { color:var(--primary); }
+.page-header__meta { text-align:right; font-family:var(--mono); font-size:10px; color:var(--muted); line-height:1.7; }
+.sync-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--success); margin-right:4px; animation:pulse 2s infinite; }
+.sync-dot.offline { background:var(--alert); animation:none; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* Dashboard grid */
+.dash-grid {
+  display:grid;
+  grid-template-columns: 320px 1fr 320px;
+  gap:24px;
+}
+@media (max-width:1100px) { .dash-grid { grid-template-columns:1fr 1fr; } }
+@media (max-width:720px)  { .dash-grid { grid-template-columns:1fr; } }
+
+.card {
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,.05);
+  padding:24px;
+  border-radius:16px;
+  display:flex; flex-direction:column; gap:16px;
+  backdrop-filter:blur(16px);
+}
+.card--span-full { grid-column:1/-1; }
+.card__title {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:.14em; color:var(--primary); text-transform:uppercase;
+  border-bottom:1px solid var(--glass-border); padding-bottom:10px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.card__id { color:var(--dim); font-size:9px; }
+
+/* Completeness */
+.comp-number { font-family:var(--display); font-size:52px; font-weight:900; color:var(--white); line-height:1; }
+.comp-sub { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+.progress-bar-wrap { width:100%; height:5px; background:rgba(255,255,255,.1); border-radius:99px; overflow:hidden; }
+.progress-bar-fill { height:100%; width:0%; background:var(--primary); transition:width .9s cubic-bezier(.4,0,.2,1); border-radius:99px; }
+.progress-bar-fill.complete { background:var(--success); }
+
+/* Quick tools */
+.tools-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.tool-btn {
+  border:1px solid var(--glass-border); background:rgba(7,10,24,.6);
+  padding:16px; border-radius:12px; text-align:left; cursor:pointer;
+  transition:all .18s; text-decoration:none; display:block;
+}
+.tool-btn:hover { border-color:var(--primary); background:rgba(91,79,232,.06); }
+.tool-btn__icon { font-family:var(--mono); font-size:16px; color:var(--primary); margin-bottom:8px; }
+.tool-btn__title { font-family:var(--mono); font-size:10px; font-weight:700; color:var(--white); margin-bottom:3px; letter-spacing:.06em; }
+.tool-btn__desc  { font-size:11px; color:var(--muted); line-height:1.4; }
+
+/* Sync metrics */
+.metric-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.06); font-family:var(--mono); font-size:11px; }
+.metric-row:last-child { border-bottom:none; }
+.metric-label { color:var(--muted); }
+.metric-val { color:var(--white); }
+
+/* Application tracker */
+.track-header { display:flex; justify-content:space-between; align-items:center; }
+.track-table-wrap { overflow-x:auto; }
+.track-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; }
+.track-table th { padding:8px 12px; color:var(--muted); font-weight:700; text-transform:uppercase; font-size:9px; border-bottom:1px solid var(--glass-border); text-align:left; }
+.track-table td { padding:11px 12px; border-bottom:1px solid rgba(255,255,255,.05); color:var(--text); }
+.track-table tr:hover td { background:rgba(91,79,232,.04); }
+.track-table td .row-actions { display:none; gap:8px; }
+.track-table tr:hover td .row-actions { display:flex; }
+.action-link { font-family:var(--mono); font-size:9px; color:var(--primary); cursor:pointer; text-decoration:underline; background:none; border:none; padding:0; }
+.action-link.del { color:rgba(245,166,35,.8); }
+
+/* Console */
+.console-box {
+  background:#000; border:1px solid var(--glass-border);
+  padding:14px; font-family:var(--mono); font-size:10px; color:var(--muted);
+  height:90px; overflow-y:auto; line-height:1.5; border-radius:10px;
+}
+.console-line { margin-bottom:2px; }
+.console-line.info { color:var(--primary); }
+.console-line.success { color:var(--success); }
+.console-line.warn { color:var(--alert); }
+
+/* Add application modal fields */
+.app-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+select.form-input { cursor:pointer; }
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<nav class="nav" id="main-nav"></nav>
+
+<!-- Add Application Modal -->
+<div class="modal-overlay" id="add-app-modal">
+  <div class="modal-box">
+    <div class="modal-title">01 // LOG NEW APPLICATION</div>
+    <div class="app-form-grid">
+      <div class="form-group">
+        <label for="app-company">Company</label>
+        <input type="text" id="app-company" class="form-input" placeholder="e.g. Acme Corp" maxlength="120">
+      </div>
+      <div class="form-group">
+        <label for="app-role">Role / Job Title</label>
+        <input type="text" id="app-role" class="form-input" placeholder="e.g. Frontend Engineer" maxlength="120">
+      </div>
+      <div class="form-group">
+        <label for="app-portal">Portal / Source</label>
+        <input type="text" id="app-portal" class="form-input" placeholder="e.g. LinkedIn, Naukri" maxlength="80">
+      </div>
+      <div class="form-group">
+        <label for="app-date">Date Applied</label>
+        <input type="date" id="app-date" class="form-input">
+      </div>
+      <div class="form-group" style="grid-column:span 2;">
+        <label for="app-url">Job URL (optional)</label>
+        <input type="url" id="app-url" class="form-input" placeholder="https://..." maxlength="500">
+      </div>
+      <div class="form-group">
+        <label for="app-status">Status</label>
+        <select id="app-status" class="form-input">
+          <option value="applied">Applied</option>
+          <option value="interview">Interview</option>
+          <option value="offer">Offer</option>
+          <option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Log Application</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Profile Modal -->
+<div class="modal-overlay" id="profile-modal-overlay">
+  <div class="modal">
+    <div class="modal-title">02 // CREATE TAILORED PROFILE</div>
+    <div class="app-form-grid" style="grid-template-columns: 1fr;">
+      <div class="form-group">
+        <label for="new-profile-name">Profile Name / Role Category</label>
+        <input type="text" id="new-profile-name" class="form-input" placeholder="e.g. Backend Developer, PM, Fullstack React" maxlength="80">
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top: 20px;">
+      <button class="btn btn-ghost" id="profile-modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="profile-modal-save">Create Profile</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Page header -->
+  <div class="page-header">
+    <div>
+      <div class="page-header__label">JOBXAPPLY // COMMAND CENTER</div>
+      <div class="page-header__name">WELCOME, <span id="op-name">—</span></div>
+      <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+        <span class="page-header__label" style="margin-bottom:0; font-size:10px;">ACTIVE PROFILE:</span>
+        <select id="active-profile-select" style="
+          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 8px; color: #fff; padding: 4px 8px; font-family: var(--mono);
+          font-size: 11px; outline: none; cursor: pointer;
+        ">
+          <option value="">Loading...</option>
+        </select>
+        <button id="btn-create-profile" style="
+          background: rgba(91,79,232,0.15); border: 1px solid rgba(91,79,232,0.3);
+          border-radius: 8px; color: #b0a8ff; padding: 4px 8px; font-family: var(--mono);
+          font-size: 11px; cursor: pointer; outline: none;
+        ">+ NEW</button>
+      </div>
+    </div>
+    <div class="page-header__meta">
+      <div><span class="sync-dot" id="sync-dot"></span><span id="sync-label">Connecting...</span></div>
+      <div>Profile v<span id="op-version">—</span></div>
+      <div id="op-updated" style="color:var(--dim)">—</div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+
+    <!-- Card 1: Profile completeness -->
+    <div class="card">
+      <div class="card__title">Profile Completeness <span class="card__id">CB-01</span></div>
+      <div>
+        <div class="comp-number" id="comp-pct">—</div>
+        <div class="comp-sub" id="comp-sub">— / — fields filled</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="comp-bar"></div>
+      </div>
+      <div id="comp-hint" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.5;"></div>
+      <a href="profile-setup.html" class="btn btn-ghost" style="margin-top:auto;font-size:10px;">EDIT PROFILE →</a>
+    </div>
+
+    <!-- Card 2: Quick tools -->
+    <div class="card">
+      <div class="card__title">Core Toolkit <span class="card__id">CB-02</span></div>
+      <div class="tools-grid">
+        <a href="resume-builder.html" class="tool-btn">
+          <div class="tool-btn__icon">◈</div>
+          <div class="tool-btn__title">RESUME BUILDER</div>
+          <div class="tool-btn__desc">Compile your profile into a formatted resume.</div>
+        </a>
+        <a href="ats-checker.html" class="tool-btn">
+          <div class="tool-btn__icon">◎</div>
+          <div class="tool-btn__title">ATS CHECKER</div>
+          <div class="tool-btn__desc">Score your resume against job descriptions.</div>
+        </a>
+        <a href="cover-letter.html" class="tool-btn">
+          <div class="tool-btn__icon">◇</div>
+          <div class="tool-btn__title">COVER LETTER</div>
+          <div class="tool-btn__desc">Draft tailored letters from your profile.</div>
+        </a>
+        <a href="autofill-lab.html" class="tool-btn">
+          <div class="tool-btn__icon">⬡</div>
+          <div class="tool-btn__title">AUTOFILL LAB</div>
+          <div class="tool-btn__desc">Preview portal field mappings live.</div>
+        </a>
+        <a href="extension-setup.html" class="tool-btn" style="grid-column:span 2;">
+          <div class="tool-btn__icon">⊕</div>
+          <div class="tool-btn__title">EXTENSION SETUP</div>
+          <div class="tool-btn__desc">Install and pair the browser autofill extension.</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Card 3: Sync metrics (real only) -->
+    <div class="card">
+      <div class="card__title">Sync Metrics <span class="card__id">CB-03</span></div>
+      <div id="metrics-content">
+        <div class="metric-row"><span class="metric-label">Profile Version</span><span class="metric-val" id="m-version">—</span></div>
+        <div class="metric-row"><span class="metric-label">Last Synced</span><span class="metric-val" id="m-updated">—</span></div>
+        <div class="metric-row"><span class="metric-label">Fields Filled</span><span class="metric-val" id="m-fields">—</span></div>
+        <div class="metric-row"><span class="metric-label">Applications Logged</span><span class="metric-val" id="m-apps">—</span></div>
+        <div class="metric-row"><span class="metric-label">Sync Origin</span><span class="metric-val" id="m-origin">—</span></div>
+      </div>
+      <div class="console-box" id="console">
+        <div class="console-line">[SYS_INIT] Dashboard online. Connecting to sync server...</div>
+      </div>
+    </div>
+
+    <!-- Card 4: Application tracker (full width) -->
+    <div class="card card--span-full">
+      <div class="card__title">
+        <div class="track-header" style="width:100%">
+          <span>Application Tracker <span class="card__id" style="margin-left:8px;">CB-04</span></span>
+          <button class="btn btn-primary" id="open-add-modal" style="height:32px;padding:0 14px;font-size:9px;">+ LOG APPLICATION</button>
+        </div>
+      </div>
+      <div class="track-table-wrap" id="tracker-wrap">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Auth guard — must be logged in
+requireAuth();
+
+// Inject nav
+renderNav(document.getElementById('main-nav'), 'dashboard.html');
+
+const consoleBox = document.getElementById('console');
+let sseConnected = false;
+
+function addLog(text, cls = '') {
+  const line = document.createElement('div');
+  line.className = 'console-line ' + cls;
+  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
+  consoleBox.appendChild(line);
+  consoleBox.scrollTop = consoleBox.scrollHeight;
+}
+
+// ── Profile rendering ──────────────────────────────────────────────────────
+function renderProfileState(state) {
+  const profile = state?.profile || {};
+  const { count, total, pct } = calcCompleteness(profile);
+  const name = profile.fullName ? profile.fullName.toUpperCase() : '—';
+
+  document.getElementById('op-name').textContent = name;
+  document.getElementById('op-version').textContent = state?.version ?? '—';
+  document.getElementById('op-updated').textContent = state?.updatedAt
+    ? new Date(state.updatedAt).toLocaleString() : '—';
+
+  // Completeness
+  document.getElementById('comp-pct').textContent = (count > 0) ? pct + '%' : '0%';
+  document.getElementById('comp-sub').textContent = `${count} / ${total} fields filled`;
+  const bar = document.getElementById('comp-bar');
+  setTimeout(() => { bar.style.width = pct + '%'; }, 100);
+  if (pct === 100) bar.classList.add('complete');
+
+  // Hint
+  const hint = document.getElementById('comp-hint');
+  if (pct === 0) {
+    hint.innerHTML = 'Complete your profile to unlock ATS scoring, cover letter drafting, and autofill.';
+  } else if (pct < 60) {
+    hint.innerHTML = 'Add more details to improve autofill accuracy across job portals.';
+  } else if (pct < 100) {
+    hint.innerHTML = 'Almost there — fill remaining fields for maximum portal coverage.';
+  } else {
+    hint.innerHTML = '<span style="color:var(--success)">✓ Profile complete.</span> You\'re ready for every portal.';
+  }
+
+  // Sync metrics
+  document.getElementById('m-version').textContent = state?.version ?? '—';
+  document.getElementById('m-updated').textContent = state?.updatedAt
+    ? new Date(state.updatedAt).toLocaleString() : '—';
+  document.getElementById('m-fields').textContent = `${count} / ${total}`;
+  document.getElementById('m-apps').textContent = loadApplications().length;
+  document.getElementById('m-origin').textContent = state?.origin || '—';
+
+  // Populate profiles select dropdown
+  const select = document.getElementById('active-profile-select');
+  if (select && state?.profiles) {
+    select.innerHTML = '';
+    for (const key of Object.keys(state.profiles)) {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = state.profiles[key].profileName || key;
+      if (key === state.activeProfileId) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    }
+  }
+}
+
+// ── Application tracker ────────────────────────────────────────────────────
+function renderTracker() {
+  const apps = loadApplications();
+  const wrap = document.getElementById('tracker-wrap');
+
+  document.getElementById('m-apps').textContent = apps.length;
+
+  if (apps.length === 0) {
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__label">No Applications Logged</div>
+        <div class="empty-state__hint">
+          Click "+ LOG APPLICATION" to manually track a job application,<br>
+          or use the JobXApply extension to auto-capture submissions.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const STATUS_MAP = { applied:'applied', interview:'interview', offer:'offer', rejected:'rejected' };
+
+  wrap.innerHTML = `
+    <table class="track-table">
+      <thead>
+        <tr>
+          <th>Company</th><th>Role</th><th>Date</th>
+          <th>Portal</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${apps.map(app => `
+          <tr data-id="${app.id}">
+            <td>${esc(app.company) || '—'}</td>
+            <td>${esc(app.role) || '—'}</td>
+            <td>${esc(app.date) || '—'}</td>
+            <td>${esc(app.portal) || '—'}</td>
+            <td><span class="status-pill ${STATUS_MAP[app.status]||'applied'}">${esc(app.status)||'APPLIED'}</span></td>
+            <td>
+              <div class="row-actions">
+                <select class="action-link status-select" data-id="${app.id}" title="Change status" style="max-width:90px;">
+                  <option value="applied" ${app.status==='applied'?'selected':''}>Applied</option>
+                  <option value="interview" ${app.status==='interview'?'selected':''}>Interview</option>
+                  <option value="offer" ${app.status==='offer'?'selected':''}>Offer</option>
+                  <option value="rejected" ${app.status==='rejected'?'selected':''}>Rejected</option>
+                </select>
+                ${app.snapshot ? `<button class="action-link view-snapshot-btn" data-id="${app.id}" style="background: rgba(47, 221, 196, 0.1); color: var(--green); border: 1px solid rgba(47,221,196,0.2); font-size:10px; font-weight:700;">View Proof</button>` : ''}
+                <button class="action-link del del-btn" data-id="${app.id}">Delete</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  // Status change handlers
+  wrap.querySelectorAll('.status-select').forEach(sel => {
+    sel.addEventListener('change', () => {
+      updateApplicationStatus(sel.dataset.id, sel.value);
+      renderTracker();
+    });
+  });
+
+  // Snapshot view handlers
+  wrap.querySelectorAll('.view-snapshot-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const app = apps.find(a => String(a.id) === String(btn.dataset.id));
+      if (app && app.snapshot) {
+        const modal = document.getElementById('snapshot-modal');
+        const img = document.getElementById('modal-image');
+        const downloadBtn = document.getElementById('download-snapshot');
+        const title = document.getElementById('modal-title');
+        
+        img.src = app.snapshot;
+        downloadBtn.href = app.snapshot;
+        downloadBtn.download = `snapshot_${app.company.replace(/\s+/g, '_')}.png`;
+        title.textContent = `Verification Proof: ${app.company} (${app.role})`;
+        
+        modal.style.display = 'flex';
+      }
+    });
+  });
+
+  // Delete handlers
+  wrap.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (confirm('Remove this application from tracker?')) {
+        deleteApplication(btn.dataset.id);
+        renderTracker();
+        addLog('Application removed from tracker.', 'warn');
+      }
+    });
+  });
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Add Application Modal ─────────────────────────────────────────────────
+const modal = document.getElementById('add-app-modal');
+document.getElementById('open-add-modal').addEventListener('click', () => {
+  // Set today as default date
+  document.getElementById('app-date').value = new Date().toISOString().slice(0,10);
+  modal.classList.add('open');
+});
+document.getElementById('modal-cancel').addEventListener('click', () => modal.classList.remove('open'));
+modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+document.getElementById('modal-save').addEventListener('click', () => {
+  const company = document.getElementById('app-company').value.trim();
+  const role    = document.getElementById('app-role').value.trim();
+  if (!company || !role) { showToast('Company and role are required.', 'error'); return; }
+  addApplication({
+    company,
+    role,
+    portal: document.getElementById('app-portal').value.trim(),
+    date:   document.getElementById('app-date').value,
+    url:    document.getElementById('app-url').value.trim(),
+    status: document.getElementById('app-status').value
+  });
+  // Clear fields
+  ['app-company','app-role','app-portal','app-url'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('app-status').value = 'applied';
+  modal.classList.remove('open');
+  renderTracker();
+  showToast('Application logged successfully.', 'success');
+  addLog(`Logged: ${company} — ${role}`, 'success');
+});
+
+// ── Profile Selector & Modal Actions ───────────────────────────────────────
+const profileSelect = document.getElementById('active-profile-select');
+profileSelect.addEventListener('change', async (e) => {
+  const newActiveId = e.target.value;
+  if (!newActiveId) return;
+  addLog(`Swapping profile to ${newActiveId}...`, 'info');
+  const res = await setActiveProfile(newActiveId);
+  if (res.ok) {
+    addLog(`Profile swapped to ${newActiveId}.`, 'success');
+    showToast('Profile swapped successfully.', 'success');
+    window.location.reload();
+  } else {
+    addLog(`Failed to swap profile: ${res.errors.join('; ')}`, 'warn');
+    showToast('Failed to swap profile.', 'error');
+  }
+});
+
+const profileModal = document.getElementById('profile-modal-overlay');
+document.getElementById('btn-create-profile').addEventListener('click', () => {
+  document.getElementById('new-profile-name').value = '';
+  profileModal.classList.add('open');
+});
+document.getElementById('profile-modal-cancel').addEventListener('click', () => profileModal.classList.remove('open'));
+profileModal.addEventListener('click', (e) => { if (e.target === profileModal) profileModal.classList.remove('open'); });
+
+document.getElementById('profile-modal-save').addEventListener('click', async () => {
+  const name = document.getElementById('new-profile-name').value.trim();
+  if (!name) { showToast('Profile name is required.', 'error'); return; }
+  
+  profileModal.classList.remove('open');
+  addLog(`Creating new profile "${name}"...`, 'info');
+  
+  const res = await createNewProfile(name);
+  if (res.ok) {
+    addLog(`Profile "${name}" created and activated.`, 'success');
+    showToast(`Profile "${name}" created.`, 'success');
+    window.location.reload();
+  } else {
+    addLog(`Failed to create profile: ${res.errors.join('; ')}`, 'warn');
+    showToast('Failed to create profile.', 'error');
+  }
+});
+
+// ── SSE + Initial Load ─────────────────────────────────────────────────────
+const syncDot = document.getElementById('sync-dot');
+const syncLabel = document.getElementById('sync-label');
+
+document.addEventListener('jobxapply:profile', (e) => {
+  renderProfileState(e.detail);
+  addLog('Profile updated via live sync.', 'success');
+});
+document.addEventListener('jobxapply:offline', () => {
+  syncDot.classList.add('offline');
+  syncLabel.textContent = 'Sync offline';
+  addLog('SSE connection lost. Using cached profile.', 'warn');
+});
+
+(async () => {
+  const state = await loadProfile();
+  renderProfileState(state);
+  renderTracker();
+
+  if (state.origin !== 'none') {
+    syncDot.classList.remove('offline');
+    syncLabel.textContent = state.origin === 'local' ? 'Cached (server offline)' : 'Synced';
+    addLog('Profile loaded from ' + (state.origin === 'local' ? 'local cache' : 'sync server') + '.', 'info');
+  } else {
+    syncLabel.textContent = 'No profile yet';
+    addLog('No profile data found. Visit Profile to get started.', 'warn');
+  }
+
+  connectSSE();
+  
+  const snapModal = document.getElementById('snapshot-modal');
+  document.getElementById('close-modal').addEventListener('click', () => snapModal.style.display = 'none');
+  snapModal.addEventListener('click', (e) => { if (e.target === snapModal) snapModal.style.display = 'none'; });
+})();
+</script>
+
+<div id="snapshot-modal" class="modal-overlay hidden" style="position: fixed; inset: 0; background: rgba(7, 10, 24, 0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 99999; padding: 20px;">
+  <div class="modal-card" style="background: #0B1020; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.5);">
+    <div class="modal-header" style="padding: 16px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+      <span id="modal-title" style="font-family: var(--display); font-size: 20px; font-weight: 700; text-transform: uppercase; color: #fff;">Application Snapshot Log</span>
+      <button id="close-modal" style="background: none; border: none; color: rgba(255,255,255,0.6); font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px; overflow: auto; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2);">
+      <img id="modal-image" src="" alt="Application Snapshot Proof" style="max-width: 100%; max-height: 60vh; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); object-fit: contain;">
+    </div>
+    <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: flex-end; gap: 12px; background: rgba(255,255,255,0.01);">
+      <a id="download-snapshot" class="btn" download="snapshot.png" style="text-decoration: none; padding: 8px 16px; font-size: 12px; font-weight: 600; background: var(--green); color: #070a18; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">Download Proof</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

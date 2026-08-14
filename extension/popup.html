@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CareerHub</title>
+    <title>JobXApply</title>
     <style>
       body {
         margin: 0;
@@ -49,6 +49,14 @@
   </head>
   <body>
     <div class="wrap">
+      <div class="card" style="padding-bottom: 16px;">
+        <div class="row">
+          <label style="margin-bottom: 4px; font-weight: 700;">Active Profile</label>
+          <select id="profileSelect" style="cursor: pointer;">
+            <option value="">Loading profiles...</option>
+          </select>
+        </div>
+      </div>
       <div class="card">
         <div class="row">
           <div class="muted">Portal</div>
@@ -67,9 +75,43 @@
             <button id="editProfile">Edit profile</button>
           </div>
           <div style="display:flex; gap:8px; margin-top:8px;">
-            <button id="report">Report map issue</button>
+            <button id="toggleMapper" style="background: linear-gradient(135deg, #2fddc4, #1fa390); color: #070a18; font-weight: 700; font-size: 11px;">Map Custom Fields</button>
+            <button id="report" style="font-size: 11px;">Report map issue</button>
           </div>
-          <div id="status" class="muted">Ready</div>
+          
+          <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+            <div style="font-size: 11px; font-weight:700; color:var(--white); text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+              <span>Application Proof</span>
+              <button id="captureSnapshot" style="padding: 4px 8px; font-size: 9px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: #fff; cursor: pointer; font-family:inherit;">Capture Screen</button>
+            </div>
+            <div id="snapshotPreview" style="display:none; width: 100%; height: 75px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background-size: cover; background-position: center; position: relative; margin-bottom:8px;">
+              <button id="removeSnapshot" style="position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; border: none; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; line-height: 1;">&times;</button>
+            </div>
+            
+            <div id="logForm" style="display:none; gap:6px; flex-direction:column; margin-top:8px;">
+              <input id="logCompany" placeholder="Company Name" style="padding:6px; font-size:11px;" />
+              <input id="logRole" placeholder="Job Title" style="padding:6px; font-size:11px;" />
+              <button id="logApp" style="width:100%; padding:8px; font-size:11px; background:var(--green); color:#070a18; font-weight:700; border:none; border-radius:6px; cursor:pointer;">Save & Track Application</button>
+            </div>
+          </div>
+          
+          <div id="status" class="muted" style="margin-top:8px;">Ready</div>
+        </div>
+      </div>
+      <div class="card" id="atsCard" style="display:none;">
+        <div class="row">
+          <div style="font-family: var(--display); font-size: 13px; font-weight: 700; color: var(--white); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <span>ATS Compatibility</span>
+            <span id="popupAtsScore" style="color: var(--green); font-size: 14px; font-weight: 900;">0%</span>
+          </div>
+          <div style="font-family: var(--mono); font-size: 9px; line-height: 1.5; margin-bottom: 4px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+            <span style="color: var(--muted);">Matched:</span>
+            <span id="popupMatchedSkills" style="color: var(--green);">None</span>
+          </div>
+          <div style="font-family: var(--mono); font-size: 9px; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+            <span style="color: var(--muted);">Missing:</span>
+            <span id="popupMissingSkills" style="color: #5b4fe8;">None</span>
+          </div>
         </div>
       </div>
       <div class="card">

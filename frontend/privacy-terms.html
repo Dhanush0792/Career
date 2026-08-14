@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Privacy Policy & Terms of Service</title>
+<meta name="description" content="JobXApply Privacy Policy and Terms of Service. Learn how we protect your data with local-first architecture and AES-GCM encryption.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --base:    #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert:   #F5A623;
+  --white:   #ffffff;
+  --text:    #f4f7ff;
+  --muted:   rgba(244,247,255,0.65);
+  --dim:     rgba(244,247,255,0.4);
+  --glass-border: rgba(255,255,255,0.15);
+  --mono:    'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body:    'Inter', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--body);
+  background: var(--base);
+  color: var(--text);
+  min-height: 100vh;
+  padding-top: 70px;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.1) 0%, transparent 45%),
+                    radial-gradient(circle at 85% 75%, rgba(47,221,196,0.06) 0%, transparent 45%);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Nav */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; height: 60px;
+  background: rgba(11,16,32,0.9);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px); z-index: 1000;
+  display: flex; align-items: center;
+}
+.nav-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 24px;
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 4px;
+}
+.nav-logo em { color: var(--primary); font-style: normal; }
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  padding: 8px 14px; text-decoration: none; text-transform: uppercase;
+  transition: color .2s;
+}
+.nav-link:hover { color: var(--white); text-decoration: none; }
+.btn-nav {
+  display: inline-flex; align-items: center; height: 38px; padding: 0 20px;
+  background: var(--primary); color: var(--white);
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; border-radius: 10px;
+  text-decoration: none; transition: opacity .2s;
+}
+.btn-nav:hover { opacity: .85; text-decoration: none; }
+
+/* Layout */
+.container { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
+.page-meta {
+  font-family: var(--mono); font-size: 10px; color: var(--primary);
+  letter-spacing: .14em; text-transform: uppercase; margin-bottom: 8px;
+}
+.page-title {
+  font-family: var(--display); font-size: 40px; font-weight: 900;
+  text-transform: uppercase; color: var(--white); margin-bottom: 8px;
+}
+.page-updated {
+  font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 48px;
+}
+
+/* Tab switcher */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--glass-border); margin-bottom: 36px; }
+.tab-btn {
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted);
+  padding: 10px 20px; background: none; border: none; border-bottom: 2px solid transparent;
+  cursor: pointer; transition: all .15s;
+}
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Doc sections */
+.doc-section { margin-bottom: 36px; }
+.doc-section h2 {
+  font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--success); margin-bottom: 14px;
+  padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.doc-section h3 {
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted);
+  margin: 16px 0 8px; letter-spacing: .08em; text-transform: uppercase;
+}
+.doc-section p {
+  font-family: var(--body); font-size: 14px; color: var(--muted);
+  line-height: 1.75; margin-bottom: 12px;
+}
+.doc-section ul { padding-left: 20px; margin-bottom: 12px; }
+.doc-section li {
+  font-family: var(--body); font-size: 14px; color: var(--muted);
+  line-height: 1.75; margin-bottom: 6px;
+  list-style: none; padding-left: 4px;
+}
+.doc-section li::before { content: '›'; color: var(--primary); margin-right: 8px; }
+
+/* Highlight box */
+.highlight-box {
+  background: rgba(91,79,232,0.08);
+  border: 1px solid rgba(91,79,232,0.25);
+  border-radius: 10px; padding: 16px 20px; margin: 20px 0;
+  font-family: var(--mono); font-size: 11px; color: rgba(244,247,255,0.8);
+  line-height: 1.65;
+}
+.highlight-box strong { color: var(--primary); }
+
+.warn-box {
+  background: rgba(245,166,35,0.07);
+  border: 1px solid rgba(245,166,35,0.25);
+  border-radius: 10px; padding: 16px 20px; margin: 20px 0;
+  font-family: var(--mono); font-size: 11px; color: rgba(245,166,35,0.9);
+  line-height: 1.65;
+}
+
+/* Footer */
+.doc-footer {
+  margin-top: 60px; padding-top: 24px;
+  border-top: 1px solid var(--glass-border);
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+}
+.doc-footer-text { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.doc-footer-links { display: flex; gap: 16px; }
+.doc-footer-links a { font-family: var(--mono); font-size: 10px; color: var(--muted); text-decoration: none; }
+.doc-footer-links a:hover { color: var(--primary); }
+
+@media (max-width: 600px) {
+  .page-title { font-size: 28px; }
+  .tabs { flex-wrap: wrap; }
+  .nav-links { display: none; }
+}
+</style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<script src="public-nav.js"></script>
+
+<div class="container">
+  <div class="page-meta">LEGAL DOCUMENTS</div>
+  <h1 class="page-title">Privacy &amp; Terms</h1>
+  <div class="page-updated">Last updated: August 2026 &nbsp;·&nbsp; Version 1.2</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('privacy', this)">Privacy Policy</button>
+    <button class="tab-btn" onclick="switchTab('terms', this)">Terms of Service</button>
+    <button class="tab-btn" onclick="switchTab('cookies', this)">Cookie Policy</button>
+  </div>
+
+  <!-- ── PRIVACY POLICY ──────────────────────────────── -->
+  <div class="tab-panel active" id="tab-privacy">
+
+    <div class="highlight-box">
+      <strong>TL;DR — Privacy First Architecture</strong><br>
+      JobXApply is built on a <strong>local-first, zero-knowledge</strong> architecture. Your profile data is encrypted on your device using AES-GCM 256-bit encryption before being stored or synced. We do not read your profile data. The sync server only receives an encrypted blob it cannot decrypt.
+    </div>
+
+    <div class="doc-section">
+      <h2>01 // Information We Collect</h2>
+      <h3>Profile Data (Encrypted)</h3>
+      <p>When you build your JobXApply master profile, the following data is stored locally on your device in your browser's <code>localStorage</code>, encrypted with AES-GCM using a key derived from your personal passcode:</p>
+      <ul>
+        <li>Full name, date of birth, family names</li>
+        <li>Email address, phone number, physical address</li>
+        <li>Education history, work experience, skills</li>
+        <li>LinkedIn, GitHub, and portfolio URLs</li>
+        <li>Resume draft text and cover letter preferences</li>
+        <li>Target role and career headline</li>
+      </ul>
+      <h3>Technical Data</h3>
+      <p>When you use our sync server, our backend receives and stores:</p>
+      <ul>
+        <li>Your encrypted profile blob (ciphertext only — unreadable without your passcode)</li>
+        <li>Profile version number and last-update timestamp</li>
+        <li>A SHA-256 hash of your sync passcode (for authentication only — not the passcode itself)</li>
+      </ul>
+      <h3>What We Do Not Collect</h3>
+      <p>JobXApply does <strong>not</strong> collect analytics, tracking identifiers, cookies, IP addresses for surveillance, or any data about which job portals you visit or apply to.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>02 // How We Use Your Data</h2>
+      <p>Your data is used solely to operate JobXApply's core features:</p>
+      <ul>
+        <li>Autofilling job application forms on portals you navigate to</li>
+        <li>Generating resume documents and cover letters from your profile</li>
+        <li>Scoring your resume against job descriptions</li>
+        <li>Tracking your job applications in your local pipeline</li>
+        <li>Syncing your profile across your devices via the local sync server</li>
+      </ul>
+      <p>We do not sell your data, share it with third parties, or use it for advertising purposes.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>03 // Data Storage &amp; Encryption</h2>
+      <div class="highlight-box">
+        <strong>Encryption Model:</strong> Your profile is encrypted client-side using the Web Crypto API with AES-GCM 256-bit encryption. The encryption key is derived from your sync passcode using PBKDF2 with 100,000 iterations and SHA-256. Your passcode never leaves your device in plaintext.
+      </div>
+      <h3>Local Storage</h3>
+      <p>Your profile and application data is stored in your browser's <code>localStorage</code>. This data remains on your device unless you explicitly use the sync server feature.</p>
+      <h3>Sync Server (Optional)</h3>
+      <p>If you configure a sync server (default: <code>localhost:8787</code>), only your encrypted profile blob is transmitted. The server cannot read your profile without your passcode, which never leaves your browser.</p>
+      <h3>Extension Storage</h3>
+      <p>The browser extension uses <code>chrome.storage.local</code> to cache your profile for fast autofill. This data stays on your device and is cleared when you disconnect the extension.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>04 // Your Rights</h2>
+      <ul>
+        <li><strong>Access</strong> — Export all your data anytime from Settings → Data Export</li>
+        <li><strong>Delete</strong> — Clear all data from Settings → Danger Zone → Clear All Local Data</li>
+        <li><strong>Portability</strong> — Export your profile as JSON for use in other systems</li>
+        <li><strong>Correction</strong> — Edit your profile at any time via the Profile Setup wizard</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h2>05 // Third-Party Services</h2>
+      <p>JobXApply uses the following external services for the web application:</p>
+      <ul>
+        <li><strong>Google Fonts</strong> — to load JetBrains Mono, Inter, and Barlow Condensed typefaces. Google may log font delivery requests per their <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a>.</li>
+      </ul>
+      <p>No other third-party analytics, tracking, or data sharing services are used.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>06 // Contact</h2>
+      <p>For privacy-related inquiries, contact us via the <a href="contact.html">Contact page</a>. We respond within 5 business days.</p>
+    </div>
+  </div>
+
+  <!-- ── TERMS OF SERVICE ──────────────────────────────── -->
+  <div class="tab-panel" id="tab-terms">
+
+    <div class="doc-section">
+      <h2>01 // Acceptance of Terms</h2>
+      <p>By accessing or using JobXApply ("the Service"), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use the Service.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>02 // Description of Service</h2>
+      <p>JobXApply is a career automation platform that helps job seekers:</p>
+      <ul>
+        <li>Maintain a master professional profile</li>
+        <li>Automatically fill job application forms on supported portals</li>
+        <li>Generate ATS-optimised resumes and cover letters</li>
+        <li>Score their resume against job descriptions</li>
+        <li>Track their job application pipeline</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h2>03 // Acceptable Use</h2>
+      <p>You agree to use JobXApply only for lawful purposes and in accordance with these Terms. You must not:</p>
+      <ul>
+        <li>Use the Service to provide false information on job applications</li>
+        <li>Attempt to circumvent security measures or authentication</li>
+        <li>Reverse-engineer, decompile, or disassemble the extension or web application</li>
+        <li>Use automated bots or scripts to submit applications without human review</li>
+        <li>Misrepresent your qualifications, experience, or identity</li>
+        <li>Use the Service in violation of any applicable laws or regulations</li>
+      </ul>
+      <div class="warn-box">
+        ⚠ JobXApply is designed to assist human applicants — not to replace human judgment. You remain responsible for the accuracy of all information submitted in job applications.
+      </div>
+    </div>
+
+    <div class="doc-section">
+      <h2>04 // User Responsibilities</h2>
+      <p>You are responsible for:</p>
+      <ul>
+        <li>Maintaining the security of your sync passcode</li>
+        <li>Ensuring all profile data you enter is accurate and truthful</li>
+        <li>Reviewing every autofilled form field before submitting any job application</li>
+        <li>Backing up your profile data (Export JSON from Settings)</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h2>05 // Intellectual Property</h2>
+      <p>All content, code, and design elements of JobXApply are the intellectual property of JobXApply and its creators. You may not reproduce, distribute, or create derivative works without explicit written permission.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>06 // Disclaimer of Warranties</h2>
+      <p>JobXApply is provided "as is" without warranties of any kind. We do not guarantee that:</p>
+      <ul>
+        <li>The autofill will work on every portal at all times (portal structures change frequently)</li>
+        <li>The Service will be uninterrupted or error-free</li>
+        <li>Using JobXApply will result in successful job applications or employment</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h2>07 // Limitation of Liability</h2>
+      <p>JobXApply and its creators shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service, including but not limited to job application outcomes, data loss, or portal compatibility issues.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>08 // Termination</h2>
+      <p>You may stop using JobXApply at any time by clearing your browser data and uninstalling the extension. All your data is stored locally and will be deleted automatically when you clear <code>localStorage</code>.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>09 // Changes to Terms</h2>
+      <p>We may update these Terms from time to time. Continued use of the Service after changes constitutes acceptance of the new terms. Material changes will be communicated via the website.</p>
+    </div>
+  </div>
+
+  <!-- ── COOKIES ──────────────────────────────── -->
+  <div class="tab-panel" id="tab-cookies">
+
+    <div class="highlight-box">
+      <strong>Short version:</strong> JobXApply does not use cookies. We use <code>localStorage</code> and <code>chrome.storage.local</code> for all data persistence. No third-party tracking cookies are set.
+    </div>
+
+    <div class="doc-section">
+      <h2>01 // What We Use Instead of Cookies</h2>
+      <p>JobXApply uses your browser's <strong>localStorage API</strong> to store session and profile data. This is fundamentally different from cookies:</p>
+      <ul>
+        <li>localStorage data is never sent to servers automatically (unlike cookies)</li>
+        <li>It cannot be accessed by third-party websites</li>
+        <li>It is scoped strictly to the JobXApply origin</li>
+      </ul>
+
+      <h3>Keys We Store in localStorage</h3>
+      <p>All keys are prefixed with <code>ch_</code> to prevent conflicts:</p>
+      <ul>
+        <li><code>ch_token</code> — session authentication token (cleared on logout)</li>
+        <li><code>ch_passcode</code> — your sync vault passcode (local device only)</li>
+        <li><code>ch_local_profile</code> — plaintext profile cache (local device only)</li>
+        <li><code>ch_user_email</code> — your account email</li>
+        <li><code>ch_role</code> — your account role (user/admin)</li>
+        <li><code>ch_applications</code> — your application pipeline data</li>
+        <li><code>ch_extension_coupled</code> — whether extension is paired</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h2>02 // Google Fonts</h2>
+      <p>Our pages load fonts from Google Fonts (fonts.googleapis.com). Google may set browser cache entries and log font delivery requests. This is governed by <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>. We do not control this behaviour.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>03 // Clearing Your Data</h2>
+      <p>To remove all JobXApply data from your browser:</p>
+      <ul>
+        <li>Go to Settings → Danger Zone → Clear All Local Data</li>
+        <li>Or: Open DevTools → Application → Local Storage → Delete all <code>ch_*</code> entries</li>
+        <li>Or: Open DevTools → Console → run <code>Object.keys(localStorage).filter(k => k.startsWith('jxa_')).forEach(k => localStorage.removeItem(k))</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div class="doc-footer-text">© 2026 JobXApply. All rights reserved.</div>
+    <div class="doc-footer-links">
+      <a href="index.html">Home</a>
+      <a href="contact.html">Contact</a>
+      <a href="about.html">About</a>
+      <a href="auth.html">Sign Up</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,192 +1,229 @@
-// Initialize AOS (Animate on Scroll)
-AOS.init({
-  duration: 600,
-  offset: 50,
-  easing: 'ease-out-cubic',
-  once: false,
-  mirror: false,
-  disable: false
-});
+/* ============================================================
+   MAIN.JS — Scroll Reveals, Progress Bar, Nav State, FAQ
+   CareerBridge · Vermillion Edge
+   ============================================================ */
 
-// Smooth scroll to sections
-document.querySelectorAll('a[href^="#"]').forEach(link => {
-  link.addEventListener('click', (e) => {
-    const href = link.getAttribute('href');
-    if (href !== '#' && document.querySelector(href)) {
-      e.preventDefault();
-      const element = document.querySelector(href);
-      const headerOffset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  });
-});
+'use strict';
 
-// Scroll progress bar
-const progress = document.getElementById('progress');
-window.addEventListener('scroll', () => {
-  const windowHeight = document.documentElement.scrollHeight - window.innerHeight;
-  const scrolled = (window.scrollY / windowHeight) * 100;
-  if (progress) {
-    progress.style.width = scrolled + '%';
+// ── Scroll Progress Bar ──────────────────────────────────────
+(function initScrollProgress() {
+  const bar = document.getElementById('scroll-progress');
+  if (!bar) return;
+
+  function updateProgress() {
+    const scrolled = window.scrollY;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = maxScroll > 0 ? (scrolled / maxScroll) * 100 : 0;
+    bar.style.width = pct + '%';
   }
-}, { passive: true });
 
-// FAQ Accordion
-const faqItems = document.querySelectorAll('.faq-item');
-faqItems.forEach(item => {
-  const button = item.querySelector('.faq-button');
-  if (button) {
-    button.addEventListener('click', () => {
-      const isOpen = item.classList.contains('open');
-      
-      // Close all items
-      faqItems.forEach(i => i.classList.remove('open'));
-      
-      // Open clicked item if it wasn't open
-      if (!isOpen) {
-        item.classList.add('open');
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+})();
+
+
+// ── Nav Scroll State ─────────────────────────────────────────
+(function initNav() {
+  const nav = document.querySelector('.nav');
+  if (!nav) return;
+
+  function onScroll() {
+    if (window.scrollY > 40) {
+      nav.classList.add('is-scrolled');
+    } else {
+      nav.classList.remove('is-scrolled');
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+
+
+// ── Mobile Nav Toggle ────────────────────────────────────────
+(function initMobileNav() {
+  const toggle = document.querySelector('.nav__mobile-toggle');
+  const nav = document.querySelector('.nav');
+  if (!toggle || !nav) return;
+
+  toggle.addEventListener('click', () => {
+    nav.classList.toggle('is-menu-open');
+    const isOpen = nav.classList.contains('is-menu-open');
+    toggle.setAttribute('aria-expanded', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+
+  // Close on link click
+  document.querySelectorAll('.nav__links .nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('is-menu-open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+
+
+// ── Intersection Observer Scroll Reveals ─────────────────────
+(function initScrollReveals() {
+  const targets = document.querySelectorAll('[data-reveal]');
+  if (!targets.length) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
       }
     });
-  }
-});
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -60px 0px'
+  });
 
-// Form interaction
-const formInputs = document.querySelectorAll('input, textarea');
-formInputs.forEach(input => {
-  input.addEventListener('focus', () => {
-    input.parentElement?.classList.add('focused');
-  });
-  
-  input.addEventListener('blur', () => {
-    if (!input.value) {
-      input.parentElement?.classList.remove('focused');
-    }
-  });
-});
+  targets.forEach(el => observer.observe(el));
+})();
 
-// Button hover effects
-const buttons = document.querySelectorAll('.btn, .btn-primary, .btn-secondary');
-buttons.forEach(button => {
-  button.addEventListener('mouseenter', () => {
-    button.style.transform = 'translateY(-4px)';
-  });
-  
-  button.addEventListener('mouseleave', () => {
-    button.style.transform = 'translateY(0)';
-  });
-});
 
-// Parallax effect for images
-const parallaxElements = document.querySelectorAll('[data-parallax]');
-if (parallaxElements.length > 0) {
-  window.addEventListener('scroll', () => {
-    parallaxElements.forEach(el => {
-      const speed = el.dataset.parallax || 0.5;
-      const offset = window.scrollY * speed;
-      el.style.transform = `translateY(${offset}px)`;
+// ── Step Highlight on Scroll ─────────────────────────────────
+(function initSteps() {
+  const steps = document.querySelectorAll('.step');
+  if (!steps.length) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        steps.forEach(s => s.classList.remove('is-active'));
+        entry.target.classList.add('is-active');
+      }
     });
-  }, { passive: true });
-}
-
-// Counter animation
-function animateCounter(element, target, duration = 2000) {
-  let start = 0;
-  const increment = target / (duration / 16);
-  
-  const timer = setInterval(() => {
-    start += increment;
-    if (start >= target) {
-      element.textContent = Math.round(target);
-      clearInterval(timer);
-    } else {
-      element.textContent = Math.round(start);
-    }
-  }, 16);
-}
-
-// Intersection Observer for animations
-const observerOptions = {
-  threshold: 0.1,
-  rootMargin: '0px 0px -50px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('in-view');
-      observer.unobserve(entry.target);
-    }
+  }, {
+    threshold: 0.6,
+    rootMargin: '0px 0px -20% 0px'
   });
-}, observerOptions);
 
-document.querySelectorAll('[data-animate]').forEach(el => {
-  observer.observe(el);
-});
+  steps.forEach(step => observer.observe(step));
 
-// Tooltip functionality
-const tooltips = document.querySelectorAll('[data-tooltip]');
-tooltips.forEach(element => {
-  element.addEventListener('mouseenter', () => {
-    const tooltip = document.createElement('div');
-    tooltip.className = 'tooltip';
-    tooltip.textContent = element.dataset.tooltip;
-    document.body.appendChild(tooltip);
-    
-    const rect = element.getBoundingClientRect();
-    tooltip.style.position = 'fixed';
-    tooltip.style.top = (rect.top - tooltip.offsetHeight - 8) + 'px';
-    tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
-    
-    element.addEventListener('mouseleave', () => {
-      tooltip.remove();
+  // Activate first step initially
+  if (steps[0]) steps[0].classList.add('is-active');
+})();
+
+
+// ── FAQ Accordion ────────────────────────────────────────────
+(function initFAQ() {
+  const items = document.querySelectorAll('.faq-item');
+  if (!items.length) return;
+
+  items.forEach(item => {
+    const trigger = item.querySelector('.faq-trigger');
+    const body = item.querySelector('.faq-body');
+    if (!trigger || !body) return;
+
+    trigger.addEventListener('click', () => {
+      const isOpen = item.classList.contains('is-open');
+
+      // Close all
+      items.forEach(i => {
+        i.classList.remove('is-open');
+        const b = i.querySelector('.faq-body');
+        if (b) b.style.maxHeight = null;
+        const t = i.querySelector('.faq-trigger');
+        if (t) t.setAttribute('aria-expanded', 'false');
+      });
+
+      // Open clicked if it was closed
+      if (!isOpen) {
+        item.classList.add('is-open');
+        body.style.maxHeight = body.scrollHeight + 'px';
+        trigger.setAttribute('aria-expanded', 'true');
+      }
     });
+
+    trigger.setAttribute('aria-expanded', 'false');
   });
-});
+})();
 
-// Dark mode toggle (optional)
-if (localStorage.getItem('theme') === 'light') {
-  document.documentElement.setAttribute('data-theme', 'light');
-}
 
-document.addEventListener('keydown', (e) => {
-  // Keyboard shortcuts
-  if (e.ctrlKey || e.metaKey) {
-    if (e.key === 'k') {
-      e.preventDefault();
-      // Open search or command palette
+// ── Number Count Up Animation ────────────────────────────────
+(function initCounters() {
+  const counters = document.querySelectorAll('[data-count]');
+  if (!counters.length) return;
+
+  function countUp(el, target, suffix, duration) {
+    const start = performance.now();
+    const isFloat = target % 1 !== 0;
+
+    function tick(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = eased * target;
+      el.textContent = (isFloat ? current.toFixed(1) : Math.floor(current)) + suffix;
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseFloat(el.dataset.count);
+        const suffix = el.dataset.suffix || '';
+        const duration = parseInt(el.dataset.duration || '1400');
+        countUp(el, target, suffix, duration);
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  counters.forEach(el => observer.observe(el));
+})();
+
+
+// ── Backend Status Fetch ──────────────────────────────────────
+(function initBackendStatus() {
+  const dots = document.querySelectorAll('.status-badge__dot');
+  const labels = document.querySelectorAll('[data-backend-status]');
+  if (!dots.length) return;
+
+  async function checkStatus() {
+    try {
+      const res = await fetch('http://localhost:8787/api/status', {
+        signal: AbortSignal.timeout(3000)
+      });
+      if (res.ok) {
+        dots.forEach(d => {
+          d.style.background = '#4ade80';
+        });
+        labels.forEach(l => {
+          l.textContent = 'System online';
+        });
+      } else {
+        throw new Error('not ok');
+      }
+    } catch {
+      dots.forEach(d => {
+        d.style.background = '#f59e0b';
+      });
+      labels.forEach(l => {
+        l.textContent = 'Offline mode';
+      });
     }
   }
-});
 
-// Log analytics (example)
-function trackEvent(eventName, data = {}) {
-  if (window.gtag) {
-    gtag('event', eventName, data);
-  }
-  console.log(`Event: ${eventName}`, data);
-}
+  checkStatus();
+  setInterval(checkStatus, 30000);
+})();
 
-// Track button clicks
-buttons.forEach(button => {
-  button.addEventListener('click', () => {
-    trackEvent('button_click', { button_text: button.textContent });
+
+// ── Word Reveal — wrap hero headline words ────────────────────
+(function initWordReveal() {
+  const targets = document.querySelectorAll('[data-word-reveal]');
+  targets.forEach(el => {
+    const words = el.textContent.trim().split(/\s+/);
+    el.innerHTML = words.map(w => `<span class="word">${w}</span>`).join(' ');
+    el.classList.add('word-reveal');
   });
-});
-
-// Performance monitoring
-if (window.performance && window.performance.timing) {
-  window.addEventListener('load', () => {
-    const timing = window.performance.timing;
-    const loadTime = timing.loadEventEnd - timing.navigationStart;
-    console.log(`Page load time: ${loadTime}ms`);
-    trackEvent('page_load', { load_time: loadTime });
-  });
-}
-
-console.log('CareerHub premium landing page initialized.');
+})();

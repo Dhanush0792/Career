@@ -1,10 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "CareerHub Profile",
+  "title": "JobXApply Profile",
   "type": "object",
   "additionalProperties": false,
   "required": ["fullName"],
   "properties": {
+    "id": { "type": "string" },
+    "profileName": { "type": "string", "maxLength": 120 },
     "fullName": { "type": "string", "minLength": 1, "maxLength": 120 },
     "firstName": { "type": "string", "maxLength": 60 },
     "lastName": { "type": "string", "maxLength": 60 },
@@ -29,6 +31,16 @@
     "github": { "type": "string", "maxLength": 280 },
     "portfolio": { "type": "string", "maxLength": 280 },
     "resumeDraft": { "type": "string", "maxLength": 20000 },
-    "targetRole": { "type": "string", "maxLength": 160 }
+    "targetRole": { "type": "string", "maxLength": 160 },
+    "encryptedBlob": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ciphertext", "iv", "salt"],
+      "properties": {
+        "ciphertext": { "type": "string" },
+        "iv": { "type": "string" },
+        "salt": { "type": "string" }
+      }
+    }
   }
 }

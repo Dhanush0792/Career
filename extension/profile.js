@@ -1,58 +1,91 @@
+import { encryptProfileData, decryptProfileData, generatePasscodeHash } from "./shared.js";
+
 async function $(id) { return document.getElementById(id); }
 
 async function loadProfile() {
   return new Promise((resolve) => {
-    chrome.storage.local.get(["careerhubProfile"], (result) => {
-      resolve(result.careerhubProfile || {});
+    chrome.storage.local.get(["jobxapplyProfile"], (result) => {
+      resolve(result.jobxapplyProfile || {});
     });
   });
 }
 
-async function saveProfile(profile) {
+async function loadPasscode() {
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: "careerhub:setProfile", profile }, (res) => {
+    chrome.storage.local.get(["jobxapplyPasscode"], (result) => {
+      resolve(result.jobxapplyPasscode || "");
+    });
+  });
+}
+
+async function saveProfile(profile, passcodeHash) {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "jobxapply:setProfile", profile, passcodeHash }, (res) => {
       resolve(res);
-    });
-  });
-}
-
-async function loadServerProfile() {
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: "careerhub:getProfile" }, (res) => {
-      resolve(res?.profile || {});
     });
   });
 }
 
 (async function init() {
   const profile = await loadProfile();
-  const fields = ["fullName","firstName","lastName","email","phone","dob","headline","summary","education","experience","linkedin","github","portfolio"];
+  const cachedPasscode = await loadPasscode();
+  
+  const fields = [
+    "fullName", "firstName", "lastName", "email", "phone", "dob", "headline", 
+    "summary", "education", "experience", "linkedin", "github", "portfolio"
+  ];
+  
   for (const f of fields) {
     const el = document.getElementById(f);
     if (!el) continue;
     el.value = profile[f] || "";
   }
   
+  const passcodeEl = document.getElementById("syncPasscode");
+  if (passcodeEl) {
+    passcodeEl.value = cachedPasscode;
+  }
+  
   let pendingLocalProfile = null;
   let currentConflictServer = null;
   
   document.getElementById('save').addEventListener('click', async () => {
+    const passcode = document.getElementById("syncPasscode").value.trim();
+    if (!passcode) {
+      document.getElementById('status').textContent = 'Error: Passcode is required to secure sync';
+      return;
+    }
+    
+    // Save passcode locally
+    await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
+    const passcodeHash = await generatePasscodeHash(passcode);
+    
     const newProfile = {};
     for (const f of fields) newProfile[f] = document.getElementById(f).value || "";
     pendingLocalProfile = newProfile;
-    document.getElementById('status').textContent = 'Saving...';
-    const res = await saveProfile(newProfile);
-    if (res?.ok) {
-      document.getElementById('status').textContent = 'Saved and synced';
-      document.getElementById('conflictUI').style.display = 'none';
-    } else if (res?.conflict && res.current) {
-      currentConflictServer = res.current.profile || {};
-      document.getElementById('conflictUI').style.display = 'block';
-      document.getElementById('status').textContent = 'Conflict detected — choose how to proceed.';
-    } else if (res?.errors) {
-      document.getElementById('status').textContent = 'Validation errors: ' + (Array.isArray(res.errors) ? res.errors.join('; ') : String(res.errors));
-    } else {
-      document.getElementById('status').textContent = 'Saved locally (offline or server error)';
+    
+    document.getElementById('status').textContent = 'Encrypting & saving...';
+    try {
+      const encryptedProfile = await encryptProfileData(newProfile, passcode);
+      const res = await saveProfile(encryptedProfile, passcodeHash);
+      if (res?.ok) {
+        document.getElementById('status').textContent = 'Saved and synced (Encrypted)';
+        document.getElementById('conflictUI').style.display = 'none';
+      } else if (res?.conflict && res.current) {
+        try {
+          currentConflictServer = await decryptProfileData(res.current, passcode);
+        } catch (e) {
+          currentConflictServer = res.current.profile || {};
+        }
+        document.getElementById('conflictUI').style.display = 'block';
+        document.getElementById('status').textContent = 'Conflict detected — choose how to proceed.';
+      } else if (res?.errors) {
+        document.getElementById('status').textContent = 'Validation errors: ' + (Array.isArray(res.errors) ? res.errors.join('; ') : String(res.errors));
+      } else {
+        document.getElementById('status').textContent = 'Saved locally (server offline or access denied)';
+      }
+    } catch (err) {
+      document.getElementById('status').textContent = 'Encryption Error: ' + err.message;
     }
   });
   
@@ -69,28 +102,52 @@ async function loadServerProfile() {
   
   document.getElementById('conflictKeepLocal').addEventListener('click', async () => {
     if (!pendingLocalProfile) return;
-    document.getElementById('status').textContent = 'Saving local changes (force overwrite)...';
-    const res = await saveProfile(pendingLocalProfile);
-    if (res?.ok) {
-      document.getElementById('status').textContent = 'Local changes saved';
-      document.getElementById('conflictUI').style.display = 'none';
-    } else if (res?.conflict) {
-      document.getElementById('status').textContent = 'Another conflict occurred. Choose again.';
-    } else {
-      document.getElementById('status').textContent = 'Error: ' + (res?.error || 'unknown');
+    const passcode = document.getElementById("syncPasscode").value.trim();
+    if (!passcode) return;
+    
+    document.getElementById('status').textContent = 'Encrypting & forcing sync...';
+    try {
+      const passcodeHash = await generatePasscodeHash(passcode);
+      const encryptedProfile = await encryptProfileData(pendingLocalProfile, passcode);
+      const res = await saveProfile(encryptedProfile, passcodeHash);
+      if (res?.ok) {
+        document.getElementById('status').textContent = 'Local changes saved (Encrypted)';
+        document.getElementById('conflictUI').style.display = 'none';
+      } else if (res?.conflict) {
+        document.getElementById('status').textContent = 'Another conflict occurred. Choose again.';
+      } else {
+        document.getElementById('status').textContent = 'Error: ' + (res?.error || 'unknown');
+      }
+    } catch (err) {
+      document.getElementById('status').textContent = 'Error: ' + err.message;
     }
   });
   
   document.getElementById('conflictReload').addEventListener('click', async () => {
     document.getElementById('status').textContent = 'Reloading from server...';
-    const serverProfile = await loadServerProfile();
-    for (const f of fields) {
-      const el = document.getElementById(f);
-      if (!el) continue;
-      el.value = serverProfile[f] || "";
+    const passcode = document.getElementById("syncPasscode").value.trim();
+    if (!passcode) return;
+    
+    const serverPayload = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => resolve(res?.state || null));
+    });
+    
+    if (serverPayload) {
+      try {
+        const decryptedServerProfile = await decryptProfileData(serverPayload, passcode);
+        for (const f of fields) {
+          const el = document.getElementById(f);
+          if (!el) continue;
+          el.value = decryptedServerProfile[f] || "";
+        }
+        document.getElementById('status').textContent = 'Reloaded and decrypted from server.';
+      } catch (err) {
+        document.getElementById('status').textContent = 'Reloaded. Decryption failed (check passcode).';
+      }
+    } else {
+      document.getElementById('status').textContent = 'Error: Reload failed.';
     }
     document.getElementById('conflictUI').style.display = 'none';
-    document.getElementById('status').textContent = 'Reloaded from server.';
   });
   
   document.getElementById('close').addEventListener('click', () => window.close());
