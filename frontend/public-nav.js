@@ -31,7 +31,7 @@
 .ch-nav__logo-bracket { color: #5B4FE8; }
 
 /* Nav Groups container */
-.ch-nav__groups { display: flex; gap: 2px; flex: 1; align-items: center; }
+.ch-nav__groups { display: flex; gap: 2px; align-items: center; margin-left: auto; margin-right: 16px; }
 
 /* Each dropdown group */
 .ch-nav__group { position: relative; }
@@ -103,7 +103,7 @@
 }
 
 /* Get Started CTA (right side) */
-.ch-nav__cta { position: relative; margin-left: auto; flex-shrink: 0; }
+.ch-nav__cta { position: relative; flex-shrink: 0; }
 .ch-nav__cta-btn {
   display: inline-flex; align-items: center; gap: 6px;
   height: 38px; padding: 0 20px;
