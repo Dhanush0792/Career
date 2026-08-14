@@ -1152,35 +1152,322 @@ footer {
         </div>
       </div>
 
-      <!-- Signature element: Tilted Glass Resume Card -->
+      <!-- Signature element: Interactive Autofill Extension Sandbox Simulator -->
+      <style>
+      .autofill-simulator-window {
+        width: 380px;
+        background: rgba(7, 10, 24, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        transform: rotateY(-8deg) rotateX(10deg) rotateZ(-3deg);
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .autofill-simulator-window:hover {
+        transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg);
+      }
+
+      /* Header style */
+      .simulator-header {
+        height: 40px;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 12px;
+      }
+      .simulator-buttons {
+        display: flex;
+        gap: 6px;
+      }
+      .sim-btn {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .sim-close { background: #ff5f56; }
+      .sim-minimize { background: #ffbd2e; }
+      .sim-expand { background: #27c93f; }
+
+      .simulator-tab {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        padding: 4px 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        font-family: var(--mono);
+        color: var(--white);
+        height: 28px;
+        margin-top: 12px;
+      }
+      .tab-close {
+        color: var(--dim);
+        cursor: pointer;
+      }
+
+      .simulator-address-bar {
+        flex: 1;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 6px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 6px;
+        font-size: 10px;
+        font-family: var(--mono);
+        color: var(--muted);
+      }
+      .lock-icon { font-size: 8px; }
+
+      .extension-icon-wrap {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: rgba(91, 79, 232, 0.1);
+        border: 1px solid rgba(91, 79, 232, 0.3);
+        color: var(--orange);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        animation: extension-pulse 8s infinite;
+      }
+
+      /* Body styles */
+      .simulator-body {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: relative;
+      }
+      .sim-form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .sim-label {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .sim-input-wrapper {
+        background: rgba(0,0,0,0.25);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 6px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        font-size: 12px;
+        font-family: var(--body);
+        color: var(--white);
+        position: relative;
+      }
+      .sim-input-text {
+        display: inline-block;
+      }
+
+      .sim-file-upload {
+        background: rgba(0,0,0,0.25);
+        border: 1px dashed rgba(255,255,255,0.2);
+        border-radius: 6px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 11px;
+        font-family: var(--mono);
+        color: var(--muted);
+        transition: all 0.3s;
+        animation: file-upload-animation 8s infinite;
+      }
+
+      .sim-success-toast {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        background: rgba(47, 221, 196, 0.1);
+        border: 1px solid rgba(47, 221, 196, 0.4);
+        padding: 10px 14px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--green);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        transform: translateY(20px);
+        opacity: 0;
+        animation: success-toast-animation 8s infinite;
+      }
+
+      /* Animations */
+      @keyframes extension-pulse {
+        0%, 15% { background: rgba(91, 79, 232, 0.1); border-color: rgba(91, 79, 232, 0.3); color: var(--muted); box-shadow: none; }
+        16%, 30% { background: var(--orange); border-color: var(--orange); color: var(--white); box-shadow: 0 0 12px var(--orange); }
+        31%, 100% { background: rgba(91, 79, 232, 0.1); border-color: rgba(91, 79, 232, 0.3); color: var(--muted); box-shadow: none; }
+      }
+
+      /* Typing name animation */
+      .typing-name::after {
+        content: "";
+        animation: type-name 8s infinite;
+      }
+      @keyframes type-name {
+        0%, 20% { content: ""; }
+        21% { content: "D"; }
+        22% { content: "Dh"; }
+        23% { content: "Dha"; }
+        24% { content: "Dhan"; }
+        25% { content: "Dhanu"; }
+        26% { content: "Dhanus"; }
+        27% { content: "Dhanush"; }
+        28% { content: "Dhanush "; }
+        29% { content: "Dhanush S"; }
+        30% { content: "Dhanush Si"; }
+        31% { content: "Dhanush Sid"; }
+        32% { content: "Dhanush Sidd"; }
+        33% { content: "Dhanush Siddi"; }
+        34% { content: "Dhanush Siddil"; }
+        35% { content: "Dhanush Siddili"; }
+        36% { content: "Dhanush Siddilin"; }
+        37% { content: "Dhanush Siddiling"; }
+        38% { content: "Dhanush Siddilinga"; }
+        39%, 90% { content: "Dhanush Siddilingam"; }
+        91%, 100% { content: ""; }
+      }
+
+      /* Typing email animation */
+      .typing-email::after {
+        content: "";
+        animation: type-email 8s infinite;
+      }
+      @keyframes type-email {
+        0%, 40% { content: ""; }
+        41% { content: "d"; }
+        42% { content: "dh"; }
+        43% { content: "dha"; }
+        44% { content: "dhan"; }
+        45% { content: "dhanu"; }
+        46% { content: "dhanus"; }
+        47% { content: "dhanush"; }
+        48% { content: "dhanush@"; }
+        49% { content: "dhanush@d"; }
+        50% { content: "dhanush@do"; }
+        51% { content: "dhanush@dom"; }
+        52% { content: "dhanush@doma"; }
+        53% { content: "dhanush@domai"; }
+        54% { content: "dhanush@domain"; }
+        55% { content: "dhanush@domain."; }
+        56% { content: "dhanush@domain.c"; }
+        57% { content: "dhanush@domain.co"; }
+        58%, 90% { content: "dhanush@domain.com"; }
+        91%, 100% { content: ""; }
+      }
+
+      @keyframes file-upload-animation {
+        0%, 60% { background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.2); color: var(--muted); }
+        61%, 90% { background: rgba(47, 221, 196, 0.05); border-color: var(--success); color: var(--white); }
+        91%, 100% { background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.2); color: var(--muted); }
+      }
+
+      .typing-file::after {
+        content: "Select CV file...";
+        animation: file-name-change 8s infinite;
+      }
+      @keyframes file-name-change {
+        0%, 60% { content: "Select CV file..."; }
+        61%, 90% { content: "📄 Dhanush_CV.pdf (ATS 94%)"; }
+        91%, 100% { content: "Select CV file..."; }
+      }
+
+      @keyframes success-toast-animation {
+        0%, 65% { transform: translateY(20px); opacity: 0; }
+        68%, 88% { transform: translateY(0); opacity: 1; }
+        90%, 100% { transform: translateY(-20px); opacity: 0; }
+      }
+
+      .cursor-blink {
+        animation: blink 1s step-end infinite;
+      }
+      @keyframes blink {
+        from, to { color: transparent }
+        50% { color: var(--orange) }
+      }
+      </style>
+
       <div class="resume-card-wrap">
-        <div class="tilted-resume-card" id="hero-resume-card">
-          <!-- Live-animating ATS score ring -->
-          <div class="score-ring-container">
-            <svg width="70" height="70" viewBox="0 0 70 70">
-              <circle class="score-circle-bg" cx="35" cy="35" r="32"></circle>
-              <circle class="score-circle-val" id="ats-circle" cx="35" cy="35" r="32"></circle>
-            </svg>
-            <div class="score-text" id="ats-score-text">0%</div>
+        <div class="autofill-simulator-window" id="hero-resume-card">
+          <!-- Window Header (Browser Mock) -->
+          <div class="simulator-header">
+            <div class="simulator-buttons">
+              <span class="sim-btn sim-close"></span>
+              <span class="sim-btn sim-minimize"></span>
+              <span class="sim-btn sim-expand"></span>
+            </div>
+            <div class="simulator-tab">
+              <span class="tab-icon">📄</span>
+              <span class="tab-title">Apply to Stripe</span>
+              <span class="tab-close">×</span>
+            </div>
+            <div class="simulator-address-bar">
+              <span class="lock-icon">🔒</span>
+              <span class="url-text">stripe.jobs/apply</span>
+            </div>
+            <div class="extension-icon-wrap" id="sim-extension-trigger">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="jxa-logo-svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
           </div>
 
-          <div style="font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:0.1em; margin-bottom:8px;">MASTER PROFILE DATA</div>
-          <h2 style="font-size:22px; font-weight:700; color:var(--white); margin-bottom:4px; font-family:var(--display);">DHANUSH K</h2>
-          <div style="font-family:var(--mono); font-size:11px; color:var(--success); margin-bottom:16px;">SOFTWARE DEVELOPER</div>
+          <!-- Window Body (Job Portal Application Form) -->
+          <div class="simulator-body">
+            <div class="sim-form-group">
+              <label class="sim-label">Full Name</label>
+              <div class="sim-input-wrapper">
+                <span class="sim-input-text typing-name"></span>
+                <span class="cursor-blink">|</span>
+              </div>
+            </div>
+            
+            <div class="sim-form-group">
+              <label class="sim-label">Email Address</label>
+              <div class="sim-input-wrapper">
+                <span class="sim-input-text typing-email"></span>
+              </div>
+            </div>
 
-          <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; margin-bottom:16px;">
-            <div style="font-family:var(--mono); font-size:9px; color:rgba(244,247,255,0.4); margin-bottom:4px;">EXPERIENCE RECORD</div>
-            <div style="font-size:12px; font-weight:600; color:var(--white);">Associate Software Engineer</div>
-            <div style="font-size:11px; color:rgba(244,247,255,0.6);">Infosys // Bangalore (2024-Present)</div>
-          </div>
-
-          <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
-            <div style="font-family:var(--mono); font-size:9px; color:rgba(244,247,255,0.4); margin-bottom:6px;">CORE REPOSITORY SKILLS</div>
-            <div style="display:flex; flex-wrap:wrap; gap:6px;">
-              <span style="font-family:var(--mono); font-size:9px; background:rgba(91,79,232,0.15); border:1px solid rgba(91,79,232,0.3); color:var(--white); padding:3px 6px; border-radius:4px;">React</span>
-              <span style="font-family:var(--mono); font-size:9px; background:rgba(91,79,232,0.15); border:1px solid rgba(91,79,232,0.3); color:var(--white); padding:3px 6px; border-radius:4px;">Node.js</span>
-              <span style="font-family:var(--mono); font-size:9px; background:rgba(47,221,196,0.15); border:1px solid rgba(47,221,196,0.3); color:var(--success); padding:3px 6px; border-radius:4px;">WebGL</span>
-              <span style="font-family:var(--mono); font-size:9px; background:rgba(245,166,35,0.15); border:1px solid rgba(245,166,35,0.3); color:var(--alert); padding:3px 6px; border-radius:4px;">SQL</span>
+            <div class="sim-form-group">
+              <label class="sim-label">Resume Attachment</label>
+              <div class="sim-file-upload">
+                <span class="file-icon">📁</span>
+                <span class="file-label typing-file">Select CV file...</span>
+              </div>
+            </div>
+            
+            <!-- Success Toast Alert -->
+            <div class="sim-success-toast">
+              <span class="success-lightning">⚡</span>
+              <span class="success-message">JobXApply Autofilled 5 fields (0.4s)</span>
             </div>
           </div>
         </div>
