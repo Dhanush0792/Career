@@ -83,6 +83,7 @@ document.getElementById("profileSelect").addEventListener("change", async (e) =>
   if (res?.ok) {
     els.status.textContent = "Profile swapped.";
     await refreshPreview();
+    await runLocalAtsMatch();
   } else {
     els.status.textContent = "Swap failed: " + (res?.error || "unknown");
   }
@@ -241,6 +242,73 @@ els.logApp.addEventListener("click", async () => {
   }
 });
 
+async function runLocalAtsMatch() {
+  const profile = await loadProfile();
+  const skillsRaw = profile.skills || "";
+  const profileSkills = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  
+  const atsCard = document.getElementById("atsCard");
+  const scoreEl = document.getElementById("popupAtsScore");
+  const matchedEl = document.getElementById("popupMatchedSkills");
+  const missingEl = document.getElementById("popupMissingSkills");
+  
+  if (!atsCard || !scoreEl || !matchedEl || !missingEl) return;
+  
+  if (profileSkills.length === 0) {
+    atsCard.style.display = "none";
+    return;
+  }
+  
+  const tab = await getActiveTab();
+  if (!tab) return;
+  
+  try {
+    const resp = await chrome.tabs.sendMessage(tab.id, { type: "jobxapply:getPageText" });
+    if (resp?.ok && resp.text) {
+      const stopWords = new Set([
+        'the','and','or','to','a','an','in','for','of','with','is','are','be',
+        'that','this','will','have','on','at','by','from','as','we','you','our',
+        'their','it','not','your','can','all','more','about','if','been','use',
+        'any','one','also','its','but','has','was','were','they','who','what',
+        'when','how','into','than','then','so','up','out','them','these','those',
+        'should','would','could','may','must','shall','do','does','did','get',
+        'per','role','work','team','job','experience','position','company',
+      ]);
+
+      const tokens = resp.text.toLowerCase()
+        .replace(/[^a-z0-9\s.+#]/g, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 1 && !stopWords.has(w));
+      const textSet = new Set(tokens);
+      
+      const matched = [];
+      const missing = [];
+      
+      profileSkills.forEach(skill => {
+        const skillTokens = skill.toLowerCase().split(/\s+/);
+        const isFound = skillTokens.some(t => textSet.has(t) || [...textSet].some(jw => jw.includes(t) || t.includes(jw)));
+        (isFound ? matched : missing).push(skill);
+      });
+      
+      const total = matched.length + missing.length;
+      const score = total > 0 ? Math.round((matched.length / total) * 100) : 0;
+      
+      scoreEl.textContent = `${score}%`;
+      scoreEl.style.color = score >= 70 ? "var(--green)" : score >= 40 ? "#5B4FE8" : "rgba(255,255,255,0.4)";
+      
+      matchedEl.textContent = matched.length > 0 ? matched.join(", ") : "None";
+      missingEl.textContent = missing.length > 0 ? missing.join(", ") : "None";
+      
+      atsCard.style.display = "block";
+    } else {
+      atsCard.style.display = "none";
+    }
+  } catch (e) {
+    atsCard.style.display = "none";
+  }
+}
+
 await loadPortalInfo();
 await populateProfileDropdown();
 await refreshPreview();
+await runLocalAtsMatch();
