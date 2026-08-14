@@ -1152,323 +1152,241 @@ footer {
         </div>
       </div>
 
-      <!-- Signature element: Interactive Autofill Extension Sandbox Simulator -->
+      <!-- Signature element: Animated Job Portal Mapping Matrix -->
       <style>
-      .autofill-simulator-window {
+      .portal-matrix-container {
         width: 380px;
-        background: rgba(7, 10, 24, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 16px;
+        height: 380px;
+        position: relative;
+        background: rgba(7, 10, 24, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
         backdrop-filter: blur(20px);
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-        transform: rotateY(-8deg) rotateX(10deg) rotateZ(-3deg);
-        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
         overflow: hidden;
-        display: flex;
-        flex-direction: column;
+        transform: rotateY(-6deg) rotateX(8deg) rotateZ(-2deg);
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
       }
-      .autofill-simulator-window:hover {
+      .portal-matrix-container:hover {
         transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg);
       }
 
-      /* Header style */
-      .simulator-header {
-        height: 40px;
-        background: rgba(255,255,255,0.03);
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        display: flex;
-        align-items: center;
-        padding: 0 12px;
-        gap: 12px;
+      /* Core styling */
+      .matrix-core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 60px;
+        height: 60px;
+        z-index: 10;
       }
-      .simulator-buttons {
-        display: flex;
-        gap: 6px;
-      }
-      .sim-btn {
-        width: 8px;
-        height: 8px;
+      .core-logo {
+        width: 100%;
+        height: 100%;
         border-radius: 50%;
-        display: inline-block;
-      }
-      .sim-close { background: #ff5f56; }
-      .sim-minimize { background: #ffbd2e; }
-      .sim-expand { background: #27c93f; }
-
-      .simulator-tab {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-bottom: none;
-        border-radius: 6px 6px 0 0;
-        padding: 4px 10px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 10px;
-        font-family: var(--mono);
-        color: var(--white);
-        height: 28px;
-        margin-top: 12px;
-      }
-      .tab-close {
-        color: var(--dim);
-        cursor: pointer;
-      }
-
-      .simulator-address-bar {
-        flex: 1;
-        background: rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 6px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        padding: 0 8px;
-        gap: 6px;
-        font-size: 10px;
-        font-family: var(--mono);
-        color: var(--muted);
-      }
-      .lock-icon { font-size: 8px; }
-
-      .extension-icon-wrap {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-        background: rgba(91, 79, 232, 0.1);
-        border: 1px solid rgba(91, 79, 232, 0.3);
-        color: var(--orange);
+        background: rgba(8, 12, 28, 0.95);
+        border: 2px solid var(--primary);
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
-        animation: extension-pulse 8s infinite;
-      }
-
-      /* Body styles */
-      .simulator-body {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
+        box-shadow: 0 0 20px rgba(91, 79, 232, 0.5);
+        z-index: 12;
         position: relative;
       }
-      .sim-form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+      .core-pulse-ring {
+        position: absolute;
+        top: -2px; left: -2px; right: -2px; bottom: -2px;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
+        opacity: 0;
+        animation: core-pulse 3s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+        pointer-events: none;
+        z-index: 5;
       }
-      .sim-label {
+      .core-pulse-ring.delay-1 { animation-delay: 1s; }
+      .core-pulse-ring.delay-2 { animation-delay: 2s; }
+
+      @keyframes core-pulse {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3.5); opacity: 0; }
+      }
+
+      /* Portal nodes */
+      .portal-node {
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(8, 12, 28, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        z-index: 15;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+      .portal-node:hover {
+        transform: translate(-50%, -50%) scale(1.15) !important;
+        border-color: var(--white);
+        box-shadow: 0 0 15px rgba(255,255,255,0.25);
+      }
+
+      .portal-node.active {
+        border-width: 2px;
+        box-shadow: 0 0 25px currentColor;
+        transform: translate(-50%, -50%) scale(1.1) !important;
+      }
+
+      /* Specific node colors on active */
+      .node-linkedin.active { border-color: #0077b5; color: #0077b5; }
+      .node-workday.active { border-color: #f26722; color: #f26722; }
+      .node-greenhouse.active { border-color: #118855; color: #118855; }
+      .node-naukri.active { border-color: #4a90e2; color: #4a90e2; }
+      .node-lever.active { border-color: #2fddc4; color: #2fddc4; }
+      .node-indeed.active { border-color: #2164f3; color: #2164f3; }
+
+      /* Tooltips */
+      .node-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(5px);
+        background: rgba(8, 12, 28, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--white);
+        padding: 6px 10px;
+        border-radius: 6px;
         font-family: var(--mono);
         font-size: 9px;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-      .sim-input-wrapper {
-        background: rgba(0,0,0,0.25);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 6px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        padding: 0 10px;
-        font-size: 12px;
-        font-family: var(--body);
-        color: var(--white);
-        position: relative;
-      }
-      .sim-input-text {
-        display: inline-block;
-      }
-
-      .sim-file-upload {
-        background: rgba(0,0,0,0.25);
-        border: 1px dashed rgba(255,255,255,0.2);
-        border-radius: 6px;
-        height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-size: 11px;
-        font-family: var(--mono);
-        color: var(--muted);
-        transition: all 0.3s;
-        animation: file-upload-animation 8s infinite;
-      }
-
-      .sim-success-toast {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        right: 20px;
-        background: rgba(47, 221, 196, 0.1);
-        border: 1px solid rgba(47, 221, 196, 0.4);
-        padding: 10px 14px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-family: var(--mono);
-        font-size: 11px;
-        color: var(--green);
-        backdrop-filter: blur(8px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        transform: translateY(20px);
+        white-space: nowrap;
         opacity: 0;
-        animation: success-toast-animation 8s infinite;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+      }
+      .portal-node.active .node-tooltip,
+      .portal-node:hover .node-tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
       }
 
-      /* Animations */
-      @keyframes extension-pulse {
-        0%, 15% { background: rgba(91, 79, 232, 0.1); border-color: rgba(91, 79, 232, 0.3); color: var(--muted); box-shadow: none; }
-        16%, 30% { background: var(--orange); border-color: var(--orange); color: var(--white); box-shadow: 0 0 12px var(--orange); }
-        31%, 100% { background: rgba(91, 79, 232, 0.1); border-color: rgba(91, 79, 232, 0.3); color: var(--muted); box-shadow: none; }
+      /* Connecting SVG lines */
+      .matrix-connections {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .conn-line {
+        stroke: rgba(255, 255, 255, 0.05);
+        stroke-width: 1.5;
+        stroke-dasharray: 4, 4;
+        transition: all 0.4s;
+      }
+      .conn-line.active {
+        stroke: var(--primary);
+        stroke-width: 2.5;
+        stroke-dasharray: none;
+        opacity: 0.8;
       }
 
-      /* Typing name animation */
-      .typing-name::after {
-        content: "";
-        animation: type-name 8s infinite;
+      /* Bottom Stats Banner */
+      .matrix-banner {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 52px;
+        background: rgba(8, 12, 28, 0.9);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 16px;
+        z-index: 20;
       }
-      @keyframes type-name {
-        0%, 20% { content: ""; }
-        21% { content: "D"; }
-        22% { content: "Dh"; }
-        23% { content: "Dha"; }
-        24% { content: "Dhan"; }
-        25% { content: "Dhanu"; }
-        26% { content: "Dhanus"; }
-        27% { content: "Dhanush"; }
-        28% { content: "Dhanush "; }
-        29% { content: "Dhanush S"; }
-        30% { content: "Dhanush Si"; }
-        31% { content: "Dhanush Sid"; }
-        32% { content: "Dhanush Sidd"; }
-        33% { content: "Dhanush Siddi"; }
-        34% { content: "Dhanush Siddil"; }
-        35% { content: "Dhanush Siddili"; }
-        36% { content: "Dhanush Siddilin"; }
-        37% { content: "Dhanush Siddiling"; }
-        38% { content: "Dhanush Siddilinga"; }
-        39%, 90% { content: "Dhanush Siddilingam"; }
-        91%, 100% { content: ""; }
+      .banner-title {
+        font-family: var(--mono);
+        font-size: 8px;
+        color: var(--primary);
+        letter-spacing: 0.1em;
+        margin-bottom: 2px;
       }
-
-      /* Typing email animation */
-      .typing-email::after {
-        content: "";
-        animation: type-email 8s infinite;
-      }
-      @keyframes type-email {
-        0%, 40% { content: ""; }
-        41% { content: "d"; }
-        42% { content: "dh"; }
-        43% { content: "dha"; }
-        44% { content: "dhan"; }
-        45% { content: "dhanu"; }
-        46% { content: "dhanus"; }
-        47% { content: "dhanush"; }
-        48% { content: "dhanush@"; }
-        49% { content: "dhanush@d"; }
-        50% { content: "dhanush@do"; }
-        51% { content: "dhanush@dom"; }
-        52% { content: "dhanush@doma"; }
-        53% { content: "dhanush@domai"; }
-        54% { content: "dhanush@domain"; }
-        55% { content: "dhanush@domain."; }
-        56% { content: "dhanush@domain.c"; }
-        57% { content: "dhanush@domain.co"; }
-        58%, 90% { content: "dhanush@domain.com"; }
-        91%, 100% { content: ""; }
-      }
-
-      @keyframes file-upload-animation {
-        0%, 60% { background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.2); color: var(--muted); }
-        61%, 90% { background: rgba(47, 221, 196, 0.05); border-color: var(--success); color: var(--white); }
-        91%, 100% { background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.2); color: var(--muted); }
-      }
-
-      .typing-file::after {
-        content: "Select CV file...";
-        animation: file-name-change 8s infinite;
-      }
-      @keyframes file-name-change {
-        0%, 60% { content: "Select CV file..."; }
-        61%, 90% { content: "📄 Dhanush_CV.pdf (ATS 94%)"; }
-        91%, 100% { content: "Select CV file..."; }
-      }
-
-      @keyframes success-toast-animation {
-        0%, 65% { transform: translateY(20px); opacity: 0; }
-        68%, 88% { transform: translateY(0); opacity: 1; }
-        90%, 100% { transform: translateY(-20px); opacity: 0; }
-      }
-
-      .cursor-blink {
-        animation: blink 1s step-end infinite;
-      }
-      @keyframes blink {
-        from, to { color: transparent }
-        50% { color: var(--orange) }
+      .banner-stat {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--white);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       </style>
 
       <div class="resume-card-wrap">
-        <div class="autofill-simulator-window" id="hero-resume-card">
-          <!-- Window Header (Browser Mock) -->
-          <div class="simulator-header">
-            <div class="simulator-buttons">
-              <span class="sim-btn sim-close"></span>
-              <span class="sim-btn sim-minimize"></span>
-              <span class="sim-btn sim-expand"></span>
+        <div class="portal-matrix-container">
+          <!-- Central Core -->
+          <div class="matrix-core">
+            <div class="core-logo">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </div>
-            <div class="simulator-tab">
-              <span class="tab-icon">📄</span>
-              <span class="tab-title">Apply to Stripe</span>
-              <span class="tab-close">×</span>
-            </div>
-            <div class="simulator-address-bar">
-              <span class="lock-icon">🔒</span>
-              <span class="url-text">stripe.jobs/apply</span>
-            </div>
-            <div class="extension-icon-wrap" id="sim-extension-trigger">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="jxa-logo-svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            </div>
+            <div class="core-pulse-ring"></div>
+            <div class="core-pulse-ring delay-1"></div>
+            <div class="core-pulse-ring delay-2"></div>
           </div>
 
-          <!-- Window Body (Job Portal Application Form) -->
-          <div class="simulator-body">
-            <div class="sim-form-group">
-              <label class="sim-label">Full Name</label>
-              <div class="sim-input-wrapper">
-                <span class="sim-input-text typing-name"></span>
-                <span class="cursor-blink">|</span>
-              </div>
-            </div>
-            
-            <div class="sim-form-group">
-              <label class="sim-label">Email Address</label>
-              <div class="sim-input-wrapper">
-                <span class="sim-input-text typing-email"></span>
-              </div>
-            </div>
+          <!-- Portal Nodes -->
+          <!-- Node 1: LinkedIn (Top) -->
+          <div class="portal-node node-linkedin" style="top: 15%; left: 50%; transform: translate(-50%, -50%);">
+            <span class="node-icon">💼</span>
+            <div class="node-tooltip">LinkedIn: 100% Auto-mapped</div>
+          </div>
+          
+          <!-- Node 2: Workday (Top Right) -->
+          <div class="portal-node node-workday" style="top: 32%; left: 82%; transform: translate(-50%, -50%);">
+            <span class="node-icon">🍊</span>
+            <div class="node-tooltip">Workday: 78 Fields Mapped</div>
+          </div>
 
-            <div class="sim-form-group">
-              <label class="sim-label">Resume Attachment</label>
-              <div class="sim-file-upload">
-                <span class="file-icon">📁</span>
-                <span class="file-label typing-file">Select CV file...</span>
-              </div>
-            </div>
-            
-            <!-- Success Toast Alert -->
-            <div class="sim-success-toast">
-              <span class="success-lightning">⚡</span>
-              <span class="success-message">JobXApply Autofilled 5 fields (0.4s)</span>
-            </div>
+          <!-- Node 3: Greenhouse (Bottom Right) -->
+          <div class="portal-node node-greenhouse" style="top: 68%; left: 82%; transform: translate(-50%, -50%);">
+            <span class="node-icon">🌿</span>
+            <div class="node-tooltip">Greenhouse: 45 Fields Mapped</div>
+          </div>
+
+          <!-- Node 4: Naukri (Bottom) -->
+          <div class="portal-node node-naukri" style="top: 85%; left: 50%; transform: translate(-50%, -50%);">
+            <span class="node-icon">🔵</span>
+            <div class="node-tooltip">Naukri: 62 Fields Mapped</div>
+          </div>
+
+          <!-- Node 5: Lever (Bottom Left) -->
+          <div class="portal-node node-lever" style="top: 68%; left: 18%; transform: translate(-50%, -50%);">
+            <span class="node-icon">📐</span>
+            <div class="node-tooltip">Lever: 38 Fields Mapped</div>
+          </div>
+
+          <!-- Node 6: Indeed (Top Left) -->
+          <div class="portal-node node-indeed" style="top: 32%; left: 18%; transform: translate(-50%, -50%);">
+            <span class="node-icon">🎯</span>
+            <div class="node-tooltip">Indeed: 52 Fields Mapped</div>
+          </div>
+
+          <!-- Connecting SVG Lines -->
+          <svg class="matrix-connections" viewBox="0 0 400 400">
+            <line class="conn-line conn-linkedin" x1="200" y1="200" x2="200" y2="60" />
+            <line class="conn-line conn-workday" x1="200" y1="200" x2="328" y2="128" />
+            <line class="conn-line conn-greenhouse" x1="200" y1="200" x2="328" y2="272" />
+            <line class="conn-line conn-naukri" x1="200" y1="200" x2="200" y2="340" />
+            <line class="conn-line conn-lever" x1="200" y1="200" x2="72" y2="272" />
+            <line class="conn-line conn-indeed" x1="200" y1="200" x2="72" y2="128" />
+          </svg>
+
+          <!-- Floating Overlay Stats Banner -->
+          <div class="matrix-banner">
+            <span class="banner-title">ACTIVE INTEGRATION FEED</span>
+            <span class="banner-stat" id="matrix-banner-stat">Scanning portal maps...</span>
           </div>
         </div>
       </div>
@@ -2808,28 +2726,39 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 });
 
 
-// Animating ATS score ring
+// Portal Matrix Active Loop
 window.addEventListener('load', () => {
-  const circle = document.getElementById('ats-circle');
-  const text = document.getElementById('ats-score-text');
-  if (circle && text) {
-    let score = 0;
-    const targetScore = 82;
-    const duration = 900; // ms
-    const intervalTime = 15; // ms
-    const step = targetScore / (duration / intervalTime);
-    
-    const interval = setInterval(() => {
-      score += step;
-      if (score >= targetScore) {
-        score = targetScore;
-        clearInterval(interval);
-      }
-      text.textContent = Math.round(score) + '%';
-      const offset = 201 - (201 * (score / 100));
-      circle.style.strokeDashoffset = offset;
-    }, intervalTime);
+  const nodes = [
+    { key: 'linkedin', label: 'LinkedIn', stat: '100% Auto-mapped (14 key profile fields)' },
+    { key: 'workday', label: 'Workday', stat: '78 Input Rules Configured (Autofill: 0.4s)' },
+    { key: 'greenhouse', label: 'Greenhouse', stat: '45 Fields Synced & Validated' },
+    { key: 'naukri', label: 'Naukri', stat: '62 Direct Mapping Connections Active' },
+    { key: 'lever', label: 'Lever', stat: '38 Input Rules Configured' },
+    { key: 'indeed', label: 'Indeed', stat: '52 Auto-mapped Fields Verified' }
+  ];
+
+  let currentIndex = 0;
+  
+  function triggerNextNode() {
+    document.querySelectorAll('.portal-node').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.conn-line').forEach(l => l.classList.remove('active'));
+
+    const currentNode = nodes[currentIndex];
+    const nodeEl = document.querySelector(`.node-${currentNode.key}`);
+    const lineEl = document.querySelector(`.conn-${currentNode.key}`);
+    const bannerStat = document.getElementById('matrix-banner-stat');
+
+    if (nodeEl) nodeEl.classList.add('active');
+    if (lineEl) lineEl.classList.add('active');
+    if (bannerStat) {
+      bannerStat.textContent = `⚡ Mapping connection to ${currentNode.label}: ${currentNode.stat}`;
+    }
+
+    currentIndex = (currentIndex + 1) % nodes.length;
   }
+
+  triggerNextNode();
+  setInterval(triggerNextNode, 2500);
 });
 </script>
 </body>
