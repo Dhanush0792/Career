@@ -2608,6 +2608,43 @@ window.addEventListener('load', () => {
           land.features.forEach(d => {
             context.beginPath();
             path(d);
+            
+            // If India (ISO 356), merge the J&K crown (including PoK and Aksai Chin)
+            if (d.id === "356" || d.id === 356 || (d.properties && d.properties.name === "India")) {
+              path({
+                type: "Feature",
+                geometry: {
+                  type: "Polygon",
+                  coordinates: [[
+                    [73.5, 32.5],
+                    [73.5, 33.3],
+                    [73.3, 33.8],
+                    [73.6, 34.2],
+                    [73.5, 34.6],
+                    [74.0, 35.1],
+                    [74.5, 35.5],
+                    [74.8, 35.8],
+                    [75.0, 36.1],
+                    [75.5, 36.5],
+                    [76.3, 36.9],
+                    [77.0, 37.1],
+                    [77.8, 36.4],
+                    [78.4, 35.9],
+                    [79.2, 35.5],
+                    [79.8, 35.2],
+                    [80.3, 34.2],
+                    [80.1, 33.3],
+                    [79.0, 32.8],
+                    [78.0, 32.4],
+                    [76.8, 32.4],
+                    [75.5, 32.3],
+                    [74.5, 32.4],
+                    [73.5, 32.5]
+                  ]]
+                }
+              });
+            }
+
             context.fillStyle = 'rgba(91, 79, 232, 0.15)';
             context.fill();
             context.strokeStyle = 'rgba(255, 255, 255, 0.25)';
