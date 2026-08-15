@@ -25,31 +25,45 @@ const SYNC_API = 'http://localhost:8787/api';
  * Call this at the top of every inner page.
  */
 function requireAuth() {
+  const path = window.location.pathname;
+  const isInAdmin = path.includes('/admin/');
+  const prefix = isInAdmin ? '../' : '';
+
   if (!localStorage.getItem('jxa_token')) {
     if (document.documentElement) {
       document.documentElement.style.display = 'none';
     }
-    const path = window.location.pathname;
     const page = path.substring(path.lastIndexOf('/') + 1);
     if (page.includes('resume-builder')) {
-      window.location.href = 'tools.html#resume-builder';
+      window.location.href = prefix + 'tools.html#resume-builder';
     } else if (page.includes('ats-checker')) {
-      window.location.href = 'tools.html#ats-checker';
+      window.location.href = prefix + 'tools.html#ats-checker';
     } else if (page.includes('cover-letter')) {
-      window.location.href = 'tools.html#cover-letter';
+      window.location.href = prefix + 'tools.html#cover-letter';
     } else if (page.includes('autofill-lab')) {
-      window.location.href = 'tools.html#autofill-lab';
+      window.location.href = prefix + 'tools.html#autofill-lab';
     } else {
-      window.location.href = 'auth.html';
+      if (page !== 'auth.html') {
+        window.location.href = prefix + 'auth.html';
+      }
     }
   } else {
-    // If logged in as admin, they should always be routed to the admin panel
-    if (localStorage.getItem('jxa_role') === 'admin') {
-      if (!window.location.pathname.includes('/admin/')) {
+    const role = localStorage.getItem('jxa_role');
+    if (role === 'admin') {
+      if (!isInAdmin) {
         if (document.documentElement) {
           document.documentElement.style.display = 'none';
         }
-        window.location.href = 'admin/index.html';
+        window.location.href = prefix + 'admin/index.html';
+        return;
+      }
+    } else {
+      // Regular user / candidate
+      if (isInAdmin) {
+        if (document.documentElement) {
+          document.documentElement.style.display = 'none';
+        }
+        window.location.href = '../dashboard.html';
         return;
       }
     }
