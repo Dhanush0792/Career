@@ -320,7 +320,8 @@ function setGroupError(inputEl, hasError) {
   inputEl.closest('.form-group').classList.toggle('has-error', hasError);
 }
 
-document.getElementById('auth-form').addEventListener('submit', () => {
+document.getElementById('auth-form').addEventListener('submit', (e) => {
+  e.preventDefault();
   const email    = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
   const confirm  = document.getElementById('auth-confirm')?.value || '';
