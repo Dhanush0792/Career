@@ -1,0 +1,56 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[a4paper,margin=0.55in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{utopia}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\titleformat{\section}{\normalsize\bfseries}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{0.6em}{0.35em}
+\setlist[itemize]{leftmargin=0.14in, itemsep=0.18em}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries {{FULL_NAME}} }\\[3pt]
+  {\small {{TARGET_ROLE_TITLE}} }\\[4pt]
+  {\small
+    \href{mailto:{{EMAIL}}}{ {{EMAIL}} } \,|\, {{PHONE}} \,|\,
+    \href{ {{LINKEDIN_URL}} }{ {{LINKEDIN_DISPLAY}} } \,|\,
+    \href{ {{GITHUB_URL}} }{ {{GITHUB_DISPLAY}} }
+  }
+\end{center}
+\vspace{6pt}
+
+\section*{Summary}
+{{SUMMARY}}
+
+\noindent
+\begin{minipage}[t]{0.66\textwidth}
+  \section*{Experience}
+  {{EXPERIENCE_BLOCK}}
+
+  \section*{Projects}
+  {{PROJECTS_BLOCK}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.30\textwidth}
+  \section*{Education}
+  {{EDUCATION_BLOCK}}
+
+  \section*{Skills}
+  {{SKILLS_BLOCK}}
+
+  \section*{Certifications}
+  {{CERTIFICATIONS_BLOCK}}
+
+  \section*{Additional}
+  {{ADDITIONAL_BLOCK}}
+\end{minipage}
+
+\end{document}

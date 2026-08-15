@@ -667,23 +667,228 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // POST Save live portal maps
-  if (req.method === "POST" && urlObj.pathname === "/api/maps") {
+  // GET /api/resume/templates
+  if (req.method === "GET" && urlObj.pathname === "/api/resume/templates") {
+    const templates = [
+      { id: "01", name: "Classic Chronological", file: "resume_01_classic_chronological.tex", desc: "Classic single-column professional layout, best for ATS-heavy applications.", safety: "Safe - Single Column" },
+      { id: "02", name: "Sidebar Two-Column", file: "resume_02_sidebar_twocolumn.tex", desc: "Sleek split column layout with sidebar for contact/skills. Recommended for referrals.", safety: "Caution - Two Column" },
+      { id: "03", name: "Compact Dense", file: "resume_03_compact_dense.tex", desc: "Space-saving dense single-column layout, ideal for students and freshers.", safety: "Safe - Single Column" },
+      { id: "04", name: "Skills-First Functional", file: "resume_04_skills_first_functional.tex", desc: "Highlights professional skills and core competencies at the top.", safety: "Safe - Single Column" },
+      { id: "05", name: "Timeline Style", file: "resume_05_timeline.tex", desc: "Chronological timeline layout with a vertical date-line divider.", safety: "Safe - Single Column" },
+      { id: "06", name: "Academic CV", file: "resume_06_academic_cv.tex", desc: "Detailed layout suited for academic publications, research, and long CVs.", safety: "Safe - Single Column" },
+      { id: "07", name: "Executive Minimalist", file: "resume_07_executive_minimalist.tex", desc: "Elegant minimalist presentation with generous whitespace and margin.", safety: "Safe - Single Column" },
+      { id: "08", name: "Conservative Finance", file: "resume_08_conservative_finance.tex", desc: "Traditional layout using classic serif typography and compact headers.", safety: "Safe - Single Column" },
+      { id: "09", name: "Modern Tech Sans", file: "resume_09_modern_tech_sans.tex", desc: "Modern clean layout with accent borders and sans-serif font face.", safety: "Safe - Single Column" },
+      { id: "10", name: "Grid Modular Two-Column", file: "resume_10_grid_modular.tex", desc: "Structured grid layout with metadata column on the right.", safety: "Caution - Two Column" }
+    ];
+    sendJson(res, 200, templates);
+    return;
+  }
+
+  // POST /api/resume/generate
+  if (req.method === "POST" && urlObj.pathname === "/api/resume/generate") {
     let body = "";
     req.on("data", chunk => { body += chunk; });
     req.on("end", () => {
       try {
-        const incoming = JSON.parse(body || "{}");
-        if (!incoming || typeof incoming !== "object") {
-          sendJson(res, 400, { ok: false, error: "Invalid maps payload" });
+        const payload = JSON.parse(body || "{}");
+        const templateId = payload.templateId || "01";
+        const data = payload.data || {};
+
+        const templates = {
+          "01": "resume_01_classic_chronological.tex",
+          "02": "resume_02_sidebar_twocolumn.tex",
+          "03": "resume_03_compact_dense.tex",
+          "04": "resume_04_skills_first_functional.tex",
+          "05": "resume_05_timeline.tex",
+          "06": "resume_06_academic_cv.tex",
+          "07": "resume_07_executive_minimalist.tex",
+          "08": "resume_08_conservative_finance.tex",
+          "09": "resume_09_modern_tech_sans.tex",
+          "10": "resume_10_grid_modular.tex"
+        };
+
+        const fileName = templates[templateId] || templates["01"];
+        const templatePath = path.join(__dirname, "templates", fileName);
+
+        if (!fs.existsSync(templatePath)) {
+          sendJson(res, 404, { ok: false, error: "Template file not found" });
           return;
         }
-        fs.writeFileSync(MAPS_FILE, JSON.stringify(incoming, null, 2), "utf8");
-        loadPortalMaps();
-        broadcastMaps(portalMaps);
-        sendJson(res, 200, { ok: true, maps: portalMaps });
-      } catch (e) {
-        sendJson(res, 400, { ok: false, error: e.message });
+
+        let content = fs.readFileSync(templatePath, "utf8");
+
+        // LaTeX Escaper
+        const escapeLatex = (str) => {
+          if (!str) return "";
+          return String(str)
+            .replace(/\\/g, "\\textbackslash{}")
+            .replace(/([&%$#_{}])/g, "\\$1")
+            .replace(/\^/g, "\\textasciicircum{}")
+            .replace(/~/g, "\\textasciitilde{}")
+            .replace(/</g, "\\textless{}")
+            .replace(/>/g, "\\textgreater{}")
+            .replace(/\n/g, " ");
+        };
+
+        // LaTeX Bullet Block Generator
+        const formatBullets = (text) => {
+          if (!text) return "";
+          const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+          if (lines.length === 0) return "";
+          let output = "\\begin{itemize}\n";
+          lines.forEach(l => {
+            if (l.startsWith("-") || l.startsWith("*") || l.startsWith("•")) {
+              output += `  \\item ${escapeLatex(l.substring(1).trim())}\n`;
+            } else {
+              output += `  \\item ${escapeLatex(l)}\n`;
+            }
+          });
+          output += "\\end{itemize}";
+          return output;
+        };
+
+        // LaTeX Experience Generator
+        const formatExperience = (text) => {
+          if (!text) return "";
+          const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+          let output = "";
+          let inBullets = false;
+          let bulletLines = [];
+
+          const closeBullets = () => {
+            if (inBullets && bulletLines.length > 0) {
+              output += `\\begin{itemize}[leftmargin=0.2in]\n${bulletLines.map(l => `  \\item ${l}`).join('\n')}\n\\end{itemize}\n`;
+              bulletLines = [];
+              inBullets = false;
+            }
+          };
+
+          lines.forEach(l => {
+            if (l.startsWith("-") || l.startsWith("*") || l.startsWith("•")) {
+              inBullets = true;
+              bulletLines.push(escapeLatex(l.substring(1).trim()));
+            } else {
+              closeBullets();
+              if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
+                let parts = l.split(/  +/);
+                if (parts.length < 2) parts = l.split('\t');
+                if (parts.length >= 2) {
+                  const title = escapeLatex(parts[0].trim());
+                  const date = escapeLatex(parts[parts.length - 1].trim());
+                  output += `\\begin{tabularx}{\\linewidth}{X r}\n\\textbf{${title}} & ${date} \\\\\n\\end{tabularx}\n`;
+                } else {
+                  output += `\\begin{tabularx}{\\linewidth}{X r}\n\\textbf{${escapeLatex(l)}} & \\\\\n\\end{tabularx}\n`;
+                }
+              } else {
+                output += `\\noindent ${escapeLatex(l)} \\\\[4pt]\n`;
+              }
+            }
+          });
+          closeBullets();
+          return output;
+        };
+
+        // LaTeX Timeline Experience Generator (Template 05)
+        const formatExperienceTimeline = (text) => {
+          if (!text) return "";
+          const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+          let output = "\\begin{tabular}{D!{\\vrule}C}\n";
+          let inBullets = false;
+          let bulletLines = [];
+
+          const closeBullets = () => {
+            if (inBullets && bulletLines.length > 0) {
+              output += ` & \\begin{itemize}[leftmargin=0.15in]\n${bulletLines.map(l => `  \\item ${l}`).join('\n')}\n\\end{itemize} \\\\\n`;
+              bulletLines = [];
+              inBullets = false;
+            }
+          };
+
+          lines.forEach(l => {
+            if (l.startsWith("-") || l.startsWith("*") || l.startsWith("•")) {
+              inBullets = true;
+              bulletLines.push(escapeLatex(l.substring(1).trim()));
+            } else {
+              closeBullets();
+              if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
+                let parts = l.split(/  +/);
+                if (parts.length < 2) parts = l.split('\t');
+                if (parts.length >= 2) {
+                  const title = escapeLatex(parts[0].trim());
+                  const date = escapeLatex(parts[parts.length - 1].trim());
+                  output += `${date} & \\textbf{${title}} \\\\\n`;
+                } else {
+                  output += ` & \\textbf{${escapeLatex(l)}} \\\\\n`;
+                }
+              } else {
+                output += ` & ${escapeLatex(l)} \\\\[2pt]\n`;
+              }
+            }
+          });
+          closeBullets();
+          output += "\\end{tabular}";
+          return output;
+        };
+
+        // LaTeX Education Generator
+        const formatEducation = (text) => {
+          if (!text) return "";
+          const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+          let output = "\\begin{tabularx}{\\linewidth}{X r}\n";
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (line.includes('--') || line.match(/(\d{4})/)) {
+              let parts = line.split(/  +/);
+              if (parts.length < 2) parts = line.split('\t');
+              if (parts.length >= 2) {
+                output += `\\textbf{${escapeLatex(parts[0].trim())}} & ${escapeLatex(parts[parts.length - 1].trim())} \\\\\n`;
+              } else {
+                output += `\\textbf{${escapeLatex(line)}} & \\\\\n`;
+              }
+            } else {
+              output += `${escapeLatex(line)} \\\\[4pt]\n`;
+            }
+          }
+          output += "\\end{tabularx}";
+          return output;
+        };
+
+        // Substitute personal contact info
+        content = content
+          .replace(/\{\{FULL_NAME\}\}/g, escapeLatex(data.fullName || ""))
+          .replace(/\{\{TARGET_ROLE_TITLE\}\}/g, escapeLatex(data.targetRole || ""))
+          .replace(/\{\{EMAIL\}\}/g, escapeLatex(data.email || ""))
+          .replace(/\{\{PHONE\}\}/g, escapeLatex(data.phone || ""))
+          .replace(/\{\{LOCATION\}\}/g, escapeLatex(data.location || ""))
+          .replace(/\{\{LINKEDIN_URL\}\}/g, escapeLatex(data.linkedinUrl || ""))
+          .replace(/\{\{LINKEDIN_DISPLAY\}\}/g, escapeLatex(data.linkedinDisplay || ""))
+          .replace(/\{\{GITHUB_URL\}\}/g, escapeLatex(data.githubUrl || ""))
+          .replace(/\{\{GITHUB_DISPLAY\}\}/g, escapeLatex(data.githubDisplay || ""))
+          .replace(/\{\{PORTFOLIO_URL\}\}/g, escapeLatex(data.portfolioUrl || ""))
+          .replace(/\{\{PORTFOLIO_DISPLAY\}\}/g, escapeLatex(data.portfolioDisplay || ""))
+          .replace(/\{\{SUMMARY\}\}/g, escapeLatex(data.summary || ""));
+
+        // Substitute blocks
+        const eduContent = formatEducation(data.education);
+        const expContent = templateId === "05" ? formatExperienceTimeline(data.experience) : formatExperience(data.experience);
+        const projContent = formatBullets(data.projects);
+        const skillsContent = formatBullets(data.skills);
+        const certsContent = formatBullets(data.certifications);
+        const addContent = formatBullets(data.additional);
+
+        content = content
+          .replace(/\{\{EDUCATION_BLOCK\}\}/g, eduContent)
+          .replace(/\{\{EXPERIENCE_BLOCK\}\}/g, expContent)
+          .replace(/\{\{PROJECTS_BLOCK\}\}/g, projContent)
+          .replace(/\{\{SKILLS_BLOCK\}\}/g, skillsContent)
+          .replace(/\{\{CERTIFICATIONS_BLOCK\}\}/g, certsContent)
+          .replace(/\{\{ADDITIONAL_BLOCK\}\}/g, addContent);
+
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end(content);
+      } catch (err) {
+        sendJson(res, 500, { ok: false, error: err.message });
       }
     });
     return;

@@ -1,0 +1,48 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[a4paper,margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\titleformat{\section}{\normalsize\bfseries\scshape}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{0.9em}{0.4em}
+\setlist[itemize]{leftmargin=0.16in, itemsep=0.2em, label=--}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\scshape {{FULL_NAME}} }\\[5pt]
+  {\small
+    \href{mailto:{{EMAIL}}}{ {{EMAIL}} } \,|\, {{PHONE}} \,|\, {{LOCATION}} \,|\,
+    \href{ {{LINKEDIN_URL}} }{ {{LINKEDIN_DISPLAY}} }
+  }
+\end{center}
+
+\section*{Professional Summary}
+{{SUMMARY}}
+
+\section*{Professional Experience}
+{{EXPERIENCE_BLOCK}}
+
+\section*{Education}
+{{EDUCATION_BLOCK}}
+
+\section*{Relevant Projects}
+{{PROJECTS_BLOCK}}
+
+\section*{Core Competencies}
+{{SKILLS_BLOCK}}
+
+\section*{Licenses \& Certifications}
+{{CERTIFICATIONS_BLOCK}}
+
+\section*{Additional Information}
+{{ADDITIONAL_BLOCK}}
+
+\end{document}

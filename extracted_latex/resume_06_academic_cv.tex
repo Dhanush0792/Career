@@ -1,0 +1,50 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[a4paper,margin=0.85in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\setlength{\parindent}{0pt}
+
+\titleformat{\section}{\normalsize\bfseries\scshape}{}{0em}{}[\titlerule]
+\titlespacing*{\section}{0pt}{0.8em}{0.4em}
+\setlist[itemize]{leftmargin=0.18in, itemsep=0.25em}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE {{FULL_NAME}} }\\[5pt]
+  {\small
+    \href{mailto:{{EMAIL}}}{ {{EMAIL}} } \,$\cdot$\, {{PHONE}} \,$\cdot$\,
+    \href{ {{LINKEDIN_URL}} }{ {{LINKEDIN_DISPLAY}} } \,$\cdot$\,
+    \href{ {{GITHUB_URL}} }{ {{GITHUB_DISPLAY}} }
+  }
+\end{center}
+
+\section*{Research \& Academic Summary}
+{{SUMMARY}}
+
+\section*{Education}
+{{EDUCATION_BLOCK}}
+
+\section*{Research \& Work Experience}
+{{EXPERIENCE_BLOCK}}
+
+\section*{Projects}
+{{PROJECTS_BLOCK}}
+
+\section*{Technical Skills}
+{{SKILLS_BLOCK}}
+
+\section*{Certifications}
+{{CERTIFICATIONS_BLOCK}}
+
+\section*{Additional Information}
+{{ADDITIONAL_BLOCK}}
+
+\section*{References}
+Available upon request.
+
+\end{document}

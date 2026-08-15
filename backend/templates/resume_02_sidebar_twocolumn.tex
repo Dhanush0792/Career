@@ -1,0 +1,67 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[a4paper,margin=0.5in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{charter}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\titleformat{\section}{\normalsize\bfseries\uppercase}{}{0em}{}[\vspace{2pt}\hrule]
+\titlespacing*{\section}{0pt}{0.8em}{0.4em}
+\setlist[itemize]{leftmargin=0.14in, itemsep=0.18em, topsep=2pt}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black}
+
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\begin{document}
+
+\noindent
+\begin{minipage}[t]{0.32\textwidth}
+  {\Large\bfseries {{FULL_NAME}} }\\[2pt]
+  {\small {{TARGET_ROLE_TITLE}} }
+
+  \vspace{14pt}
+  \section*{Contact}
+  \small
+  \href{mailto:{{EMAIL}}}{ {{EMAIL}} }\\
+  {{PHONE}}\\
+  {{LOCATION}}\\
+  \href{ {{LINKEDIN_URL}} }{ {{LINKEDIN_DISPLAY}} }\\
+  \href{ {{GITHUB_URL}} }{ {{GITHUB_DISPLAY}} }
+
+  \vspace{10pt}
+  \section*{Skills}
+  \small
+  {{SKILLS_BLOCK}}
+
+  \vspace{10pt}
+  \section*{Certifications}
+  \small
+  {{CERTIFICATIONS_BLOCK}}
+
+  \vspace{10pt}
+  \section*{Additional}
+  \small
+  {{ADDITIONAL_BLOCK}}
+\end{minipage}
+\hfill
+\vrule width 0.6pt
+\hfill
+\begin{minipage}[t]{0.62\textwidth}
+  \section*{Summary}
+  {{SUMMARY}}
+
+  \section*{Experience}
+  {{EXPERIENCE_BLOCK}}
+
+  \section*{Education}
+  {{EDUCATION_BLOCK}}
+
+  \section*{Projects}
+  {{PROJECTS_BLOCK}}
+\end{minipage}
+
+\end{document}

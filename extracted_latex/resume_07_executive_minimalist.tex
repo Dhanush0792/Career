@@ -1,0 +1,53 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\titleformat{\section}{\normalsize\bfseries\MakeUppercase}{}{0em}{}
+\titlespacing*{\section}{0pt}{1.1em}{0.5em}
+\setlist[itemize]{leftmargin=0.16in, itemsep=0.3em}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black}
+
+\begin{document}
+
+\begin{center}
+  {\Huge {{FULL_NAME}} }\\[6pt]
+  {\large {{TARGET_ROLE_TITLE}} }\\[10pt]
+  \rule{0.5\linewidth}{0.4pt}\\[10pt]
+  {\small
+    \href{mailto:{{EMAIL}}}{ {{EMAIL}} } \quad {{PHONE}} \quad
+    \href{ {{LINKEDIN_URL}} }{ {{LINKEDIN_DISPLAY}} }
+  }
+\end{center}
+
+\vspace{18pt}
+\section*{Summary}
+{{SUMMARY}}
+
+\vspace{6pt}
+\section*{Experience}
+{{EXPERIENCE_BLOCK}}
+
+\vspace{6pt}
+\section*{Education}
+{{EDUCATION_BLOCK}}
+
+\vspace{6pt}
+\section*{Selected Projects}
+{{PROJECTS_BLOCK}}
+
+\vspace{6pt}
+\section*{Skills}
+{{SKILLS_BLOCK}}
+
+\vspace{6pt}
+\section*{Certifications}
+{{CERTIFICATIONS_BLOCK}}
+
+\end{document}

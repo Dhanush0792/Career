@@ -1,0 +1,56 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[a4paper,margin=0.5in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\titleformat{\section}{\normalsize\bfseries}{}{0em}{}[\vspace{1pt}\titlerule]
+\titlespacing*{\section}{0pt}{0.4em}{0.25em}
+\setlist[itemize]{leftmargin=0.13in, itemsep=0.05em, topsep=1pt, parsep=0pt}
+\setlength{\parskip}{0pt}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black}
+
+\begin{document}
+
+\begin{center}
+  {\large\textbf{ {{FULL_NAME}} }} \quad
+  {\small
+    \href{mailto:{{EMAIL}}}{ {{EMAIL}} } \,|\, {{PHONE}} \,|\,
+    \href{ {{LINKEDIN_URL}} }{ {{LINKEDIN_DISPLAY}} } \,|\,
+    \href{ {{GITHUB_URL}} }{ {{GITHUB_DISPLAY}} }
+  }
+\end{center}
+\vspace{2pt}
+
+\section*{Summary}
+\small {{SUMMARY}}
+
+\section*{Education}
+\small
+{{EDUCATION_BLOCK}}
+
+\section*{Experience}
+\small
+{{EXPERIENCE_BLOCK}}
+
+\section*{Projects}
+\small
+{{PROJECTS_BLOCK}}
+
+\section*{Skills}
+\small
+{{SKILLS_BLOCK}}
+
+\section*{Certifications}
+\small
+{{CERTIFICATIONS_BLOCK}}
+
+\section*{Additional Information}
+\small
+{{ADDITIONAL_BLOCK}}
+
+\end{document}

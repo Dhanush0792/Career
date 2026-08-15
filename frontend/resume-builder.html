@@ -322,6 +322,112 @@ body::after {
     overflow: visible !important;
   }
 }
+
+/* ═══════════════════════════════════════
+   LATEX DYNAMIC HTML TEMPLATE OUTLINES
+═══════════════════════════════════════ */
+.cv-page {
+  background: #ffffff;
+  padding: 40px !important;
+  color: #111111 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  box-sizing: border-box !important;
+  min-height: 297mm !important;
+  width: 210mm !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+  margin: 0 auto !important;
+  border-radius: 4px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.cv-page .hdr { text-align: left; }
+.cv-page .name { font-size: 24px; font-weight: bold; margin-bottom: 4px; color: #111; }
+.cv-page .contact { display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; color: #444; margin-top: 4px; margin-bottom: 8px; border-bottom: none !important; }
+.cv-page .sec-title { font-size: 13px; font-weight: bold; border-bottom: 1px solid #111111; text-transform: uppercase; margin-top: 8px; margin-bottom: 6px; padding-bottom: 2px; color: #111; letter-spacing: 0.05em; }
+.cv-page .cv-body-text { font-size: 11.5px; line-height: 1.45; color: #222; }
+
+/* 01. Classic Chronological */
+.tmpl-01 { font-family: 'Georgia', serif; }
+.tmpl-01 .hdr { text-align: center; }
+.tmpl-01 .contact { justify-content: center; }
+
+/* 02. Sidebar Two-Column */
+.tmpl-02 {
+  font-family: 'Georgia', serif;
+  display: grid !important;
+  grid-template-columns: 0.32fr 1px 0.64fr !important;
+  gap: 20px !important;
+  padding: 30px !important;
+  flex-direction: row !important;
+}
+.tmpl-02 .col-left { display: flex; flex-direction: column; gap: 16px; }
+.tmpl-02 .col-right { display: flex; flex-direction: column; gap: 16px; }
+.tmpl-02 .divider { background: #dddddd; width: 1px; height: 100%; }
+.tmpl-02 .name { font-size: 20px; }
+.tmpl-02 .sec-title { font-size: 11px; }
+
+/* 03. Compact Dense */
+.tmpl-03 {
+  font-family: 'Inter', sans-serif;
+  padding: 24px !important;
+  gap: 8px !important;
+}
+.tmpl-03 .hdr { text-align: center; }
+.tmpl-03 .contact { justify-content: center; font-size: 10px; }
+.tmpl-03 .name { font-size: 18px; }
+.tmpl-03 .sec-title { font-size: 11px; margin-top: 4px; }
+.tmpl-03 .cv-body-text { font-size: 10.5px; line-height: 1.35; }
+
+/* 04. Skills-First Functional */
+.tmpl-04 { font-family: 'Georgia', serif; }
+.tmpl-04 .hdr { text-align: center; }
+.tmpl-04 .contact { justify-content: center; }
+
+/* 05. Timeline Style */
+.tmpl-05 { font-family: 'Bookman', serif; }
+.tmpl-05 .hdr { text-align: center; }
+.tmpl-05 .contact { justify-content: center; }
+.tmpl-05 .timeline-row { display: grid; grid-template-columns: 110px 1px 1fr; gap: 12px; margin-bottom: 8px; }
+.tmpl-05 .timeline-date { text-align: right; font-size: 11px; font-weight: bold; padding-right: 4px; color: #444; }
+.tmpl-05 .timeline-line { background: #cccccc; position: relative; }
+.tmpl-05 .timeline-line::after { content: ''; position: absolute; top: 6px; left: -3px; width: 7px; height: 7px; border-radius: 50%; background: #5b4fe8; }
+.tmpl-05 .timeline-body { font-size: 11px; line-height: 1.4; color: #222; }
+
+/* 06. Academic CV */
+.tmpl-06 { font-family: 'Georgia', serif; }
+.tmpl-06 .hdr { text-align: center; }
+.tmpl-06 .contact { justify-content: center; }
+.tmpl-06 .sec-title { text-align: center; border-bottom: none; }
+.tmpl-06 .sec-title::after { content: ''; display: block; width: 60px; height: 1px; background: #333333; margin: 4px auto 0 auto; }
+
+/* 07. Executive Minimalist */
+.tmpl-07 { font-family: 'Inter', sans-serif; padding: 45px !important; }
+.tmpl-07 .name { font-size: 24px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+.tmpl-07 .sec-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; border-bottom: 1px solid #e2e8f0; color: #64748b; }
+
+/* 08. Conservative Finance */
+.tmpl-08 { font-family: 'Times New Roman', Times, serif; }
+.tmpl-08 .hdr { text-align: center; }
+.tmpl-08 .name { font-size: 22px; font-variant: small-caps; }
+.tmpl-08 .contact { justify-content: center; font-variant: small-caps; }
+.tmpl-08 .sec-title { font-size: 12px; font-variant: small-caps; }
+
+/* 09. Modern Tech Sans */
+.tmpl-09 { font-family: 'Inter', sans-serif; }
+.tmpl-09 .sec-title { border-left: 3px solid #5b4fe8; padding-left: 8px; border-bottom: none; }
+
+/* 10. Grid Modular */
+.tmpl-10 {
+  font-family: 'Inter', sans-serif;
+  display: grid !important;
+  grid-template-columns: 0.65fr 0.3fr !important;
+  gap: 24px !important;
+  flex-direction: row !important;
+}
+.tmpl-10 .col-left { display: flex; flex-direction: column; gap: 16px; }
+.tmpl-10 .col-right { display: flex; flex-direction: column; gap: 16px; }
 </style>
 </head>
 <body>
@@ -359,16 +465,7 @@ body::after {
     <div class="control-group">
       <label class="control-label" for="select-template">Format Style</label>
       <select class="select-input" id="select-template">
-        <option value="standard">1. Standard Professional (Provided Layout)</option>
-        <option value="serif">2. Classic Serif (Double Divider)</option>
-        <option value="timeline">3. Left-Aligned Timeline Column</option>
-        <option value="twocol">4. Compact Dual Grid</option>
-        <option value="executive">5. Executive Top Separator</option>
-        <option value="minimal">6. Minimalist Sans-Serif</option>
-        <option value="academic">7. Academic Outline (Centered Headers)</option>
-        <option value="matrix">8. Technical Matrix Outline</option>
-        <option value="bulletless">9. Bulletless Paragraph Lead-ins</option>
-        <option value="spaced">10. Letterspaced Bold Titles</option>
+        <option value="01">Loading templates...</option>
       </select>
     </div>
 
@@ -389,9 +486,10 @@ body::after {
       </select>
     </div>
 
-    <!-- Candidate level display -->
-    <div style="font-family:var(--mono); font-size:10px; color:var(--muted); background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border:1px solid var(--border);">
-      Classified Level: <span id="candidate-level" style="color:var(--green); font-weight:700;">-</span>
+    <!-- Candidate level and sync display -->
+    <div style="display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:10px; color:var(--muted); background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border:1px solid var(--border); margin-bottom: 12px;">
+      <div>Classified Level: <span id="candidate-level" style="color:var(--green); font-weight:700;">-</span></div>
+      <div id="save-status" style="color:var(--green);">Synced</div>
     </div>
 
     <!-- Section Editors -->
@@ -453,79 +551,25 @@ body::after {
     </div>
     
     <div class="pane-title">LaTeX Document Actions</div>
-    <button class="btn btn-primary" id="btn-copy-latex">&rsaquo; Copy LaTeX Code</button>
-    <button class="btn btn-secondary" id="btn-download-latex">&rsaquo; Download .tex File</button>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+      <button class="btn btn-primary" id="btn-copy-latex" style="width: 100%; justify-content: center;">&rsaquo; Copy LaTeX Code</button>
+      <button class="btn btn-secondary" id="btn-download-latex" style="width: 100%; justify-content: center;">&rsaquo; Download .tex File</button>
+      <button class="btn btn-secondary" id="btn-save-profile" style="width: 100%; justify-content: center; background: rgba(47, 221, 196, 0.1); border-color: rgba(47, 221, 196, 0.4); color: var(--green);">&rsaquo; Save Profile Data Now</button>
+    </div>
     
     <div class="pane-title">PDF Operations</div>
-    <button class="btn btn-secondary" onclick="window.print()">&rsaquo; Export PDF via Print</button>
+    <button class="btn btn-secondary" onclick="window.print()" style="width: 100%; justify-content: center; margin-bottom: 20px;">&rsaquo; Export PDF via Print</button>
     
     <div style="font-family:var(--mono); font-size:10px; color:var(--dim); line-height:1.6; margin-top: auto;">
       Premium layout, perfectly formatted, only black text that fits in one or two pages.
     </div>
   </div>
 
-  <!-- Right Side: Preview & Tabs -->
-  <div class="right-pane">
-    <div class="tab-header">
-      <button class="tab-btn active" id="btn-tab-visual">Visual Preview</button>
-      <button class="tab-btn" id="btn-tab-source">LaTeX Source Code</button>
-    </div>
-
+  <!-- Right Side: Preview (Strictly visual resume preview) -->
+  <div class="right-pane" style="padding-top: 24px;">
     <!-- Tab 1: Visual -->
     <div class="cv-page" id="cv-preview">
-      <div class="cv-header">
-        <h2 class="cv-name" id="cv-name">[Your Name]</h2>
-        <div class="cv-contact" id="cv-contact">
-          <span id="cv-email">EMAIL: [not set]</span>
-          <span id="cv-phone">PHONE: [not set]</span>
-          <span id="cv-links">LINKS: [not set]</span>
-        </div>
-      </div>
-      
-      <div class="cv-section" id="sec-summary">
-        <div class="cv-section-title">Summary</div>
-        <p class="cv-body-text" id="cv-summary">[Summary]</p>
-      </div>
-
-      <div class="cv-section" id="sec-education">
-        <div class="cv-section-title">Education</div>
-        <div class="cv-body-text" id="cv-education">[Education]</div>
-      </div>
-
-      <div class="cv-section" id="sec-experience">
-        <div class="cv-section-title">Experience</div>
-        <div class="cv-body-text" id="cv-experience">[Experience]</div>
-      </div>
-
-      <div class="cv-section" id="sec-projects">
-        <div class="cv-section-title">Projects</div>
-        <div class="cv-body-text" id="cv-projects">[Projects]</div>
-      </div>
-
-      <div class="cv-section" id="sec-skills">
-        <div class="cv-section-title">Skills</div>
-        <div class="cv-body-text" id="cv-skills">[Skills]</div>
-      </div>
-
-      <div class="cv-section" id="sec-certifications">
-        <div class="cv-section-title">Certifications</div>
-        <div class="cv-body-text" id="cv-certifications">[Certifications]</div>
-      </div>
-
-      <div class="cv-section" id="sec-additional">
-        <div class="cv-section-title">Additional Information</div>
-        <div class="cv-body-text" id="cv-additional">[Additional Info]</div>
-      </div>
-
-      <div class="cv-section" id="sec-languages">
-        <div class="cv-section-title">Languages & Interests</div>
-        <div class="cv-body-text" id="cv-languages">[Languages & Interests]</div>
-      </div>
-    </div>
-
-    <!-- Tab 2: LaTeX Source -->
-    <div class="source-pane" id="source-preview">
-      <textarea class="source-area" id="latex-editor" readonly></textarea>
+      <!-- Layout loaded dynamically -->
     </div>
   </div>
 </div>
@@ -906,569 +950,443 @@ const ROLE_LIBRARY = {
 };
 
 // 10 Black-and-White Premium LaTeX Templates
-const LATEX_TEMPLATES = {
-  standard: `% Template 1: Standard Professional (Provided Layout)
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.65in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{hyperref}
-\\usepackage{tabularx}
-\\setlength{\\parindent}{0pt} 
-
-% Section rule
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
-\\setlist[itemize]{leftmargin=0.15in, itemsep=0.2em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
-  {\\small
-    \\href{mailto:{{EMAIL}}}{ {{EMAIL}} } \\,|\\ {{PHONE}} \\,|\\ {{LINKS}}
-  }
-\\end{center}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  serif: `% Template 2: Classic Serif (Double Divider)
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.65in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\usepackage{times}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries\\centering}{}{0em}{}[\\hrule\\vspace{1pt}\\hrule]
-\\titlespacing*{\\section}{0pt}{0.8em}{0.6em}
-\\setlist[itemize]{leftmargin=0.2in, itemsep=0.15em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{center}
-
-\\section*{Summary}
-\\noindent {{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  timeline: `% Template 3: Left-Aligned Timeline Column
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.6in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
-\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
-
-\\begin{document}
-
-{\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\
-{\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\vspace{3mm}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  twocol: `% Template 4: Compact Dual Grid
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.6in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\usepackage{multicol}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{0.5em}{0.3em}
-\\setlist[itemize]{leftmargin=0.15in, itemsep=0.1em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[3pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{center}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\begin{multicols}{2}
-\\section*{Education}
-{{EDUCATION}}
-
-\\columnbreak
-
-\\section*{Skills}
-{{SKILLS}}
-\\end{multicols}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  executive: `% Template 5: Executive Top Separator
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.65in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{\\rule{\\textwidth}{1pt}\\\\}[]
-\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
-\\setlist[itemize]{leftmargin=0.2in, itemsep=0.15em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{center}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  minimal: `% Template 6: Minimalist Sans-Serif
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.65in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\renewcommand{\\familydefault}{\\sfdefault}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{0.5em}{0.3em}
-\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[3pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{center}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  academic: `% Template 7: Academic Outline
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.7in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries\\centering}{}{0em}{}[\\hrule]
-\\titlespacing*{\\section}{0pt}{0.8em}{0.5em}
-\\setlist[itemize]{leftmargin=0.2in, itemsep=0.2em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{center}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  matrix: `% Template 8: Technical Matrix Outline
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.65in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
-\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
-
-\\begin{document}
-
-\\begin{flushleft}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{flushleft}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  bulletless: `% Template 9: Bulletless Paragraph Lead-ins
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.65in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{0.6em}{0.4em}
-\\setlist[itemize]{leftmargin=0.2in, itemsep=0.2em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{center}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`,
-
-  spaced: `% Template 10: Letterspaced Bold Titles
-\\documentclass[a4paper,10pt]{article}
-\\usepackage[a4paper,margin=0.65in]{geometry}
-\\usepackage[T1]{fontenc}
-\\usepackage{titlesec}
-\\usepackage{enumitem}
-\\usepackage{tabularx}
-\\setlength{\\parindent}{0pt}
-
-\\titleformat{\\section}{\\large\\bfseries\\scshape}{}{0em}{}[\\titlerule]
-\\titlespacing*{\\section}{0pt}{0.7em}{0.4em}
-\\setlist[itemize]{leftmargin=0.15in, itemsep=0.15em}
-
-\\begin{document}
-
-\\begin{center}
-  {\\LARGE\\textbf{ {{FULL_NAME}} }}\\\\[4pt]
-  {\\small {{EMAIL}} \\ | \\ {{PHONE}} \\ | \\ {{LINKS}} }
-\\end{center}
-
-\\section*{Summary}
-{{SUMMARY}}
-
-\\section*{Education}
-{{EDUCATION}}
-
-\\section*{Experience}
-{{EXPERIENCE}}
-
-\\section*{Projects}
-{{PROJECTS}}
-
-\\section*{Skills}
-{{SKILLS}}
-
-\\section*{Certifications}
-{{CERTIFICATIONS}}
-
-\\section*{Additional Information}
-{{ADDITIONAL_INFORMATION}}
-
-\\section*{Languages \\& Interests}
-{{LANGUAGES_INTERESTS}}
-
-\\end{document}`
+const LATEX_TEMPLATES = {};
+
+
+
+// State
+let activeProfile = {};
+let candidateLevel = "student"; // classified level: student, experienced, transition
+let autoSaveTimeout = null;
+
+// Form inputs references
+const editors = {
+  name: document.getElementById('edit-name'),
+  email: document.getElementById('edit-email'),
+  phone: document.getElementById('edit-phone'),
+  summary: document.getElementById('edit-summary'),
+  education: document.getElementById('edit-education'),
+  experience: document.getElementById('edit-experience'),
+  projects: document.getElementById('edit-projects'),
+  skills: document.getElementById('edit-skills'),
+  certifications: document.getElementById('edit-certifications'),
+  additional: document.getElementById('edit-additional'),
+  languages: document.getElementById('edit-languages')
 };
+
+// HTML Escaper
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// HTML Experience Renderer
+function formatExperienceToHtml(text) {
+  if (!text) return "";
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  let html = "";
+  let inList = false;
+
+  const closeList = () => {
+    if (inList) {
+      html += "</ul>";
+      inList = false;
+    }
+  };
+
+  lines.forEach(l => {
+    if (l.startsWith("-") || l.startsWith("*") || l.startsWith("•")) {
+      if (!inList) {
+        html += `<ul style="margin: 4px 0 4px 16px; padding: 0; list-style-type: disc;">`;
+        inList = true;
+      }
+      const clean = l.substring(1).trim();
+      html += `<li style="margin-bottom: 2px;">${escapeHtml(clean)}</li>`;
+    } else {
+      closeList();
+      if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
+        let parts = l.split(/  +/);
+        if (parts.length < 2) parts = l.split('\t');
+        if (parts.length >= 2) {
+          const title = parts[0].trim();
+          const date = parts[parts.length - 1].trim();
+          html += `<div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 8px;">
+            <span>${escapeHtml(title)}</span>
+            <span>${escapeHtml(date)}</span>
+          </div>`;
+        } else {
+          html += `<div style="font-weight: bold; margin-top: 8px;">${escapeHtml(l)}</div>`;
+        }
+      } else {
+        html += `<div style="font-size: 11px; color: #555555; margin-top: 2px;">${escapeHtml(l)}</div>`;
+      }
+    }
+  });
+  closeList();
+  return html;
+}
+
+// HTML Timeline Experience Renderer (Template 05)
+function formatExperienceTimelineToHtml(text) {
+  if (!text) return "";
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  let html = "";
+  let currentRole = null;
+  let currentBullets = [];
+
+  const flushRole = () => {
+    if (currentRole) {
+      html += `
+        <div class="timeline-row">
+          <div class="timeline-date">${escapeHtml(currentRole.date)}</div>
+          <div class="timeline-line"></div>
+          <div class="timeline-body">
+            <div style="font-weight: bold;">${escapeHtml(currentRole.title)}</div>
+            ${currentRole.company ? `<div style="font-size:10.5px; color:#555; margin-bottom:4px;">${escapeHtml(currentRole.company)}</div>` : ''}
+            ${currentBullets.length > 0 ? `
+              <ul style="margin: 4px 0 0 16px; padding: 0; list-style-type: disc;">
+                ${currentBullets.map(b => `<li style="margin-bottom: 2px;">${escapeHtml(b)}</li>`).join("")}
+              </ul>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      currentRole = null;
+      currentBullets = [];
+    }
+  };
+
+  lines.forEach(l => {
+    if (l.startsWith("-") || l.startsWith("*") || l.startsWith("•")) {
+      currentBullets.push(l.substring(1).trim());
+    } else {
+      flushRole();
+      if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
+        let parts = l.split(/  +/);
+        if (parts.length < 2) parts = l.split('\t');
+        if (parts.length >= 2) {
+          currentRole = { title: parts[0].trim(), date: parts[parts.length - 1].trim() };
+        } else {
+          currentRole = { title: l, date: "" };
+        }
+      } else {
+        if (currentRole) {
+          currentRole.company = l;
+        } else {
+          currentRole = { title: l, date: "" };
+        }
+      }
+    }
+  });
+  flushRole();
+  return html;
+}
+
+// HTML Education Renderer
+function formatEducationToHtml(text) {
+  if (!text) return "";
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  let html = "";
+  lines.forEach(line => {
+    if (line.includes('--') || line.match(/(\d{4})/)) {
+      let parts = line.split(/  +/);
+      if (parts.length < 2) parts = line.split('\t');
+      if (parts.length >= 2) {
+        html += `<div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 4px;">
+          <span>${escapeHtml(parts[0].trim())}</span>
+          <span>${escapeHtml(parts[parts.length - 1].trim())}</span>
+        </div>`;
+      } else {
+        html += `<div style="font-weight: bold; margin-top: 4px;">${escapeHtml(line)}</div>`;
+      }
+    } else {
+      html += `<div style="font-size: 11px; color: #444444;">${escapeHtml(line)}</div>`;
+    }
+  });
+  return html;
+}
+
+// HTML Bullet List Renderer
+function formatBulletsToHtml(text) {
+  if (!text) return "";
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) return "";
+  return `<ul style="margin: 4px 0 0 16px; padding: 0; list-style-type: disc;">
+    ${lines.map(l => {
+      const clean = l.startsWith('-') || l.startsWith('*') || l.startsWith('•') ? l.substring(1).trim() : l;
+      return `<li style="margin-bottom: 3px;">${escapeHtml(clean)}</li>`;
+    }).join("")}
+  </ul>`;
+}
 
 // Workspace Render Engine (Live Preview)
 function renderResumeWorkspace() {
   const tmplKey = document.getElementById("select-template").value;
-  const roleKey = document.getElementById("select-role").value;
-  
-  // Resolve summary and skills dynamically from inputs (allowing live changes)
-  let resolvedName = editors.name.value;
-  let resolvedEmail = editors.email.value;
-  let resolvedPhone = editors.phone.value;
-  let resolvedSummary = editors.summary.value;
-  let resolvedSkills = editors.skills.value;
-  let resolvedEdu = editors.education.value;
-  let resolvedExp = editors.experience.value;
-  let resolvedProjects = editors.projects.value;
-  let resolvedCerts = editors.certifications.value;
-  let resolvedAdditional = editors.additional.value;
-  let resolvedLang = editors.languages.value;
-  
-  // 1. Render Visual DOM preview panel
-  document.getElementById('cv-name').textContent = resolvedName || 'Dhanush Siddilingam';
-  document.getElementById('cv-email').textContent = 'EMAIL: ' + (resolvedEmail || 'dhanushsiddilingam27@gmail.com').toUpperCase();
-  document.getElementById('cv-phone').textContent = 'PHONE: ' + (resolvedPhone || '+91-8187007696');
-  
-  const linkedin = activeProfile.linkedin || "linkedin.com/in/dhanush-siddilingam";
-  const github = activeProfile.github || "github.com/Dhanush0792";
-  document.getElementById('cv-links').textContent = `LINKEDIN: ${linkedin} | GITHUB: ${github}`;
-  
-  document.getElementById('cv-summary').textContent = resolvedSummary || '[Summary]';
-  document.getElementById('cv-education').textContent = resolvedEdu || '[Education]';
-  document.getElementById('cv-experience').textContent = resolvedExp || '[Experience]';
-  
-  const toggleSec = (id, val) => {
-    const el = document.getElementById(id);
-    if (!val || !val.trim()) {
-      el.style.display = "none";
-    } else {
-      el.style.display = "flex";
-      el.querySelector(".cv-body-text").textContent = val;
+  const preview = document.getElementById("cv-preview");
+  preview.className = `cv-page tmpl-${tmplKey}`;
+
+  // Read current input values
+  const data = {
+    fullName: editors.name.value || "Your Name",
+    email: editors.email.value || "email@domain.com",
+    phone: editors.phone.value || "+91-0000000000",
+    targetRole: document.getElementById("select-role").value === "profile" ? (activeProfile.targetRole || "Software Engineer") : document.getElementById("select-role").value,
+    location: activeProfile.city && activeProfile.state ? `${activeProfile.city}, ${activeProfile.state}` : (activeProfile.address || ""),
+    linkedinDisplay: (activeProfile.linkedin || "linkedin.com/in/username").replace(/^https?:\/\/(www\.)?/, ""),
+    githubDisplay: (activeProfile.github || "github.com/username").replace(/^https?:\/\/(www\.)?/, ""),
+    portfolioDisplay: (activeProfile.portfolio || "").replace(/^https?:\/\/(www\.)?/, ""),
+    summary: editors.summary.value || "",
+    education: editors.education.value || "",
+    experience: editors.experience.value || "",
+    projects: editors.projects.value || "",
+    skills: editors.skills.value || "",
+    certifications: editors.certifications.value || "",
+    additional: editors.additional.value || ""
+  };
+
+  const linksList = [];
+  if (data.linkedinDisplay) linksList.push(`LinkedIn: ${data.linkedinDisplay}`);
+  if (data.githubDisplay) linksList.push(`GitHub: ${data.githubDisplay}`);
+  if (data.portfolioDisplay) linksList.push(`Portfolio: ${data.portfolioDisplay}`);
+  const linksHtml = linksList.join(" | ");
+
+  const sectionsHtml = {
+    summary: data.summary ? `
+      <div class="cv-section" id="sec-summary">
+        <div class="sec-title">Summary</div>
+        <p class="cv-body-text">${escapeHtml(data.summary)}</p>
+      </div>
+    ` : "",
+    education: data.education ? `
+      <div class="cv-section" id="sec-education">
+        <div class="sec-title">Education</div>
+        <div class="cv-body-text">${formatEducationToHtml(data.education)}</div>
+      </div>
+    ` : "",
+    experience: data.experience ? `
+      <div class="cv-section" id="sec-experience">
+        <div class="sec-title">Experience</div>
+        <div class="cv-body-text">${tmplKey === "05" ? formatExperienceTimelineToHtml(data.experience) : formatExperienceToHtml(data.experience)}</div>
+      </div>
+    ` : "",
+    projects: data.projects ? `
+      <div class="cv-section" id="sec-projects">
+        <div class="sec-title">Projects</div>
+        <div class="cv-body-text">${formatBulletsToHtml(data.projects)}</div>
+      </div>
+    ` : "",
+    skills: data.skills ? `
+      <div class="cv-section" id="sec-skills">
+        <div class="sec-title">Skills</div>
+        <div class="cv-body-text">${formatBulletsToHtml(data.skills)}</div>
+      </div>
+    ` : "",
+    certifications: data.certifications ? `
+      <div class="cv-section" id="sec-certifications">
+        <div class="sec-title">Certifications</div>
+        <div class="cv-body-text">${formatBulletsToHtml(data.certifications)}</div>
+      </div>
+    ` : "",
+    additional: data.additional ? `
+      <div class="cv-section" id="sec-additional">
+        <div class="sec-title">Additional Information</div>
+        <div class="cv-body-text">${formatBulletsToHtml(data.additional)}</div>
+      </div>
+    ` : ""
+  };
+
+  // Render template-specific grid layouts
+  if (tmplKey === "02") {
+    // Sidebar Two Column
+    preview.innerHTML = `
+      <div class="col-left">
+        <div class="name" style="margin-bottom: 2px;">${escapeHtml(data.fullName)}</div>
+        <div style="font-size: 11px; text-transform: uppercase; color: #555555; margin-bottom: 12px;">${escapeHtml(data.targetRole)}</div>
+        
+        <div class="cv-section">
+          <div class="sec-title">Contact</div>
+          <div style="font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
+            <span>📧 ${escapeHtml(data.email)}</span>
+            <span>📞 ${escapeHtml(data.phone)}</span>
+            ${data.location ? `<span>📍 ${escapeHtml(data.location)}</span>` : ""}
+            ${data.linkedinDisplay ? `<span>💼 <span style="font-size:9px">${escapeHtml(data.linkedinDisplay)}</span></span>` : ""}
+            ${data.githubDisplay ? `<span>🐙 <span style="font-size:9px">${escapeHtml(data.githubDisplay)}</span></span>` : ""}
+          </div>
+        </div>
+
+        ${sectionsHtml.skills}
+        ${sectionsHtml.certifications}
+        ${sectionsHtml.additional}
+      </div>
+      <div class="divider"></div>
+      <div class="col-right">
+        ${sectionsHtml.summary}
+        ${sectionsHtml.experience}
+        ${sectionsHtml.education}
+        ${sectionsHtml.projects}
+      </div>
+    `;
+  } else if (tmplKey === "10") {
+    // Grid Modular
+    preview.innerHTML = `
+      <div class="col-left">
+        <div style="margin-bottom: 12px;">
+          <div class="name" style="font-size: 24px; font-weight: bold;">${escapeHtml(data.fullName)}</div>
+          <div style="font-size: 12px; color: #555; text-transform: uppercase;">${escapeHtml(data.targetRole)}</div>
+          <div style="font-size: 10.5px; color: #666; margin-top: 4px;">
+            ${escapeHtml(data.email)} | ${escapeHtml(data.phone)} ${data.location ? `| ${escapeHtml(data.location)}` : ""}
+          </div>
+        </div>
+        ${sectionsHtml.summary}
+        ${sectionsHtml.experience}
+        ${sectionsHtml.projects}
+      </div>
+      <div class="col-right">
+        <div style="margin-bottom: 12px; font-size: 10.5px; color: #666; display: flex; flex-direction: column; gap: 4px;">
+          ${data.linkedinDisplay ? `<span>LinkedIn: ${escapeHtml(data.linkedinDisplay)}</span>` : ""}
+          ${data.githubDisplay ? `<span>GitHub: ${escapeHtml(data.githubDisplay)}</span>` : ""}
+        </div>
+        ${sectionsHtml.education}
+        ${sectionsHtml.skills}
+        ${sectionsHtml.certifications}
+        ${sectionsHtml.additional}
+      </div>
+    `;
+  } else if (tmplKey === "04") {
+    // Skills-First Functional (Skills at the top)
+    preview.innerHTML = `
+      <div class="hdr">
+        <h2 class="name">${escapeHtml(data.fullName)}</h2>
+        <div style="font-size: 11px; color: #555555; text-transform: uppercase; margin-bottom: 6px;">${escapeHtml(data.targetRole)}</div>
+        <div style="font-size: 11px; color: #444;">
+          ${escapeHtml(data.email)} | ${escapeHtml(data.phone)} ${data.location ? `| ${escapeHtml(data.location)}` : ""}
+        </div>
+        <div style="font-size: 10.5px; color: #666; margin-top: 2px;">${escapeHtml(linksHtml)}</div>
+      </div>
+      ${sectionsHtml.summary}
+      ${sectionsHtml.skills}
+      ${sectionsHtml.experience}
+      ${sectionsHtml.projects}
+      ${sectionsHtml.education}
+      ${sectionsHtml.certifications}
+      ${sectionsHtml.additional}
+    `;
+  } else {
+    // Standard and other single column layouts (01, 03, 05, 06, 07, 08, 09)
+    preview.innerHTML = `
+      <div class="hdr">
+        <h2 class="name">${escapeHtml(data.fullName)}</h2>
+        <div style="font-size: 11px; color: #555555; text-transform: uppercase; margin-bottom: 6px;">${escapeHtml(data.targetRole)}</div>
+        <div style="font-size: 11px; color: #444;">
+          ${escapeHtml(data.email)} | ${escapeHtml(data.phone)} ${data.location ? `| ${escapeHtml(data.location)}` : ""}
+        </div>
+        <div style="font-size: 10.5px; color: #666; margin-top: 2px;">${escapeHtml(linksHtml)}</div>
+      </div>
+      ${sectionsHtml.summary}
+      ${sectionsHtml.experience}
+      ${sectionsHtml.education}
+      ${sectionsHtml.projects}
+      ${sectionsHtml.skills}
+      ${sectionsHtml.certifications}
+      ${sectionsHtml.additional}
+    `;
+  }
+}
+
+// Request LaTeX from Backend Generator
+async function getBackendGeneratedLatex() {
+  const tmplKey = document.getElementById("select-template").value;
+  const payload = {
+    templateId: tmplKey,
+    data: {
+      fullName: editors.name.value,
+      email: editors.email.value,
+      phone: editors.phone.value,
+      targetRole: document.getElementById("select-role").value === "profile" ? (activeProfile.targetRole || "") : document.getElementById("select-role").value,
+      location: activeProfile.city && activeProfile.state ? `${activeProfile.city}, ${activeProfile.state}` : (activeProfile.address || ""),
+      linkedinUrl: activeProfile.linkedin || "",
+      linkedinDisplay: (activeProfile.linkedin || "").replace(/^https?:\/\/(www\.)?/, ""),
+      githubUrl: activeProfile.github || "",
+      githubDisplay: (activeProfile.github || "").replace(/^https?:\/\/(www\.)?/, ""),
+      portfolioUrl: activeProfile.portfolio || "",
+      portfolioDisplay: (activeProfile.portfolio || "").replace(/^https?:\/\/(www\.)?/, ""),
+      summary: editors.summary.value,
+      education: editors.education.value,
+      experience: editors.experience.value,
+      projects: editors.projects.value,
+      skills: editors.skills.value,
+      certifications: editors.certifications.value,
+      additional: editors.additional.value
     }
   };
-  
-  toggleSec('sec-projects', resolvedProjects);
-  toggleSec('sec-skills', resolvedSkills);
-  toggleSec('sec-certifications', resolvedCerts);
-  toggleSec('sec-additional', resolvedAdditional);
-  toggleSec('sec-languages', resolvedLang);
-  
-  const cvPreview = document.getElementById("cv-preview");
-  cvPreview.className = "cv-page " + tmplKey;
 
-  // 2. Compile LaTeX Document Source Code
-  let template = LATEX_TEMPLATES[tmplKey] || LATEX_TEMPLATES.standard;
-  
-  const latexName = escapeLatex(resolvedName || "Dhanush Siddilingam");
-  const latexEmail = escapeLatex(resolvedEmail || "dhanushsiddilingam27@gmail.com");
-  const latexPhone = escapeLatex(resolvedPhone || "+91-8187007696");
-  
-  const linksParts = [];
-  linksParts.push(`\\href{https://${linkedin}}{${linkedin}}`);
-  linksParts.push(`\\href{https://${github}}{${github}}`);
-  const latexLinks = linksParts.join(" \\,|\\ ");
-  
-  const latexSummary = escapeLatex(resolvedSummary);
-  const latexEdu = formatEducationToLatex(resolvedEdu);
-  const latexExp = formatExperienceToLatex(resolvedExp);
-  const latexProjects = formatBulletsToLatex(resolvedProjects);
-  const latexSkills = formatBulletsToLatex(resolvedSkills);
-  const latexCerts = formatBulletsToLatex(resolvedCerts);
-  const latexAdditional = formatBulletsToLatex(resolvedAdditional);
-  const latexLang = formatBulletsToLatex(resolvedLang);
-  
-  generatedLatex = template
-    .replace("{{FULL_NAME}}", latexName)
-    .replace("{{EMAIL}}", latexEmail)
-    .replace("{{PHONE}}", latexPhone)
-    .replace("{{LINKS}}", latexLinks)
-    .replace("{{SUMMARY}}", latexSummary)
-    .replace("{{EDUCATION}}", latexEdu)
-    .replace("{{EXPERIENCE}}", latexExp)
-    .replace("{{PROJECTS}}", latexProjects)
-    .replace("{{SKILLS}}", latexSkills)
-    .replace("{{CERTIFICATIONS}}", latexCerts)
-    .replace("{{ADDITIONAL_INFORMATION}}", latexAdditional)
-    .replace("{{LANGUAGES_INTERESTS}}", latexLang);
-    
-  document.getElementById("latex-editor").value = generatedLatex;
+  try {
+    const res = await fetch(`${SYNC_API}/resume/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      return await res.text();
+    } else {
+      const err = await res.json();
+      throw new Error(err.error || "Generation failed");
+    }
+  } catch (e) {
+    showToast("Generation failed: " + e.message, "error");
+    return "";
+  }
+}
+
+// Save Profile Database Updates
+async function saveResumeData() {
+  activeProfile.fullName = editors.name.value;
+  activeProfile.email = editors.email.value;
+  activeProfile.phone = editors.phone.value;
+  activeProfile.summary = editors.summary.value;
+  activeProfile.education = editors.education.value;
+  activeProfile.experience = editors.experience.value;
+  activeProfile.skills = editors.skills.value;
+  activeProfile.projects = editors.projects.value;
+  activeProfile.certifications = editors.certifications.value;
+  activeProfile.additional = editors.additional.value;
+  activeProfile.languages = editors.languages.value;
+
+  const saveStatus = document.getElementById("save-status");
+  saveStatus.textContent = "Saving changes...";
+  saveStatus.style.color = "var(--primary)";
+
+  const res = await saveProfile(activeProfile);
+  if (res && res.ok) {
+    saveStatus.textContent = "Synced";
+    saveStatus.style.color = "var(--green)";
+  } else {
+    saveStatus.textContent = "Sync failed";
+    saveStatus.style.color = "red";
+  }
+}
+
+// Debounced typing auto-save
+function triggerAutoSave() {
+  const saveStatus = document.getElementById("save-status");
+  saveStatus.textContent = "Typing...";
+  saveStatus.style.color = "var(--primary)";
+
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(saveResumeData, 1500);
 }
 
 // Add input event listeners to all section editors for live updates
 Object.keys(editors).forEach(key => {
-  editors[key].addEventListener('input', renderResumeWorkspace);
+  editors[key].addEventListener('input', () => {
+    renderResumeWorkspace();
+    triggerAutoSave();
+  });
 });
 
 // Selector events
@@ -1476,60 +1394,68 @@ document.getElementById("select-template").addEventListener("change", renderResu
 document.getElementById("select-role").addEventListener("change", (e) => {
   const roleKey = e.target.value;
   if (roleKey !== "profile" && ROLE_LIBRARY[roleKey]) {
-    // Lookup role summary based on dynamic candidate classified level (student, experienced, transition)
     const levelKey = candidateLevel || "general";
     const selected = ROLE_LIBRARY[roleKey][levelKey] || ROLE_LIBRARY[roleKey]["general"];
     editors.summary.value = selected.summary;
     editors.skills.value = selected.skills;
   } else {
-    // Reset to loaded profile values
     const parsed = parseResumeDraft(activeProfile.resumeDraft || "");
     editors.summary.value = parsed.summary || activeProfile.summary || "";
     editors.skills.value = parsed.skills || activeProfile.skills || "";
   }
   renderResumeWorkspace();
+  triggerAutoSave();
 });
 
-// Tabs management
-const tabVisualBtn = document.getElementById("btn-tab-visual");
-const tabSourceBtn = document.getElementById("btn-tab-source");
-const cvPreviewBlock = document.getElementById("cv-preview");
-const sourcePreviewBlock = document.getElementById("source-preview");
+// Copy LaTeX
+document.getElementById("btn-copy-latex").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-copy-latex");
+  btn.disabled = true;
+  btn.textContent = "Generating LaTeX...";
 
-tabVisualBtn.addEventListener("click", () => {
-  tabVisualBtn.classList.add("active");
-  tabSourceBtn.classList.remove("active");
-  cvPreviewBlock.style.display = "flex";
-  sourcePreviewBlock.style.display = "none";
+  const text = await getBackendGeneratedLatex();
+  if (text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("LaTeX code copied to clipboard!", "success");
+    }).catch(() => {
+      showToast("Failed to copy code.", "error");
+    });
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Copy LaTeX Code";
 });
 
-tabSourceBtn.addEventListener("click", () => {
-  tabSourceBtn.classList.add("active");
-  tabVisualBtn.classList.remove("active");
-  cvPreviewBlock.style.display = "none";
-  sourcePreviewBlock.style.display = "block";
+// Download LaTeX File
+document.getElementById("btn-download-latex").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-download-latex");
+  btn.disabled = true;
+  btn.textContent = "Generating file...";
+
+  const text = await getBackendGeneratedLatex();
+  if (text) {
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `resume_${(editors.name.value || "document").replace(/\s+/g, "_").toLowerCase()}.tex`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    showToast("LaTeX document downloaded!", "success");
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Download .tex File";
 });
 
-// Operations Handlers
-document.getElementById("btn-copy-latex").addEventListener("click", () => {
-  const text = document.getElementById("latex-editor").value;
-  navigator.clipboard.writeText(text).then(() => {
-    showToast("LaTeX code copied to clipboard!", "success");
-  }).catch(() => {
-    showToast("Failed to copy code.", "error");
-  });
-});
-
-document.getElementById("btn-download-latex").addEventListener("click", () => {
-  const text = document.getElementById("latex-editor").value;
-  const blob = new Blob([text], { type: "text/plain" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `resume_${(editors.name.value || "document").replace(/\s+/g, "_").toLowerCase()}.tex`;
-  a.click();
-  window.URL.revokeObjectURL(url);
-  showToast("LaTeX document downloaded!", "success");
+// Save Profile Manual Button
+document.getElementById("btn-save-profile").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-save-profile");
+  btn.disabled = true;
+  btn.textContent = "Saving to database...";
+  await saveResumeData();
+  btn.disabled = false;
+  btn.textContent = "Save Profile Data Now";
 });
 
 // Startup load
@@ -1555,7 +1481,7 @@ document.getElementById("btn-download-latex").addEventListener("click", () => {
   const loadingSequence = [
     { text: "Accessing secure sync vault...", delay: 0 },
     { text: "Decrypting candidate profile...", delay: 400 },
-    { text: "Parsing your information...", delay: 800 },
+    { text: "Loading LaTeX layout templates...", delay: 800 },
     { text: "Arranging and preparing your resume...", delay: 1200 },
     { text: "Readying visual preview panels...", delay: 1600 }
   ];
@@ -1565,6 +1491,24 @@ document.getElementById("btn-download-latex").addEventListener("click", () => {
       loadingText.textContent = step.text;
     }, step.delay);
   });
+
+  // Load actual template list from backend API
+  try {
+    const res = await fetch(`${SYNC_API}/resume/templates`);
+    if (res.ok) {
+      const templates = await res.json();
+      const select = document.getElementById("select-template");
+      select.innerHTML = "";
+      templates.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = `${t.id} // ${t.name} (${t.safety})`;
+        select.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.error("Failed to load templates list:", e);
+  }
   
   // Complete loading and reveal workspace
   setTimeout(() => {
