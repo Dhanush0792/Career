@@ -26,7 +26,19 @@ const SYNC_API = 'http://localhost:8787/api';
  */
 function requireAuth() {
   if (!localStorage.getItem('jxa_token')) {
-    window.location.href = 'auth.html';
+    const path = window.location.pathname;
+    const page = path.substring(path.lastIndexOf('/') + 1);
+    if (page.includes('resume-builder')) {
+      window.location.href = 'tools.html#resume-builder';
+    } else if (page.includes('ats-checker')) {
+      window.location.href = 'tools.html#ats-checker';
+    } else if (page.includes('cover-letter')) {
+      window.location.href = 'tools.html#cover-letter';
+    } else if (page.includes('autofill-lab')) {
+      window.location.href = 'tools.html#autofill-lab';
+    } else {
+      window.location.href = 'auth.html';
+    }
   } else {
     // Background pull tracker data from server on startup
     pullApplicationsFromServer().catch(() => {});

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Tools Showcase // CareerBridge</title>
+  
+  <!-- CSS Variables & Base Rules matching theme -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+    :root {
+      --bg: #070a18;
+      --glass-bg: rgba(11, 16, 32, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --text: rgba(244, 247, 255, 0.75);
+      --white: #ffffff;
+      --muted: #8b92b6;
+      --primary: #5B4FE8;
+      --success: #2FDDC4;
+      --display: 'Space Grotesk', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--display);
+      line-height: 1.6;
+      overflow-x: hidden;
+      padding-top: 100px;
+    }
+
+    /* Grid background */
+    body::after {
+      content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .header-section {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .header-section h1 {
+      font-size: 3.5rem;
+      color: var(--white);
+      text-transform: uppercase;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .header-section p {
+      font-size: 1.2rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Tools Showcase Cards */
+    .tools-list {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      margin-bottom: 80px;
+    }
+    .tool-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 40px;
+      backdrop-filter: blur(16px);
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 40px;
+      align-items: center;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .tool-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 36px rgba(91, 79, 232, 0.15);
+    }
+
+    /* Target highlight flash effect */
+    .highlight-flash {
+      animation: flash-animation 1.5s ease-out;
+    }
+    @keyframes flash-animation {
+      0% { border-color: var(--success); box-shadow: 0 0 0 4px rgba(47, 221, 196, 0.2); }
+      100% { border-color: var(--glass-border); box-shadow: none; }
+    }
+
+    .tool-info h2 {
+      font-family: var(--display);
+      font-size: 2.2rem;
+      color: var(--white);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .tool-info p {
+      font-size: 1.05rem;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 30px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+    }
+    .feature-item span {
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    /* Buttons */
+    .btn-launch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      padding: 14px 28px;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-launch:hover {
+      background: #6f65f0;
+      transform: scale(1.02);
+    }
+
+    /* Mock visual/graphic representation of each tool */
+    .tool-visual {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 24px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+    .visual-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+      color: var(--white);
+    }
+
+    @media (max-width: 768px) {
+      .tool-card {
+        grid-template-columns: 1fr;
+        padding: 24px;
+      }
+      .header-section h1 {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+  <!-- Inject Header Public Navigation -->
+  <script src="public-nav.js"></script>
+
+  <div class="container">
+    
+    <header class="header-section">
+      <h1>OPERATIVE <em>TOOLKIT</em></h1>
+      <p>Seamlessly build resume structures, test ATS parsing compatibility, compose matching cover letters, and configure browser extension mappings.</p>
+    </header>
+
+    <div class="tools-list">
+      
+      <!-- ① RESUME BUILDER -->
+      <section class="tool-card" id="resume-builder">
+        <div class="tool-info">
+          <h2>Resume Builder</h2>
+          <p>Create clean, professional black-and-white resumes designed to score high on modern parser systems. Features a real-time layout editor and synchronization module.</p>
+          <div class="feature-list">
+            <div class="feature-item"><span>[✓]</span> 10 Premium ATS-optimized templates</div>
+            <div class="feature-item"><span>[✓]</span> Debounced cloud auto-save & sync</div>
+            <div class="feature-item"><span>[✓]</span> Instant PDF or Raw LaTeX output</div>
+          </div>
+          <a href="resume-builder.html" class="btn-launch">Launch Resume Builder &rsaquo;</a>
+        </div>
+        <div class="tool-visual">
+          <div class="visual-header">
+            <span>RESUME_CORE.TEX</span>
+            <span style="color:var(--success)">SYNCED</span>
+          </div>
+          <div style="white-space:pre;line-height:1.4;opacity:0.85;">
+\documentclass{resume}
+\name{Dhanush}
+\contact{Jammu, IN}{dhanush@dev}
+\section{Experience}
+\item Developed CareerBridge frontend client...
+\item Optimized 3D vector map layers...
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;font-size:10px;">
+            Lines: 124 | Words: 420 | Size: 1.9kb
+          </div>
+        </div>
+      </section>
+
+      <!-- ② ATS CHECKER -->
+      <section class="tool-card" id="ats-checker">
+        <div class="tool-info">
+          <h2>ATS Checker</h2>
+          <p>Scan your resume details against specific target job profiles. Receive immediate compatibility scoring, semantic alignment feedback, and targeted suggestions.</p>
+          <div class="feature-list">
+            <div class="feature-item"><span>[✓]</span> Preset profiles: SDE, Backend, Marketing...</div>
+            <div class="feature-item"><span>[✓]</span> Live vocabulary density auditing</div>
+            <div class="feature-item"><span>[✓]</span> Actionable keyword insertion suggestions</div>
+          </div>
+          <a href="ats-checker.html" class="btn-launch">Launch ATS Checker &rsaquo;</a>
+        </div>
+        <div class="tool-visual">
+          <div class="visual-header">
+            <span>ATS_CHECKER_LOGS</span>
+            <span style="color:#e2b616">EVALUATING</span>
+          </div>
+          <div style="line-height:1.5;">
+            [STATUS] Analyzing profile structure...<br>
+            [STATUS] Calculating vocabulary density...<br>
+            <span style="color:var(--success)">[MATCH] Role compatibility score: 87%</span><br>
+            <span style="color:#ef4444">[MISSING] missing: Node.js, JWT, Redis</span>
+          </div>
+          <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden;">
+            <div style="width:87%;height:100%;background:var(--success)"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ③ COVER LETTER -->
+      <section class="tool-card" id="cover-letter">
+        <div class="tool-info">
+          <h2>Cover Letter</h2>
+          <p>Automatically compose targeted, tailored cover letters matching your profile details to specific positions, minimizing application writing overhead.</p>
+          <div class="feature-list">
+            <div class="feature-item"><span>[✓]</span> Dynamic token-based matching</div>
+            <div class="feature-item"><span>[✓]</span> Structured professional layouts</div>
+            <div class="feature-item"><span>[✓]</span> Automatic PDF exports</div>
+          </div>
+          <a href="cover-letter.html" class="btn-launch">Launch Cover Letter &rsaquo;</a>
+        </div>
+        <div class="tool-visual" style="color:rgba(255,255,255,0.65)">
+          <div class="visual-header">
+            <span>COVER_LETTER.TXT</span>
+            <span style="color:var(--success)">GENERATED</span>
+          </div>
+          <div style="white-space:pre-wrap;font-size:10px;line-height:1.4;">
+Dear Hiring Manager,
+
+I am writing to express my strong interest in the SDE position. My credentials match your specifications...
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;font-size:10px;color:var(--muted)">
+            Target: SDE | Tone: Professional
+          </div>
+        </div>
+      </section>
+
+      <!-- ④ AUTOFILL LAB -->
+      <section class="tool-card" id="autofill-lab">
+        <div class="tool-info">
+          <h2>Autofill Lab</h2>
+          <p>Sync your local data vault and test browser extension rules on various mock forms. Map selectors to input fields for instant single-click submittals.</p>
+          <div class="feature-list">
+            <div class="feature-item"><span>[✓]</span> Sandbox validation for custom input rules</div>
+            <div class="feature-item"><span>[✓]</span> Dynamic schema inspection tools</div>
+            <div class="feature-item"><span>[✓]</span> Real-time data encryption preview</div>
+          </div>
+          <a href="autofill-lab.html" class="btn-launch">Open Autofill Lab &rsaquo;</a>
+        </div>
+        <div class="tool-visual">
+          <div class="visual-header">
+            <span>AUTOFILL_SANDBOX</span>
+            <span style="color:var(--success)">ACTIVE</span>
+          </div>
+          <div style="line-height:1.5;">
+            Input: [Full Name] &rarr; #candidate-name<br>
+            Input: [Email Address] &rarr; #candidate-email<br>
+            Input: [Github Link] &rarr; #github-url<br>
+            <span style="color:var(--success)">[MAP_PASS] Fields parsed: 3/3 matched</span>
+          </div>
+          <div style="font-size:9px;color:var(--muted);">
+            Active selector map: standard-v3-map.json
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    // Smooth scroll and flash highlight handler for tool targets
+    function handleHashScroll() {
+      if (window.location.hash) {
+        const target = document.querySelector(window.location.hash);
+        if (target) {
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Apply highlight flash
+            target.classList.add('highlight-flash');
+            
+            // Clean up highlight class after animation runs
+            setTimeout(() => {
+              target.classList.remove('highlight-flash');
+            }, 1600);
+          }, 300);
+        }
+      }
+    }
+
+    window.addEventListener('load', handleHashScroll);
+    window.addEventListener('hashchange', handleHashScroll);
+  </script>
+</body>
+</html>
