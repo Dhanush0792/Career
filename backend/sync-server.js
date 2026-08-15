@@ -436,6 +436,12 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // GET Root Status Check
+  if (req.method === "GET" && (urlObj.pathname === "/" || urlObj.pathname === "")) {
+    sendJson(res, 200, { ok: true, message: "JobXApply Sync API Server is running. Access the user panel at http://localhost:8000" });
+    return;
+  }
+
   // GET User Profile
   if (req.method === "GET" && urlObj.pathname === "/api/profile") {
     let profile = await db.getProfile(activeUser.id);
