@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { MongoClient } = require("mongodb");
+const { Pool } = require("pg");
 
 const USERS_DIR = path.join(__dirname, "..", "database", "users");
 const REPORTS_FILE = path.join(__dirname, "..", "database", "map-reports.json");
@@ -12,32 +12,30 @@ if (!fs.existsSync(USERS_DIR)) {
   fs.mkdirSync(USERS_DIR, { recursive: true });
 }
 
-// MongoDB Client Initialization
-let useMongo = false;
-let mongoClient = null;
-let dbInstance = null;
+// Supabase PostgreSQL Pool Initialization
+let usePg = false;
+let pool = null;
 
-const MONGODB_URI = process.env.MONGODB_URI;
-if (MONGODB_URI) {
+const DATABASE_URL = process.env.DATABASE_URL;
+if (DATABASE_URL) {
   try {
-    mongoClient = new MongoClient(MONGODB_URI);
-    mongoClient.connect()
-      .then(client => {
-        dbInstance = client.db();
-        useMongo = true;
-        console.log("[DB] Connection established: MongoDB Cloud Database is ACTIVE.");
+    pool = new Pool({
+      connectionString: DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false // Required for Supabase external TLS queries
+      }
+    });
+    pool.query("SELECT NOW()")
+      .then(() => {
+        usePg = true;
+        console.log("[DB] Connection established: Supabase PostgreSQL Cloud DB is ACTIVE.");
       })
       .catch(err => {
-        console.error("[DB] MongoDB connection failed. Falling back to local files.", err);
+        console.error("[DB] Supabase connection failed. Falling back to local files.", err);
       });
   } catch (err) {
-    console.error("[DB] Failed to construct MongoDB client. Falling back to local files.", err);
+    console.error("[DB] Failed to construct pg Pool. Falling back to local files.", err);
   }
-}
-
-async function getDb() {
-  if (useMongo && dbInstance) return dbInstance;
-  return null;
 }
 
 // ─── Local Filesystem Utilities ──────────────────────────────────────────
@@ -123,15 +121,22 @@ function saveUserData(userId, data) {
 module.exports = {
   // Authentication / Users
   async createUser({ email, name, passwordHash, role = "user" }) {
-    const db = await getDb();
-    if (db) {
+    if (usePg) {
       const emailLower = email.toLowerCase();
-      const existing = await db.collection("users").findOne({ email: emailLower });
-      if (existing) {
+      const existing = await pool.query("SELECT id FROM users WHERE LOWER(email) = $1", [emailLower]);
+      if (existing.rows.length > 0) {
         throw new Error("User already exists");
       }
       const userId = "u_" + Math.random().toString(36).substring(2, 15);
-      const newUser = {
+      await pool.query(
+        "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        [userId, emailLower, name || "", passwordHash, role, "free", Date.now(), Date.now()]
+      );
+      await pool.query(
+        "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3)",
+        [userId, null, JSON.stringify([])]
+      );
+      return {
         id: userId,
         email: emailLower,
         name: name || "",
@@ -141,9 +146,6 @@ module.exports = {
         createdAt: Date.now(),
         lastSync: Date.now()
       };
-      await db.collection("users").insertOne(newUser);
-      await db.collection("userdata").insertOne({ userId, profile: null, applications: [] });
-      return newUser;
     }
 
     const registry = loadRegistry();
@@ -168,9 +170,21 @@ module.exports = {
   },
 
   async getUserByEmail(email) {
-    const db = await getDb();
-    if (db) {
-      return await db.collection("users").findOne({ email: email.toLowerCase() });
+    if (usePg) {
+      const res = await pool.query("SELECT * FROM users WHERE LOWER(email) = $1", [email.toLowerCase()]);
+      if (res.rows.length === 0) return null;
+      const u = res.rows[0];
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        passwordHash: u.password_hash,
+        role: u.role,
+        tier: u.tier,
+        createdAt: Number(u.created_at),
+        lastSync: Number(u.last_sync),
+        passcodeHash: u.passcode_hash
+      };
     }
 
     const registry = loadRegistry();
@@ -178,9 +192,21 @@ module.exports = {
   },
 
   async getUserById(id) {
-    const db = await getDb();
-    if (db) {
-      return await db.collection("users").findOne({ id: id });
+    if (usePg) {
+      const res = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+      if (res.rows.length === 0) return null;
+      const u = res.rows[0];
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        passwordHash: u.password_hash,
+        role: u.role,
+        tier: u.tier,
+        createdAt: Number(u.created_at),
+        lastSync: Number(u.last_sync),
+        passcodeHash: u.passcode_hash
+      };
     }
 
     const registry = loadRegistry();
@@ -189,9 +215,21 @@ module.exports = {
 
   async getUserByPasscodeHash(passcodeHash) {
     if (!passcodeHash) return null;
-    const db = await getDb();
-    if (db) {
-      return await db.collection("users").findOne({ passcodeHash: passcodeHash });
+    if (usePg) {
+      const res = await pool.query("SELECT * FROM users WHERE passcode_hash = $1", [passcodeHash]);
+      if (res.rows.length === 0) return null;
+      const u = res.rows[0];
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        passwordHash: u.password_hash,
+        role: u.role,
+        tier: u.tier,
+        createdAt: Number(u.created_at),
+        lastSync: Number(u.last_sync),
+        passcodeHash: u.passcode_hash
+      };
     }
 
     const registry = loadRegistry();
@@ -199,10 +237,9 @@ module.exports = {
   },
 
   async updateUserPasscodeHash(userId, passcodeHash) {
-    const db = await getDb();
-    if (db) {
-      const res = await db.collection("users").updateOne({ id: userId }, { $set: { passcodeHash: passcodeHash } });
-      return res.modifiedCount > 0;
+    if (usePg) {
+      const res = await pool.query("UPDATE users SET passcode_hash = $1 WHERE id = $2", [passcodeHash, userId]);
+      return res.rowCount > 0;
     }
 
     const registry = loadRegistry();
@@ -216,10 +253,18 @@ module.exports = {
   },
 
   async getUsersList() {
-    const db = await getDb();
-    if (db) {
-      const users = await db.collection("users").find({}).toArray();
-      return users.map(({ passwordHash, _id, ...rest }) => rest);
+    if (usePg) {
+      const res = await pool.query("SELECT id, email, name, role, tier, created_at, last_sync, passcode_hash FROM users");
+      return res.rows.map(u => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: u.role,
+        tier: u.tier,
+        createdAt: Number(u.created_at),
+        lastSync: Number(u.last_sync),
+        passcodeHash: u.passcode_hash
+      }));
     }
 
     const registry = loadRegistry();
@@ -227,10 +272,8 @@ module.exports = {
   },
 
   async deleteUser(userId) {
-    const db = await getDb();
-    if (db) {
-      await db.collection("users").deleteOne({ id: userId });
-      await db.collection("userdata").deleteOne({ userId: userId });
+    if (usePg) {
+      await pool.query("DELETE FROM users WHERE id = $1", [userId]);
       return;
     }
 
@@ -245,10 +288,10 @@ module.exports = {
 
   // Profiles
   async getProfile(userId) {
-    const db = await getDb();
-    if (db) {
-      const data = await db.collection("userdata").findOne({ userId: userId });
-      return data ? data.profile : null;
+    if (usePg) {
+      const res = await pool.query("SELECT profile FROM userdata WHERE user_id = $1", [userId]);
+      if (res.rows.length === 0) return null;
+      return res.rows[0].profile;
     }
 
     const data = loadUserData(userId);
@@ -256,10 +299,12 @@ module.exports = {
   },
 
   async saveProfile(userId, profileData) {
-    const db = await getDb();
-    if (db) {
-      await db.collection("userdata").updateOne({ userId: userId }, { $set: { profile: profileData } }, { upsert: true });
-      await db.collection("users").updateOne({ id: userId }, { $set: { lastSync: Date.now() } });
+    if (usePg) {
+      await pool.query(
+        "INSERT INTO userdata (user_id, profile) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET profile = $2",
+        [userId, JSON.stringify(profileData)]
+      );
+      await pool.query("UPDATE users SET last_sync = $1 WHERE id = $2", [Date.now(), userId]);
       return;
     }
 
@@ -277,10 +322,12 @@ module.exports = {
 
   // Applications Tracker
   async getApplications(userId) {
-    const db = await getDb();
-    if (db) {
-      const data = await db.collection("userdata").findOne({ userId: userId });
-      return data ? (data.applications || []) : [];
+    if (usePg) {
+      const res = await pool.query("SELECT applications FROM userdata WHERE user_id = $1", [userId]);
+      if (res.rows.length === 0 || !res.rows[0].applications) return [];
+      return typeof res.rows[0].applications === "string" 
+        ? JSON.parse(res.rows[0].applications)
+        : res.rows[0].applications;
     }
 
     const data = loadUserData(userId);
@@ -288,9 +335,11 @@ module.exports = {
   },
 
   async saveApplications(userId, applications) {
-    const db = await getDb();
-    if (db) {
-      await db.collection("userdata").updateOne({ userId: userId }, { $set: { applications: applications } }, { upsert: true });
+    if (usePg) {
+      await pool.query(
+        "INSERT INTO userdata (user_id, applications) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET applications = $2",
+        [userId, JSON.stringify(applications)]
+      );
       return;
     }
 
@@ -301,8 +350,7 @@ module.exports = {
 
   // Reports Queue
   async createReport(report) {
-    const db = await getDb();
-    if (db) {
+    if (usePg) {
       const newReport = {
         id: "rep_" + Math.random().toString(36).substring(2, 11),
         portal: report.portal,
@@ -312,7 +360,10 @@ module.exports = {
         submittedAt: Date.now(),
         status: "pending"
       };
-      await db.collection("reports").insertOne(newReport);
+      await pool.query(
+        "INSERT INTO reports (id, portal, field, selector_tried, reporter_email, submitted_at, status) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        [newReport.id, newReport.portal, newReport.field, newReport.selectorTried, newReport.reporterEmail, newReport.submittedAt, newReport.status]
+      );
       return newReport;
     }
 
@@ -332,23 +383,39 @@ module.exports = {
   },
 
   async getReports() {
-    const db = await getDb();
-    if (db) {
-      return await db.collection("reports").find({}).toArray();
+    if (usePg) {
+      const res = await pool.query("SELECT * FROM reports");
+      return res.rows.map(r => ({
+        id: r.id,
+        portal: r.portal,
+        field: r.field,
+        selectorTried: r.selector_tried,
+        reporterEmail: r.reporter_email,
+        submittedAt: Number(r.submitted_at),
+        status: r.status
+      }));
     }
 
     return loadReports();
   },
 
   async updateReportStatus(reportId, status) {
-    const db = await getDb();
-    if (db) {
-      const res = await db.collection("reports").findOneAndUpdate(
-        { id: reportId },
-        { $set: { status: status } },
-        { returnDocument: "after" }
+    if (usePg) {
+      const res = await pool.query(
+        "UPDATE reports SET status = $1 WHERE id = $2 RETURNING *",
+        [status, reportId]
       );
-      return res ? (res.value || res) : null;
+      if (res.rows.length === 0) return null;
+      const r = res.rows[0];
+      return {
+        id: r.id,
+        portal: r.portal,
+        field: r.field,
+        selectorTried: r.selector_tried,
+        reporterEmail: r.reporter_email,
+        submittedAt: Number(r.submitted_at),
+        status: r.status
+      };
     }
 
     const reports = loadReports();
@@ -362,10 +429,9 @@ module.exports = {
   },
 
   async updateUserTier(userId, tier) {
-    const db = await getDb();
-    if (db) {
-      const res = await db.collection("users").updateOne({ id: userId }, { $set: { tier: tier } });
-      return res.modifiedCount > 0;
+    if (usePg) {
+      const res = await pool.query("UPDATE users SET tier = $1 WHERE id = $2", [tier, userId]);
+      return res.rowCount > 0;
     }
 
     const registry = loadRegistry();
@@ -379,11 +445,11 @@ module.exports = {
   },
 
   async recordTelemetryHit(metric) {
-    const db = await getDb();
-    if (db) {
-      const update = {};
-      update[metric] = 1;
-      await db.collection("telemetry").updateOne({}, { $inc: update }, { upsert: true });
+    if (usePg) {
+      await pool.query(
+        "INSERT INTO telemetry (metric_key, metric_value) VALUES ($1, 1) ON CONFLICT (metric_key) DO UPDATE SET metric_value = telemetry.metric_value + 1",
+        [metric]
+      );
       return;
     }
 
@@ -398,32 +464,37 @@ module.exports = {
 
   // Telemetry Stats
   async getStats() {
-    const db = await getDb();
-    if (db) {
-      const totalUsers = await db.collection("users").countDocuments({});
-      const totalReports = await db.collection("reports").countDocuments({});
-      const pendingReports = await db.collection("reports").countDocuments({ status: "pending" });
-      const tel = await db.collection("telemetry").findOne({}) || {};
+    if (usePg) {
+      const userCountRes = await pool.query("SELECT COUNT(*) FROM users");
+      const reportCountRes = await pool.query("SELECT COUNT(*) FROM reports");
+      const pendingReportRes = await pool.query("SELECT COUNT(*) FROM reports WHERE status = 'pending'");
       
-      const freeUsers = await db.collection("users").countDocuments({ tier: { $nin: ["paid", "pro", "operative", "command"] } });
-      const paidUsers = await db.collection("users").countDocuments({ tier: { $in: ["paid", "pro", "operative", "command"] } });
+      const freeUsersRes = await pool.query("SELECT COUNT(*) FROM users WHERE tier NOT IN ('paid', 'pro', 'operative', 'command')");
+      const paidUsersRes = await pool.query("SELECT COUNT(*) FROM users WHERE tier IN ('paid', 'pro', 'operative', 'command')");
 
-      const allUserData = await db.collection("userdata").find({}).toArray();
+      const telemetryRes = await pool.query("SELECT metric_key, metric_value FROM telemetry");
+      const tel = {};
+      telemetryRes.rows.forEach(r => {
+        tel[r.metric_key] = r.metric_value;
+      });
+
+      const userdataRes = await pool.query("SELECT profile, applications FROM userdata");
       let totalApps = 0;
       let profilesCount = 0;
-      allUserData.forEach(d => {
+      userdataRes.rows.forEach(d => {
         if (d.profile) profilesCount++;
-        if (Array.isArray(d.applications)) totalApps += d.applications.length;
+        const apps = typeof d.applications === "string" ? JSON.parse(d.applications) : d.applications;
+        if (Array.isArray(apps)) totalApps += apps.length;
       });
 
       return {
-        totalUsers,
+        totalUsers: Number(userCountRes.rows[0].count),
         totalProfiles: profilesCount,
         totalApplications: totalApps,
-        totalReports,
-        pendingReports,
-        freeUsers,
-        paidUsers,
+        totalReports: Number(reportCountRes.rows[0].count),
+        pendingReports: Number(pendingReportRes.rows[0].count),
+        freeUsers: Number(freeUsersRes.rows[0].count),
+        paidUsers: Number(paidUsersRes.rows[0].count),
         pageViews: tel.pageViews || 0,
         apiRequests: tel.apiRequests || 0
       };
