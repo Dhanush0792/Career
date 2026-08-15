@@ -379,6 +379,12 @@ document.getElementById('auth-form').addEventListener('submit', (e) => {
     localStorage.setItem('jxa_user_email', data.user.email);
     localStorage.setItem('jxa_role', data.user.role || 'user');
 
+    if (data.user.role === 'admin') {
+      addLog('[SYS_QUERY] Admin session authorized. Redirecting to Admin Panel...', 'success');
+      setTimeout(() => window.location.href = 'admin/index.html', 700);
+      return;
+    }
+
     addLog('[SYS_QUERY] Checking master profile on sync network...', 'info');
 
     try {
@@ -416,7 +422,11 @@ document.getElementById('auth-form').addEventListener('submit', (e) => {
 
 // Already logged in → skip auth page
 if (localStorage.getItem('jxa_token')) {
-  window.location.replace('dashboard.html');
+  if (localStorage.getItem('jxa_role') === 'admin') {
+    window.location.replace('admin/index.html');
+  } else {
+    window.location.replace('dashboard.html');
+  }
 }
 
 // Prefill email from query params (e.g. from landing CTA)

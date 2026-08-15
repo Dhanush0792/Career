@@ -40,6 +40,13 @@ function requireAuth() {
       window.location.href = 'auth.html';
     }
   } else {
+    // If logged in as admin, they should always be routed to the admin panel
+    if (localStorage.getItem('jxa_role') === 'admin') {
+      if (!window.location.pathname.includes('/admin/')) {
+        window.location.href = 'admin/index.html';
+        return;
+      }
+    }
     // Background pull tracker data from server on startup
     pullApplicationsFromServer().catch(() => {});
   }
