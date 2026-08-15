@@ -45,8 +45,8 @@ body::after {
 .section-title { font-family: var(--display); font-size: 2.5rem; color: var(--white); text-transform: uppercase; margin-bottom: 24px; text-align: center; }
 .mission-text { font-size: 1.1rem; line-height: 1.8; color: var(--text); text-align: center; margin-bottom: 80px; background: var(--glass-bg); padding: 40px; border-radius: 14px; border: 1px solid var(--glass-border); backdrop-filter: blur(16px); }
 
-.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 80px; }
-.team-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 32px 24px; text-align: center; backdrop-filter: blur(16px); transition: transform 0.3s ease; }
+.team-grid { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 80px; }
+.team-card { width: 300px; flex-shrink: 0; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 32px 24px; text-align: center; backdrop-filter: blur(16px); transition: transform 0.3s ease; }
 .team-card:hover { transform: translateY(-4px); border-color: var(--primary); }
 .team-card h3 { font-family: var(--display); font-size: 1.5rem; margin: 0 0 8px; color: var(--white); text-transform: uppercase; }
 .team-role { font-family: var(--mono); font-size: 0.85rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
@@ -80,23 +80,13 @@ body::after {
   <div class="team-grid">
     <div class="team-card">
       <h3>Dhanush</h3>
-      <div class="team-role">Creator / Builder</div>
-      <p style="font-size:0.9rem;color:var(--muted);margin:0;">Architect of the master profile structure and heuristic engine.</p>
+      <div class="team-role">Frontend & Application Developer</div>
+      <p style="font-size:0.9rem;color:var(--muted);margin:0;">Developed the core application interfaces and client-side logic for CareerBridge.</p>
     </div>
     <div class="team-card">
       <h3>Nikhil Reddy</h3>
-      <div class="team-role">Backend Engineer</div>
-      <p style="font-size:0.9rem;color:var(--muted);margin:0;">Scales the API, database operations, and real-time syncing.</p>
-    </div>
-    <div class="team-card">
-      <h3>Ismail</h3>
-      <div class="team-role">Software Engineer</div>
-      <p style="font-size:0.9rem;color:var(--muted);margin:0;">Extension development and complex ATS mapping algorithms.</p>
-    </div>
-    <div class="team-card">
-      <h3>Rupesh</h3>
-      <div class="team-role">Student Tester</div>
-      <p style="font-size:0.9rem;color:var(--muted);margin:0;">QA operations and primary job portal battle testing.</p>
+      <div class="team-role">QA Tester & Marketer</div>
+      <p style="font-size:0.9rem;color:var(--muted);margin:0;">Drives quality assurance testing, user acquisition, and marketing operations.</p>
     </div>
   </div>
 
