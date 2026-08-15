@@ -1156,6 +1156,12 @@ footer {
 
       <!-- Signature element: Interactive 3D Globe Showcase -->
       <style>
+      .resume-card-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -40px; /* Pull the globe showcase upwards */
+      }
       .globe-wrap {
         width: 440px;
         height: 440px;
@@ -1170,7 +1176,7 @@ footer {
       }
       .globe-status-badge {
         position: absolute;
-        bottom: -15px;
+        bottom: -32px; /* Pull the badge down to prevent overlapping */
         left: 50%;
         transform: translateX(-50%);
         background: rgba(8, 12, 28, 0.85);
