@@ -290,18 +290,19 @@ body::after {
       <!-- Left step tracker -->
       <div class="wizard-nav">
         <button type="button" class="nav-step active" id="step-btn-1" onclick="switchStep(1)">01 // PERSONAL ID</button>
-        <button type="button" class="nav-step" id="step-btn-2" onclick="switchStep(2)">02 // ADDRESS & LINKS</button>
-        <button type="button" class="nav-step" id="step-btn-3" onclick="switchStep(3)">03 // CAREER PROFILE</button>
-        <button type="button" class="nav-step" id="step-btn-4" onclick="switchStep(4)">04 // SYNC & COMMIT</button>
+        <button type="button" class="nav-step" id="step-btn-2" onclick="switchStep(2)">02 // EDUCATION</button>
+        <button type="button" class="nav-step" id="step-btn-3" onclick="switchStep(3)">03 // RECRUITMENT</button>
+        <button type="button" class="nav-step" id="step-btn-4" onclick="switchStep(4)">04 // PROJECTS & LINKS</button>
+        <button type="button" class="nav-step" id="step-btn-5" onclick="switchStep(5)">05 // SYNC & COMMIT</button>
       </div>
 
       <!-- Right form pane -->
       <div class="wizard-content">
         
-        <!-- STEP 1: PERSONAL ID -->
+        <!-- STEP 1: PERSONAL ID & LOCATION -->
         <div class="step-panel active" id="panel-step-1">
           <div class="form-grid">
-            <div class="form-group full-width">
+            <div class="form-group">
               <label>Full Name *</label>
               <input type="text" class="form-input" id="fullName" placeholder="Enter your full name" required>
             </div>
@@ -335,20 +336,24 @@ body::after {
             </div>
             <div class="form-group">
               <label>Phone Number</label>
-              <input type="text" class="form-input" id="phone" placeholder="+91 9876543210">
+              <div style="display: flex; gap: 8px;">
+                <select class="form-input" id="phoneCode" style="width: 90px; padding: 10px 4px;">
+                  <option value="+91">+91 (IN)</option>
+                  <option value="+1">+1 (US)</option>
+                  <option value="+44">+44 (UK)</option>
+                  <option value="+61">+61 (AU)</option>
+                  <option value="+81">+81 (JP)</option>
+                  <option value="+49">+49 (DE)</option>
+                </select>
+                <input type="text" class="form-input" id="phone" placeholder="9876543210" style="flex: 1;">
+              </div>
             </div>
-          </div>
-        </div>
-
-        <!-- STEP 2: ADDRESS & LINKS -->
-        <div class="step-panel" id="panel-step-2">
-          <div class="form-grid">
             <div class="form-group full-width">
               <label>Street Address</label>
-              <input type="text" class="form-input" id="address" placeholder="Line 1, Line 2">
+              <input type="text" class="form-input" id="address" placeholder="Flat No, Apartment, Street Name">
             </div>
             <div class="form-group">
-              <label>City / Town</label>
+              <label>Town / City</label>
               <input type="text" class="form-input" id="city" placeholder="e.g. Bangalore">
             </div>
             <div class="form-group">
@@ -363,67 +368,202 @@ body::after {
               <label>Pincode / ZIP</label>
               <input type="text" class="form-input" id="zip" placeholder="6-digit ZIP code">
             </div>
-            <div class="form-group">
-              <label>LinkedIn Profile Link</label>
-              <input type="text" class="form-input" id="linkedin" placeholder="https://linkedin.com/in/username">
+          </div>
+        </div>
+
+        <!-- STEP 2: EDUCATION HISTORY -->
+        <div class="step-panel" id="panel-step-2">
+          <div class="form-grid">
+            <!-- 10th -->
+            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px;">
+              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">10th Standard / Matriculation</span>
             </div>
             <div class="form-group">
-              <label>GitHub Profile Link</label>
-              <input type="text" class="form-input" id="github" placeholder="https://github.com/username">
+              <label>School Name</label>
+              <input type="text" class="form-input" id="edu10_school" placeholder="High School Name">
             </div>
-            <div class="form-group full-width">
-              <label>Personal Portfolio URL</label>
-              <input type="text" class="form-input" id="portfolio" placeholder="https://yourwebsite.com">
+            <div class="form-group">
+              <label>Board</label>
+              <input type="text" class="form-input" id="edu10_board" placeholder="e.g. CBSE / ICSE / State Board">
+            </div>
+            <div class="form-group">
+              <label>Year of Completion</label>
+              <input type="text" class="form-input" id="edu10_year" placeholder="e.g. 2018">
+            </div>
+            <div class="form-group">
+              <label>CGPA / Percentage</label>
+              <input type="text" class="form-input" id="edu10_cgpa" placeholder="e.g. 9.4 CGPA or 92%">
+            </div>
+
+            <!-- 12th -->
+            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px; margin-top: 12px;">
+              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">12th Standard / Higher Secondary</span>
+            </div>
+            <div class="form-group">
+              <label>School / Junior College Name</label>
+              <input type="text" class="form-input" id="edu12_school" placeholder="School/College Name">
+            </div>
+            <div class="form-group">
+              <label>Board / Stream</label>
+              <input type="text" class="form-input" id="edu12_board" placeholder="e.g. State Board (MPC) or CBSE (Science)">
+            </div>
+            <div class="form-group">
+              <label>Year of Completion</label>
+              <input type="text" class="form-input" id="edu12_year" placeholder="e.g. 2020">
+            </div>
+            <div class="form-group">
+              <label>CGPA / Percentage</label>
+              <input type="text" class="form-input" id="edu12_cgpa" placeholder="e.g. 96% or 9.8 CGPA">
+            </div>
+
+            <!-- Graduation -->
+            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px; margin-top: 12px;">
+              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">Graduation Degree</span>
+            </div>
+            <div class="form-group">
+              <label>College / University Name</label>
+              <input type="text" class="form-input" id="eduGrad_college" placeholder="Graduation College Name">
+            </div>
+            <div class="form-group">
+              <label>Degree & Major</label>
+              <input type="text" class="form-input" id="eduGrad_degree" placeholder="e.g. B.Tech Computer Science">
+            </div>
+            <div class="form-group">
+              <label>Year of Completion</label>
+              <input type="text" class="form-input" id="eduGrad_year" placeholder="e.g. 2024">
+            </div>
+            <div class="form-group" id="grp-grad-cgpa">
+              <label>CGPA / Percentage</label>
+              <input type="text" class="form-input" id="eduGrad_cgpa" placeholder="e.g. 8.5 CGPA">
+            </div>
+            <div class="form-group full-width" style="flex-direction:row; align-items:center; gap:8px;">
+              <input type="checkbox" id="eduGrad_pursuing" style="width:16px; height:16px; cursor:pointer;" onchange="toggleGradCGPA()">
+              <label for="eduGrad_pursuing" style="cursor:pointer; font-size:10px;">I am currently pursuing this graduation degree (hide score)</label>
+            </div>
+
+            <!-- Post Graduation -->
+            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px; margin-top: 12px;">
+              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">Post Graduation (Optional)</span>
+            </div>
+            <div class="form-group">
+              <label>College / University Name</label>
+              <input type="text" class="form-input" id="eduPG_college" placeholder="PG College Name">
+            </div>
+            <div class="form-group">
+              <label>Degree & Major</label>
+              <input type="text" class="form-input" id="eduPG_degree" placeholder="e.g. M.Tech Software Engineering">
+            </div>
+            <div class="form-group">
+              <label>Year of Completion</label>
+              <input type="text" class="form-input" id="eduPG_year" placeholder="e.g. 2026">
+            </div>
+            <div class="form-group" id="grp-pg-cgpa">
+              <label>CGPA / Percentage</label>
+              <input type="text" class="form-input" id="eduPG_cgpa" placeholder="e.g. 9.0 CGPA">
+            </div>
+            <div class="form-group full-width" style="flex-direction:row; align-items:center; gap:8px;">
+              <input type="checkbox" id="eduPG_pursuing" style="width:16px; height:16px; cursor:pointer;" onchange="togglePGCGPA()">
+              <label for="eduPG_pursuing" style="cursor:pointer; font-size:10px;">I am currently pursuing this post-graduation degree</label>
             </div>
           </div>
         </div>
 
-        <!-- STEP 3: CAREER PROFILE -->
+        <!-- STEP 3: EXPERIENCE & RECRUITMENT DETAILS -->
         <div class="step-panel" id="panel-step-3">
           <div class="form-grid">
             <div class="form-group">
-              <label>Target Role / Designation</label>
-              <input type="text" class="form-input" id="targetRole" placeholder="e.g. Software Engineer">
+              <label>Total Experience (in Years)</label>
+              <input type="number" class="form-input" id="totalExperience" min="0" max="60" placeholder="e.g. 3">
             </div>
             <div class="form-group">
-              <label>Headline</label>
-              <input type="text" class="form-input" id="headline" placeholder="Professional summary headline">
+              <label>Notice Period (in Days)</label>
+              <input type="number" class="form-input" id="noticePeriod" min="0" max="365" placeholder="e.g. 30">
             </div>
             <div class="form-group full-width">
-              <label>Executive / Bio Summary</label>
-              <textarea class="form-input form-textarea" id="summary" placeholder="Provide a brief summary of qualifications..."></textarea>
+              <label>Current Availability</label>
+              <select class="form-input" id="availability">
+                <option value="immediate">Immediate Joiner</option>
+                <option value="15days">15 Days</option>
+                <option value="30days">30 Days</option>
+                <option value="60days">60 Days</option>
+                <option value="90days">90 Days</option>
+                <option value="not_available">Not looking for opportunities</option>
+              </select>
             </div>
-            <div class="form-group">
-              <label>College / Institution</label>
-              <input type="text" class="form-input" id="college" placeholder="Name of your college">
-            </div>
-            <div class="form-group">
-              <label>Skills (Comma-separated)</label>
-              <input type="text" class="form-input" id="skills" placeholder="React, Node.js, Python, PostgreSQL">
-            </div>
-            <div class="form-group full-width">
-              <label>Educational History Details</label>
-              <textarea class="form-input form-textarea" id="education" placeholder="List degrees, majors, and grades..."></textarea>
-            </div>
-            <div class="form-group full-width">
-              <label>Work Experience Details</label>
-              <textarea class="form-input form-textarea" id="experience" placeholder="List companies, job titles, and job roles..."></textarea>
+            
+            <div class="form-group full-width" style="margin-top:16px;">
+              <label style="border-bottom:1px solid var(--glass-border); padding-bottom:6px; display:block; font-weight:700;">EMPLOYMENT & WORK HISTORY</label>
+              <div id="experience-list-container" style="margin-top:12px;"></div>
+              <button type="button" class="btn btn-add" id="btn-add-experience">+ ADD WORK EXPERIENCE</button>
             </div>
           </div>
         </div>
 
-        <!-- STEP 4: SYNC & COMMIT -->
+        <!-- STEP 4: PROJECTS & LINKS -->
         <div class="step-panel" id="panel-step-4">
-          <h3 style="font-family:var(--mono); font-size:12px; color:var(--white); border-bottom:1px solid var(--glass-border); padding-bottom:8px; text-transform:uppercase;">COMPILE AND SAVE DATA TO VAULT</h3>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>LinkedIn Profile URL</label>
+              <input type="text" class="form-input" id="linkedin" placeholder="https://linkedin.com/in/username">
+            </div>
+            <div class="form-group">
+              <label>GitHub Profile URL</label>
+              <input type="text" class="form-input" id="github" placeholder="https://github.com/username">
+            </div>
+            <div class="form-group">
+              <label>Personal Portfolio URL</label>
+              <input type="text" class="form-input" id="portfolio" placeholder="https://yourwebsite.com">
+            </div>
+            <div class="form-group">
+              <label>LeetCode URL</label>
+              <input type="text" class="form-input" id="leetcode" placeholder="https://leetcode.com/username">
+            </div>
+            
+            <div class="form-group full-width" style="margin-top: 16px;">
+              <label style="border-bottom:1px solid var(--glass-border); padding-bottom:6px; display:block; font-weight:700;">PROJECTS PORTFOLIO</label>
+              <div id="projects-list-container" style="margin-top:12px;"></div>
+              <button type="button" class="btn btn-add" id="btn-add-project">+ ADD PROJECT ENTRY</button>
+            </div>
+
+            <div class="form-group full-width" style="margin-top: 16px;">
+              <label style="border-bottom:1px solid var(--glass-border); padding-bottom:6px; display:block; font-weight:700;">CERTIFICATIONS & CREDENTIALS</label>
+              <div id="certifications-list-container" style="margin-top:12px;"></div>
+              <button type="button" class="btn btn-add" id="btn-add-certification">+ ADD CERTIFICATION</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 5: SYNC & VAULT COMMIT -->
+        <div class="step-panel" id="panel-step-5">
+          <h3 style="font-family:var(--mono); font-size:12px; color:var(--white); border-bottom:1px solid var(--glass-border); padding-bottom:8px; text-transform:uppercase; margin-bottom: 16px;">SECURE AND DEPLOY DATA VAULT</h3>
           
-          <div class="import-box" id="drop-zone">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Target Role Designation</label>
+              <input type="text" class="form-input" id="targetRole" placeholder="e.g. Software Engineer">
+            </div>
+            <div class="form-group">
+              <label>Headline Tagline</label>
+              <input type="text" class="form-input" id="headline" placeholder="Professional summary headline">
+            </div>
+            <div class="form-group full-width">
+              <label>Technical Skills (Comma-separated)</label>
+              <input type="text" class="form-input" id="skills" placeholder="React, Node.js, Python, PostgreSQL, AWS">
+            </div>
+            <div class="form-group full-width">
+              <label>Short Bio / Executive Summary</label>
+              <textarea class="form-input form-textarea" id="summary" placeholder="Provide a brief summary of qualifications..."></textarea>
+            </div>
+          </div>
+
+          <div class="import-box" id="drop-zone" style="margin-top: 20px;">
             <div class="import-title">OPTIONAL: PARSE FROM EXISTING RESUME FILE</div>
-            <div>Drag and drop your PDF/DOCX resume here to pre-populate elements instantly.</div>
+            <div style="font-size:11px;color:var(--muted);">Drag and drop your PDF/DOCX resume here to pre-populate elements instantly.</div>
             <input type="file" id="resume-file" style="display:none;" accept=".pdf,.doc,.docx,.txt">
           </div>
 
-          <div class="form-group full-width" style="margin-top:12px;">
-            <label>Raw Resume / CV Draft text (Parsed content)</label>
+          <div class="form-group full-width">
+            <label>Raw Resume / CV Draft text (Backup Content)</label>
             <textarea class="form-input form-textarea" style="min-height:140px;" id="resumeDraft" placeholder="Pasted raw CV text details used by the ATS Checker and autofills..."></textarea>
           </div>
 
@@ -459,8 +599,13 @@ const dropZone = document.getElementById('drop-zone');
 
 const fields = [
   'fullName', 'firstName', 'lastName', 'age', 'dob', 'fatherName', 'motherName',
-  'email', 'phone', 'address', 'city', 'state', 'country', 'zip',
-  'targetRole', 'headline', 'summary', 'college', 'skills', 'education', 'experience', 'resumeDraft', 'linkedin', 'github', 'portfolio'
+  'email', 'phoneCode', 'phone', 'address', 'city', 'state', 'country', 'zip',
+  'targetRole', 'headline', 'summary', 'skills', 'resumeDraft', 'linkedin', 'github', 'portfolio',
+  'leetcode', 'availability', 'noticePeriod', 'totalExperience',
+  'edu10_school', 'edu10_board', 'edu10_year', 'edu10_cgpa',
+  'edu12_school', 'edu12_board', 'edu12_year', 'edu12_cgpa',
+  'eduGrad_college', 'eduGrad_degree', 'eduGrad_year', 'eduGrad_cgpa', 'eduGrad_pursuing',
+  'eduPG_college', 'eduPG_degree', 'eduPG_year', 'eduPG_cgpa', 'eduPG_pursuing'
 ];
 
 function addLog(text, className = '') {
@@ -472,7 +617,7 @@ function addLog(text, className = '') {
 }
 
 let activeStep = 1;
-const panels = ['step-1', 'step-2', 'step-3', 'step-4'];
+const panels = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
 
 function switchStep(stepNum) {
   activeStep = stepNum;
@@ -481,7 +626,7 @@ function switchStep(stepNum) {
 
 function moveStep(direction) {
   const next = activeStep + direction;
-  if (next >= 1 && next <= 4) {
+  if (next >= 1 && next <= 5) {
     activeStep = next;
     updatePanelVisibility();
   }
@@ -500,7 +645,6 @@ function updatePanelVisibility() {
     }
   });
 
-  // Buttons visibility
   const prevBtn = document.getElementById('btn-prev');
   const nextBtn = document.getElementById('btn-next');
 
@@ -510,46 +654,196 @@ function updatePanelVisibility() {
     prevBtn.style.visibility = 'visible';
   }
 
-  if (activeStep === 4) {
+  if (activeStep === 5) {
     nextBtn.textContent = 'COMMIT TO SYNC SERVER';
   } else {
     nextBtn.textContent = 'NEXT ›';
   }
 }
 
+// Pursuing score visibility toggle helpers
+function toggleGradCGPA() {
+  const checkbox = document.getElementById('eduGrad_pursuing');
+  const scoreInput = document.getElementById('eduGrad_cgpa');
+  if (checkbox && checkbox.checked) {
+    scoreInput.disabled = true;
+    scoreInput.value = "";
+    scoreInput.placeholder = "CGPA/Percentage hidden while pursuing";
+  } else if (scoreInput) {
+    scoreInput.disabled = false;
+    scoreInput.placeholder = "e.g. 8.5 CGPA";
+  }
+}
+
+function togglePGCGPA() {
+  const checkbox = document.getElementById('eduPG_pursuing');
+  const scoreInput = document.getElementById('eduPG_cgpa');
+  if (checkbox && checkbox.checked) {
+    scoreInput.disabled = true;
+    scoreInput.value = "";
+    scoreInput.placeholder = "CGPA/Percentage hidden while pursuing";
+  } else if (scoreInput) {
+    scoreInput.disabled = false;
+    scoreInput.placeholder = "e.g. 9.0 CGPA";
+  }
+}
+
+// Dynamic Lists Management Functions
+function addExperienceItem(data = {}) {
+  const container = document.getElementById('experience-list-container');
+  const card = document.createElement('div');
+  card.className = 'dynamic-item-card experience-item';
+  card.innerHTML = `
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="form-group">
+        <label>Company Name</label>
+        <input type="text" class="form-input exp-company" placeholder="e.g. Google" value="${escapeHtml(data.company || '')}">
+      </div>
+      <div class="form-group">
+        <label>Job Title</label>
+        <input type="text" class="form-input exp-title" placeholder="e.g. Software Engineer" value="${escapeHtml(data.title || '')}">
+      </div>
+      <div class="form-group">
+        <label>Start Date</label>
+        <input type="text" class="form-input exp-start" placeholder="e.g. June 2022" value="${escapeHtml(data.startDate || '')}">
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input type="text" class="form-input exp-end" placeholder="e.g. Present" value="${escapeHtml(data.endDate || '')}">
+      </div>
+      <div class="form-group full-width">
+        <label>Description / Core Achievements</label>
+        <textarea class="form-input exp-desc" placeholder="Summary of responsibilities, technologies, metrics..." style="height: 60px;">${escapeHtml(data.description || '')}</textarea>
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function addProjectItem(data = {}) {
+  const container = document.getElementById('projects-list-container');
+  const card = document.createElement('div');
+  card.className = 'dynamic-item-card project-item';
+  card.innerHTML = `
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" class="form-input proj-name" placeholder="e.g. E-Commerce Core" value="${escapeHtml(data.name || '')}">
+      </div>
+      <div class="form-group">
+        <label>Technologies Used</label>
+        <input type="text" class="form-input proj-tech" placeholder="e.g. React, Node.js" value="${escapeHtml(data.technologies || '')}">
+      </div>
+      <div class="form-group full-width">
+        <label>Project URL / Link</label>
+        <input type="text" class="form-input proj-link" placeholder="e.g. https://github.com/my-project" value="${escapeHtml(data.link || '')}">
+      </div>
+      <div class="form-group full-width">
+        <label>Project Description</label>
+        <textarea class="form-input proj-desc" placeholder="Brief explanation of the project scale, architecture, and role..." style="height: 60px;">${escapeHtml(data.description || '')}</textarea>
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function addCertificationItem(data = {}) {
+  const container = document.getElementById('certifications-list-container');
+  const card = document.createElement('div');
+  card.className = 'dynamic-item-card certification-item';
+  card.innerHTML = `
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="form-group">
+        <label>Certification Name</label>
+        <input type="text" class="form-input cert-name" placeholder="e.g. AWS Solutions Architect" value="${escapeHtml(data.name || '')}">
+      </div>
+      <div class="form-group">
+        <label>Issuing Organization</label>
+        <input type="text" class="form-input cert-issuer" placeholder="e.g. Amazon Web Services" value="${escapeHtml(data.issuer || '')}">
+      </div>
+      <div class="form-group">
+        <label>Issue Date</label>
+        <input type="text" class="form-input cert-date" placeholder="e.g. Jan 2024" value="${escapeHtml(data.issueDate || '')}">
+      </div>
+      <div class="form-group">
+        <label>Credential ID / Verification URL</label>
+        <input type="text" class="form-input cert-id" placeholder="e.g. AWS-12345" value="${escapeHtml(data.id || '')}">
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+// Add click listeners to Add buttons
+document.getElementById('btn-add-experience').addEventListener('click', () => addExperienceItem());
+document.getElementById('btn-add-project').addEventListener('click', () => addProjectItem());
+document.getElementById('btn-add-certification').addEventListener('click', () => addCertificationItem());
+
+// Retrieve dynamic items arrays
+function getExperienceList() {
+  const list = [];
+  document.querySelectorAll('.experience-item').forEach(item => {
+    list.push({
+      company: item.querySelector('.exp-company').value.trim(),
+      title: item.querySelector('.exp-title').value.trim(),
+      startDate: item.querySelector('.exp-start').value.trim(),
+      endDate: item.querySelector('.exp-end').value.trim(),
+      description: item.querySelector('.exp-desc').value.trim()
+    });
+  });
+  return list;
+}
+
+function getProjectsList() {
+  const list = [];
+  document.querySelectorAll('.project-item').forEach(item => {
+    list.push({
+      name: item.querySelector('.proj-name').value.trim(),
+      technologies: item.querySelector('.proj-tech').value.trim(),
+      link: item.querySelector('.proj-link').value.trim(),
+      description: item.querySelector('.proj-desc').value.trim()
+    });
+  });
+  return list;
+}
+
+function getCertificationsList() {
+  const list = [];
+  document.querySelectorAll('.certification-item').forEach(item => {
+    list.push({
+      name: item.querySelector('.cert-name').value.trim(),
+      issuer: item.querySelector('.cert-issuer').value.trim(),
+      issueDate: item.querySelector('.cert-date').value.trim(),
+      id: item.querySelector('.cert-id').value.trim()
+    });
+  });
+  return list;
+}
+
 // Drag & drop resume parser simulator
 if (dropZone) {
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.style.borderColor = 'var(--primary)';
-  });
-  dropZone.addEventListener('dragleave', () => {
-    dropZone.style.borderColor = 'var(--glass-border)';
-  });
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; });
+  dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--glass-border)'; });
   dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropZone.style.borderColor = 'var(--glass-border)';
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      parseMockResume(files[0]);
-    }
+    if (files.length > 0) parseMockResume(files[0]);
   });
-  dropZone.addEventListener('click', () => {
-    document.getElementById('resume-file').click();
-  });
+  dropZone.addEventListener('click', () => { document.getElementById('resume-file').click(); });
 }
 
 document.getElementById('resume-file')?.addEventListener('change', (e) => {
   const files = e.target.files;
-  if (files.length > 0) {
-    parseMockResume(files[0]);
-  }
+  if (files.length > 0) parseMockResume(files[0]);
 });
 
 function parseMockResume(file) {
   addLog(`[PARSER] File selected: ${file.name}`);
   addLog('[PARSER] Note: Auto-parsing is not available. Please fill in your details manually.', 'warn');
-  // Only log the filename — no fake prefill values injected
 }
 
 // Auth guard — must be logged in
@@ -563,11 +857,38 @@ async function load() {
 
   const state = await loadProfile();
   const p = state?.profile || {};
+  
   if (Object.keys(p).some(k => p[k])) {
     fields.forEach(f => {
       const input = document.getElementById(f);
-      if (input && p[f] !== undefined && p[f] !== null) input.value = p[f];
+      if (input && p[f] !== undefined && p[f] !== null) {
+        if (input.type === 'checkbox') {
+          input.checked = !!p[f];
+        } else {
+          input.value = p[f];
+        }
+      }
     });
+
+    // Populate dynamic lists
+    document.getElementById('experience-list-container').innerHTML = "";
+    document.getElementById('projects-list-container').innerHTML = "";
+    document.getElementById('certifications-list-container').innerHTML = "";
+
+    if (Array.isArray(p.experienceList)) {
+      p.experienceList.forEach(item => addExperienceItem(item));
+    }
+    if (Array.isArray(p.projectsList)) {
+      p.projectsList.forEach(item => addProjectItem(item));
+    }
+    if (Array.isArray(p.certificationsList)) {
+      p.certificationsList.forEach(item => addCertificationItem(item));
+    }
+
+    // Toggle pursuing visibility
+    toggleGradCGPA();
+    togglePGCGPA();
+
     addLog('[SYS_LOAD] Existing profile data loaded. Review and update.', 'info');
   } else {
     addLog('[SYS_INIT] No existing profile found. Fill in your details.', 'info');
@@ -646,7 +967,7 @@ document.getElementById('btn-delete-profile').addEventListener('click', async ()
 
 // Submit & sync state
 document.getElementById('btn-next').addEventListener('click', async () => {
-  if (activeStep < 4) {
+  if (activeStep < 5) {
     moveStep(1);
     return;
   }
@@ -655,8 +976,19 @@ document.getElementById('btn-next').addEventListener('click', async () => {
   const payload = {};
   fields.forEach(f => {
     const el = document.getElementById(f);
-    if (el) payload[f] = el.value.trim();
+    if (el) {
+      if (el.type === 'checkbox') {
+        payload[f] = el.checked;
+      } else {
+        payload[f] = el.value.trim();
+      }
+    }
   });
+
+  // Extract lists arrays
+  payload.experienceList = getExperienceList();
+  payload.projectsList = getProjectsList();
+  payload.certificationsList = getCertificationsList();
 
   if (!payload.fullName) {
     addLog('[ERROR] Full Name is required before saving.', 'warn');
@@ -671,7 +1003,6 @@ document.getElementById('btn-next').addEventListener('click', async () => {
     return;
   }
 
-  // Save passcode locally
   localStorage.setItem('jxa_passcode', passcode);
 
   addLog('[SYS_SYNC] Saving profile...');
@@ -694,6 +1025,17 @@ document.getElementById('btn-next').addEventListener('click', async () => {
     showToast(errMsg, 'error');
   }
 });
+
+// HTML escaping helper
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 </script>
 </body>
 </html>

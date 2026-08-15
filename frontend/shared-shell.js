@@ -743,9 +743,15 @@ function showToast(message, type = 'info') {
 
 const DEFAULT_PROFILE_FIELDS = [
   "fullName", "firstName", "lastName", "age", "dob", "fatherName", "motherName",
-  "email", "phone", "address", "city", "state", "country", "zip", "headline",
+  "email", "phoneCode", "phone", "address", "city", "state", "country", "zip", "headline",
   "summary", "education", "college", "experience", "skills", "linkedin", "github",
-  "portfolio", "resumeDraft", "targetRole", "answers"
+  "portfolio", "resumeDraft", "targetRole", "answers",
+  "leetcode", "availability", "noticePeriod", "totalExperience",
+  "edu10_school", "edu10_board", "edu10_year", "edu10_cgpa",
+  "edu12_school", "edu12_board", "edu12_year", "edu12_cgpa",
+  "eduGrad_college", "eduGrad_degree", "eduGrad_year", "eduGrad_cgpa", "eduGrad_pursuing",
+  "eduPG_college", "eduPG_degree", "eduPG_year", "eduPG_cgpa", "eduPG_pursuing",
+  "experienceList", "projectsList", "certificationsList"
 ];
 
 function uint8ToBase64(uint8) {
