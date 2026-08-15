@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
 <script src="shared-shell.js?v=2"></script>
 <style>
 body { padding-top: 80px; }
@@ -45,6 +47,10 @@ body::after {
 .console-line.success { color:var(--success); }
 .console-line.warn { color:var(--alert); }
 .profile-status-box { border:1px dashed var(--glass-border); padding:14px; background:rgba(7,10,24,.5); font-family:var(--mono); font-size:10px; color:var(--muted); border-radius:8px; line-height:1.6; }
+.dropzone { border:2px dashed var(--glass-border); border-radius:10px; padding:30px 20px; text-align:center; cursor:pointer; transition:all .2s; }
+.dropzone:hover { border-color:var(--primary); background:rgba(91,79,232,.03); }
+.tab-btn { flex:1; border:0; background:transparent; color:var(--muted); font-size:10px; font-family:var(--mono); font-weight:700; border-radius:6px; cursor:pointer; height:32px; transition: all 0.2s; }
+.tab-btn.active { background:var(--primary); color:#fff; }
 @media (max-width:680px) { .grid { grid-template-columns:1fr; } .analyze-btn, .results-panel, .console-box { grid-column:1; } .scanned-keywords { grid-template-columns:1fr; } }
 </style>
 
@@ -76,27 +82,58 @@ body::after {
           <option value="customer_care">Customer Care Operator</option>
         </select>
       </div>
-      <textarea class="text-area" id="jd-input" placeholder="Paste the target job description here. The backend scorer will perform semantic comparison and keyword matches against your resume profile." style="height: 140px;"></textarea>
+      <textarea class="text-area" id="jd-input" placeholder="Paste the target job description here. The ATS scorer will extract parameters and match keywords, placement, and bullet density." style="height: 140px;"></textarea>
     </div>
 
-    <!-- Right: Profile preview -->
+    <!-- Right: Resume Source Selector Tabs -->
     <div class="card">
-      <div class="card__title">02 // YOUR PROFILE SKILLS</div>
-      <div style="font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
-        Analyzing profile: <span id="res-name" style="color:var(--white)">Loading...</span>
+      <div class="card__title">02 // YOUR RESUME SOURCE</div>
+      
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px; border: 1px solid var(--glass-border);">
+        <button id="tab-profile" class="tab-btn active">CLOUD PROFILE</button>
+        <button id="tab-pdf" class="tab-btn">UPLOAD PDF</button>
+        <button id="tab-docx" class="tab-btn">UPLOAD DOCX</button>
       </div>
-      <div class="profile-status-box">
-        SKILLS: <span id="res-skills" style="color:var(--white);">...</span>
+
+      <!-- Tab Content 1: Profile -->
+      <div id="pane-profile" style="display: block;">
+        <div style="font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
+          Analyzing profile: <span id="res-name" style="color:var(--white)">Loading...</span>
+        </div>
+        <div class="profile-status-box">
+          SKILLS: <span id="res-skills" style="color:var(--white);">...</span>
+        </div>
+        <div id="skills-warn" style="display:none;" class="warn-banner" style="margin-top:12px;">
+          ⚠ No skills in your profile. <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Add skills →</a>
+        </div>
       </div>
-      <div id="skills-warn" style="display:none;" class="warn-banner" style="margin-top:12px;">
-        ⚠ No skills in your profile. <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Add skills →</a>
+
+      <!-- Tab Content 2: PDF Upload -->
+      <div id="pane-pdf" style="display: none;">
+        <div id="pdf-dropzone" class="dropzone">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">DRAG & DROP PDF OR CLICK TO CHOOSE</span>
+          <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
+        </div>
+        <div id="pdf-file-info" style="display: none; font-family: var(--mono); font-size: 10px; color: var(--success); margin-top: 10px; text-transform: uppercase;"></div>
+      </div>
+
+      <!-- Tab Content 3: DOCX Upload -->
+      <div id="pane-docx" style="display: none;">
+        <div id="docx-dropzone" class="dropzone">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">DRAG & DROP DOCX OR CLICK TO CHOOSE</span>
+          <input type="file" id="docx-file-input" accept=".docx" style="display: none;">
+        </div>
+        <div id="docx-file-info" style="display: none; font-family: var(--mono); font-size: 10px; color: var(--success); margin-top: 10px; text-transform: uppercase;"></div>
+        <div style="font-family: var(--mono); font-size: 9px; color: var(--alert); margin-top: 10px; line-height: 1.35;">
+          Note: DOCX layout parsing (columns & image flags) is PDF-only in this demo. DOCX text will be processed.
+        </div>
       </div>
     </div>
 
     <button class="analyze-btn" id="run-check-btn">› ANALYZE COMPATIBILITY</button>
 
     <div class="console-box" id="console">
-      <div class="console-line">[SYS_INIT] ATS analyzer loaded. Select role, paste job description and click Analyze.</div>
+      <div class="console-line">[SYS_INIT] ATS analyzer loaded. Select role, select intake source, and click Analyze.</div>
     </div>
 
     <!-- Results (shown after analysis) -->
@@ -109,10 +146,71 @@ body::after {
           <span id="score-detail" style="color:var(--dim);">—</span>
         </div>
       </div>
+
+      <!-- Subcategory progress bars -->
+      <div class="card">
+        <div class="card__title">ATS Breakdown</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--muted);">
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+              <span>Parseability & Formatting (20%)</span>
+              <span id="score-parseability" style="color:var(--white);">0%</span>
+            </div>
+            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+              <div id="bar-parseability" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+              <span>Job Title Alignment (10%)</span>
+              <span id="score-title" style="color:var(--white);">0%</span>
+            </div>
+            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+              <div id="bar-title" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+              <span>Keyword & Skill Coverage (30%)</span>
+              <span id="score-keyword" style="color:var(--white);">0%</span>
+            </div>
+            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+              <div id="bar-keyword" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+              <span>Placement & Density (10%)</span>
+              <span id="score-density" style="color:var(--white);">0%</span>
+            </div>
+            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+              <div id="bar-density" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+              <span>Achievement Quality (15%)</span>
+              <span id="score-achievement" style="color:var(--white);">0%</span>
+            </div>
+            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+              <div id="bar-achievement" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+              <span>Completeness & Hygiene (15%)</span>
+              <span id="score-completeness" style="color:var(--white);">0%</span>
+            </div>
+            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+              <div id="bar-completeness" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <div class="scanned-keywords">
         <div class="kw-box">
-          <div class="kw-title" style="color:var(--success);">MATCHED IN JD & PROFILE</div>
+          <div class="kw-title" style="color:var(--success);">MATCHED KEYWORDS</div>
           <div id="matched-tags"></div>
         </div>
         <div class="kw-box">
@@ -133,12 +231,113 @@ body::after {
 </div>
 
 <script>
+// Configure pdf.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
 requireAuth();
 renderNav(document.getElementById('main-nav'), 'ats-checker.html');
 
 const consoleBox = document.getElementById('console');
 const runBtn = document.getElementById('run-check-btn');
 const resultsPanel = document.getElementById('results-panel');
+
+// Tab control elements
+const tabs = {
+  profile: document.getElementById('tab-profile'),
+  pdf: document.getElementById('tab-pdf'),
+  docx: document.getElementById('tab-docx')
+};
+const panes = {
+  profile: document.getElementById('pane-profile'),
+  pdf: document.getElementById('pane-pdf'),
+  docx: document.getElementById('pane-docx')
+};
+
+let currentTab = 'profile';
+
+function switchTab(target) {
+  currentTab = target;
+  Object.keys(tabs).forEach(k => {
+    if (k === target) {
+      tabs[k].classList.add('active');
+      panes[k].style.display = 'block';
+    } else {
+      tabs[k].classList.remove('active');
+      panes[k].style.display = 'none';
+    }
+  });
+  addLog(`[INTAKE] Switched resume source to ${target.toUpperCase()}`, 'info');
+}
+
+tabs.profile.addEventListener('click', () => switchTab('profile'));
+tabs.pdf.addEventListener('click', () => switchTab('pdf'));
+tabs.docx.addEventListener('click', () => switchTab('docx'));
+
+// Drag and drop for PDF
+const pdfDropzone = document.getElementById('pdf-dropzone');
+const pdfInput = document.getElementById('pdf-file-input');
+const pdfInfo = document.getElementById('pdf-file-info');
+let uploadedPdfData = null;
+let uploadedPdfName = "";
+
+pdfDropzone.addEventListener('click', () => pdfInput.click());
+pdfInput.addEventListener('change', (e) => handlePdfFile(e.target.files[0]));
+pdfDropzone.addEventListener('dragover', (e) => { e.preventDefault(); pdfDropzone.style.borderColor = 'var(--primary)'; });
+pdfDropzone.addEventListener('dragleave', () => { pdfDropzone.style.borderColor = 'var(--glass-border)'; });
+pdfDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  pdfDropzone.style.borderColor = 'var(--glass-border)';
+  if (e.dataTransfer.files.length > 0) handlePdfFile(e.dataTransfer.files[0]);
+});
+
+function handlePdfFile(file) {
+  if (!file || file.type !== 'application/pdf') {
+    showToast('Please select a valid PDF file.', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    uploadedPdfData = e.target.result;
+    uploadedPdfName = file.name;
+    pdfInfo.textContent = `✓ SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
+    pdfInfo.style.display = 'block';
+    addLog(`[UPLOAD] Loaded PDF: ${file.name}`, 'success');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Drag and drop for DOCX
+const docxDropzone = document.getElementById('docx-dropzone');
+const docxInput = document.getElementById('docx-file-input');
+const docxInfo = document.getElementById('docx-file-info');
+let uploadedDocxData = null;
+let uploadedDocxName = "";
+
+docxDropzone.addEventListener('click', () => docxInput.click());
+docxInput.addEventListener('change', (e) => handleDocxFile(e.target.files[0]));
+docxDropzone.addEventListener('dragover', (e) => { e.preventDefault(); docxDropzone.style.borderColor = 'var(--primary)'; });
+docxDropzone.addEventListener('dragleave', () => { docxDropzone.style.borderColor = 'var(--glass-border)'; });
+docxDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  docxDropzone.style.borderColor = 'var(--glass-border)';
+  if (e.dataTransfer.files.length > 0) handleDocxFile(e.dataTransfer.files[0]);
+});
+
+function handleDocxFile(file) {
+  if (!file || (!file.name.endsWith('.docx') && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+    showToast('Please select a valid DOCX file.', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    uploadedDocxData = e.target.result;
+    uploadedDocxName = file.name;
+    docxInfo.textContent = `✓ SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
+    docxInfo.style.display = 'block';
+    addLog(`[UPLOAD] Loaded DOCX: ${file.name}`, 'success');
+  };
+  reader.readAsArrayBuffer(file);
+}
 
 function addLog(text, cls = '') {
   const line = document.createElement('div');
@@ -171,12 +370,72 @@ let activeProfileData = {};
   if (profileSkills.length === 0) {
     skillsEl.innerHTML = '<span style="color:var(--muted);">None listed.</span>';
     warnEl.style.display = 'flex';
-    addLog('[WARN] Profile has no skills. Add them in Profile to use ATS matching.', 'warn');
+    addLog('[WARN] Cloud profile has no skills. Add them in settings to run profile matching.', 'warn');
   } else {
     skillsEl.textContent = skillsRaw;
-    addLog('[SYS_LOAD] Profile loaded — ' + profileSkills.length + ' skill(s) available for matching.', 'info');
+    addLog('[SYS_LOAD] Cloud profile loaded — ' + profileSkills.length + ' skill(s) ready.', 'info');
   }
 })();
+
+// Core extractors
+async function parsePdfTextAndLayout(arrayBuffer) {
+  const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let textItemsCount = 0;
+  let leftCount = 0;
+  let rightCount = 0;
+  let imageCount = 0;
+  let textStr = "";
+
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const textContent = await page.getTextContent();
+    const viewport = page.getViewport({ scale: 1.0 });
+    const pageWidth = viewport.width;
+
+    textContent.items.forEach(item => {
+      const x = item.transform[4];
+      const text = item.str.trim();
+      if (text) {
+        textItemsCount++;
+        textStr += item.str + " ";
+        
+        const ratio = x / pageWidth;
+        if (ratio < 0.35) {
+          leftCount++;
+        } else if (ratio > 0.65) {
+          rightCount++;
+        }
+      }
+    });
+
+    const opList = await page.getOperatorList();
+    for (let j = 0; j < opList.fnArray.length; j++) {
+      const op = opList.fnArray[j];
+      if (op === pdfjsLib.OPS.paintImageXObject || 
+          op === pdfjsLib.OPS.paintInlineImageXObject || 
+          op === pdfjsLib.OPS.paintImageMaskXObject) {
+        imageCount++;
+      }
+    }
+  }
+
+  // Scanned image PDF detection
+  const isScanned = textItemsCount < 15 || textStr.trim().length < 60;
+  // Multi column detection
+  const hasColumns = leftCount > 6 && rightCount > 6;
+
+  return {
+    text: textStr,
+    isScanned,
+    hasColumns,
+    imageCount
+  };
+}
+
+async function parseDocxText(arrayBuffer) {
+  const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+  return result.value || "";
+}
 
 runBtn.addEventListener('click', async () => {
   const jdText = document.getElementById('jd-input').value.trim();
@@ -187,60 +446,71 @@ runBtn.addEventListener('click', async () => {
     return;
   }
 
+  // Validate intakes
+  if (currentTab === 'pdf' && !uploadedPdfData) {
+    addLog('[WARN] Please choose or drop a PDF file first.', 'warn');
+    return;
+  }
+  if (currentTab === 'docx' && !uploadedDocxData) {
+    addLog('[WARN] Please choose or drop a DOCX file first.', 'warn');
+    return;
+  }
+
   runBtn.disabled = true;
   resultsPanel.style.display = 'none';
   consoleBox.innerHTML = '';
   
-  // Sequential loading logs
-  const logs = [
-    { text: '[STATUS] Checking file layout and text encoding...', delay: 0, class: 'info' },
-    { text: '[STRUCTURE] Analyzing profile section structures and completeness...', delay: 500, class: 'info' },
-    { text: '[PARAMETERS] Fetching preset target role parameters from vault...', delay: 1000, class: 'info' },
-    { text: '[KEYWORDS] Scanning keyword matches & computing vocabulary overlaps...', delay: 1500, class: 'info' },
-    { text: '[RECOMMENDATIONS] Finding gaps and compiling final score recommendations...', delay: 2000, class: 'info' }
-  ];
-
-  logs.forEach(log => {
-    setTimeout(() => {
-      addLog(log.text, log.class);
-    }, log.delay);
-  });
+  addLog('Reading your resume...', 'info');
 
   setTimeout(async () => {
     try {
-      const token = localStorage.getItem('jxa_token') || "";
-      const passcode = localStorage.getItem('jxa_passcode') || "";
-      const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else if (passcodeHash) {
-        headers['Authorization'] = `Bearer ${passcodeHash}`;
+      let extractedText = "";
+      let fileType = 'profile';
+      let layoutData = {};
+
+      if (currentTab === 'profile') {
+        extractedText = null;
+        fileType = 'profile';
+        addLog('Checking file structure... [Known single-column profile structure. PASS]', 'success');
+      } else if (currentTab === 'pdf') {
+        fileType = 'pdf';
+        addLog('Checking file structure...', 'info');
+        const parsed = await parsePdfTextAndLayout(uploadedPdfData);
+        extractedText = parsed.text;
+        layoutData = parsed;
+        
+        if (parsed.isScanned) {
+          addLog('[STRUCTURE] CRITICAL WARNING: No select-selectable text extracted. Document is likely a scanned photo or image.', 'warn');
+        } else {
+          addLog(`[STRUCTURE] PDF details extracted: ${parsed.imageCount} image(s), multi-column layout signal: ${parsed.hasColumns ? 'DETECTED' : 'NONE'}.`, 'info');
+        }
+      } else if (currentTab === 'docx') {
+        fileType = 'docx';
+        addLog('Checking file structure...', 'info');
+        extractedText = await parseDocxText(uploadedDocxData);
+        addLog('[STRUCTURE] DOCX raw text extracted. Layout signals bypassed (PDF-only).', 'info');
       }
 
-      const response = await fetch(`${SYNC_API}/ats/analyze`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          role: role,
-          jdText: jdText,
-          profile: activeProfileData
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('ATS analyze call failed.');
-      }
-
-      const result = await response.json();
+      addLog(`Comparing against target role preset...`, 'info');
       
-      const score = result.score || 0;
+      // Calculate score using shared-shell logic
+      const result = scoreResumeData(activeProfileData, role, extractedText, fileType, layoutData);
+      
+      const score = result.score;
       const scoreEl = document.getElementById('score-number');
       scoreEl.textContent = score + '%';
-      scoreEl.style.color = score >= 80 ? 'var(--success)' : score >= 50 ? 'var(--alert)' : 'red';
+      scoreEl.style.color = score >= 85 ? 'var(--success)' : score >= 50 ? 'var(--alert)' : 'red';
 
       document.getElementById('score-detail').textContent = 
-        `${result.matchedKeywords.length} matching keywords detected. Robust vocabulary check active.`;
+        `${result.matchedKeywords.length} keywords matched. Subcategory scoring complete.`;
+
+      // Update Breakdown bars
+      const breakdown = result.breakdown;
+      const categories = ['parseability', 'title', 'keyword', 'density', 'achievement', 'completeness'];
+      categories.forEach(cat => {
+        document.getElementById(`score-${cat}`).textContent = breakdown[cat] + '%';
+        document.getElementById(`bar-${cat}`).style.width = breakdown[cat] + '%';
+      });
 
       // Render tags
       const matchedEl = document.getElementById('matched-tags');
@@ -267,25 +537,29 @@ runBtn.addEventListener('click', async () => {
       // Render Suggestions
       const suggestionsEl = document.getElementById('suggestions-list');
       suggestionsEl.innerHTML = '';
+      
       result.suggestions.forEach(s => {
-        // Render simple markdown bolding
         const formatted = escapeHtml(s).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         suggestionsEl.innerHTML += `<li style="margin-bottom: 8px;">${formatted}</li>`;
       });
 
-      addLog(`[DONE] Scanned complete. ATS Compatibility Score: ${score}%. Recommendations loaded.`, 'success');
+      if (result.suggestions.length === 0) {
+        suggestionsEl.innerHTML = '<li style="color:var(--success);">✓ Perfect compatibility! No optimization changes required.</li>';
+      }
+
+      addLog(`[DONE] Compatibility score: ${score}%. Recommendations successfully generated.`, 'success');
       resultsPanel.style.display = 'flex';
 
     } catch (err) {
-      addLog(`[ERROR] Scoring engine run crashed: ${err.message}`, 'warn');
+      addLog(`[ERROR] Scoring engine collapsed: ${err.message}`, 'warn');
       showToast('ATS Scoring failed.', 'error');
+      console.error(err);
     } finally {
       runBtn.disabled = false;
     }
-  }, 2500);
+  }, 1000);
 });
 
-// HTML Escaper Helper
 function escapeHtml(str) {
   if (!str) return "";
   return String(str)

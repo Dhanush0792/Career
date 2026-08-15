@@ -472,17 +472,13 @@ body::after {
     <div class="control-group">
       <label class="control-label" for="select-role">Target Role Override</label>
       <select class="select-input" id="select-role">
-        <option value="profile">Default (Use Profile Summary & Skills)</option>
-        <option value="software">Software Engineering</option>
-        <option value="qa">Quality Assurance Analyst</option>
+        <option value="default">Default / General</option>
+        <option value="sde">Software Development Engineer (SDE)</option>
+        <option value="backend">Backend Developer</option>
         <option value="java">Java Developer</option>
-        <option value="python">Python & Data Specialist</option>
-        <option value="marketing">Marketing & Content</option>
-        <option value="video">Video & Creative Production</option>
-        <option value="customer">Customer Support</option>
-        <option value="sales">Sales & Accounts</option>
-        <option value="bd">Business Development</option>
-        <option value="mba">MBA & Operations Management</option>
+        <option value="marketing">Marketing Specialist</option>
+        <option value="sales">Sales Representative</option>
+        <option value="customer_care">Customer Care Operator</option>
       </select>
     </div>
 
@@ -548,6 +544,20 @@ body::after {
     <div class="control-group">
       <label class="control-label" for="edit-languages">Languages & Interests</label>
       <textarea class="select-input" id="edit-languages" style="height: 60px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
+    </div>
+    
+    <div class="pane-title">ATS Real-time Feedback</div>
+    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-sizing: border-box;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+        <span style="font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase;">ATS Compatibility</span>
+        <span id="ats-score-badge" style="font-family: var(--display); font-size: 22px; font-weight: 900; color: var(--green);">0%</span>
+      </div>
+      <div style="height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
+        <div id="ats-score-bar" style="width: 0%; height: 100%; background: var(--green); transition: width 0.3s;"></div>
+      </div>
+      <div id="ats-suggestions-container" style="font-family: var(--body); font-size: 11px; color: var(--muted); line-height: 1.45; display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; padding-right: 4px;">
+        Loading ATS metrics...
+      </div>
     </div>
     
     <div class="pane-title">LaTeX Document Actions</div>
@@ -1369,6 +1379,8 @@ async function saveResumeData() {
     saveStatus.textContent = "Sync failed";
     saveStatus.style.color = "red";
   }
+  
+  updateATSRealtimeFeedback();
 }
 
 // Debounced typing auto-save
@@ -1386,6 +1398,7 @@ Object.keys(editors).forEach(key => {
   editors[key].addEventListener('input', () => {
     renderResumeWorkspace();
     triggerAutoSave();
+    updateATSRealtimeFeedback();
   });
 });
 
@@ -1393,18 +1406,21 @@ Object.keys(editors).forEach(key => {
 document.getElementById("select-template").addEventListener("change", renderResumeWorkspace);
 document.getElementById("select-role").addEventListener("change", (e) => {
   const roleKey = e.target.value;
-  if (roleKey !== "profile" && ROLE_LIBRARY[roleKey]) {
+  let libKey = roleKey;
+  if (roleKey === "sde") libKey = "software";
+  if (roleKey === "backend") libKey = "software";
+  if (roleKey === "customer_care") libKey = "customer";
+  if (roleKey === "default") libKey = "software"; // fallback
+
+  if (ROLE_LIBRARY[libKey]) {
     const levelKey = candidateLevel || "general";
-    const selected = ROLE_LIBRARY[roleKey][levelKey] || ROLE_LIBRARY[roleKey]["general"];
+    const selected = ROLE_LIBRARY[libKey][levelKey] || ROLE_LIBRARY[libKey]["general"];
     editors.summary.value = selected.summary;
     editors.skills.value = selected.skills;
-  } else {
-    const parsed = parseResumeDraft(activeProfile.resumeDraft || "");
-    editors.summary.value = parsed.summary || activeProfile.summary || "";
-    editors.skills.value = parsed.skills || activeProfile.skills || "";
   }
   renderResumeWorkspace();
   triggerAutoSave();
+  updateATSRealtimeFeedback();
 });
 
 // Copy LaTeX
@@ -1528,6 +1544,7 @@ document.getElementById("btn-save-profile").addEventListener("click", async () =
     editors.languages.value = parsed.languages || "";
     
     renderResumeWorkspace();
+    updateATSRealtimeFeedback();
     
     // Fade out loader
     loadingOverlay.style.opacity = "0";
@@ -1536,6 +1553,54 @@ document.getElementById("btn-save-profile").addEventListener("click", async () =
     }, 500);
   }, 2100);
 })();
+
+function updateATSRealtimeFeedback() {
+  activeProfile.fullName = editors.name.value;
+  activeProfile.email = editors.email.value;
+  activeProfile.phone = editors.phone.value;
+  activeProfile.summary = editors.summary.value;
+  activeProfile.education = editors.education.value;
+  activeProfile.experience = editors.experience.value;
+  activeProfile.skills = editors.skills.value;
+  activeProfile.projects = editors.projects.value;
+  activeProfile.certifications = editors.certifications.value;
+  activeProfile.additional = editors.additional.value;
+  activeProfile.languages = editors.languages.value;
+
+  const roleSelect = document.getElementById('select-role');
+  const roleValue = roleSelect ? roleSelect.value : 'default';
+
+  // Generated resume doesn't need layout parsing - score directly from profile
+  const result = scoreResumeData(activeProfile, roleValue, null, 'profile');
+
+  const badge = document.getElementById('ats-score-badge');
+  const bar = document.getElementById('ats-score-bar');
+  const suggestionsBox = document.getElementById('ats-suggestions-container');
+
+  if (badge && bar && suggestionsBox) {
+    badge.textContent = result.score + '%';
+
+    let color = 'var(--green)';
+    if (result.score < 50) {
+      color = '#f55a23';
+    } else if (result.score < 85) {
+      color = 'var(--alert)';
+    }
+    badge.style.color = color;
+    bar.style.backgroundColor = color;
+    bar.style.width = result.score + '%';
+
+    suggestionsBox.innerHTML = '';
+    if (result.suggestions.length === 0) {
+      suggestionsBox.innerHTML = '<div style="color:var(--green);">✓ ATS fully optimized. Great job!</div>';
+    } else {
+      result.suggestions.forEach(s => {
+        const cleaned = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        suggestionsBox.innerHTML += `<div style="border-left: 2px solid var(--border); padding-left: 6px; margin-bottom: 6px; font-size: 10px;">${cleaned}</div>`;
+      });
+    }
+  }
+}
 </script>
 </body>
 </html>

@@ -974,3 +974,371 @@ function showPasscodeModal() {
     if (e.key === 'Enter') attemptUnlock();
   });
 }
+
+// ─── ATS Scoring Engine ────────────────────────────────────────────────────
+
+const ATS_ROLE_PRESETS = {
+  sde: {
+    name: "Software Engineer / SDE (General)",
+    titles: ["software engineer", "software developer", "sde", "software development engineer"],
+    mustHave: ["data structures", "algorithms", "system design", "git", "rest api", "object-oriented programming", "debugging", "unit testing", "agile", "problem solving", "ci/cd", "cloud"],
+    niceToHave: ["docker", "kubernetes", "microservices", "aws", "scalability", "design patterns"],
+    verbs: ["built", "designed", "developed", "implemented", "optimized", "automated", "architected", "debugged", "deployed", "refactored"],
+    summaryDesc: "Leads with years of experience and core technical strengths (languages, systems), one measurable engineering outcome (performance, scale, or delivery speed), not soft skills."
+  },
+  backend: {
+    name: "Backend Developer",
+    titles: ["backend developer", "backend engineer", "server-side developer"],
+    mustHave: ["rest api", "database design", "sql", "node.js", "python", "java", "microservices", "authentication", "api integration", "server-side logic", "caching", "docker"],
+    niceToHave: ["graphql", "message queues", "redis", "kafka", "load balancing", "kubernetes"],
+    verbs: ["built", "architected", "optimized", "integrated", "scaled", "deployed", "engineered", "automated"],
+    summaryDesc: "Emphasizes systems the candidate has built end-to-end and a concrete scale/performance number (requests/sec, latency reduction, uptime)."
+  },
+  java: {
+    name: "Java Developer",
+    titles: ["java developer", "java engineer", "backend java developer"],
+    mustHave: ["java", "spring boot", "spring framework", "hibernate", "rest api", "multithreading", "collections", "jvm", "maven", "microservices", "sql", "junit"],
+    niceToHave: ["kafka", "docker", "kubernetes", "aws", "design patterns", "oop"],
+    verbs: ["developed", "implemented", "optimized", "engineered", "built", "migrated", "debugged"],
+    summaryDesc: "Names the Java ecosystem stack explicitly (Spring, Hibernate, Maven) rather than just \"Java\" alone, since ecosystem terms are what most Java job descriptions actually filter on."
+  },
+  marketing: {
+    name: "Marketing Specialist",
+    titles: ["marketing executive", "marketing associate", "digital marketing specialist", "marketing specialist"],
+    mustHave: ["seo", "content marketing", "social media marketing", "campaign management", "google analytics", "brand strategy", "email marketing", "market research", "a/b testing", "roi", "lead generation"],
+    niceToHave: ["google ads", "meta ads manager", "crm", "marketing automation", "copywriting"],
+    verbs: ["launched", "grew", "increased", "managed", "executed", "optimized", "drove", "generated"],
+    summaryDesc: "Leads with a quantified growth or campaign-performance result (traffic %, conversion rate, audience growth) rather than a list of responsibilities."
+  },
+  sales: {
+    name: "Sales Representative",
+    titles: ["sales executive", "sales associate", "business development executive", "account executive"],
+    mustHave: ["lead generation", "client relationship management", "negotiation", "sales pipeline", "crm", "cold calling", "quota attainment", "prospecting", "closing deals", "revenue growth"],
+    niceToHave: ["salesforce", "b2b sales", "account management", "upselling"],
+    verbs: ["closed", "generated", "exceeded", "negotiated", "managed", "grew", "secured", "achieved"],
+    summaryDesc: "Leads with quota attainment or revenue figures explicitly (e.g. \"achieved 120% of quota\") -- this is the single highest-signal line for sales resumes across every source reviewed."
+  },
+  customer_care: {
+    name: "Customer Care Operator",
+    titles: ["customer support executive", "customer service representative", "customer care executive", "client support associate"],
+    mustHave: ["customer support", "query resolution", "sla compliance", "crm", "escalation handling", "communication skills", "ticketing system", "customer satisfaction", "chat support", "email support"],
+    niceToHave: ["zendesk", "freshdesk", "salesforce service cloud", "multichannel support"],
+    verbs: ["resolved", "handled", "assisted", "managed", "responded", "improved", "maintained"],
+    summaryDesc: "Leads with a resolution-rate, response-time, or CSAT figure if available; otherwise volume handled (e.g. tickets/day) is the strongest available signal."
+  },
+  default: {
+    name: "Default / General",
+    titles: ["professional", "associate", "specialist", "coordinator"],
+    mustHave: ["communication", "teamwork", "problem solving", "time management", "documentation", "attention to detail"],
+    niceToHave: ["project management", "leadership", "adaptability", "microsoft office"],
+    verbs: ["managed", "coordinated", "assisted", "supported", "organized", "completed"],
+    summaryDesc: "Used when no specific role is selected, or for early-career profiles without a clear target yet -- scoring leans more heavily on formatting, achievement quantification, and section completeness."
+  }
+};
+
+const ATS_KEYWORD_SYNONYMS = {
+  "js": ["javascript"],
+  "javascript": ["js"],
+  "ts": ["typescript"],
+  "typescript": ["ts"],
+  "ml": ["machine learning"],
+  "machine learning": ["ml"],
+  "ai": ["artificial intelligence"],
+  "artificial intelligence": ["ai"],
+  "ci/cd": ["continuous integration", "cicd"],
+  "continuous integration": ["ci/cd", "cicd"],
+  "aws": ["amazon web services"],
+  "amazon web services": ["aws"],
+  "seo": ["search engine optimization"],
+  "search engine optimization": ["seo"]
+};
+
+function extractKeywordsFromJD(jdText) {
+  const stopWords = new Set([
+    'the','and','or','to','a','an','in','for','of','with','is','are','be',
+    'that','this','will','have','on','at','by','from','as','we','you','our',
+    'their','it','not','your','can','all','more','about','if','been','use',
+    'any','one','also','its','but','has','was','were','they','who','what',
+    'when','how','into','than','then','so','up','out','them','these','those',
+    'should','would','could','may','must','shall','do','does','did','get',
+    'per','role','work','team','job','experience','position','company'
+  ]);
+  
+  const tokens = jdText.toLowerCase()
+    .replace(/[^a-z0-9\s.+#-]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 2 && !stopWords.has(w));
+    
+  const freqs = {};
+  tokens.forEach(t => {
+    freqs[t] = (freqs[t] || 0) + 1;
+  });
+  
+  const sortedTerms = Object.keys(freqs).sort((a, b) => freqs[b] - freqs[a]);
+  
+  return {
+    mustHave: sortedTerms.slice(0, 15),
+    niceToHave: sortedTerms.slice(15, 23)
+  };
+}
+
+/**
+ * Centrally calculates the 0-100 ATS compatibility score.
+ */
+function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'profile', layoutData = {}) {
+  const preset = ATS_ROLE_PRESETS[targetRole] || ATS_ROLE_PRESETS.default;
+  const isProfile = fileType === 'profile';
+  
+  // 1. Intake Resume Text
+  let resumeText = "";
+  if (textOverride !== null) {
+    resumeText = textOverride;
+  } else {
+    resumeText = [
+      profile.fullName || "",
+      profile.email || "",
+      profile.phone || "",
+      profile.summary || "",
+      profile.skills || "",
+      profile.experience || "",
+      profile.education || "",
+      profile.projects || "",
+      profile.certifications || "",
+      profile.additional || "",
+      profile.languages || ""
+    ].join(" ");
+  }
+
+  const cleanText = resumeText.toLowerCase().replace(/[^a-z0-9\s.+#-]/g, ' ');
+  const suggestions = [];
+  const flags = {
+    scanned_image: false,
+    multi_column: false,
+    embedded_images: false
+  };
+
+  // --- Category A: Parseability & Formatting (20%) ---
+  let parseabilityScore = 100;
+  if (!isProfile) {
+    if (fileType === 'pdf') {
+      if (layoutData.isScanned) {
+        parseabilityScore = 0;
+        flags.scanned_image = true;
+        suggestions.push("**Parseability critical failure**: This file appears to be a scanned image or photo of a resume, meaning applicant tracking systems will extract zero text. Re-export your resume as a text-selectable PDF.");
+      } else {
+        if (layoutData.hasColumns) {
+          parseabilityScore -= 20;
+          flags.multi_column = true;
+          suggestions.push("**Multi-column layout flagged**: This resume uses a multi-column structure, which can cause sections like Work Experience and Education to be read out of order. Switch to a single-column format.");
+        }
+        if (layoutData.imageCount && layoutData.imageCount > 0) {
+          parseabilityScore -= 20;
+          flags.embedded_images = true;
+          suggestions.push(`**Embedded images detected**: Found ${layoutData.imageCount} image or graphic components. Non-text features (photos, icons, or graphics) frequently choke ATS parser engines. Remove non-text elements.`);
+        }
+      }
+    }
+  }
+
+  // --- Category B: Job Title Alignment (10%) ---
+  let titleScore = 0;
+  const lowercaseText = resumeText.toLowerCase();
+  
+  let exactTitleMatch = false;
+  let partialTitleMatch = false;
+
+  preset.titles.forEach(title => {
+    if (lowercaseText.includes(title)) {
+      exactTitleMatch = true;
+    } else {
+      // Check if any significant word of the title matches
+      const words = title.split(' ');
+      words.forEach(w => {
+        if (w.length > 3 && lowercaseText.includes(w)) {
+          partialTitleMatch = true;
+        }
+      });
+    }
+  });
+
+  if (exactTitleMatch) {
+    titleScore = 100;
+  } else if (partialTitleMatch) {
+    titleScore = 50;
+    suggestions.push(`**Job Title Alignment**: Your resume partially matches the target title. Consider adding terms like "${preset.titles[0]}" to your summary or objective header.`);
+  } else {
+    titleScore = 0;
+    suggestions.push(`**Job Title mismatch**: Your most recent job titles or summary do not explicitly reference target roles like "${preset.titles.join('", "')}". Incorporate these role titles to pass initial filter screens.`);
+  }
+
+  // --- Category C: Keyword & Skill Coverage (30%) ---
+  const matchedKeywords = [];
+  const missingKeywords = [];
+  let keywordEarned = 0;
+  let keywordTotal = 0;
+
+  // Synonyms variant search helper
+  function checkKeyword(kw) {
+    const kwLow = kw.toLowerCase();
+    // exact word-boundary check
+    const exactRegex = new RegExp('\\b' + kwLow.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'i');
+    if (exactRegex.test(cleanText)) {
+      return 1.0; // 100% credit
+    }
+    
+    // variant check
+    const variants = ATS_KEYWORD_SYNONYMS[kwLow] || [];
+    for (const variant of variants) {
+      const variantRegex = new RegExp('\\b' + variant.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'i');
+      if (variantRegex.test(cleanText)) {
+        return 0.85; // 85% credit
+      }
+    }
+
+    // stem/partial check
+    if (cleanText.includes(kwLow) || (kwLow.length > 4 && cleanText.includes(kwLow.substring(0, kwLow.length - 2)))) {
+      return 0.5; // 50% credit
+    }
+
+    return 0.0;
+  }
+
+  preset.mustHave.forEach(kw => {
+    const credit = checkKeyword(kw);
+    keywordTotal += 1.0;
+    keywordEarned += credit;
+    if (credit >= 0.85) {
+      matchedKeywords.push(kw);
+    } else {
+      missingKeywords.push(kw);
+    }
+  });
+
+  preset.niceToHave.forEach(kw => {
+    const credit = checkKeyword(kw);
+    // niceToHaves are bonus: they contribute to earned but not to the baseline total
+    keywordEarned += credit * 0.5;
+  });
+
+  const keywordCoverageScore = Math.min(100, Math.round((keywordEarned / keywordTotal) * 100));
+
+  if (keywordCoverageScore < 80 && missingKeywords.length > 0) {
+    suggestions.push(`**Keyword Coverage low**: Missing key technical or role terms. Integrate standard keywords like: ${missingKeywords.slice(0, 5).join(", ")}.`);
+  }
+
+  // --- Category D: Keyword Placement & Density (10%) ---
+  let densityScore = 100;
+  
+  matchedKeywords.forEach(kw => {
+    const kwLow = kw.toLowerCase();
+    // count occurrences
+    const matches = cleanText.match(new RegExp(kwLow.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'));
+    const count = matches ? matches.length : 0;
+    
+    if (count >= 5) {
+      densityScore -= 10;
+      suggestions.push(`**Keyword Stuffing Warning**: "${kw}" appears ${count} times, which may trigger spam filters. Aim for 2-3 natural repetitions instead.`);
+    } else if (count === 1) {
+      // isolated check - is it only in one place?
+      densityScore -= 3;
+    }
+  });
+
+  densityScore = Math.max(0, densityScore);
+
+  // --- Category E: Achievement Quality (15%) ---
+  let achievementScore = 0;
+  let totalBullets = 0;
+  let quantifiedBullets = 0;
+
+  // Split text by standard bullet point characters or line breaks
+  const bulletLines = resumeText.split(/[\n•\-\*]/).map(line => line.trim()).filter(line => line.length > 15);
+  
+  const actionVerbRegex = new RegExp('\\b(' + preset.verbs.join('|') + ')\\w*\\b', 'i');
+  // Look for percentages, dollar figures, number ranges, or scale words like thousand, million, billion
+  const quantityRegex = /\b(\d+|%|\$|thousand|million|billion|increase|decrease|growth|scale|revenue|users)\b/i;
+
+  bulletLines.forEach(line => {
+    totalBullets++;
+    if (actionVerbRegex.test(line) && quantityRegex.test(line)) {
+      quantifiedBullets++;
+    }
+  });
+
+  if (totalBullets > 0) {
+    achievementScore = Math.round((quantifiedBullets / totalBullets) * 100);
+  }
+
+  if (achievementScore < 60) {
+    const unquantifiedCount = totalBullets - quantifiedBullets;
+    suggestions.push(`**Unquantified accomplishments**: ${unquantifiedCount} bullet points lack measurable metrics. Add statistics (percentage, dollar, scale) to demonstrate impact, e.g. "Optimized code to reduce execution latency by 20%".`);
+  }
+
+  // --- Category F: Section Completeness & Hygiene (15%) ---
+  let completenessScore = 100;
+  
+  // Section checks
+  const experienceRegex = /\b(experience|work|employment|history)\b/i;
+  const educationRegex = /\b(education|academic|college|university)\b/i;
+  const skillsRegex = /\b(skills|technologies|expertise)\b/i;
+  const summaryRegex = /\b(summary|profile|objective)\b/i;
+
+  if (!experienceRegex.test(lowercaseText)) {
+    completenessScore -= 25;
+    suggestions.push(`**Completeness**: No Work Experience section detected. Most ${preset.name} resumes require this. Add it if applicable.`);
+  }
+  if (!educationRegex.test(lowercaseText)) {
+    completenessScore -= 25;
+    suggestions.push(`**Completeness**: No Education section detected. Add your credentials.`);
+  }
+  if (!skillsRegex.test(lowercaseText)) {
+    completenessScore -= 25;
+    suggestions.push(`**Completeness**: No Skills section detected. Add key technical elements.`);
+  }
+  if (!summaryRegex.test(lowercaseText)) {
+    completenessScore -= 15;
+    suggestions.push(`**Completeness**: Add a Professional Summary or Profile header to frame your experience.`);
+  }
+
+  // Word count check
+  const wordCount = cleanText.split(/\s+/).length;
+  if (wordCount < 250 || wordCount > 700) {
+    completenessScore -= 15;
+    suggestions.push(`**Hygiene**: Your resume word count is ${wordCount}. Optimize length to 250-700 words to ensure it fits single-screen layouts perfectly.`);
+  }
+
+  // First-person pronoun checks
+  const pronouns = cleanText.match(/\b(i|me|my|we|our)\b/g);
+  if (pronouns && pronouns.length > 0) {
+    completenessScore -= 15;
+    suggestions.push(`**Hygiene**: Detected first-person pronouns ("${pronouns[0]}"). Write descriptions in third-person implied style (e.g. "Led system launch" instead of "I led system launch").`);
+  }
+
+  completenessScore = Math.max(0, completenessScore);
+
+  // Final aggregate computation
+  const finalScore = Math.round(
+    (parseabilityScore * 0.20) +
+    (titleScore * 0.10) +
+    (keywordCoverageScore * 0.30) +
+    (densityScore * 0.10) +
+    (achievementScore * 0.15) +
+    (completenessScore * 0.15)
+  );
+
+  return {
+    score: finalScore,
+    breakdown: {
+      parseability: parseabilityScore,
+      title: titleScore,
+      keyword: keywordCoverageScore,
+      density: densityScore,
+      achievement: achievementScore,
+      completeness: completenessScore
+    },
+    matchedKeywords,
+    missingKeywords,
+    suggestions,
+    flags
+  };
+}
