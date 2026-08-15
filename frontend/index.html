@@ -1156,63 +1156,54 @@ footer {
 
       <!-- Signature element: Interactive 3D Globe Showcase -->
       <style>
-      .globe-showcase-container {
-        width: 380px;
-        height: 380px;
+      .globe-wrap {
+        width: 440px;
+        height: 440px;
         position: relative;
-        background: rgba(7, 10, 24, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 24px;
-        backdrop-filter: blur(20px);
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
-        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: grab;
       }
-      .globe-showcase-container:active {
+      .globe-wrap:active {
         cursor: grabbing;
       }
-
-      /* Floating Overlay Stats Banner */
-      .globe-banner {
+      .globe-status-badge {
         position: absolute;
-        bottom: 0; left: 0; right: 0;
-        height: 52px;
-        background: rgba(8, 12, 28, 0.9);
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 0 16px;
-        z-index: 20;
-        pointer-events: none;
-      }
-      .globe-banner-title {
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(8, 12, 28, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 6px 14px;
         font-family: var(--mono);
-        font-size: 8px;
-        color: var(--primary);
-        letter-spacing: 0.1em;
-        margin-bottom: 2px;
-      }
-      .globe-banner-stat {
-        font-family: var(--mono);
-        font-size: 11px;
-        color: var(--white);
+        font-size: 10px;
+        color: var(--muted);
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        pointer-events: none;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+      .pulse-green {
+        color: #2FDDC4;
+        animation: blink-pulse 1.5s infinite;
+      }
+      @keyframes blink-pulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
       }
       </style>
 
       <div class="resume-card-wrap">
-        <div class="globe-showcase-container">
-          <canvas id="globe-canvas" width="380" height="380"></canvas>
-          
-          <div class="globe-banner">
-            <span class="globe-banner-title">GLOBAL AUTOFILL ENGINE</span>
-            <span class="globe-banner-stat" id="globe-banner-stat">Initializing vector maps...</span>
+        <div class="globe-wrap">
+          <canvas id="globe-canvas" width="440" height="440" style="max-width: 100%; height: auto;"></canvas>
+          <div class="globe-status-badge">
+            <span class="pulse-green">●</span>
+            <span id="globe-banner-stat">Initializing vector maps...</span>
           </div>
         </div>
       </div>
@@ -2577,8 +2568,8 @@ window.addEventListener('load', () => {
   let animationFrameId = null;
 
   const projection = d3.geoOrthographic()
-    .scale(160)
-    .translate([190, 190])
+    .scale(200)
+    .translate([220, 220])
     .clipAngle(90);
 
   const path = d3.geoPath(projection, context);
@@ -2594,11 +2585,11 @@ window.addEventListener('load', () => {
       const land = topojson.feature(world, world.objects.countries);
 
       function draw() {
-        context.clearRect(0, 0, 380, 380);
+        context.clearRect(0, 0, 440, 440);
 
         // Draw Globe Background Sphere
         context.beginPath();
-        context.arc(190, 190, 160, 0, 2 * Math.PI);
+        context.arc(220, 220, 200, 0, 2 * Math.PI);
         context.fillStyle = 'rgba(10, 15, 36, 0.8)';
         context.fill();
         context.lineWidth = 2;
@@ -2612,19 +2603,23 @@ window.addEventListener('load', () => {
         context.lineWidth = 0.5;
         context.stroke();
 
-        // Draw Country Lands
-        context.beginPath();
-        path(land);
-        context.fillStyle = 'rgba(91, 79, 232, 0.12)';
-        context.fill();
-        context.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        context.lineWidth = 0.8;
-        context.stroke();
+        // Draw Country Lands (Individually to resolve clipping fill issues)
+        if (land && land.features) {
+          land.features.forEach(d => {
+            context.beginPath();
+            path(d);
+            context.fillStyle = 'rgba(91, 79, 232, 0.15)';
+            context.fill();
+            context.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            context.lineWidth = 0.8;
+            context.stroke();
+          });
+        }
 
         // Draw Cities & Connection Arcs
         const visibleCities = [];
         cities.forEach(city => {
-          const center = projection.invert([190, 190]);
+          const center = projection.invert([220, 220]);
           const distance = d3.geoDistance(center, city.coords);
           if (distance < Math.PI / 2) {
             const xy = projection(city.coords);
@@ -2662,7 +2657,7 @@ window.addEventListener('load', () => {
 
       function animate() {
         if (autoRotate) {
-          rotation[0] += 0.2;
+          rotation[0] -= 0.15; // Rotate clockwise (westward)
           projection.rotate(rotation);
           draw();
         }
@@ -2683,8 +2678,8 @@ window.addEventListener('load', () => {
         const dx = e.clientX - dragStart.x;
         const dy = e.clientY - dragStart.y;
 
-        rotation[0] = dragRotation[0] + dx * 0.4;
-        rotation[1] = dragRotation[1] - dy * 0.4;
+        rotation[0] = dragRotation[0] + dx * 0.45;
+        rotation[1] = dragRotation[1] - dy * 0.45;
 
         // Clamp latitude
         if (rotation[1] > 80) rotation[1] = 80;
@@ -2709,7 +2704,7 @@ window.addEventListener('load', () => {
       setInterval(() => {
         const city = cities[msgIndex];
         if (bannerStat) {
-          bannerStat.textContent = `⚡ Global Node: ${city.name} — ${city.msg}`;
+          bannerStat.textContent = `Global Node: ${city.name} — ${city.msg}`;
         }
         msgIndex = (msgIndex + 1) % cities.length;
       }, 3000);
