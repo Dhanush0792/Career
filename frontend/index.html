@@ -1160,12 +1160,14 @@ footer {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-top: -40px; /* Pull the globe showcase upwards */
+        align-self: flex-start; /* Align globe with starting text on the left */
+        margin-top: 16px; /* Symmetrical top spacing */
       }
       .globe-wrap {
         width: 440px;
         height: 440px;
         max-width: 100%;
+        max-height: 440px;
         aspect-ratio: 1 / 1;
         position: relative;
         display: flex;
@@ -1178,13 +1180,15 @@ footer {
       }
       #globe-canvas {
         display: block;
+        width: 440px;
+        height: 440px;
         max-width: 100%;
-        height: auto;
+        max-height: 100%;
         aspect-ratio: 1 / 1;
       }
       .globe-status-badge {
         position: absolute;
-        bottom: -32px; /* Pull the badge down to prevent overlapping */
+        bottom: -45px; /* Pull the badge lower to prevent any overlapping */
         left: 50%;
         transform: translateX(-50%);
         background: rgba(8, 12, 28, 0.85);
@@ -2126,24 +2130,25 @@ window.addEventListener('load', () => {
     .then(world => {
       const land = topojson.feature(world, world.objects.countries);
 
-      // Reconstruct India outline to include J&K, PoK, and Aksai Chin in a single continuous boundary
+      // Reconstruct India outline to include J&K, PoK, and Aksai Chin in a single continuous boundary matching the SOI standard
       const completeIndiaOutline = [
         [68.18, 23.85],
         [68.85, 24.63], [70.18, 24.32], [70.82, 25.42], [70.32, 26.85],
-        [71.55, 27.85], [72.25, 28.52], [73.5, 32.5],
-        [73.5, 33.3], [73.3, 33.8], [73.6, 34.2], [73.5, 34.6],
-        [74.0, 35.1], [74.5, 35.5], [74.8, 35.8], [75.0, 36.1],
-        [75.5, 36.5], [76.3, 36.9], [77.0, 37.1], [77.8, 36.4],
-        [78.4, 35.9], [79.2, 35.5], [79.8, 35.2], [80.3, 34.2],
-        [80.1, 33.3], [79.0, 32.8], [78.6, 32.0], [78.8, 31.0],
+        [71.55, 27.85], [72.25, 28.52],
+        [72.2, 28.5], [72.8, 29.2], [73.3, 29.9], [73.9, 30.6], [74.4, 31.3], [74.6, 32.2], [73.8, 32.7],
+        [73.7, 33.2], [73.6, 33.8], [73.4, 34.1], [73.5, 34.7], [73.9, 35.2], [74.3, 35.5], [74.7, 35.9], [74.9, 36.3],
+        [75.4, 36.7], [76.0, 37.0], [76.8, 37.1], [77.2, 37.0],
+        [77.6, 36.4], [78.3, 35.9], [78.9, 35.5], [79.5, 35.1], [80.0, 34.4], [80.3, 33.8], [80.0, 33.0],
+        [79.2, 32.7], [78.6, 32.0], [78.8, 31.0],
         [79.8, 30.2], [81.0, 30.1],
         [80.2, 28.8], [81.3, 28.0], [83.8, 27.5], [84.8, 27.3], [85.2, 26.6],
-        [88.1, 26.5], [88.5, 27.3], [88.8, 28.0],
-        [91.3, 27.8], [91.6, 26.9],
-        [91.8, 27.3], [92.5, 27.8], [94.0, 28.2], [96.0, 29.3], [97.3, 28.2],
+        [88.1, 26.5], [88.5, 27.3], [88.8, 28.0], [88.9, 27.3], [89.1, 26.8],
+        [88.9, 27.3], [89.5, 27.0], [90.3, 26.8], [91.3, 26.8],
+        [91.3, 26.8], [91.5, 27.8], [92.0, 26.9],
+        [92.5, 27.8], [94.0, 28.2], [96.0, 29.3], [97.3, 28.2],
         [97.0, 27.5], [95.2, 26.8], [95.4, 25.5], [94.5, 24.3], [93.2, 24.0],
         [92.2, 23.3], [92.8, 22.0], [92.2, 21.7],
-        [91.4, 23.0], [91.2, 24.0], [92.0, 25.2], [89.8, 25.2],
+        [91.8, 22.4], [91.4, 23.0], [91.2, 24.0], [92.2, 24.3], [92.0, 25.2], [89.8, 25.2],
         [88.8, 26.3], [88.5, 25.0], [89.0, 23.5], [89.1, 21.8],
         [87.0, 21.5], [85.8, 20.0], [83.2, 18.0], [80.2, 16.0], [80.0, 13.5],
         [79.8, 10.5], [79.2, 9.2], [77.5, 8.1],
