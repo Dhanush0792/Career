@@ -247,10 +247,6 @@
         <a href="auth.html"             class="ch-nav__dd-link ch-nav__dd-link--accent"><span class="ch-nav__dd-icon">→</span>Login</a>
         <a href="auth.html#signup"      class="ch-nav__dd-link"><span class="ch-nav__dd-icon">＋</span>Sign Up</a>
         <a href="forgot-password.html"  class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⟳</span>Forgot Password</a>
-        <div class="ch-nav__dd-divider"></div>
-        <div class="ch-nav__dd-label">Dashboard</div>
-        <a href="dashboard.html"        class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⊞</span>User Dashboard</a>
-        <a href="admin/index.html"      class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⊟</span>Admin Panel</a>
       </div>
     </div>
 
@@ -292,7 +288,6 @@
     <a href="auth.html"            class="ch-nav__drawer-link">→ Login</a>
     <a href="auth.html#signup"     class="ch-nav__drawer-link">＋ Sign Up</a>
     <a href="forgot-password.html" class="ch-nav__drawer-link">⟳ Forgot Password</a>
-    <a href="dashboard.html"       class="ch-nav__drawer-link">⊞ User Dashboard</a>
   </div>
   <a href="auth.html" class="ch-nav__drawer-cta">GET STARTED →</a>
 </div>
