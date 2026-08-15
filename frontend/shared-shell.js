@@ -26,6 +26,9 @@ const SYNC_API = 'http://localhost:8787/api';
  */
 function requireAuth() {
   if (!localStorage.getItem('jxa_token')) {
+    if (document.documentElement) {
+      document.documentElement.style.display = 'none';
+    }
     const path = window.location.pathname;
     const page = path.substring(path.lastIndexOf('/') + 1);
     if (page.includes('resume-builder')) {
@@ -43,6 +46,9 @@ function requireAuth() {
     // If logged in as admin, they should always be routed to the admin panel
     if (localStorage.getItem('jxa_role') === 'admin') {
       if (!window.location.pathname.includes('/admin/')) {
+        if (document.documentElement) {
+          document.documentElement.style.display = 'none';
+        }
         window.location.href = 'admin/index.html';
         return;
       }
@@ -51,6 +57,9 @@ function requireAuth() {
     pullApplicationsFromServer().catch(() => {});
   }
 }
+
+// Auto-run authorization check immediately upon script parsing
+requireAuth();
 
 function logout() {
   const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
@@ -422,6 +431,10 @@ const PROFILE_FIELDS = [
 ];
 
 function calcCompleteness(profile = {}) {
+  // If the profile has no name, it is uninitialized
+  if (!profile.fullName || String(profile.fullName).trim().length === 0) {
+    return { count: 0, total: PROFILE_FIELDS.length, pct: 0 };
+  }
   const filled = PROFILE_FIELDS.filter(f => {
     const v = profile[f];
     return v !== null && v !== undefined && String(v).trim().length > 0;
