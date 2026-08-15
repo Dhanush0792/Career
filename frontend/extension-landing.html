@@ -94,7 +94,7 @@ a { color: inherit; text-decoration: none; }
 
   <div class="hero-ctas">
     <a href="extension-setup.html" class="btn-primary">View Setup Guide</a>
-    <a href="#" class="btn-ghost">Download Extension ZIP</a>
+    <a href="#" class="btn-ghost" id="download-zip-btn">Download Extension ZIP</a>
   </div>
 
   <div class="browser-support">
@@ -160,5 +160,22 @@ a { color: inherit; text-decoration: none; }
   </div>
 
 </div>
+
+<script>
+document.getElementById('download-zip-btn').addEventListener('click', (e) => {
+  e.preventDefault();
+  
+  const token = localStorage.getItem('jxa_token') || "";
+  const passcode = localStorage.getItem('jxa_passcode') || "";
+  
+  if (token || passcode) {
+    // User is logged in, start download
+    window.location.href = "http://localhost:8787/api/extension/download";
+  } else {
+    // User is not logged in, redirect to login page
+    window.location.href = "auth.html?redirect=extension-landing.html";
+  }
+});
+</script>
 </body>
 </html>
