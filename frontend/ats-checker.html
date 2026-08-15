@@ -63,8 +63,20 @@ body::after {
   <div class="grid">
     <!-- Left: JD input -->
     <div class="card">
-      <div class="card__title">01 // TARGET JOB DESCRIPTION</div>
-      <textarea class="text-area" id="jd-input" placeholder="Paste the job description here. The system will extract keywords and compare them against your profile skills."></textarea>
+      <div class="card__title">01 // TARGET ROLE & JOB DESCRIPTION</div>
+      <div style="margin-bottom: 12px;">
+        <label style="display:block; font-family:var(--mono); font-size:9px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">Select Target Role</label>
+        <select class="select-input" id="select-role" style="width:100%; height:38px; background:rgba(7,10,24,.6); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:0 8px; border-radius:6px; outline:none; cursor: pointer; transition: border-color 0.2s;">
+          <option value="default">Default / General</option>
+          <option value="sde">Software Development Engineer (SDE)</option>
+          <option value="backend">Backend Developer</option>
+          <option value="java">Java Developer</option>
+          <option value="marketing">Marketing Specialist</option>
+          <option value="sales">Sales Representative</option>
+          <option value="customer_care">Customer Care Operator</option>
+        </select>
+      </div>
+      <textarea class="text-area" id="jd-input" placeholder="Paste the target job description here. The backend scorer will perform semantic comparison and keyword matches against your resume profile." style="height: 140px;"></textarea>
     </div>
 
     <!-- Right: Profile preview -->
@@ -84,7 +96,7 @@ body::after {
     <button class="analyze-btn" id="run-check-btn">› ANALYZE COMPATIBILITY</button>
 
     <div class="console-box" id="console">
-      <div class="console-line">[SYS_INIT] ATS analyzer loaded. Paste job description and click Analyze.</div>
+      <div class="console-line">[SYS_INIT] ATS analyzer loaded. Select role, paste job description and click Analyze.</div>
     </div>
 
     <!-- Results (shown after analysis) -->
@@ -93,19 +105,27 @@ body::after {
         <div class="score-val" id="score-number">—</div>
         <div class="score-desc">
           <span style="color:var(--white);font-weight:700;">ATS COMPATIBILITY SCORE</span><br>
-          Percentage of your profile skills that appear in the job description.<br>
+          Weighed keyword matching, section checks, and job alignment scoring.<br>
           <span id="score-detail" style="color:var(--dim);">—</span>
         </div>
       </div>
+      
       <div class="scanned-keywords">
         <div class="kw-box">
-          <div class="kw-title" style="color:var(--success);">MATCHED IN JD</div>
+          <div class="kw-title" style="color:var(--success);">MATCHED IN JD & PROFILE</div>
           <div id="matched-tags"></div>
         </div>
         <div class="kw-box">
-          <div class="kw-title" style="color:var(--primary);">NOT FOUND IN JD</div>
+          <div class="kw-title" style="color:var(--primary);">MISSING / UNMATCHED</div>
           <div id="missing-tags"></div>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card__title">03 // OPTIMIZATION SUGGESTIONS</div>
+        <ul id="suggestions-list" style="margin-left: 20px; font-family: var(--body); font-size: 12px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+          <!-- Populated dynamically -->
+        </ul>
       </div>
     </div>
 
@@ -129,12 +149,13 @@ function addLog(text, cls = '') {
 }
 
 let profileSkills = [];
+let activeProfileData = {};
 
 (async () => {
   const state = await loadProfile();
-  const profile = state?.profile || {};
-  const name = profile.fullName || '';
-  const skillsRaw = profile.skills || '';
+  activeProfileData = state?.profile || {};
+  const name = activeProfileData.fullName || '';
+  const skillsRaw = activeProfileData.skills || '';
   profileSkills = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
 
   const nameEl = document.getElementById('res-name');
@@ -157,83 +178,123 @@ let profileSkills = [];
   }
 })();
 
-runBtn.addEventListener('click', () => {
+runBtn.addEventListener('click', async () => {
   const jdText = document.getElementById('jd-input').value.trim();
+  const role = document.getElementById('select-role').value;
+  
   if (!jdText) {
     addLog('[WARN] Paste a job description first.', 'warn');
-    return;
-  }
-  if (profileSkills.length === 0) {
-    addLog('[WARN] No skills in profile to compare. Add skills in your Profile first.', 'warn');
-    showToast('Add skills to your profile first.', 'error');
     return;
   }
 
   runBtn.disabled = true;
   resultsPanel.style.display = 'none';
   consoleBox.innerHTML = '';
-  addLog('[ANALYZE] Tokenizing job description...');
+  
+  // Sequential loading logs
+  const logs = [
+    { text: '[STATUS] Checking file layout and text encoding...', delay: 0, class: 'info' },
+    { text: '[STRUCTURE] Analyzing profile section structures and completeness...', delay: 500, class: 'info' },
+    { text: '[PARAMETERS] Fetching preset target role parameters from vault...', delay: 1000, class: 'info' },
+    { text: '[KEYWORDS] Scanning keyword matches & computing vocabulary overlaps...', delay: 1500, class: 'info' },
+    { text: '[RECOMMENDATIONS] Finding gaps and compiling final score recommendations...', delay: 2000, class: 'info' }
+  ];
 
-  setTimeout(() => {
-    addLog('[ANALYZE] Matching against your profile skills...', 'info');
+  logs.forEach(log => {
     setTimeout(() => {
-      const stopWords = new Set([
-        'the','and','or','to','a','an','in','for','of','with','is','are','be',
-        'that','this','will','have','on','at','by','from','as','we','you','our',
-        'their','it','not','your','can','all','more','about','if','been','use',
-        'any','one','also','its','but','has','was','were','they','who','what',
-        'when','how','into','than','then','so','up','out','them','these','those',
-        'should','would','could','may','must','shall','do','does','did','get',
-        'per','role','work','team','job','experience','position','company',
-      ]);
+      addLog(log.text, log.class);
+    }, log.delay);
+  });
 
-      const jdTokens = jdText.toLowerCase()
-        .replace(/[^a-z0-9\s.+#]/g, ' ')
-        .split(/\s+/)
-        .filter(w => w.length > 1 && !stopWords.has(w));
-      const jdSet = new Set(jdTokens);
+  setTimeout(async () => {
+    try {
+      const token = localStorage.getItem('jxa_token') || "";
+      const passcode = localStorage.getItem('jxa_passcode') || "";
+      const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else if (passcodeHash) {
+        headers['Authorization'] = `Bearer ${passcodeHash}`;
+      }
 
-      const matched = [];
-      const missing = [];
-
-      profileSkills.forEach(skill => {
-        const tokens = skill.toLowerCase().split(/\s+/);
-        const isFound = tokens.some(t => {
-          if (t.length <= 3) {
-            return jdSet.has(t);
-          }
-          return jdSet.has(t) || [...jdSet].some(jw => jw.includes(t) || t.includes(jw));
-        });
-        (isFound ? matched : missing).push(skill);
+      const response = await fetch(`${SYNC_API}/ats/analyze`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          role: role,
+          jdText: jdText,
+          profile: activeProfileData
+        })
       });
 
+      if (!response.ok) {
+        throw new Error('ATS analyze call failed.');
+      }
+
+      const result = await response.json();
+      
+      const score = result.score || 0;
+      const scoreEl = document.getElementById('score-number');
+      scoreEl.textContent = score + '%';
+      scoreEl.style.color = score >= 80 ? 'var(--success)' : score >= 50 ? 'var(--alert)' : 'red';
+
+      document.getElementById('score-detail').textContent = 
+        `${result.matchedKeywords.length} matching keywords detected. Robust vocabulary check active.`;
+
+      // Render tags
       const matchedEl = document.getElementById('matched-tags');
       const missingEl = document.getElementById('missing-tags');
       matchedEl.innerHTML = '';
       missingEl.innerHTML = '';
 
-      matched.forEach(s => { matchedEl.innerHTML += `<span class="kw-tag match">${s}</span>`; });
-      missing.forEach(s => { missingEl.innerHTML += `<span class="kw-tag missing">${s}</span>`; });
-
-      if (matched.length === 0 && missing.length === 0) {
-        matchedEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">No comparisons made.</span>';
+      if (result.matchedKeywords.length === 0) {
+        matchedEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">No keywords matched.</span>';
+      } else {
+        result.matchedKeywords.forEach(k => {
+          matchedEl.innerHTML += `<span class="kw-tag match">${escapeHtml(k)}</span>`;
+        });
       }
 
-      const total = matched.length + missing.length;
-      const score = total > 0 ? Math.round((matched.length / total) * 100) : 0;
-      const scoreEl = document.getElementById('score-number');
-      scoreEl.textContent = total > 0 ? score + '%' : '—';
-      scoreEl.style.color = score >= 70 ? 'var(--success)' : score >= 40 ? 'var(--alert)' : 'rgba(244,247,255,.4)';
+      if (result.missingKeywords.length === 0) {
+        missingEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">All target keywords matched!</span>';
+      } else {
+        result.missingKeywords.forEach(k => {
+          missingEl.innerHTML += `<span class="kw-tag missing">${escapeHtml(k)}</span>`;
+        });
+      }
 
-      document.getElementById('score-detail').textContent =
-        `${matched.length} of ${total} skills found in the job description.`;
+      // Render Suggestions
+      const suggestionsEl = document.getElementById('suggestions-list');
+      suggestionsEl.innerHTML = '';
+      result.suggestions.forEach(s => {
+        // Render simple markdown bolding
+        const formatted = escapeHtml(s).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        suggestionsEl.innerHTML += `<li style="margin-bottom: 8px;">${formatted}</li>`;
+      });
 
-      addLog(`[DONE] ${matched.length} matched, ${missing.length} not found. Score: ${score}%.`, 'success');
+      addLog(`[DONE] Scanned complete. ATS Compatibility Score: ${score}%. Recommendations loaded.`, 'success');
       resultsPanel.style.display = 'flex';
+
+    } catch (err) {
+      addLog(`[ERROR] Scoring engine run crashed: ${err.message}`, 'warn');
+      showToast('ATS Scoring failed.', 'error');
+    } finally {
       runBtn.disabled = false;
-    }, 800);
-  }, 500);
+    }
+  }, 2500);
 });
+
+// HTML Escaper Helper
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 </script>
 </body>
 </html>

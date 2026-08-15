@@ -667,6 +667,172 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // POST /api/ats/analyze
+  if (req.method === "POST" && urlObj.pathname === "/api/ats/analyze") {
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", () => {
+      try {
+        const payload = JSON.parse(body || "{}");
+        const role = payload.role || "default";
+        const jdText = payload.jdText || "";
+        const profile = payload.profile || {};
+
+        if (!jdText.trim()) {
+          sendJson(res, 400, { ok: false, error: "Job description is required" });
+          return;
+        }
+
+        // 1. Roles dictionary configuration
+        const ROLE_PRESETS = {
+          sde: {
+            keywords: ["software engineering", "data structures", "algorithms", "git", "testing", "system design", "agile", "object-oriented"],
+            skills: ["java", "javascript", "python", "c++", "sql", "html", "css"]
+          },
+          backend: {
+            keywords: ["backend", "api design", "microservices", "databases", "rest", "scalability", "cloud computing", "docker", "security"],
+            skills: ["node.js", "express", "sql", "postgresql", "mongodb", "aws", "redis", "python", "go"]
+          },
+          java: {
+            keywords: ["java", "jvm", "spring boot", "maven", "gradle", "multithreading", "hibernate", "mvc", "microservices", "unit testing"],
+            skills: ["java", "spring", "jpa", "sql", "junit", "git", "hibernate", "docker"]
+          },
+          marketing: {
+            keywords: ["marketing", "analytics", "campaign management", "seo", "sem", "content strategy", "social media", "growth", "conversion"],
+            skills: ["google analytics", "seo", "adwords", "hubspot", "crm", "content writing", "email marketing"]
+          },
+          sales: {
+            keywords: ["sales", "business development", "crm", "negotiating", "lead generation", "pipeline management", "customer relationship", "closing"],
+            skills: ["salesforce", "crm", "cold calling", "presentation", "negotiation", "hubspot"]
+          },
+          customer_care: {
+            keywords: ["customer support", "communication", "ticketing", "troubleshooting", "crm", "query resolution", "escalation", "empathy"],
+            skills: ["zendesk", "salesforce", "freshdesk", "live chat", "phone support", "problem solving"]
+          },
+          default: {
+            keywords: ["professional", "communication", "organization", "problem solving", "management", "leadership", "collaboration"],
+            skills: ["office", "excel", "word", "powerpoint", "slack", "zoom"]
+          }
+        };
+
+        const preset = ROLE_PRESETS[role] || ROLE_PRESETS.default;
+        const targetWords = [...preset.keywords, ...preset.skills];
+
+        // Combine profile fields into a single text blob for full scanning
+        const resumeText = [
+          profile.fullName || "",
+          profile.summary || "",
+          profile.skills || "",
+          profile.experience || "",
+          profile.education || "",
+          profile.projects || "",
+          profile.certifications || "",
+          profile.additional || ""
+        ].join(" ").toLowerCase();
+
+        // 2. Keyword Match (40%)
+        const matchedKeywords = [];
+        const missingKeywords = [];
+
+        targetWords.forEach(word => {
+          if (resumeText.includes(word.toLowerCase())) {
+            matchedKeywords.push(word);
+          } else {
+            missingKeywords.push(word);
+          }
+        });
+
+        const keywordScore = targetWords.length > 0 
+          ? (matchedKeywords.length / targetWords.length) * 100 
+          : 100;
+
+        // 3. JD Alignment (40%)
+        const stopWords = new Set([
+          'the','and','or','to','a','an','in','for','of','with','is','are','be',
+          'that','this','will','have','on','at','by','from','as','we','you','our',
+          'their','it','not','your','can','all','more','about','if','been','use',
+          'any','one','also','its','but','has','was','were','they','who','what',
+          'when','how','into','than','then','so','up','out','them','these','those',
+          'should','would','could','may','must','shall','do','does','did','get',
+          'per','role','work','team','job','experience','position','company'
+        ]);
+
+        const jdTokens = jdText.toLowerCase()
+          .replace(/[^a-z0-9\s.+#]/g, ' ')
+          .split(/\s+/)
+          .filter(w => w.length > 1 && !stopWords.has(w));
+        const jdSet = new Set(jdTokens);
+
+        // Gather all candidate words
+        const candidateTokens = resumeText
+          .replace(/[^a-z0-9\s.+#]/g, ' ')
+          .split(/\s+/)
+          .filter(w => w.length > 1 && !stopWords.has(w));
+        
+        let jdMatchedCount = 0;
+        let jdTotalTerms = Array.from(jdSet).slice(0, 50); // Limit comparison to top 50 unique terms
+        
+        jdTotalTerms.forEach(term => {
+          if (candidateTokens.includes(term)) {
+            jdMatchedCount++;
+          }
+        });
+
+        const jdAlignmentScore = jdTotalTerms.length > 0 
+          ? (jdMatchedCount / jdTotalTerms.length) * 100 
+          : 100;
+
+        // 4. Section Completeness (20%)
+        let completenessScore = 0;
+        const completenessReport = [];
+
+        if (profile.fullName && profile.fullName.trim()) { completenessScore += 15; } else { completenessReport.push("Missing Full Name profile header"); }
+        if (profile.email && profile.email.trim()) { completenessScore += 15; } else { completenessReport.push("Missing email contact information"); }
+        if (profile.summary && profile.summary.trim()) { completenessScore += 20; } else { completenessReport.push("Professional summary field is empty"); }
+        if (profile.skills && profile.skills.trim()) { completenessScore += 20; } else { completenessReport.push("Technical skills inventory is empty"); }
+        if (profile.experience && profile.experience.trim()) { completenessScore += 15; } else { completenessReport.push("No work experience entries populated"); }
+        if (profile.education && profile.education.trim()) { completenessScore += 15; } else { completenessReport.push("No education qualifications listed"); }
+
+        // Final score calculation
+        const finalScore = Math.round(
+          (keywordScore * 0.40) + 
+          (jdAlignmentScore * 0.40) + 
+          (completenessScore * 0.20)
+        );
+
+        // 5. Suggestions generation
+        const suggestions = [];
+        if (completenessReport.length > 0) {
+          suggestions.push(`**Structural warnings**: Your profile is missing critical resume sections: ${completenessReport.join(", ")}.`);
+        }
+        if (missingKeywords.length > 0) {
+          suggestions.push(`**Missing keywords**: Consider adding these industry-standard terms to your summary or skills list: ${missingKeywords.slice(0, 5).join(", ")}.`);
+        }
+        if (jdAlignmentScore < 50) {
+          suggestions.push(`**Job description alignment**: Your vocabulary overlaps very little with this specific job description. Try adding terms like: "${jdTotalTerms.slice(0, 4).join('", "')}" to match their job description.`);
+        }
+        if (finalScore >= 80) {
+          suggestions.push(`**Perfect layout & alignment**: Excellent compatibility! Your resume uses robust keyword mapping and exhibits complete structural integrity.`);
+        } else if (finalScore >= 50) {
+          suggestions.push(`**Needs optimization**: Good foundation. Include more role-specific tools in your skills list to cross the 80% compatibility bar.`);
+        } else {
+          suggestions.push(`**Critical revisions needed**: Align your resume keywords and summary with your target role preset to avoid auto-rejection by applicant trackers.`);
+        }
+
+        sendJson(res, 200, {
+          ok: true,
+          score: finalScore,
+          matchedKeywords: matchedKeywords,
+          missingKeywords: missingKeywords,
+          suggestions: suggestions
+        });
+      } catch (err) {
+        sendJson(res, 500, { ok: false, error: err.message });
+      }
+    });
+    return;
+  }
+
   // GET /api/resume/templates
   if (req.method === "GET" && urlObj.pathname === "/api/resume/templates") {
     const templates = [
