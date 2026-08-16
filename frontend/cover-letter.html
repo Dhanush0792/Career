@@ -105,6 +105,19 @@ body::after {
       </div>
 
       <div class="form-row">
+        <label>Target Role Override</label>
+        <select id="select-role" onchange="onRoleOverrideChange()">
+          <option value="profile">Use Profile Target Role</option>
+          <option value="sde">Software Development Engineer (SDE)</option>
+          <option value="backend">Backend Developer</option>
+          <option value="java">Java Developer</option>
+          <option value="marketing">Marketing Specialist</option>
+          <option value="sales">Sales Representative</option>
+          <option value="customer_care">Customer Care Operator</option>
+        </select>
+      </div>
+
+      <div class="form-row">
         <label>Company Name</label>
         <input type="text" id="company-input" placeholder="e.g. Google India" maxlength="120">
       </div>
@@ -202,7 +215,7 @@ body::after {
 
       <!-- Tab: Rich Text Preview -->
       <div id="tab-rich" class="preview-container active">
-        <div class="output-letter-box" contenteditable="true" id="letter-preview-content" oninput="updateAtsScore()">
+        <div class="output-letter-box" contenteditable="true" id="letter-preview-content" oninput="onPreviewEdit()">
           [Generate a tailored cover letter to view the output here.]
         </div>
       </div>
@@ -233,6 +246,101 @@ const latexPreview = document.getElementById('latex-code-content');
 
 let userProfile = {};
 let generatedLatex = '';
+let autoSaveTimeout = null;
+
+// Role Library same as Resume Builder
+const ROLE_LIBRARY = {
+  software: {
+    student: {
+      summary: "Ambitious Software Engineering graduate with strong academic foundations in algorithm design, data structures, and full-stack development. Eager to contribute to software delivery teams and learn cutting-edge production frameworks."
+    },
+    experienced: {
+      summary: "Results-oriented Software Engineer with a proven track record of designing scalable web architectures, microservices API performance improvements, and leading agile sprint execution."
+    },
+    transition: {
+      summary: "Adaptable professional pivoting into Software Engineering. Combines analytical problem-solving skills from previous technical roles with self-taught expertise in modern programming stacks."
+    },
+    general: {
+      summary: "Dedicated developer focused on writing clean, maintainable code, implementing robust database schemas, and building responsive client-side web applications."
+    }
+  },
+  qa: {
+    student: {
+      summary: "Detail-focused engineering graduate interested in manual and automated software testing. Experienced in mapping out user flows, drafting test plans, and logging system exceptions."
+    },
+    experienced: {
+      summary: "QA Engineer with extensive experience in automated test suite authoring, CI/CD pipeline verification, regression analysis, and cross-browser responsiveness checks."
+    },
+    transition: {
+      summary: "Analytical investigator transitioning to Quality Assurance. Brings high attention to detail, process compliance experience, and troubleshooting capabilities from past administrative roles."
+    },
+    general: {
+      summary: "Quality-driven analyst committed to verifying system reliability, drafting end-to-end user scenarios, and raising software stability thresholds."
+    }
+  },
+  java: {
+    student: {
+      summary: "Graduate developer with solid foundations in Object-Oriented Programming, Java SE/EE, and SQL query creation. Comfortable building desktop applications and working with relational databases."
+    },
+    experienced: {
+      summary: "Senior Java Developer with expertise in Spring Boot microservices, multithreading optimizations, Hibernate ORM mappings, and secure enterprise application integrations."
+    },
+    transition: {
+      summary: "Skilled backend practitioner transitioning focus to enterprise Java stacks. Combines analytical systems design experience with deep hands-on training in object-oriented architectures."
+    },
+    general: {
+      summary: "Java Engineer focused on writing robust, structured backend business logic, optimizing database query executions, and maintaining system integrations."
+    }
+  },
+  python: {
+    student: {
+      summary: "Data-driven graduate with practical knowledge of Python scripting, data visualization libraries, and mathematical modeling. Enthusiastic about analytics pipeline automation."
+    },
+    experienced: {
+      summary: "Experienced Data Specialist proficient in Python backend automation, ETL pipeline design, regression analysis modeling, and database warehousing tools."
+    },
+    transition: {
+      summary: "Logical analyst transitioning to Python and Data Operations. Brings strong quantitative skills, system audits background, and automated scripting proficiency."
+    },
+    general: {
+      summary: "Technical practitioner focused on building clean Python automation scripts, optimizing database queries, and preparing structured analytics reports."
+    }
+  },
+  marketing: {
+    student: {
+      summary: "Creative graduate trained in digital branding, social media metrics tracking, and content creation. Passionate about campaign analytics and scaling audience reach."
+    },
+    experienced: {
+      summary: "Strategic Growth Marketer with a track record of managing multi-channel digital acquisition funnels, optimizing SEO campaigns, and running A/B conversion tests."
+    },
+    general: {
+      summary: "Marketing professional focused on creating engaging digital strategies, improving content visibility, and tracking lead generation metrics."
+    }
+  },
+  sales: {
+    student: {
+      summary: "Energetic graduate eager to build a career in business development and B2B sales. Possesses excellent communication skills, relationship-building abilities, and target alignment."
+    },
+    experienced: {
+      summary: "Results-driven Sales Manager with a strong record of exceeding revenue quotas, managing enterprise pipelines, negotiating contracts, and expanding market territories."
+    },
+    general: {
+      summary: "Sales representative dedicated to maintaining customer relationships, matching customer needs with product features, and driving sales growth."
+    }
+  },
+  customer: {
+    general: {
+      summary: "Customer Support Specialist committed to resolving customer inquiries, documenting product feedback, maintaining high satisfaction scores, and managing escalations."
+    }
+  }
+};
+
+const PREDEFINED_SUMMARIES = {
+  technical: "Over the course of my career, I have focused on constructing highly scalable, resilient frontend and fullstack web architectures. My stack centers on React, Node.js, and TypeScript, backed by robust cloud infrastructures. I specialize in optimizing bundle sizes, reducing rendering overhead, and establishing micro-frontend sync servers. I am excited to apply these core skills to your engineering challenges.",
+  executive: "I offer a proven track record of product strategy, team scaling, and metrics-driven development cycles. By aligning engineering priorities with key customer acquisitions, I have led departments to launch core features that reduced churn by 18% and optimized cloud operational expenditure by $45K annually. I look forward to bringing this leadership to your team.",
+  narrative: "My journey into software engineering started with building developer tools that automated my own workflows, eventually growing into a passionate career solving real-world challenges. I believe that product engineering requires listening closely to users, keeping codebases clean, and shipping early and often. I am motivated to join your collaborative culture.",
+  pivot: "Having spent several years refining my core skills in data analytics and customer strategy, I have pivoted into full-time product engineering. My background gives me a unique advantage: I don't just build code; I understand customer journeys, user data, and how web applications drive user retention. I am eager to apply this unique cross-functional skill set to your team."
+};
 
 function addLog(text, cls = '') {
   const line = document.createElement('div');
@@ -247,7 +355,7 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
   document.getElementById('enclosure-text-row').style.display = e.target.checked ? 'flex' : 'none';
 });
 
-// Auto load profile details
+// Auto load profile details and sync
 (async () => {
   const state = await loadProfile();
   userProfile = state?.profile || {};
@@ -264,30 +372,213 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     addLog('[SYS_LOAD] Profile parameters validated.', 'info');
   }
 
-  if (userProfile.targetRole) {
-    document.getElementById('role-input').value = userProfile.targetRole;
-    document.getElementById('subject-input').value = `RE: Application for ${userProfile.targetRole} role`;
+  // Check if saved Cover Letter state is in the synced profile
+  if (userProfile.coverLetter) {
+    const cl = userProfile.coverLetter;
+    if (cl.templateId) document.getElementById('template-select').value = cl.templateId;
+    if (cl.companyName) document.getElementById('company-input').value = cl.companyName;
+    if (cl.role) document.getElementById('role-input').value = cl.role;
+    if (cl.selectRole) document.getElementById('select-role').value = cl.selectRole;
+    if (cl.recipientName) document.getElementById('recipient-name').value = cl.recipientName;
+    if (cl.recipientTitle) document.getElementById('recipient-title').value = cl.recipientTitle;
+    if (cl.recipientAddress) document.getElementById('recipient-address').value = cl.recipientAddress;
+    if (cl.subjectLine) document.getElementById('subject-input').value = cl.subjectLine;
+    document.getElementById('opt-subject').checked = !!cl.includeSubject;
+    document.getElementById('opt-enclosure').checked = !!cl.includeEnclosure;
+    document.getElementById('enclosure-text-row').style.display = cl.includeEnclosure ? 'flex' : 'none';
+    if (cl.enclosureText) document.getElementById('enclosure-input').value = cl.enclosureText;
+    if (cl.summarySelect) document.getElementById('summary-select').value = cl.summarySelect;
+    if (cl.jdText) document.getElementById('jd-input').value = cl.jdText;
+    
+    if (cl.richText) richPreview.innerHTML = cl.richText;
+    if (cl.latexCode) {
+      generatedLatex = cl.latexCode;
+      latexPreview.textContent = cl.latexCode;
+    }
+    
+    // Rerender pre-defined summaries list if custom_role is populated
+    if (cl.customRoleSummary) {
+      PREDEFINED_SUMMARIES["custom_role"] = cl.customRoleSummary;
+      const displayRole = document.querySelector(`#select-role option[value="${cl.selectRole}"]`)?.text || "Preset";
+      document.getElementById('summary-select').innerHTML = `
+        <option value="">-- Choose pre-defined summaries --</option>
+        <option value="custom_role" ${cl.summarySelect === 'custom_role' ? 'selected' : ''}>${displayRole} Summary Preset</option>
+        <option value="technical" ${cl.summarySelect === 'technical' ? 'selected' : ''}>Technical Focus (React, Node, Cloud architecture)</option>
+        <option value="executive" ${cl.summarySelect === 'executive' ? 'selected' : ''}>Managerial & Executive Focus (Metrics, strategy, scaling)</option>
+        <option value="narrative" ${cl.summarySelect === 'narrative' ? 'selected' : ''}>Storyteller Hook (Self-taught journey, user-centric engineering)</option>
+        <option value="pivot" ${cl.summarySelect === 'pivot' ? 'selected' : ''}>Career Transition (Transferable skills, adaptability)</option>
+      `;
+    }
+    
+    updateAtsScore();
+    addLog('[SYS_LOAD] Saved cover letter parameters loaded.', 'success');
+  } else {
+    if (userProfile.targetRole) {
+      document.getElementById('role-input').value = userProfile.targetRole;
+      document.getElementById('subject-input').value = `RE: Application for ${userProfile.targetRole} role`;
+    }
   }
+
+  // Register real-time inputs auto-save handlers
+  const syncInputs = [
+    'template-select', 'company-input', 'role-input', 'select-role',
+    'recipient-name', 'recipient-title', 'recipient-address', 'subject-input',
+    'opt-subject', 'opt-enclosure', 'enclosure-input', 'summary-select', 'jd-input'
+  ];
+  syncInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', triggerAutoSave);
+      el.addEventListener('change', triggerAutoSave);
+    }
+  });
+
+  // Listen for real-time SSE broadcasts from other tabs/devices
+  document.addEventListener('jobxapply:profile', (e) => {
+    const state = e.detail;
+    const incomingProfile = state?.profile || {};
+    if (incomingProfile.coverLetter) {
+      updateFieldsFromSync(incomingProfile.coverLetter);
+    }
+  });
 })();
 
-// Apply predefined summaries to textareas
-const PREDEFINED_SUMMARIES = {
-  technical: "Over the course of my career, I have focused on constructing highly scalable, resilient frontend and fullstack web architectures. My stack centers on React, Node.js, and TypeScript, backed by robust cloud infrastructures. I specialize in optimizing bundle sizes, reducing rendering overhead, and establishing micro-frontend sync servers. I am excited to apply these core skills to your engineering challenges.",
-  executive: "I offer a proven track record of product strategy, team scaling, and metrics-driven development cycles. By aligning engineering priorities with key customer acquisitions, I have led departments to launch core features that reduced churn by 18% and optimized cloud operational expenditure by $45K annually. I look forward to bringing this leadership to your team.",
-  narrative: "My journey into software engineering started with building developer tools that automated my own workflows, eventually growing into a passionate career solving real-world challenges. I believe that product engineering requires listening closely to users, keeping codebases clean, and shipping early and often. I am motivated to join your collaborative culture.",
-  pivot: "Having spent several years refining my core skills in data analytics and customer strategy, I have pivoted into full-time product engineering. My background gives me a unique advantage: I don't just build code; I understand customer journeys, user data, and how web applications drive user retention. I am eager to apply this unique cross-functional skill set to your team."
-};
+// Debounced Cloud Sync Trigger
+function triggerAutoSave() {
+  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+  autoSaveTimeout = setTimeout(async () => {
+    const activeSummarySelect = document.getElementById('summary-select').value;
+    const coverLetterData = {
+      templateId: document.getElementById('template-select').value,
+      companyName: document.getElementById('company-input').value.trim(),
+      role: document.getElementById('role-input').value.trim(),
+      selectRole: document.getElementById('select-role').value,
+      recipientName: document.getElementById('recipient-name').value.trim(),
+      recipientTitle: document.getElementById('recipient-title').value.trim(),
+      recipientAddress: document.getElementById('recipient-address').value.trim(),
+      subjectLine: document.getElementById('subject-input').value.trim(),
+      includeSubject: document.getElementById('opt-subject').checked,
+      includeEnclosure: document.getElementById('opt-enclosure').checked,
+      enclosureText: document.getElementById('enclosure-input').value.trim(),
+      summarySelect: activeSummarySelect,
+      jdText: document.getElementById('jd-input').value.trim(),
+      richText: richPreview.innerHTML,
+      latexCode: generatedLatex,
+      customRoleSummary: PREDEFINED_SUMMARIES["custom_role"] || ""
+    };
+    
+    userProfile.coverLetter = coverLetterData;
+    const res = await saveProfile(userProfile);
+    if (res.ok) {
+      addLog('[SYS_SYNC] Real-time cover letter cloud sync completed.', 'info');
+    }
+  }, 1200);
+}
+
+// Update form fields on incoming SSE broadcast
+function updateFieldsFromSync(cl) {
+  // Only update if user is not currently focusing/editing these inputs
+  const focused = document.activeElement;
+  
+  const updateVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && el !== focused && val !== undefined) {
+      el.value = val;
+    }
+  };
+  
+  updateVal('template-select', cl.templateId);
+  updateVal('company-input', cl.companyName);
+  updateVal('role-input', cl.role);
+  updateVal('select-role', cl.selectRole);
+  updateVal('recipient-name', cl.recipientName);
+  updateVal('recipient-title', cl.recipientTitle);
+  updateVal('recipient-address', cl.recipientAddress);
+  updateVal('subject-input', cl.subjectLine);
+  
+  const checkSub = document.getElementById('opt-subject');
+  if (checkSub && checkSub !== focused) checkSub.checked = !!cl.includeSubject;
+  
+  const checkEnc = document.getElementById('opt-enclosure');
+  if (checkEnc && checkEnc !== focused) {
+    checkEnc.checked = !!cl.includeEnclosure;
+    document.getElementById('enclosure-text-row').style.display = cl.includeEnclosure ? 'flex' : 'none';
+  }
+  
+  updateVal('enclosure-input', cl.enclosureText);
+  updateVal('jd-input', cl.jdText);
+  
+  if (cl.customRoleSummary) {
+    PREDEFINED_SUMMARIES["custom_role"] = cl.customRoleSummary;
+  }
+  
+  updateVal('summary-select', cl.summarySelect);
+  
+  if (cl.richText && richPreview !== focused) {
+    richPreview.innerHTML = cl.richText;
+  }
+  if (cl.latexCode) {
+    generatedLatex = cl.latexCode;
+    latexPreview.textContent = cl.latexCode;
+  }
+  
+  updateAtsScore();
+}
+
+function onPreviewEdit() {
+  updateAtsScore();
+  triggerAutoSave();
+}
+
+// Role Override changes
+function onRoleOverrideChange() {
+  const roleKey = document.getElementById('select-role').value;
+  if (roleKey === 'profile') {
+    if (userProfile.targetRole) {
+      document.getElementById('role-input').value = userProfile.targetRole;
+      document.getElementById('subject-input').value = `RE: Application for ${userProfile.targetRole} role`;
+    }
+    triggerAutoSave();
+    return;
+  }
+  
+  let libKey = roleKey;
+  if (roleKey === "sde" || roleKey === "backend" || roleKey === "default") libKey = "software";
+  if (roleKey === "customer_care") libKey = "customer";
+  
+  if (ROLE_LIBRARY[libKey]) {
+    const selected = ROLE_LIBRARY[libKey]["general"] || ROLE_LIBRARY[libKey]["experienced"] || {};
+    const displayRole = document.querySelector(`#select-role option[value="${roleKey}"]`).text;
+    document.getElementById('role-input').value = displayRole;
+    document.getElementById('subject-input').value = `RE: Application for ${displayRole}`;
+    
+    // Inject custom preset summary
+    PREDEFINED_SUMMARIES["custom_role"] = selected.summary || "";
+    document.getElementById('summary-select').innerHTML = `
+      <option value="">-- Choose pre-defined summaries --</option>
+      <option value="custom_role" selected>${displayRole} Summary Preset</option>
+      <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
+      <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
+      <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
+      <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
+    `;
+    
+    addLog(`[ROLE_OVERRIDE] Loaded summary preset for: ${displayRole}`, 'info');
+    showToast(`Applied ${displayRole} summary preset.`);
+    triggerAutoSave();
+  }
+}
 
 function applyPredefinedSummary() {
   const val = document.getElementById('summary-select').value;
   if (val && PREDEFINED_SUMMARIES[val]) {
-    addLog(`[UI_INPUT] Predefined summary selected: ${val}`);
-    // Append to JD or alert
-    showToast('Loaded predefined text. Click Generate to update.');
+    addLog(`[UI_INPUT] Applied predefined pitch summary: ${val}`);
+    showToast('Summary selected. Click Tailor to generate letter.');
+    triggerAutoSave();
   }
 }
 
-// Generate Tailored Cover Letter
+// Tailor Button trigger
 genBtn.addEventListener('click', async () => {
   const company = document.getElementById('company-input').value.trim();
   const role = document.getElementById('role-input').value.trim();
@@ -352,14 +643,12 @@ genBtn.addEventListener('click', async () => {
     const resData = await res.json();
     generatedLatex = resData.latex;
 
-    // Render plain text into Rich Preview
     renderRichPreview(payload.data);
-
-    // Render LaTeX code
     latexPreview.textContent = generatedLatex;
 
     addLog('[SUCCESS] Tailored cover letter generated from profile.', 'success');
     updateAtsScore();
+    triggerAutoSave();
   } catch (err) {
     console.error(err);
     addLog(`[API_ERR] Tailor failed: ${err.message}`, 'warn');
