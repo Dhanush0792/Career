@@ -1,6 +1,11 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const dns = require("dns");
+
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 8787;
 const STATE_FILE = process.env.STATE_FILE || path.join(__dirname, "..", "database", "jobxapply-sync-state.json");
