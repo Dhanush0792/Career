@@ -2160,11 +2160,33 @@ window.addEventListener('load', () => {
 
       if (land && land.features) {
         land.features.forEach(feature => {
+          // 1. India: Set to our custom complete outline (including J&K, PoK, Aksai Chin)
           if (feature.id === "356" || feature.id === 356 || (feature.properties && feature.properties.name === "India")) {
             feature.geometry = {
               type: "Polygon",
               coordinates: [completeIndiaOutline]
             };
+          }
+          
+          // 2. Pakistan: Adjust eastern border to not overlap India J&K/PoK
+          if (feature.id === "586" || feature.id === 586 || (feature.properties && feature.properties.name === "Pakistan")) {
+            if (feature.geometry && feature.geometry.type === "Polygon") {
+              const coords = feature.geometry.coordinates[0];
+              // Filter out coordinate points in the J&K crown (lon > 72.9 and lat > 32.2)
+              const cleanCoords = coords.filter(pt => {
+                const lon = pt[0];
+                const lat = pt[1];
+                return !(lon > 72.9 && lat > 32.2);
+              });
+              
+              // Bridge the gap cleanly along India's western border
+              const borderBridge = [
+                [73.5, 34.7], [73.4, 34.1], [73.6, 33.8], [73.7, 33.2], 
+                [73.8, 32.7], [74.6, 32.2], [74.4, 31.3], [73.9, 30.6]
+              ];
+              
+              feature.geometry.coordinates[0] = [...cleanCoords, ...borderBridge];
+            }
           }
         });
       }
