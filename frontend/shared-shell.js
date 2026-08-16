@@ -28,10 +28,13 @@ function requireAuth() {
   const path = window.location.pathname;
   const isInAdmin = path.includes('/admin/');
   const prefix = isInAdmin ? '../' : '';
-  const page = path.substring(path.lastIndexOf('/') + 1);
+  let page = path.substring(path.lastIndexOf('/') + 1).toLowerCase();
+  if (page.endsWith('.html')) {
+    page = page.substring(0, page.length - 5);
+  }
 
-  // Whitelist public pages that do not require authentication
-  const publicPages = ['', 'auth.html', 'extension-setup.html', 'extension-landing.html', 'index.html', 'about.html', 'tools.html'];
+  // Whitelist public pages (extension-agnostic names)
+  const publicPages = ['', 'auth', 'extension-setup', 'extension-landing', 'index', 'about', 'tools'];
   if (publicPages.includes(page)) {
     if (localStorage.getItem('jxa_token')) {
       pullApplicationsFromServer().catch(() => {});
