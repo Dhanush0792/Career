@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply // Cover Letter Generator</title>
+<title>JobXApply // Tailored Cover Letter Builder</title>
 <meta name="description" content="Generate a tailored cover letter from your master profile.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,42 +17,63 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
-.container { max-width:1000px; margin:0 auto; padding:0 20px; position:relative; z-index:10; }
+.container { max-width:1200px; margin:0 auto; padding:0 20px; position:relative; z-index:10; }
 .page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
 .page-title { font-family:var(--display); font-size:36px; font-weight:900; text-transform:uppercase; color:var(--white); }
 .page-title em { font-style:normal; color:var(--primary); }
-.grid { display:grid; grid-template-columns:360px 1fr; gap:24px; margin-top:32px; }
-.card { border:1px solid var(--glass-border); background:rgba(255,255,255,.05); padding:24px; display:flex; flex-direction:column; gap:14px; border-radius:14px; backdrop-filter:blur(16px); }
-.card__title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; }
-.text-area { width:100%; height:160px; background:rgba(7,10,24,.6); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:12px; outline:none; resize:none; border-radius:8px; }
+.grid { display:grid; grid-template-columns:420px 1fr; gap:24px; margin-top:32px; }
+.card { border:1px solid var(--glass-border); background:rgba(255,255,255,.03); padding:24px; display:flex; flex-direction:column; gap:14px; border-radius:14px; backdrop-filter:blur(16px); }
+.card__title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+.text-area { width:100%; height:110px; background:rgba(7,10,24,.6); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:12px; outline:none; resize:none; border-radius:8px; }
 .text-area:focus { border-color:var(--primary); }
-.form-row { display:flex; flex-direction:column; gap:6px; }
+.form-row { display:flex; flex-direction:column; gap:4px; }
 .form-row label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
-.form-row input { background:rgba(7,10,24,.6); border:1px solid var(--glass-border); padding:10px 14px; font-family:var(--mono); font-size:11px; color:var(--white); outline:none; border-radius:8px; }
-.form-row input:focus { border-color:var(--primary); }
+.form-row input, .form-row select { background:rgba(7,10,24,.6); border:1px solid var(--glass-border); padding:8px 12px; font-family:var(--mono); font-size:11px; color:var(--white); outline:none; border-radius:8px; }
+.form-row input:focus, .form-row select:focus { border-color:var(--primary); }
 .gen-btn { width:100%; height:46px; background:var(--primary); color:var(--white); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; border:1px solid var(--primary); cursor:pointer; border-radius:12px; transition:all .2s; }
 .gen-btn:hover { background:rgba(91,79,232,.85); }
 .gen-btn:disabled { opacity:.45; cursor:not-allowed; }
-.output-letter-box { width:100%; min-height:400px; background:#ffffff; color:#1a1a1a; font-family:'Inter',sans-serif; font-size:13px; line-height:1.75; padding:36px; border:1px solid var(--glass-border); border-radius:10px; outline:none; overflow-y:auto; }
-.console-box { background:#000; border:1px solid var(--glass-border); padding:12px; font-family:var(--mono); font-size:10px; color:var(--muted); height:90px; overflow-y:auto; line-height:1.5; border-radius:8px; }
+
+/* Tabs Layout */
+.tabs-header { display:flex; border-bottom:1px solid var(--glass-border); margin-bottom:12px; }
+.tab-btn { background:transparent; border:none; color:var(--muted); padding:8px 16px; font-family:var(--mono); font-size:11px; cursor:pointer; transition:all .2s; border-bottom:2px solid transparent; }
+.tab-btn.active { color:var(--white); border-bottom-color:var(--primary); }
+
+.preview-container { display:none; }
+.preview-container.active { display:block; }
+
+.output-letter-box { width:100%; min-height:480px; background:#ffffff; color:#1a1a1a; font-family:'Inter',sans-serif; font-size:13px; line-height:1.65; padding:40px; border:1px solid var(--glass-border); border-radius:10px; outline:none; overflow-y:auto; box-shadow:0 12px 30px rgba(0,0,0,0.15); }
+.latex-code-box { width:100%; min-height:480px; background:#070a18; color:#a2b2c9; font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.6; padding:18px; border:1px solid var(--glass-border); border-radius:10px; overflow-y:auto; white-space:pre-wrap; }
+
+/* ATS Panel */
+.ats-panel { border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.01); padding:16px; border-radius:10px; margin-top:12px; }
+.ats-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.ats-title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--white); }
+.ats-score { font-family:var(--display); font-size:24px; color:var(--primary); font-weight:900; }
+.ats-bar-bg { width:100%; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:12px; }
+.ats-bar-fill { height:100%; width:0%; background:var(--primary); transition:width 0.4s ease, background-color 0.4s ease; }
+.ats-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; font-size:11px; font-family:var(--mono); }
+
+.console-box { background:#000; border:1px solid var(--glass-border); padding:10px; font-family:var(--mono); font-size:10px; color:var(--muted); height:75px; overflow-y:auto; line-height:1.5; border-radius:8px; }
 .console-line { margin-bottom:2px; }
 .console-line.info { color:var(--primary); }
 .console-line.success { color:var(--success); }
 .console-line.warn { color:var(--alert); }
+
 .export-row { display:flex; gap:10px; }
 .export-btn { flex:1; height:40px; background:transparent; color:var(--muted); font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; border:1px solid var(--glass-border); cursor:pointer; border-radius:8px; transition:all .2s; }
 .export-btn:hover { color:var(--white); border-color:var(--glass-border); background:rgba(255,255,255,.04); }
-@media (max-width:720px) { .grid { grid-template-columns:1fr; } }
-</style>
 
-  <link rel="icon" type="image/png" href="assets/favicon.png">
+@media (max-width:850px) { .grid { grid-template-columns:1fr; } }
+</style>
+<link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
 
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
-  <div style="border-bottom:1px solid var(--glass-border); padding-bottom:20px; margin-bottom:4px;">
+  <div style="border-bottom:1px solid var(--glass-border); padding-bottom:16px; margin-bottom:4px;">
     <div class="page-label">COVER LETTER DRAFT ENGINE</div>
     <h1 class="page-title">COVER LETTER <em>TAILORING</em></h1>
   </div>
@@ -68,31 +89,133 @@ body::after {
       </div>
 
       <div class="form-row">
-        <label>Company Name</label>
-        <input type="text" id="company-input" placeholder="e.g. Acme Corp" maxlength="120">
+        <label>Select Cover Letter Style</label>
+        <select id="template-select">
+          <option value="01">Classic Corporate (Palatino Serif)</option>
+          <option value="02">Modern Minimalist (Helvetica Sans)</option>
+          <option value="03">Narrative / Storyteller (Charter Serif)</option>
+          <option value="04">Executive Strategist (Times Serif)</option>
+          <option value="05">Technical / Developer (Monospace Headers)</option>
+          <option value="06">Bold & Impactful (Helvetica Bold)</option>
+          <option value="07">Academic Formal (Times Traditional)</option>
+          <option value="08">Startup Builder (Helvetica Compact)</option>
+          <option value="09">Career Pivot / Transition (Palatino Minimal)</option>
+          <option value="10">Referral-Based (Traditional Flush)</option>
+        </select>
       </div>
+
       <div class="form-row">
-        <label>Role / Position</label>
-        <input type="text" id="role-input" placeholder="e.g. Frontend Engineer" maxlength="120">
+        <label>Company Name</label>
+        <input type="text" id="company-input" placeholder="e.g. Google India" maxlength="120">
+      </div>
+      
+      <div class="form-row">
+        <label>Target Role / Position</label>
+        <input type="text" id="role-input" placeholder="e.g. Senior Frontend Engineer" maxlength="120">
       </div>
 
-      <textarea class="text-area" id="jd-input" placeholder="Optional: Paste key requirements from the job description to personalise the letter further..."></textarea>
+      <div class="card__title" style="margin-top:8px; border-bottom:none; padding:0;">02 // RECIPIENT DETAILS</div>
 
-      <button class="gen-btn" id="gen-btn">› GENERATE COVER LETTER</button>
+      <div class="form-row">
+        <label>Recipient Name</label>
+        <input type="text" id="recipient-name" placeholder="e.g. hiring manager, recruiter name" value="Hiring Team">
+      </div>
+
+      <div class="form-row">
+        <label>Recipient Title</label>
+        <input type="text" id="recipient-title" placeholder="e.g. Director of Talent Acquisition" value="Hiring Manager">
+      </div>
+
+      <div class="form-row">
+        <label>Recipient Address / Location</label>
+        <input type="text" id="recipient-address" placeholder="e.g. Bangalore Office, Karnataka">
+      </div>
+
+      <div class="card__title" style="margin-top:8px; border-bottom:none; padding:0;">03 // FORMATTING & OPTIONS</div>
+
+      <div class="form-row">
+        <label>Subject Line Template</label>
+        <input type="text" id="subject-input" placeholder="e.g. RE: Application for role" value="RE: Application for target role">
+      </div>
+
+      <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center;">
+        <label for="opt-subject" style="margin:0;">Include Subject Line</label>
+        <input type="checkbox" id="opt-subject" checked style="width:auto; margin:0;">
+      </div>
+
+      <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center;">
+        <label for="opt-enclosure" style="margin:0;">Include Enclosure line</label>
+        <input type="checkbox" id="opt-enclosure" style="width:auto; margin:0;">
+      </div>
+
+      <div class="form-row" id="enclosure-text-row" style="display:none;">
+        <label>Enclosure Documents</label>
+        <input type="text" id="enclosure-input" placeholder="e.g. Resume, Portfolio" value="Resume, Portfolio">
+      </div>
+
+      <div class="form-row">
+        <label>Select Predefined Pitch Summary</label>
+        <select id="summary-select" onchange="applyPredefinedSummary()">
+          <option value="">-- Choose pre-defined summaries --</option>
+          <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
+          <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
+          <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
+          <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Job Description Requirements (ATS tailer)</label>
+        <textarea class="text-area" id="jd-input" placeholder="Optional: Paste requirements from target job description to compute real-time ATS match rating..." oninput="updateAtsScore()"></textarea>
+      </div>
+
+      <button class="gen-btn" id="gen-btn">› TAILOR COVER LETTER</button>
 
       <div class="console-box" id="console">
-        <div class="console-line">[SYS_INIT] Generator ready. Enter job details and click Generate.</div>
+        <div class="console-line">[SYS_INIT] Cover Letter builder ready. Fill inputs and trigger tailor.</div>
       </div>
     </div>
 
-    <!-- Right: Output -->
+    <!-- Right: Output Preview Workspace -->
     <div class="card">
-      <div class="card__title">02 // EDITABLE LETTER PREVIEW</div>
-      <div class="output-letter-box" contenteditable="true" id="letter-output">
-        [Your letter will appear here. The text is fully editable before export.]
+      <div class="card__title">
+        <span>03 // WORKSPACE PREVIEW</span>
+        <div class="tabs-header" style="border-bottom:none; margin:0;">
+          <button class="tab-btn active" onclick="switchTab('rich')">RICH PREVIEW</button>
+          <button class="tab-btn" onclick="switchTab('latex')">LATEX CODE</button>
+        </div>
       </div>
+
+      <!-- Live ATS Score Panel -->
+      <div class="ats-panel">
+        <div class="ats-header">
+          <span class="ats-title">ATS COVER LETTER ALIGNMENT SCORE</span>
+          <span class="ats-score" id="ats-score-badge">0%</span>
+        </div>
+        <div class="ats-bar-bg">
+          <div class="ats-bar-fill" id="ats-score-bar"></div>
+        </div>
+        <ul class="ats-list" id="ats-suggestions">
+          <li>Paste a target Job Description on the left to compute alignment rating.</li>
+        </ul>
+      </div>
+
+      <!-- Tab: Rich Text Preview -->
+      <div id="tab-rich" class="preview-container active">
+        <div class="output-letter-box" contenteditable="true" id="letter-preview-content" oninput="updateAtsScore()">
+          [Generate a tailored cover letter to view the output here.]
+        </div>
+      </div>
+
+      <!-- Tab: LaTeX Code -->
+      <div id="tab-latex" class="preview-container">
+        <pre class="latex-code-box" id="latex-code-content" style="margin:0;">% Generated LaTeX code will be displayed here.</pre>
+      </div>
+
       <div class="export-row">
-        <button class="export-btn" onclick="exportText()">EXPORT .TXT</button>
+        <button class="export-btn" onclick="copyLatexCode()">COPY LATEX</button>
+        <button class="export-btn" onclick="downloadLatexFile()">DOWNLOAD .TEX</button>
+        <button class="export-btn" onclick="exportText()">DOWNLOAD .TXT</button>
         <button class="export-btn" onclick="window.print()">PRINT / PDF</button>
       </div>
     </div>
@@ -105,7 +228,11 @@ renderNav(document.getElementById('main-nav'), 'cover-letter.html');
 
 const consoleBox = document.getElementById('console');
 const genBtn = document.getElementById('gen-btn');
-const outputBox = document.getElementById('letter-output');
+const richPreview = document.getElementById('letter-preview-content');
+const latexPreview = document.getElementById('latex-code-content');
+
+let userProfile = {};
+let generatedLatex = '';
 
 function addLog(text, cls = '') {
   const line = document.createElement('div');
@@ -115,105 +242,308 @@ function addLog(text, cls = '') {
   consoleBox.scrollTop = consoleBox.scrollHeight;
 }
 
-let userProfile = {};
+// Toggle Enclosure input view
+document.getElementById('opt-enclosure').addEventListener('change', (e) => {
+  document.getElementById('enclosure-text-row').style.display = e.target.checked ? 'flex' : 'none';
+});
 
+// Auto load profile details
 (async () => {
   const state = await loadProfile();
   userProfile = state?.profile || {};
 
   const missing = [];
   if (!userProfile.fullName?.trim()) missing.push('Full Name');
-  if (!userProfile.targetRole?.trim()) missing.push('Target Role');
-  if (!userProfile.summary?.trim()) missing.push('Summary');
+  if (!userProfile.email?.trim()) missing.push('Email');
+  if (!userProfile.phone?.trim()) missing.push('Phone');
 
   if (missing.length > 0) {
     document.getElementById('profile-banner').style.display = 'flex';
-    addLog('[WARN] Profile incomplete — missing: ' + missing.join(', '), 'warn');
+    addLog('[WARN] Profile registry incomplete: ' + missing.join(', '), 'warn');
   } else {
-    addLog('[SYS_LOAD] Profile loaded. Ready to generate.', 'info');
+    addLog('[SYS_LOAD] Profile parameters validated.', 'info');
   }
 
-  // Pre-fill role from profile target role if available
   if (userProfile.targetRole) {
     document.getElementById('role-input').value = userProfile.targetRole;
+    document.getElementById('subject-input').value = `RE: Application for ${userProfile.targetRole} role`;
   }
 })();
 
-genBtn.addEventListener('click', () => {
-  const company = document.getElementById('company-input').value.trim();
-  const role    = document.getElementById('role-input').value.trim();
-  const jdExtra = document.getElementById('jd-input').value.trim();
+// Apply predefined summaries to textareas
+const PREDEFINED_SUMMARIES = {
+  technical: "Over the course of my career, I have focused on constructing highly scalable, resilient frontend and fullstack web architectures. My stack centers on React, Node.js, and TypeScript, backed by robust cloud infrastructures. I specialize in optimizing bundle sizes, reducing rendering overhead, and establishing micro-frontend sync servers. I am excited to apply these core skills to your engineering challenges.",
+  executive: "I offer a proven track record of product strategy, team scaling, and metrics-driven development cycles. By aligning engineering priorities with key customer acquisitions, I have led departments to launch core features that reduced churn by 18% and optimized cloud operational expenditure by $45K annually. I look forward to bringing this leadership to your team.",
+  narrative: "My journey into software engineering started with building developer tools that automated my own workflows, eventually growing into a passionate career solving real-world challenges. I believe that product engineering requires listening closely to users, keeping codebases clean, and shipping early and often. I am motivated to join your collaborative culture.",
+  pivot: "Having spent several years refining my core skills in data analytics and customer strategy, I have pivoted into full-time product engineering. My background gives me a unique advantage: I don't just build code; I understand customer journeys, user data, and how web applications drive user retention. I am eager to apply this unique cross-functional skill set to your team."
+};
 
+function applyPredefinedSummary() {
+  const val = document.getElementById('summary-select').value;
+  if (val && PREDEFINED_SUMMARIES[val]) {
+    addLog(`[UI_INPUT] Predefined summary selected: ${val}`);
+    // Append to JD or alert
+    showToast('Loaded predefined text. Click Generate to update.');
+  }
+}
+
+// Generate Tailored Cover Letter
+genBtn.addEventListener('click', async () => {
+  const company = document.getElementById('company-input').value.trim();
+  const role = document.getElementById('role-input').value.trim();
+  const templateId = document.getElementById('template-select').value;
+  
   if (!company && !role) {
-    addLog('[WARN] Enter at least a company name or role.', 'warn');
+    addLog('[WARN] Company Name and Position are required.', 'warn');
     return;
   }
 
   genBtn.disabled = true;
   consoleBox.innerHTML = '';
-  addLog('[GEN] Loading profile data...');
+  addLog('[API_POST] Sending tailored payload to JobXApply sync-server...');
 
-  setTimeout(() => {
-    addLog('[GEN] Assembling letter template...', 'info');
-    setTimeout(() => {
+  const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 
-      // Use real profile values; show placeholder text if missing
-      const name    = userProfile.fullName?.trim()    || '[Your Name]';
-      const jobRole = role    || userProfile.targetRole?.trim() || '[Position]';
-      const companyName = company || '[Company Name]';
-      const summary = userProfile.summary?.trim()     || '';
-      const headline = userProfile.headline?.trim()   || '';
-      const linkedin  = userProfile.linkedin?.trim()  || '';
-      const phone     = userProfile.phone?.trim()     || '';
-      const email     = userProfile.email?.trim()     || '';
-      const today     = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  // Get active selected summary
+  const summaryKey = document.getElementById('summary-select').value;
+  const summaryBody = PREDEFINED_SUMMARIES[summaryKey] || userProfile.summary || 'I am excited to bring my engineering background and collaborative approach to your product challenges.';
 
-      // Build the letter from real data
-      const hasContext = summary || headline;
-      const contextPara = hasContext
-        ? `\n\n${summary || headline}`
-        : '\n\n[Add a professional summary to your profile to personalise this section.]';
+  const payload = {
+    templateId: templateId,
+    data: {
+      fullName: userProfile.fullName || '[Your Name]',
+      email: userProfile.email || '[Your Email]',
+      phone: userProfile.phone || '[Your Phone]',
+      linkedinUrl: userProfile.linkedin || '',
+      portfolioUrl: userProfile.portfolio || '',
+      date: today,
+      recipientName: document.getElementById('recipient-name').value.trim() || 'Hiring Team',
+      recipientTitle: document.getElementById('recipient-title').value.trim() || 'Hiring Manager',
+      companyName: company || '[Company Name]',
+      companyAddress: document.getElementById('recipient-address').value.trim() || '',
+      subjectLine: document.getElementById('opt-subject').checked ? document.getElementById('subject-input').value.trim() : '',
+      salutation: `Dear ${document.getElementById('recipient-name').value.trim() || 'Hiring Team'},`,
+      openingParagraph: `I am writing to express my strong interest in the ${role || 'Product Engineer'} position at ${company || 'your company'}. As an engineer with a track record of crafting user-centric platforms and clean API endpoints, I am confident in my ability to immediately add value to your team.`,
+      bodyParagraph1: summaryBody,
+      bodyParagraph2: `What excites me most about ${company || 'your organization'} is your focus on engineering excellence and developer ergonomics. I am eager to apply my experience in React, TypeScript, and microservices to help scale your operations.`,
+      closingParagraph: `I would appreciate the opportunity to speak with you further regarding how my skills align with your engineering needs. Thank you for your time, consideration, and dedication to building great tools.`,
+      signOff: 'Sincerely,',
+      enclosureLine: document.getElementById('opt-enclosure').checked ? document.getElementById('enclosure-input').value.trim() : ''
+    }
+  };
 
-      const jdPara = jdExtra
-        ? `\n\nHaving reviewed the role requirements, I am confident that my background aligns well with the key expectations: ${jdExtra.slice(0, 200)}${jdExtra.length > 200 ? '...' : ''}`
-        : '';
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + localStorage.getItem('jxa_token')
+    };
 
-      const contactLine = [phone, email, linkedin].filter(Boolean).join(' · ');
+    const res = await fetch(`${SYNC_API}/cover-letter/generate`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
 
-      const letter = `${today}
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Server rejected request');
+    }
 
-To the Hiring Team at ${companyName},
+    const resData = await res.json();
+    generatedLatex = resData.latex;
 
-Dear Hiring Manager,
+    // Render plain text into Rich Preview
+    renderRichPreview(payload.data);
 
-I am writing to express my genuine interest in the ${jobRole} position at ${companyName}. I believe my background and experience make me a strong candidate for this role.${contextPara}${jdPara}
+    // Render LaTeX code
+    latexPreview.textContent = generatedLatex;
 
-I would welcome the opportunity to discuss how my qualifications and approach align with your team's goals. Thank you for your time and consideration.
-
-Sincerely,
-${name}${contactLine ? '\n' + contactLine : ''}`;
-
-      outputBox.innerText = letter;
-      addLog('[GEN] Letter generated from your profile data.', 'success');
-      genBtn.disabled = false;
-
-    }, 900);
-  }, 500);
+    addLog('[SUCCESS] Tailored cover letter generated from profile.', 'success');
+    updateAtsScore();
+  } catch (err) {
+    console.error(err);
+    addLog(`[API_ERR] Tailor failed: ${err.message}`, 'warn');
+    showToast(err.message, 'error');
+  } finally {
+    genBtn.disabled = false;
+  }
 });
 
+function renderRichPreview(data) {
+  let html = `
+    <div style="font-family:'Inter', sans-serif; line-height:1.65; color:#1a1a1a;">
+      <div style="text-align:right; margin-bottom:24px; border-bottom:1px solid #eee; padding-bottom:12px;">
+        <strong>${data.fullName}</strong><br>
+        ${data.email} | ${data.phone}<br>
+        ${data.linkedinUrl ? data.linkedinUrl + '<br>' : ''}
+        ${data.portfolioUrl ? data.portfolioUrl : ''}
+      </div>
+
+      <div style="margin-bottom:16px;">
+        ${data.date}
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <strong>${data.recipientName}</strong><br>
+        ${data.recipientTitle}<br>
+        ${data.companyName}<br>
+        ${data.companyAddress}
+      </div>
+  `;
+
+  if (data.subjectLine) {
+    html += `
+      <div style="margin-bottom:20px; font-weight:bold; text-transform:uppercase; letter-spacing:0.02em;">
+        Subject: ${data.subjectLine}
+      </div>
+    `;
+  }
+
+  html += `
+      <div style="margin-bottom:16px;">
+        ${data.salutation}
+      </div>
+
+      <p style="margin-bottom:16px;">${data.openingParagraph}</p>
+      <p style="margin-bottom:16px;">${data.bodyParagraph1}</p>
+      <p style="margin-bottom:16px;">${data.bodyParagraph2}</p>
+      <p style="margin-bottom:16px;">${data.closingParagraph}</p>
+
+      <div style="margin-top:24px; margin-bottom:24px;">
+        ${data.signOff}<br><br>
+        <strong>${data.fullName}</strong>
+      </div>
+  `;
+
+  if (data.enclosureLine) {
+    html += `
+      <div style="font-size:11px; color:#555; border-top:1px dashed #ccc; padding-top:8px;">
+        Enclosures: ${data.enclosureLine}
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  richPreview.innerHTML = html;
+}
+
+// Tabs Switcher
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.preview-container').forEach(c => c.classList.remove('active'));
+  
+  if (tab === 'rich') {
+    document.querySelector('.tab-btn[onclick="switchTab(\'rich\')"]').classList.add('active');
+    document.getElementById('tab-rich').classList.add('active');
+  } else {
+    document.querySelector('.tab-btn[onclick="switchTab(\'latex\')"]').classList.add('active');
+    document.getElementById('tab-latex').classList.add('active');
+  }
+}
+
+// Copy LaTeX code
+function copyLatexCode() {
+  if (!generatedLatex) {
+    showToast('Generate a cover letter first.', 'error');
+    return;
+  }
+  navigator.clipboard.writeText(generatedLatex);
+  showToast('LaTeX source code copied to clipboard!', 'success');
+}
+
+// Download .tex File
+function downloadLatexFile() {
+  if (!generatedLatex) {
+    showToast('Generate a cover letter first.', 'error');
+    return;
+  }
+  const blob = new Blob([generatedLatex], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tailored_cover_letter.tex';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('LaTeX file downloaded.', 'success');
+}
+
+// Download Plain Text
 function exportText() {
-  const text = outputBox.innerText;
-  if (!text.trim() || text.startsWith('[Your letter')) {
-    showToast('Generate a letter first.', 'error');
+  const text = richPreview.innerText;
+  if (!text.trim() || text.startsWith('[Generate a tailored')) {
+    showToast('Generate a cover letter first.', 'error');
     return;
   }
   const blob = new Blob([text], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'JobXApply_Cover_Letter.txt';
+  a.download = 'tailored_cover_letter.txt';
   a.click();
   URL.revokeObjectURL(a.href);
-  showToast('Cover letter exported.', 'success');
+  showToast('TXT document downloaded.', 'success');
+}
+
+// Live ATS Score Matching
+function updateAtsScore() {
+  const jdText = document.getElementById('jd-input').value.toLowerCase().trim();
+  const letterText = richPreview.innerText.toLowerCase().trim();
+  
+  if (!jdText) {
+    document.getElementById('ats-score-badge').innerText = '0%';
+    document.getElementById('ats-score-bar').style.width = '0%';
+    document.getElementById('ats-suggestions').innerHTML = '<li>Paste a Job Description to compute real-time ATS match rating.</li>';
+    return;
+  }
+  
+  const jdWords = jdText.match(/\b[a-z]{4,15}\b/g) || [];
+  const uniqueJdKeywords = [...new Set(jdWords)];
+  
+  let matched = 0;
+  const missingKeywords = [];
+  uniqueJdKeywords.slice(0, 15).forEach(word => {
+    if (letterText.includes(word)) {
+      matched++;
+    } else {
+      missingKeywords.push(word);
+    }
+  });
+  
+  const checks = [];
+  let structurePoints = 0;
+  
+  if (document.getElementById('company-input').value.trim()) { structurePoints += 15; } else { checks.push('Add Company Name'); }
+  if (document.getElementById('recipient-name').value.trim()) { structurePoints += 10; } else { checks.push('Add Recipient Name'); }
+  if (document.getElementById('recipient-address').value.trim()) { structurePoints += 15; } else { checks.push('Add Recipient Address'); }
+  if (letterText.length > 300) { structurePoints += 20; } else { checks.push('Extend body paragraph details'); }
+  if (letterText.includes('sincerely') || letterText.includes('regards')) { structurePoints += 10; } else { checks.push('Add formal sign-off (Sincerely)'); }
+  
+  const keywordWeight = uniqueJdKeywords.length > 0 ? (matched / Math.min(uniqueJdKeywords.length, 15)) * 30 : 30;
+  const totalScore = Math.round(structurePoints + keywordWeight);
+  const finalScore = Math.min(Math.max(totalScore, 5), 100);
+  
+  document.getElementById('ats-score-badge').innerText = `${finalScore}%`;
+  document.getElementById('ats-score-bar').style.width = `${finalScore}%`;
+  
+  const bar = document.getElementById('ats-score-bar');
+  if (finalScore >= 80) {
+    bar.style.backgroundColor = 'var(--success)';
+  } else if (finalScore >= 60) {
+    bar.style.backgroundColor = 'var(--primary)';
+  } else {
+    bar.style.backgroundColor = 'var(--alert)';
+  }
+  
+  let html = '';
+  checks.forEach(c => {
+    html += `<li style="color:var(--alert)">⚠ ${c}</li>`;
+  });
+  
+  if (missingKeywords.length > 0) {
+    html += `<li style="color:var(--muted)">💡 Incorporate keywords from job requirements: <strong>${missingKeywords.slice(0, 5).join(', ')}</strong></li>`;
+  } else {
+    html += `<li style="color:var(--success)">✓ Matches all target requirements!</li>`;
+  }
+  
+  document.getElementById('ats-suggestions').innerHTML = html;
 }
 </script>
 </body>

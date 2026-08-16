@@ -1152,6 +1152,88 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // POST /api/cover-letter/generate
+  if (req.method === "POST" && urlObj.pathname === "/api/cover-letter/generate") {
+    if (activeUser) {
+      if (isRateLimited(activeUser.id, 5, 3600000, userRateLimits)) {
+        sendJson(res, 429, { ok: false, error: "Too many cover letter generation attempts. Limit is 5 per hour." });
+        return;
+      }
+    }
+    let body = "";
+    req.on("data", chunk => { body += chunk; });
+    req.on("end", () => {
+      try {
+        const payload = JSON.parse(body || "{}");
+        const templateId = payload.templateId || "01";
+        const data = payload.data || {};
+
+        const templates = {
+          "01": "cover_01_classic.tex",
+          "02": "cover_02_minimal.tex",
+          "03": "cover_03_narrative.tex",
+          "04": "cover_04_executive.tex",
+          "05": "cover_05_technical.tex",
+          "06": "cover_06_bold.tex",
+          "07": "cover_07_academic.tex",
+          "08": "cover_08_startup.tex",
+          "09": "cover_09_transition.tex",
+          "10": "cover_10_referral.tex"
+        };
+
+        const fileName = templates[templateId] || templates["01"];
+        const templatePath = path.join(__dirname, "templates", "coverletter", fileName);
+
+        if (!fs.existsSync(templatePath)) {
+          sendJson(res, 404, { ok: false, error: "Cover letter template file not found" });
+          return;
+        }
+
+        let content = fs.readFileSync(templatePath, "utf8");
+
+        // LaTeX Escaper
+        const escapeLatex = (str) => {
+          if (!str) return "";
+          return String(str)
+            .replace(/\\/g, "\\textbackslash{}")
+            .replace(/([&%$#_{}])/g, "\\$1")
+            .replace(/\^/g, "\\textasciicircum{}")
+            .replace(/~/g, "\\textasciitilde{}")
+            .replace(/</g, "\\textless{}")
+            .replace(/>/g, "\\textgreater{}")
+            .replace(/\n/g, " ");
+        };
+
+        // Substitute placeholders
+        content = content
+          .replace(/\{\{FULL_NAME\}\}/g, escapeLatex(data.fullName || ""))
+          .replace(/\{\{EMAIL\}\}/g, escapeLatex(data.email || ""))
+          .replace(/\{\{PHONE\}\}/g, escapeLatex(data.phone || ""))
+          .replace(/\{\{LINKEDIN_URL\}\}/g, escapeLatex(data.linkedinUrl || ""))
+          .replace(/\{\{PORTFOLIO_URL\}\}/g, escapeLatex(data.portfolioUrl || ""))
+          .replace(/\{\{DATE\}\}/g, escapeLatex(data.date || ""))
+          .replace(/\{\{RECIPIENT_NAME\}\}/g, escapeLatex(data.recipientName || "Hiring Team"))
+          .replace(/\{\{RECIPIENT_TITLE\}\}/g, escapeLatex(data.recipientTitle || "Hiring Manager"))
+          .replace(/\{\{COMPANY_NAME\}\}/g, escapeLatex(data.companyName || ""))
+          .replace(/\{\{COMPANY_ADDRESS\}\}/g, escapeLatex(data.companyAddress || ""))
+          .replace(/\{\{SUBJECT_LINE\}\}/g, data.subjectLine ? `\\textbf{Subject: ${escapeLatex(data.subjectLine)}}` : "")
+          .replace(/\{\{SALUTATION\}\}/g, escapeLatex(data.salutation || "Dear Hiring Team,"))
+          .replace(/\{\{OPENING_PARAGRAPH\}\}/g, escapeLatex(data.openingParagraph || ""))
+          .replace(/\{\{BODY_PARAGRAPH_1\}\}/g, escapeLatex(data.bodyParagraph1 || ""))
+          .replace(/\{\{BODY_PARAGRAPH_2\}\}/g, escapeLatex(data.bodyParagraph2 || ""))
+          .replace(/\{\{CLOSING_PARAGRAPH\}\}/g, escapeLatex(data.closingParagraph || ""))
+          .replace(/\{\{SIGN_OFF\}\}/g, escapeLatex(data.signOff || "Sincerely,"))
+          .replace(/\{\{ENCLOSURE_LINE\}\}/g, data.enclosureLine ? `Enclosures: ${escapeLatex(data.enclosureLine)}` : "");
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, latex: content }));
+      } catch (err) {
+        sendJson(res, 500, { ok: false, error: err.message });
+      }
+    });
+    return;
+  }
+
   sendJson(res, 404, { ok: false, error: "Not found" });
 });
 
