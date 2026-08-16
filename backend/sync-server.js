@@ -352,6 +352,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /health (Public Health check)
+  if (req.method === "GET" && (urlObj.pathname === "/health" || urlObj.pathname === "/api/health")) {
+    sendJson(res, 200, { ok: true, status: "healthy", timestamp: Date.now() });
+    return;
+  }
+
   // Static Health check
   if (req.method === "GET" && urlObj.pathname === "/api/status") {
     const stats = await db.getStats();
