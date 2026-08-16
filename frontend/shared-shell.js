@@ -28,12 +28,21 @@ function requireAuth() {
   const path = window.location.pathname;
   const isInAdmin = path.includes('/admin/');
   const prefix = isInAdmin ? '../' : '';
+  const page = path.substring(path.lastIndexOf('/') + 1);
+
+  // Whitelist public pages that do not require authentication
+  const publicPages = ['', 'auth.html', 'extension-setup.html', 'extension-landing.html', 'index.html', 'about.html', 'tools.html'];
+  if (publicPages.includes(page)) {
+    if (localStorage.getItem('jxa_token')) {
+      pullApplicationsFromServer().catch(() => {});
+    }
+    return; // Allow access without authentication
+  }
 
   if (!localStorage.getItem('jxa_token')) {
     if (document.documentElement) {
       document.documentElement.style.display = 'none';
     }
-    const page = path.substring(path.lastIndexOf('/') + 1);
     if (page.includes('resume-builder')) {
       window.location.href = prefix + 'tools.html#resume-builder';
     } else if (page.includes('ats-checker')) {
@@ -43,9 +52,7 @@ function requireAuth() {
     } else if (page.includes('autofill-lab')) {
       window.location.href = prefix + 'tools.html#autofill-lab';
     } else {
-      if (page !== 'auth.html') {
-        window.location.href = prefix + 'auth.html';
-      }
+      window.location.href = prefix + 'auth.html';
     }
   } else {
     const role = localStorage.getItem('jxa_role');
@@ -607,7 +614,7 @@ const NAV_ITEMS = [
   { label: 'Cover Letter', href: 'cover-letter.html' },
   { label: 'Tracker',      href: 'tracker.html' },
   { label: 'Autofill',     href: 'autofill-lab.html' },
-  { label: 'Extension',    href: 'extension-setup.html' },
+  { label: 'Extension',    href: 'extension-landing.html' },
   { label: 'Settings',     href: 'settings.html' },
 ];
 

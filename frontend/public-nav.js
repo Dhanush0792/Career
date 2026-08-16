@@ -216,8 +216,8 @@
           <div class="ch-nav__dd-divider"></div>
           <div class="ch-nav__dd-label">Autofill</div>
           <a href="autofill-lab.html"    class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⊛</span>Autofill Lab</a>
-          <a href="extension-setup.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⬡</span>Browser Extension</a>
-          <a href="extension-landing.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">↓</span>Install Guide</a>
+          <a href="extension-landing.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⬡</span>Browser Extension</a>
+          <a href="extension-setup.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">↓</span>Install Guide</a>
         </div>
       </div>
 
@@ -274,7 +274,7 @@
     <a href="ats-checker.html"     class="ch-nav__drawer-link">◉ ATS Checker</a>
     <a href="cover-letter.html"    class="ch-nav__drawer-link">✉ Cover Letter</a>
     <a href="autofill-lab.html"    class="ch-nav__drawer-link">⊛ Autofill Lab</a>
-    <a href="extension-setup.html" class="ch-nav__drawer-link">⬡ Browser Extension</a>
+    <a href="extension-landing.html" class="ch-nav__drawer-link">⬡ Browser Extension</a>
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Company</div>

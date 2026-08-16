@@ -535,10 +535,10 @@ function downloadExtension() {
   addLog('[DOWNLOAD] Requesting extension package from server...', 'info');
 
   // Try server zip endpoint first
-  fetch('http://localhost:8787/api/extension/download', { method: 'HEAD' })
+  fetch(`${SYNC_API}/extension/download`, { method: 'HEAD' })
     .then(res => {
       if (res.ok) {
-        window.location.href = 'http://localhost:8787/api/extension/download';
+        window.location.href = `${SYNC_API}/extension/download`;
         addLog('[DOWNLOAD] Extension package downloaded successfully.', 'success');
       } else {
         throw new Error('Server returned ' + res.status);

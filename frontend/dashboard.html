@@ -544,7 +544,7 @@ document.addEventListener('jobxapply:offline', () => {
 
 (async () => {
   // Telemetry page view hit
-  fetch('http://localhost:8787/api/telemetry/hit', {
+  fetch(`${SYNC_API}/telemetry/hit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ metric: 'pageViews' })

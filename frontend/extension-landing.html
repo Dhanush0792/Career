@@ -170,7 +170,7 @@ document.getElementById('download-zip-btn').addEventListener('click', (e) => {
   
   if (token || passcode) {
     // User is logged in, start download
-    window.location.href = "http://localhost:8787/api/extension/download";
+    window.location.href = "https://jobxapply-backend.onrender.com/api/extension/download";
   } else {
     // User is not logged in, redirect to login page
     window.location.href = "auth.html?redirect=extension-landing.html";
