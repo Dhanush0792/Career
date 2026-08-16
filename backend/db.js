@@ -82,14 +82,18 @@ function loadTelemetry() {
     if (fs.existsSync(TELEMETRY_FILE)) {
       return JSON.parse(fs.readFileSync(TELEMETRY_FILE, "utf8"));
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("Failed to load telemetry registry:", e);
+  }
   return { pageViews: 0, apiRequests: 0 };
 }
 
 function saveTelemetry(data) {
   try {
     fs.writeFileSync(TELEMETRY_FILE, JSON.stringify(data, null, 2), "utf8");
-  } catch (e) {}
+  } catch (e) {
+    console.warn("Failed to save telemetry registry:", e);
+  }
 }
 
 function getUserFilePath(userId) {

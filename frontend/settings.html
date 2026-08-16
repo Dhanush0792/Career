@@ -187,6 +187,10 @@ body::after {
       <span class="data-label">Clear All Local Data & Logout</span>
       <button class="btn btn-danger" onclick="factoryReset()">Erase Everything</button>
     </div>
+    <div class="data-row">
+      <span class="data-label">Permanently Delete Cloud Account</span>
+      <button class="btn btn-danger" onclick="deleteAccountFromServer()">Purge Account</button>
+    </div>
   </div>
 
 </div>
@@ -323,16 +327,56 @@ function savePasscode() {
   document.getElementById('confirm-passcode').value = '';
 }
 
-function exportProfile() {
-  const data = localStorage.getItem('jxa_local_profile') || '{}';
-  const blob = new Blob([data], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'jobxapply_profile.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('Profile exported');
+async function exportProfile() {
+  showToast('Exporting data from cloud...');
+  try {
+    const headers = { 'Authorization': 'Bearer ' + localStorage.getItem('jxa_token') };
+    const res = await fetch(`${SYNC_API}/profile/export`, { headers });
+    if (!res.ok) throw new Error('Cloud export failed: ' + res.statusText);
+    const data = await res.blob();
+    const url = URL.createObjectURL(data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'jobxapply_data_export.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Data exported successfully');
+  } catch (err) {
+    console.error(err);
+    showToast('Cloud export failed, exporting local copy instead', 'warn');
+    const local = localStorage.getItem('jxa_local_profile') || '{}';
+    const blob = new Blob([local], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'jobxapply_profile_local.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function deleteAccountFromServer() {
+  if (confirm('WARNING: This will permanently delete your account, synced profile, and application tracking history from our cloud servers. This action is irreversible. Proceed?')) {
+    if (confirm('Are you absolutely sure you want to purge your account?')) {
+      showToast('Deleting account...');
+      try {
+        const headers = { 'Authorization': 'Bearer ' + localStorage.getItem('jxa_token') };
+        const res = await fetch(`${SYNC_API}/profile`, {
+          method: 'DELETE',
+          headers
+        });
+        if (!res.ok) throw new Error('Server deletion failed');
+        showToast('Account purged. Erasing local data...');
+        localStorage.clear();
+        setTimeout(() => {
+          window.location.href = 'auth.html';
+        }, 1200);
+      } catch (err) {
+        console.error(err);
+        showToast('Purge failed: ' + err.message, 'error');
+      }
+    }
+  }
 }
 
 function exportApps() {

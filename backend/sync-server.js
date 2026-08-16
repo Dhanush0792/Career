@@ -2,6 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const dns = require("dns");
+const jwt = require("jsonwebtoken");
 
 if (typeof dns.setDefaultResultOrder === "function") {
   dns.setDefaultResultOrder("ipv4first");
@@ -211,9 +212,28 @@ function validateState(nextState) {
 
 const db = require("./db");
 const auth = require("./auth-handler");
+const JWT_SECRET = auth.JWT_SECRET;
 const handleJobsSearch = require("./routes-jobs");
 
 const clients = new Set(); // Set of objects: { userId, res }
+
+const ipRateLimits = new Map();
+const userRateLimits = new Map();
+
+function isRateLimited(key, limit, windowMs, trackerMap) {
+  const now = Date.now();
+  if (!trackerMap.has(key)) {
+    trackerMap.set(key, [now]);
+    return false;
+  }
+  const timestamps = trackerMap.get(key).filter(t => now - t < windowMs);
+  if (timestamps.length >= limit) {
+    return true;
+  }
+  timestamps.push(now);
+  trackerMap.set(key, timestamps);
+  return false;
+}
 
 function writeCorsHeaders(req, res) {
   const origin = req.headers.origin;
@@ -247,7 +267,9 @@ async function getRequestUser(req) {
 function sendJson(res, code, payload) {
   const headers = {
     "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store"
+    "Cache-Control": "no-store",
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "frame-ancestors 'none'"
   };
   const currentOrigin = res.getHeader("Access-Control-Allow-Origin");
   if (currentOrigin) {
@@ -338,6 +360,15 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Authentication routes
+  if (req.method === "POST" && (urlObj.pathname === "/api/auth/register" || urlObj.pathname === "/api/auth/login")) {
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown-ip";
+    if (isRateLimited(clientIp, 5, 60000, ipRateLimits)) {
+      writeCorsHeaders(req, res);
+      sendJson(res, 429, { ok: false, error: "Too many authentication attempts. Please wait a minute." });
+      return;
+    }
+  }
+
   if (req.method === "POST" && urlObj.pathname === "/api/auth/register") {
     let body = "";
     req.on("data", chunk => { body += chunk; });
@@ -416,6 +447,44 @@ const server = http.createServer(async (req, res) => {
   const isUninitialized = usersList.length === 0;
 
   let isUnauthProfileRequest = false;
+
+  // GET Data Export
+  if (req.method === "GET" && urlObj.pathname === "/api/profile/export") {
+    if (!activeUser) {
+      writeCorsHeaders(req, res);
+      sendJson(res, 401, { ok: false, error: "Authentication required" });
+      return;
+    }
+    const profile = await db.getProfile(activeUser.id) || {};
+    const apps = await db.getApplications(activeUser.id) || [];
+    
+    writeCorsHeaders(req, res);
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Disposition": "attachment; filename=jobxapply-data-export.json",
+      "Cache-Control": "no-store"
+    });
+    res.end(JSON.stringify({
+      user: { id: activeUser.id, email: activeUser.email, name: activeUser.name, tier: activeUser.tier, role: activeUser.role },
+      profile: profile,
+      applications: apps,
+      exportedAt: Date.now()
+    }, null, 2));
+    return;
+  }
+
+  // DELETE Candidate Profile & Account
+  if (req.method === "DELETE" && urlObj.pathname === "/api/profile") {
+    if (!activeUser) {
+      writeCorsHeaders(req, res);
+      sendJson(res, 401, { ok: false, error: "Authentication required" });
+      return;
+    }
+    await db.deleteUser(activeUser.id);
+    writeCorsHeaders(req, res);
+    sendJson(res, 200, { ok: true, message: "Account and profile successfully purged." });
+    return;
+  }
   
   if (urlObj.pathname === "/api/profile" && req.method === "GET") {
     if (isUninitialized) {
@@ -864,6 +933,12 @@ const server = http.createServer(async (req, res) => {
 
   // POST /api/resume/generate
   if (req.method === "POST" && urlObj.pathname === "/api/resume/generate") {
+    if (activeUser) {
+      if (isRateLimited(activeUser.id, 5, 3600000, userRateLimits)) {
+        sendJson(res, 429, { ok: false, error: "Too many resume generation attempts. Limit is 5 per hour." });
+        return;
+      }
+    }
     let body = "";
     req.on("data", chunk => { body += chunk; });
     req.on("end", () => {

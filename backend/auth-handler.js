@@ -1,14 +1,17 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const db = require("./db");
+const crypto = require("crypto");
 
 require("dotenv").config();
-const JWT_SECRET = process.env.JWT_SECRET || "jobxapply_super_secure_vault_secret_key_2026";
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
 
 function sendJson(res, code, payload) {
   res.writeHead(code, {
     "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store"
+    "Cache-Control": "no-store",
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "frame-ancestors 'none'"
   });
   res.end(JSON.stringify(payload));
 }
@@ -122,5 +125,6 @@ function verifyToken(req) {
 module.exports = {
   registerUser,
   loginUser,
-  verifyToken
+  verifyToken,
+  JWT_SECRET
 };

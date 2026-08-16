@@ -92,7 +92,8 @@ function findBestElementForKey(key) {
       bestScore = score;
     }
   }
-  return bestScore > 0 ? best : null;
+  const confidenceThreshold = 6; // Strict 60% minimum score threshold
+  return bestScore >= confidenceThreshold ? best : null;
 }
 
 function setValue(el, value) {
