@@ -16,7 +16,7 @@
   });
 })();
 
-const SYNC_API = 'http://localhost:8787/api';
+const SYNC_API = 'https://jobxapply-backend.onrender.com/api';
 
 // ─── Auth ─────────────────────────────────────────────────────────────────
 
