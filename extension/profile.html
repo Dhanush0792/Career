@@ -23,8 +23,11 @@
       
       <div style="margin-top:12px; margin-bottom:12px; padding:12px; background:rgba(91,79,232,0.08); border:1px solid rgba(91,79,232,0.2); border-radius:8px;">
         <label style="margin-top:0; font-weight:700;">Sync Encryption Passcode *</label>
-        <input id="syncPasscode" type="password" placeholder="Key for zero-knowledge AES-GCM local encryption" style="margin-top:4px;" />
-        <div class="muted" style="margin-top:4px; font-size:11px;">This passcode is never sent to the server in plaintext. It is used locally to encrypt/decrypt details.</div>
+        <div style="display:flex; gap:8px; margin-top:4px;">
+          <input id="syncPasscode" type="password" placeholder="Key for zero-knowledge AES-GCM local encryption" style="margin-top:0;" />
+          <button id="pullCloud" style="margin-top:0; white-space:nowrap; background:#2fddc4; color:#070a18; font-weight:bold; padding:8px 12px; font-size:11px;">Fetch from Cloud</button>
+        </div>
+        <div class="muted" style="margin-top:4px; font-size:11px; margin-bottom:0;">This passcode is never sent to the server in plaintext. It is used locally to encrypt/decrypt details. Use the "Fetch from Cloud" button to load your synced profile.</div>
       </div>
 
       <div class="row">

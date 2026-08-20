@@ -104,9 +104,7 @@ function setValue(el, value) {
     document.execCommand("insertText", false, value);
     return true;
   }
-  try {
-    el.focus();
-  } catch (e) {}
+  // Removed el.focus() to avoid rapid page scrolling/jittering during autofill
   const tag = el.tagName?.toLowerCase();
   const type = normalize(el.getAttribute("type"));
   if (tag === "select") {

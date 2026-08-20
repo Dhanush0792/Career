@@ -150,5 +150,35 @@ async function saveProfile(profile, passcodeHash) {
     document.getElementById('conflictUI').style.display = 'none';
   });
   
+  document.getElementById('pullCloud').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const passcode = document.getElementById("syncPasscode").value.trim();
+    if (!passcode) {
+      document.getElementById('status').textContent = 'Error: Passcode is required to fetch profile';
+      return;
+    }
+    
+    document.getElementById('status').textContent = 'Fetching encrypted profile from server...';
+    try {
+      await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
+      const passcodeHash = await generatePasscodeHash(passcode);
+      
+      chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
+        if (res && res.profile && Object.keys(res.profile).length > 0) {
+          const p = res.profile;
+          for (const f of fields) {
+            const el = document.getElementById(f);
+            if (el) el.value = p[f] || "";
+          }
+          document.getElementById('status').textContent = 'Successfully fetched and decrypted profile from cloud!';
+        } else {
+          document.getElementById('status').textContent = 'No profile found on server or decryption failed. Check your passcode.';
+        }
+      });
+    } catch (err) {
+      document.getElementById('status').textContent = 'Fetch Error: ' + err.message;
+    }
+  });
+
   document.getElementById('close').addEventListener('click', () => window.close());
 })();
