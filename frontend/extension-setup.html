@@ -512,22 +512,45 @@ detectBrowser();
 // ── Add to Browser button ────────────────────────────────────────────────────
 function handleAddToBrowser() {
   const ua = navigator.userAgent;
-  addLog('[ACTION] Opening browser extension manager...', 'info');
+  let targetUrl = 'chrome://extensions';
+  let instructions = 'Enable Developer Mode → Load Unpacked.';
 
   if (/Firefox\//.test(ua)) {
-    window.open('about:debugging#/runtime/this-firefox', '_blank');
-    addLog('[GUIDE] Opened Firefox Debugging page. Click "Load Temporary Add-on" and select manifest.json.', 'info');
+    targetUrl = 'about:debugging#/runtime/this-firefox';
+    instructions = 'Click "Load Temporary Add-on" and select manifest.json.';
   } else if (/Edg\//.test(ua)) {
-    window.open('edge://extensions', '_blank');
-    addLog('[GUIDE] Opened Edge Extensions page. Enable Developer Mode → Load Unpacked.', 'info');
-  } else {
-    window.open('chrome://extensions', '_blank');
-    addLog('[GUIDE] Opened Chrome Extensions page. Enable Developer Mode → Load Unpacked.', 'info');
+    targetUrl = 'edge://extensions';
+    instructions = 'Enable Developer Mode → Load Unpacked.';
   }
+
+  addLog('[ACTION] Copying extension manager URL to clipboard...', 'info');
+
+  navigator.clipboard.writeText(targetUrl)
+    .then(() => {
+      addLog(`[SUCCESS] Copied '${targetUrl}' to clipboard!`, 'success');
+      showToast(`URL Copied! Paste '${targetUrl}' in a new tab.`, 'success');
+    })
+    .catch(() => {
+      const el = document.createElement('textarea');
+      el.value = targetUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      addLog(`[SUCCESS] Copied '${targetUrl}' to clipboard!`, 'success');
+      showToast(`URL Copied! Paste '${targetUrl}' in a new tab.`, 'success');
+    });
+
+  addLog(`[GUIDE] Open a new tab, paste '${targetUrl}' in the address bar, and press Enter.`, 'info');
+  addLog(`[GUIDE] Instructions: ${instructions}`, 'info');
+
+  try {
+    window.open(targetUrl, '_blank');
+  } catch (e) {}
 
   setTimeout(() => {
     addLog('[TIP] Select the extracted JobXApply extension folder (the one with manifest.json).', 'info');
-  }, 800);
+  }, 1000);
 }
 
 // ── Download Extension ───────────────────────────────────────────────────────

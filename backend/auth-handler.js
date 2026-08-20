@@ -4,26 +4,51 @@ const db = require("./db");
 const crypto = require("crypto");
 
 require("dotenv").config();
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString("hex");
+
+// ── Validators ─────────────────────────────────────────────────────────────
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+
+function validateEmail(email) {
+  return typeof email === "string" && EMAIL_REGEX.test(email.trim()) && email.length <= 255;
+}
+
+function validatePassword(password) {
+  if (typeof password !== "string") return { ok: false, reason: "Password must be a string" };
+  if (password.length < 8) return { ok: false, reason: "Password must be at least 8 characters" };
+  if (password.length > 128) return { ok: false, reason: "Password must be at most 128 characters" };
+  if (!/[A-Z]/.test(password)) return { ok: false, reason: "Password must contain at least one uppercase letter" };
+  if (!/[0-9]/.test(password)) return { ok: false, reason: "Password must contain at least one digit" };
+  if (!/[^A-Za-z0-9]/.test(password)) return { ok: false, reason: "Password must contain at least one special character (!@#$%^&* etc.)" };
+  return { ok: true };
+}
 
 function sendJson(res, code, payload) {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Content-Security-Policy", "frame-ancestors 'none'");
   res.statusCode = code;
   res.end(JSON.stringify(payload));
 }
 
 // Register user
-async function registerUser(req, res, bodyData) {
+async function registerUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures } = {}) {
   try {
     const { name, email, password } = bodyData;
     if (!email || !password || !name) {
       return sendJson(res, 400, { ok: false, error: "Name, email, and password are required" });
     }
-    if (password.length < 8) {
-      return sendJson(res, 400, { ok: false, error: "Password must be at least 8 characters" });
+    if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 100) {
+      return sendJson(res, 400, { ok: false, error: "Name must be between 2 and 100 characters" });
+    }
+    if (!validateEmail(email)) {
+      return sendJson(res, 400, { ok: false, error: "Invalid email address format" });
+    }
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.ok) {
+      return sendJson(res, 400, { ok: false, error: pwCheck.reason });
     }
 
     const existingUser = await db.getUserByEmail(email);
@@ -31,7 +56,7 @@ async function registerUser(req, res, bodyData) {
       return sendJson(res, 400, { ok: false, error: "Email already registered" });
     }
 
-    const salt = bcrypt.genSaltSync(10);
+    const salt = bcrypt.genSaltSync(12); // Upgraded from 10 to 12 rounds
     const passwordHash = bcrypt.hashSync(password, salt);
 
     // First user is automatically admin
@@ -39,8 +64,8 @@ async function registerUser(req, res, bodyData) {
     const role = list.length === 0 ? "admin" : "user";
 
     const user = await db.createUser({
-      email,
-      name,
+      email: email.toLowerCase().trim(),
+      name: name.trim(),
       passwordHash,
       role
     });
@@ -48,7 +73,7 @@ async function registerUser(req, res, bodyData) {
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "24h" } // Shortened from 7d to 24h
     );
 
     sendJson(res, 200, {
@@ -63,32 +88,45 @@ async function registerUser(req, res, bodyData) {
     });
   } catch (err) {
     console.error("Registration error:", err);
-    sendJson(res, 500, { ok: false, error: "Server registration error: " + err.message });
+    sendJson(res, 500, { ok: false, error: "Registration failed. Please try again." });
   }
 }
 
 // Login user
-async function loginUser(req, res, bodyData) {
+async function loginUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures } = {}) {
   try {
     const { email, password } = bodyData;
     if (!email || !password) {
       return sendJson(res, 400, { ok: false, error: "Email and password are required" });
     }
+    if (!validateEmail(email)) {
+      return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
+    }
+
+    // Check account lockout
+    if (isAccountLocked && isAccountLocked(email)) {
+      return sendJson(res, 429, { ok: false, error: "Account temporarily locked due to repeated failed attempts. Please wait 15 minutes." });
+    }
 
     const user = await db.getUserByEmail(email);
     if (!user) {
+      if (recordLoginFailure) recordLoginFailure(email);
       return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
     }
 
     const validPassword = bcrypt.compareSync(password, user.passwordHash);
     if (!validPassword) {
+      if (recordLoginFailure) recordLoginFailure(email);
       return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
     }
+
+    // Success: clear failure counter
+    if (clearLoginFailures) clearLoginFailures(email);
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "24h" }
     );
 
     sendJson(res, 200, {
@@ -103,7 +141,7 @@ async function loginUser(req, res, bodyData) {
     });
   } catch (err) {
     console.error("Login error:", err);
-    sendJson(res, 500, { ok: false, error: "Server login error: " + err.message });
+    sendJson(res, 500, { ok: false, error: "Login failed. Please try again." });
   }
 }
 
@@ -127,3 +165,4 @@ module.exports = {
   verifyToken,
   JWT_SECRET
 };
+

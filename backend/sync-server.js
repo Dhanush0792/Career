@@ -220,6 +220,40 @@ const clients = new Set(); // Set of objects: { userId, res }
 const ipRateLimits = new Map();
 const userRateLimits = new Map();
 const anonAtsScans = new Map(); // clientIp -> lastScanTimestamp
+const loginFailures = new Map(); // email -> { count, lockedUntil }
+
+// ── Constants ──────────────────────────────────────────────────────────────
+const MAX_BODY_BYTES = 256 * 1024; // 256 KB — reject bodies larger than this
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+// ── CORS Allowlist ─────────────────────────────────────────────────────────
+// Read from env, or fall back to sensible defaults for local dev
+const ALLOWED_ORIGINS_RAW = process.env.ALLOWED_ORIGINS || "";
+const ALLOWED_ORIGINS = new Set([
+  "http://localhost:3000",
+  "http://localhost:8787",
+  "http://localhost:5500",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:5500",
+  // Production Netlify / Render origins
+  "https://jobxapply.netlify.app",
+  "https://careerhub-app.netlify.app",
+  // Extension origin
+  "chrome-extension://",
+  // Custom overrides from .env
+  ...ALLOWED_ORIGINS_RAW.split(",").map(o => o.trim()).filter(Boolean)
+]);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // Non-browser/server-to-server requests
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  // Allow all chrome-extension:// origins (browser extension requests)
+  if (origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://")) return true;
+  // Allow all localhost variants (for local dev)
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
+  return false;
+}
 
 function isRateLimited(key, limit, windowMs, trackerMap) {
   const now = Date.now();
@@ -236,16 +270,62 @@ function isRateLimited(key, limit, windowMs, trackerMap) {
   return false;
 }
 
+// ── Account Lockout Helpers ────────────────────────────────────────────────
+function recordLoginFailure(email) {
+  const key = email.toLowerCase();
+  const entry = loginFailures.get(key) || { count: 0, lockedUntil: 0 };
+  entry.count += 1;
+  if (entry.count >= MAX_LOGIN_ATTEMPTS) {
+    entry.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+  }
+  loginFailures.set(key, entry);
+}
+
+function isAccountLocked(email) {
+  const key = email.toLowerCase();
+  const entry = loginFailures.get(key);
+  if (!entry) return false;
+  if (entry.lockedUntil && Date.now() < entry.lockedUntil) return true;
+  return false;
+}
+
+function clearLoginFailures(email) {
+  loginFailures.delete(email.toLowerCase());
+}
+
+// ── Body Reader with Size Limit ────────────────────────────────────────────
+function readBody(req, maxBytes = MAX_BODY_BYTES) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    let size = 0;
+    req.on("data", chunk => {
+      size += chunk.length;
+      if (size > maxBytes) {
+        req.destroy();
+        reject(new Error("Request body too large"));
+        return;
+      }
+      body += chunk;
+    });
+    req.on("end", () => resolve(body));
+    req.on("error", reject);
+  });
+}
+
 function writeCorsHeaders(req, res) {
   const origin = req.headers.origin;
-  if (origin) {
+  if (origin && isAllowedOrigin(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  } else if (!origin) {
+    // Non-browser request — no ACAO header needed
   } else {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    // Blocked origin — do NOT reflect it
+    res.setHeader("Access-Control-Allow-Origin", "null");
   }
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Vary", "Origin");
 }
 
 async function getRequestUser(req) {
@@ -334,20 +414,23 @@ const server = http.createServer(async (req, res) => {
   // Parse URL
   const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
+
   // POST Telemetry Hit
   if (req.method === "POST" && urlObj.pathname === "/api/telemetry/hit") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", async () => {
-      try {
-        const incoming = JSON.parse(body || "{}");
-        const metric = incoming.metric || "pageViews";
-        await db.recordTelemetryHit(metric);
-        sendJson(res, 200, { ok: true });
-      } catch (e) {
-        sendJson(res, 400, { ok: false, error: e.message });
+    // HIGH-5: Whitelist metric names to prevent pollution of telemetry table
+    const ALLOWED_METRICS = new Set(["pageViews", "apiRequests", "atsScans", "resumeBuilds", "coverLetters", "extensionDownloads"]);
+    try {
+      const body = await readBody(req, 4096); // 4KB limit for this tiny payload
+      const incoming = JSON.parse(body || "{}");
+      const metric = incoming.metric;
+      if (!metric || !ALLOWED_METRICS.has(metric)) {
+        return sendJson(res, 400, { ok: false, error: "Invalid metric name" });
       }
-    });
+      await db.recordTelemetryHit(metric);
+      sendJson(res, 200, { ok: true });
+    } catch (e) {
+      sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
+    }
     return;
   }
 
@@ -366,7 +449,8 @@ const server = http.createServer(async (req, res) => {
 
   // GET /api/ats/check-limit (Check anonymous daily scan limit)
   if (req.method === "GET" && urlObj.pathname === "/api/ats/check-limit") {
-    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown-ip";
+    const xfwd = req.headers["x-forwarded-for"];
+    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
     const lastScan = anonAtsScans.get(clientIp);
     const dayMs = 24 * 60 * 60 * 1000;
     const isLimited = lastScan && (Date.now() - lastScan < dayMs);
@@ -376,7 +460,8 @@ const server = http.createServer(async (req, res) => {
 
   // POST /api/ats/record-scan (Record anonymous scan)
   if (req.method === "POST" && urlObj.pathname === "/api/ats/record-scan") {
-    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown-ip";
+    const xfwd = req.headers["x-forwarded-for"];
+    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
     const lastScan = anonAtsScans.get(clientIp);
     const dayMs = 24 * 60 * 60 * 1000;
     if (lastScan && (Date.now() - lastScan < dayMs)) {
@@ -390,8 +475,10 @@ const server = http.createServer(async (req, res) => {
 
   // Authentication routes
   if (req.method === "POST" && (urlObj.pathname === "/api/auth/register" || urlObj.pathname === "/api/auth/login")) {
-    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown-ip";
-    if (isRateLimited(clientIp, 5, 60000, ipRateLimits)) {
+    // Use only the first IP from X-Forwarded-For to prevent spoofing (trusting Render's proxy)
+    const xfwd = req.headers["x-forwarded-for"];
+    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
+    if (isRateLimited(clientIp, 10, 60000, ipRateLimits)) {
       writeCorsHeaders(req, res);
       sendJson(res, 429, { ok: false, error: "Too many authentication attempts. Please wait a minute." });
       return;
@@ -399,30 +486,24 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && urlObj.pathname === "/api/auth/register") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", async () => {
-      try {
-        const payload = JSON.parse(body || "{}");
-        await auth.registerUser(req, res, payload);
-      } catch (e) {
-        sendJson(res, 400, { ok: false, error: "Invalid JSON format" });
-      }
-    });
+    try {
+      const body = await readBody(req);
+      const payload = JSON.parse(body || "{}");
+      await auth.registerUser(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures });
+    } catch (e) {
+      sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: e.message === "Request body too large" ? "Request body too large" : "Invalid JSON format" });
+    }
     return;
   }
 
   if (req.method === "POST" && urlObj.pathname === "/api/auth/login") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", async () => {
-      try {
-        const payload = JSON.parse(body || "{}");
-        await auth.loginUser(req, res, payload);
-      } catch (e) {
-        sendJson(res, 400, { ok: false, error: "Invalid JSON format" });
-      }
-    });
+    try {
+      const body = await readBody(req);
+      const payload = JSON.parse(body || "{}");
+      await auth.loginUser(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures });
+    } catch (e) {
+      sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: e.message === "Request body too large" ? "Request body too large" : "Invalid JSON format" });
+    }
     return;
   }
 
@@ -457,19 +538,28 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Public broken field report submission
+  // Public broken field report submission — HIGH-4: Validate and sanitize all fields
   if (req.method === "POST" && urlObj.pathname === "/api/report") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", async () => {
-      try {
-        const payload = JSON.parse(body || "{}");
-        const entry = await db.createReport(payload);
-        sendJson(res, 200, { ok: true, report: entry });
-      } catch (e) {
-        sendJson(res, 400, { ok: false, error: e.message });
+    try {
+      const body = await readBody(req, 8192); // 8KB limit for reports
+      const payload = JSON.parse(body || "{}");
+      // Validate required fields and enforce max lengths
+      const portal = typeof payload.portal === "string" ? payload.portal.slice(0, 128).trim() : null;
+      const field = typeof payload.field === "string" ? payload.field.slice(0, 128).trim() : null;
+      if (!portal || !field) {
+        return sendJson(res, 400, { ok: false, error: "portal and field are required" });
       }
-    });
+      const sanitized = {
+        portal,
+        field,
+        selectorTried: typeof payload.selectorTried === "string" ? payload.selectorTried.slice(0, 512) : "",
+        reporterEmail: typeof payload.reporterEmail === "string" ? payload.reporterEmail.slice(0, 255) : "anonymous"
+      };
+      const entry = await db.createReport(sanitized);
+      sendJson(res, 200, { ok: true, report: entry });
+    } catch (e) {
+      sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
+    }
     return;
   }
 
@@ -715,6 +805,11 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 403, { ok: false, error: "Forbidden: Admin privileges required" });
       return;
     }
+    // Rate limit admin reads to prevent enumeration scraping
+    if (isRateLimited(activeUser.id, 30, 60000, userRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Too many admin requests. Please slow down." });
+      return;
+    }
   }
 
   // GET Admin Telemetry Stats
@@ -724,10 +819,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET User List
+  // GET User List — HIGH-2: Strip passcodeHash and passwordHash from response
   if (req.method === "GET" && urlObj.pathname === "/api/admin/users") {
     const users = await db.getUsersList();
-    sendJson(res, 200, { ok: true, users });
+    // Remove sensitive authentication fields before sending to client
+    const safeUsers = users.map(({ passcodeHash, passwordHash, ...rest }) => rest);
+    sendJson(res, 200, { ok: true, users: safeUsers });
     return;
   }
 
