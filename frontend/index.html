@@ -2155,6 +2155,7 @@ window.addEventListener('load', () => {
   let isDragging = false;
   let inactivityTimer = null;
   let draw = () => {};
+  let INDIA_SOI = null;
 
   canvas.addEventListener('mousedown', e => {
     autoRotate = false;
@@ -2201,103 +2202,6 @@ window.addEventListener('load', () => {
     inactivityTimer = setTimeout(() => { autoRotate = true; }, 1500);
   });
 
-  const INDIA_SOI = {
-    type: 'Feature',
-    geometry: {
-      type: 'Polygon',
-      coordinates: [[
-        // === GUJARAT / SINDH COAST (SW starting point) ===
-        [68.18, 23.88],
-        // Rann of Kutch / Gujarat west coast
-        [68.50, 24.00], [68.84, 24.62], [69.51, 24.19], [70.18, 24.32],
-        [70.82, 25.43], [70.33, 26.87],
-        // Sindh / Rajasthan border
-        [70.71, 27.73], [71.55, 27.83],
-        // Punjab border — entering J&K LOC
-        [72.20, 28.40], [72.85, 29.19],
-        [73.31, 29.93], [73.91, 30.60],
-        [74.40, 31.27], [74.57, 32.16],
-        // J&K LOC climbs north
-        [73.79, 32.71], [73.72, 33.17],
-        [73.60, 33.79], [73.41, 34.10],
-        // PoK — Northern Areas (Gilgit-Baltistan, India's claim)
-        [73.47, 34.69],
-        [73.91, 35.22], [74.30, 35.51],
-        [74.67, 35.88], [74.89, 36.30],
-        // Siachen Glacier / Karakoram
-        [75.37, 36.68], [76.00, 36.99],
-        // NORTHERNMOST POINT — Karakoram Pass 37.09°N
-        [76.78, 37.09],
-        [77.18, 37.01],
-        // Aksai Chin (Chinese administered, Indian claim)
-        [77.73, 36.50], [78.31, 35.95],
-        [78.89, 35.49], [79.50, 35.08],
-        [79.97, 34.39], [80.25, 33.78],
-        // India–China border near Uttarakhand
-        [80.00, 33.02], [79.16, 32.72],
-        [78.60, 32.00], [78.77, 31.03],
-        // Uttarakhand Himalayas
-        [79.16, 30.42], [79.72, 30.14],
-        [80.23, 29.63], [80.55, 29.15],
-        // Nepal border
-        [80.87, 28.63], [81.30, 28.02],
-        [82.52, 27.70], [83.78, 27.47],
-        [84.80, 27.29], [85.29, 26.74],
-        // Sikkim sector
-        [85.74, 26.63], [86.77, 26.52],
-        [88.04, 26.43],
-        // Sikkim into Bhutan
-        [88.17, 26.81], [88.52, 27.29],
-        [88.76, 27.85], [88.89, 27.33],
-        // Bhutan border
-        [89.10, 26.82], [89.57, 26.91],
-        [90.37, 26.87], [91.29, 26.80],
-        // Arunachal Pradesh — McMahon Line
-        [91.46, 27.75], [92.04, 26.87],
-        [92.55, 27.78], [93.44, 27.47],
-        [94.02, 28.21], [95.16, 28.99],
-        // Easternmost — Arunachal at ~97°E
-        [95.96, 29.25], [96.50, 29.00],
-        [97.29, 28.22],
-        // Myanmar border (south)
-        [97.03, 27.50], [96.28, 27.12],
-        [95.40, 26.74], [95.52, 25.56],
-        [94.58, 24.30], [93.22, 24.01],
-        // Manipur / Mizoram
-        [92.23, 23.32], [92.16, 22.05],
-        [92.66, 21.89], [92.20, 21.07],
-        // Bangladesh border (south)
-        [91.84, 22.40], [91.41, 23.00],
-        [91.17, 24.04], [92.14, 24.34],
-        [91.95, 25.22], [89.83, 25.24],
-        // Bangladesh west border → West Bengal
-        [88.84, 26.32], [88.51, 24.97],
-        [88.73, 23.48], [88.91, 21.81],
-        // Bay of Bengal coast (Odisha / AP)
-        [87.00, 21.52], [85.79, 20.05],
-        [83.23, 18.03], [80.20, 16.02],
-        [80.00, 13.50],
-        // Kanyakumari tip
-        [79.81, 10.52], [79.21, 9.20],
-        [77.52, 8.09],
-        // Kerala west coast
-        [76.47, 8.37], [76.00, 10.53],
-        [75.73, 11.37], [74.83, 12.82],
-        // Karnataka / Goa
-        [74.12, 14.81], [73.81, 15.50],
-        // Maharashtra / Gujarat west coast
-        [72.83, 19.04], [72.22, 20.17],
-        [72.79, 21.03], [72.18, 22.20],
-        // Gulf of Kutch → back to start
-        [70.15, 22.51], [68.83, 22.82],
-        [68.18, 23.10],
-        [68.18, 23.88]
-      ]]
-    }
-  };
-
-
-
   const projection = d3.geoOrthographic()
     .scale(RADIUS)
     .translate([CX, CY])
@@ -2306,10 +2210,13 @@ window.addEventListener('load', () => {
   const path = d3.geoPath(projection, context);
   const graticule = d3.geoGraticule();
 
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
-    .then(r => { if (!r.ok) throw new Error('World atlas load failed'); return r.json(); })
-    .then(world => {
-      const land = topojson.feature(world, world.objects.countries);
+  Promise.all([
+    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r => { if (!r.ok) throw new Error('World atlas load failed'); return r.json(); }),
+    fetch('india-boundary.json').then(r => { if (!r.ok) throw new Error('India boundary load failed'); return r.json(); })
+  ])
+  .then(([world, indiaBoundary]) => {
+    INDIA_SOI = indiaBoundary;
+    const land = topojson.feature(world, world.objects.countries);
 
       // Remove India (id=356) and trim Pakistan & China in disputed zones
       // so our SOI overlay paints clean on top
@@ -2372,20 +2279,22 @@ window.addEventListener('load', () => {
         });
 
         // ── INDIA — SOI Official Boundary overlay ───────────────
-        context.beginPath();
-        path(INDIA_SOI);
-        context.fillStyle = 'rgba(47, 221, 196, 0.25)';
-        context.fill();
-        // Bright teal border
-        context.strokeStyle = 'rgba(47, 221, 196, 0.75)';
-        context.lineWidth = 1.4;
-        context.stroke();
-        // Inner glow pass
-        context.beginPath();
-        path(INDIA_SOI);
-        context.strokeStyle = 'rgba(47, 221, 196, 0.2)';
-        context.lineWidth = 4;
-        context.stroke();
+        if (INDIA_SOI) {
+          context.beginPath();
+          path(INDIA_SOI);
+          context.fillStyle = 'rgba(47, 221, 196, 0.25)';
+          context.fill();
+          // Bright teal border
+          context.strokeStyle = 'rgba(47, 221, 196, 0.75)';
+          context.lineWidth = 1.4;
+          context.stroke();
+          // Inner glow pass
+          context.beginPath();
+          path(INDIA_SOI);
+          context.strokeStyle = 'rgba(47, 221, 196, 0.2)';
+          context.lineWidth = 4;
+          context.stroke();
+        }
 
         // ── City markers & pulse rings ──────────────────────────
         const visibleCities = [];
