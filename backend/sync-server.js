@@ -432,15 +432,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Public extension download
-  if (req.method === "GET" && urlObj.pathname === "/api/extension/download") {
+  // Public extension download (handles both HEAD check and GET download)
+  if ((req.method === "GET" || req.method === "HEAD") && urlObj.pathname === "/api/extension/download") {
     const zipPath = path.join(__dirname, "jobxapply-extension.zip");
     if (fs.existsSync(zipPath)) {
       res.writeHead(200, {
         "Content-Type": "application/zip",
         "Content-Disposition": "attachment; filename=jobxapply-extension.zip"
       });
-      fs.createReadStream(zipPath).pipe(res);
+      if (req.method === "GET") {
+        fs.createReadStream(zipPath).pipe(res);
+      } else {
+        res.end();
+      }
     } else {
       sendJson(res, 404, { ok: false, error: "Extension zip package not found" });
     }
