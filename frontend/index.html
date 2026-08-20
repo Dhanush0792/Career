@@ -1204,8 +1204,11 @@ footer {
         display: flex;
         align-items: center;
         justify-content: center;
-        align-self: flex-start;
+        align-self: center;
         margin-top: 0;
+        /* Prevent globe from escaping its grid column */
+        min-width: 0;
+        overflow: visible;
       }
       .globe-wrap {
         width: 440px;
@@ -1213,24 +1216,25 @@ footer {
         max-width: 100%;
         aspect-ratio: 1 / 1;
         position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         cursor: grab;
         flex-shrink: 0;
+        /* Clip badge and any overflows to the box bounds */
+        overflow: hidden;
+        border-radius: 50%;
       }
       .globe-wrap:active {
         cursor: grabbing;
       }
       .globe-status-badge {
         position: absolute;
-        bottom: 10px;
+        /* inside the globe circle — 50% height - radius*sin(30°) ≈ bottom 22% */
+        bottom: 18%;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(8, 12, 28, 0.90);
-        border: 1px solid rgba(47, 221, 196, 0.25);
+        background: rgba(8, 12, 28, 0.88);
+        border: 1px solid rgba(47, 221, 196, 0.30);
         border-radius: 20px;
-        padding: 6px 14px;
+        padding: 5px 14px;
         font-family: var(--mono);
         font-size: 10px;
         color: var(--muted);
@@ -1240,7 +1244,7 @@ footer {
         display: flex;
         align-items: center;
         gap: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
       }
       .pulse-green {
         color: #2FDDC4;
@@ -1254,7 +1258,7 @@ footer {
 
       <div class="resume-card-wrap">
         <div class="globe-wrap">
-          <canvas id="globe-canvas" width="440" height="440" style="max-width:100%;height:auto;display:block;"></canvas>
+          <canvas id="globe-canvas" width="440" height="440" style="width:100%;height:100%;display:block;"></canvas>
           <div class="globe-status-badge">
             <span class="pulse-green">●</span>
             <span id="globe-banner-stat">Initializing vector maps...</span>
@@ -2144,14 +2148,59 @@ window.addEventListener('load', () => {
     { name: 'Sydney',        coords: [151.2093, -33.8688],msg: 'Zero-knowledge handshake: Sydney' }
   ];
 
-  // SOI Official India claim boundary [lon, lat]
-  // Verified key waypoints:
-  //   SW tip:          Kanyakumari ~77.5°E, 8.09°N
-  //   NW Gujarat:      Sir Creek ~68.18°E, 23.88°N
-  //   LoC (Pakistan):  Lahore sector → J&K LoC up to ~73.47°E, 34.69°N
-  //   PoK N edge:      Karakoram Pass ~76.78°E, 37.09°N (India's northernmost claim)
-  //   Aksai Chin:      ~80°E, 34.4°N (India claims up to ~80.4°E boundary)
-  //   McMahon Line:    Arunachal ~97.3°E, 28.22°N
+  let rotation = [20, -20, 0];
+  let autoRotate = true;
+  let dragStart = null;
+  let dragRotation = null;
+  let isDragging = false;
+  let inactivityTimer = null;
+  let draw = () => {};
+
+  canvas.addEventListener('mousedown', e => {
+    autoRotate = false;
+    isDragging = true;
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    dragStart = { x: e.clientX, y: e.clientY };
+    dragRotation = [...rotation];
+  });
+  window.addEventListener('mousemove', e => {
+    if (!isDragging || !dragStart) return;
+    rotation[0] = dragRotation[0] + (e.clientX - dragStart.x) * 0.4;
+    rotation[1] = Math.max(-80, Math.min(80, dragRotation[1] - (e.clientY - dragStart.y) * 0.4));
+    projection.rotate(rotation);
+    draw();
+  });
+  window.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    dragStart = null;
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => { autoRotate = true; }, 1500);
+  });
+
+  canvas.addEventListener('touchstart', e => {
+    autoRotate = false;
+    isDragging = true;
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    dragRotation = [...rotation];
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchmove', e => {
+    if (!isDragging || !dragStart) return;
+    rotation[0] = dragRotation[0] + (e.touches[0].clientX - dragStart.x) * 0.4;
+    rotation[1] = Math.max(-80, Math.min(80, dragRotation[1] - (e.touches[0].clientY - dragStart.y) * 0.4));
+    projection.rotate(rotation);
+    draw();
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => {
+    isDragging = false;
+    dragStart = null;
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => { autoRotate = true; }, 1500);
+  });
+
   const INDIA_SOI = {
     type: 'Feature',
     geometry: {
@@ -2171,7 +2220,7 @@ window.addEventListener('load', () => {
         // J&K LOC climbs north
         [73.79, 32.71], [73.72, 33.17],
         [73.60, 33.79], [73.41, 34.10],
-        // PoK — Northern Areas (Gilgit-Baltistan claimed by India)
+        // PoK — Northern Areas (Gilgit-Baltistan, India's claim)
         [73.47, 34.69],
         [73.91, 35.22], [74.30, 35.51],
         [74.67, 35.88], [74.89, 36.30],
@@ -2247,11 +2296,7 @@ window.addEventListener('load', () => {
     }
   };
 
-  let rotation = [20, -20, 0];  // Start showing India
-  let autoRotate = true;
-  let dragStart = null;
-  let dragRotation = null;
-  let inactivityTimer = null;
+
 
   const projection = d3.geoOrthographic()
     .scale(RADIUS)
@@ -2293,7 +2338,7 @@ window.addEventListener('load', () => {
           })
       };
 
-      function draw() {
+      draw = function() {
         context.clearRect(0, 0, W, H);
 
         // ── Globe ocean background ──────────────────────────────

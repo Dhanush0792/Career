@@ -16,7 +16,12 @@
   });
 })();
 
-const SYNC_API = 'https://jobxapply-backend.onrender.com/api';
+const SYNC_API = (window.location.hostname === 'localhost' || 
+                  window.location.hostname === '127.0.0.1' || 
+                  window.location.protocol === 'file:')
+  ? 'http://localhost:8787/api'
+  : 'https://jobxapply-backend.onrender.com/api';
+
 
 // ─── Auth ─────────────────────────────────────────────────────────────────
 
@@ -34,7 +39,7 @@ function requireAuth() {
   }
 
   // Whitelist public pages (extension-agnostic names)
-  const publicPages = ['', 'auth', 'extension-setup', 'extension-landing', 'index', 'about', 'tools'];
+  const publicPages = ['', 'auth', 'extension-setup', 'extension-landing', 'index', 'about', 'tools', 'ats-checker'];
   if (publicPages.includes(page)) {
     if (localStorage.getItem('jxa_token')) {
       pullApplicationsFromServer().catch(() => {});
@@ -627,18 +632,27 @@ const NAV_ITEMS = [
  * @param {string} activePage - The current page filename (e.g. 'dashboard.html').
  */
 function renderNav(container, activePage) {
+  const token = localStorage.getItem('jxa_token');
   const links = NAV_ITEMS.map(item => {
+    // If not logged in, only show ATS, Extension
+    const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html'].includes(item.href);
+    if (!token && isPrivate) return '';
+
     const isActive = item.href === activePage;
     return `<a href="${item.href}" class="nav__link${isActive ? ' nav__link--active' : ''}">${item.label}</a>`;
   }).join('');
 
+  const btnHtml = token
+    ? `<button class="nav__logout" onclick="logout()">LOGOUT</button>`
+    : `<button class="nav__logout" onclick="window.location.href='auth.html'">LOGIN</button>`;
+
   container.innerHTML = `
     <div class="nav__inner">
-      <a href="dashboard.html" class="nav__logo">
-        <span class="nav__logo-bracket">[</span>&nbsp;CH&nbsp;<span class="nav__logo-bracket">]</span>
+      <a href="${token ? 'dashboard.html' : 'index.html'}" class="nav__logo">
+        <span class="nav__logo-bracket">[</span>&nbsp;JobXApply&nbsp;<span class="nav__logo-bracket">]</span>
       </a>
       <div class="nav__links">${links}</div>
-      <button class="nav__logout" onclick="logout()">LOGOUT</button>
+      ${btnHtml}
     </div>`;
 }
 

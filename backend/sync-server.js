@@ -219,6 +219,7 @@ const clients = new Set(); // Set of objects: { userId, res }
 
 const ipRateLimits = new Map();
 const userRateLimits = new Map();
+const anonAtsScans = new Map(); // clientIp -> lastScanTimestamp
 
 function isRateLimited(key, limit, windowMs, trackerMap) {
   const now = Date.now();
@@ -362,6 +363,30 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && urlObj.pathname === "/api/status") {
     const stats = await db.getStats();
     sendJson(res, 200, { ok: true, status: "online", users: stats.totalUsers, version: "1.2.0" });
+    return;
+  }
+
+  // GET /api/ats/check-limit (Check anonymous daily scan limit)
+  if (req.method === "GET" && urlObj.pathname === "/api/ats/check-limit") {
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown-ip";
+    const lastScan = anonAtsScans.get(clientIp);
+    const dayMs = 24 * 60 * 60 * 1000;
+    const isLimited = lastScan && (Date.now() - lastScan < dayMs);
+    sendJson(res, 200, { ok: true, allowed: !isLimited, remaining: isLimited ? 0 : 1 });
+    return;
+  }
+
+  // POST /api/ats/record-scan (Record anonymous scan)
+  if (req.method === "POST" && urlObj.pathname === "/api/ats/record-scan") {
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown-ip";
+    const lastScan = anonAtsScans.get(clientIp);
+    const dayMs = 24 * 60 * 60 * 1000;
+    if (lastScan && (Date.now() - lastScan < dayMs)) {
+      sendJson(res, 429, { ok: false, error: "Daily free scan limit reached (1/1). Sign up to unlock unlimited scans." });
+      return;
+    }
+    anonAtsScans.set(clientIp, Date.now());
+    sendJson(res, 200, { ok: true });
     return;
   }
 

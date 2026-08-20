@@ -285,7 +285,7 @@
     const token = localStorage.getItem("jxa_token");
     let reports = mockReports;
     try {
-      const res = await fetch('http://localhost:8787/api/reports', {
+      const res = await fetch(`${SYNC_API}/reports`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {

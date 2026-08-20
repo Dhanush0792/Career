@@ -260,7 +260,7 @@
     let users = mockUsers;
     
     try {
-      const res = await fetch('http://localhost:8787/api/admin/users', {
+      const res = await fetch(`${SYNC_API}/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -334,7 +334,7 @@
     }
     try {
       const token = localStorage.getItem("jxa_token");
-      const res = await fetch(`http://localhost:8787/api/admin/users/${id}/tier`, {
+      const res = await fetch(`${SYNC_API}/admin/users/${id}/tier`, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -364,7 +364,7 @@
     }
     try {
       const token = localStorage.getItem("jxa_token");
-      const res = await fetch(`http://localhost:8787/api/admin/users/${id}`, {
+      const res = await fetch(`${SYNC_API}/admin/users/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

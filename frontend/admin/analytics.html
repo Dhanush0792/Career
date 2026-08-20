@@ -330,7 +330,7 @@
   async function loadAnalytics() {
     const token = localStorage.getItem("jxa_token");
     try {
-      const res = await fetch('http://localhost:8787/api/admin/stats', {
+      const res = await fetch(`${SYNC_API}/admin/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {

@@ -400,7 +400,7 @@
     const sseStat = document.getElementById('stat-sse');
     
     try {
-      const res = await fetch('http://localhost:8787/api/status');
+      const res = await fetch(`${SYNC_API}/status`);
       if(res.ok) {
         badge.textContent = 'ONLINE';
         badge.className = 'health-badge';
@@ -414,7 +414,7 @@
 
     try {
       const token = localStorage.getItem("jxa_token");
-      const res = await fetch('http://localhost:8787/api/admin/stats', {
+      const res = await fetch(`${SYNC_API}/admin/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if(res.ok) {

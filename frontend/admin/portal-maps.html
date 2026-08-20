@@ -382,7 +382,7 @@
 
   async function loadMaps() {
     try {
-      const res = await fetch('http://localhost:8787/api/maps');
+      const res = await fetch(`${SYNC_API}/maps`);
       if (res.ok) {
         const rawData = await res.json();
         // Bridge object structure to the editor's array expectation
@@ -546,7 +546,7 @@
 
     try {
       const token = localStorage.getItem("jxa_token");
-      const res = await fetch('http://localhost:8787/api/maps', {
+      const res = await fetch(`${SYNC_API}/maps`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

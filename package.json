@@ -1,4 +1,12 @@
 {
+  "name": "jobxapply",
+  "version": "1.0.0",
+  "description": "JobXApply Career Automation Suite",
+  "scripts": {
+    "frontend": "http-server frontend -p 8000",
+    "backend": "cd backend && npm start",
+    "start": "npm run backend"
+  },
   "dependencies": {
     "http-server": "^14.1.1"
   }
