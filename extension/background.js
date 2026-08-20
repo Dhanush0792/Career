@@ -1,6 +1,6 @@
 import { getPortalRule, PORTAL_MAPS, generatePasscodeHash, decryptProfileData, encryptProfileData } from "./shared.js";
 
-const SYNC_API = "http://localhost:8787/api";
+const SYNC_API = "https://jobxapply-backend.onrender.com/api";
 
 async function authenticatedFetch(url, options = {}) {
   return new Promise((resolve, reject) => {
