@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Government Exam Photo & Signature Resizer (SSC, IBPS, UPSC)</title>
+<meta name="description" content="Free online tool to resize and compress photos and signatures for SSC CGL, IBPS PO, and UPSC exam applications. Hit exact KB limits instantly.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js?v=2"></script>
+<style>
+body { padding-top: 80px; }
+.container { max-width: 1000px; margin: 0 auto; padding: 0 20px; z-index: 10; position: relative; }
+.page-header { border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 24px; }
+.page-label { font-family: var(--mono); font-size: 10px; color: var(--primary); letter-spacing: .14em; text-transform: uppercase; }
+.page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); }
+.page-title em { font-style: normal; color: var(--primary); }
+
+.resizer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.card { border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); padding: 24px; border-radius: 14px; backdrop-filter: blur(16px); display: flex; flex-direction: column; gap: 16px; }
+.card-title { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; }
+
+.dropzone { border: 2px dashed var(--glass-border); border-radius: 10px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
+.dropzone:hover { border-color: var(--primary); background: rgba(91, 79, 232, 0.05); }
+.dropzone-label { font-family: var(--mono); font-size: 12px; color: var(--white); text-transform: uppercase; }
+.dropzone-hint { font-size: 10px; color: var(--muted); margin-top: 6px; }
+
+.field-row { display: flex; flex-direction: column; gap: 4px; }
+.field-row label { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.field-row select, .field-row input { background: rgba(7, 10, 24, 0.6); border: 1px solid var(--glass-border); padding: 8px 12px; color: var(--white); font-family: var(--mono); font-size: 11px; border-radius: 8px; outline: none; }
+
+.preview-container { border: 1px solid var(--glass-border); background: rgba(0, 0, 0, 0.4); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; gap: 12px; }
+#preview-image { max-width: 100%; max-height: 250px; border-radius: 4px; display: none; }
+.size-info { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.size-info.success { color: var(--success); }
+.size-info.warn { color: var(--alert); }
+
+.btn { width: 100%; height: 40px; font-family: var(--mono); font-size: 10px; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+.btn-primary { background: var(--primary); color: var(--white); border: 1px solid var(--primary); }
+.btn-primary:hover { background: rgba(91, 79, 232, 0.85); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--glass-border); }
+.btn-ghost:hover { color: var(--white); border-color: var(--white); }
+
+.cta-banner { border: 1px solid rgba(46, 204, 113, 0.2); background: rgba(46, 204, 113, 0.04); border-radius: 12px; padding: 16px; margin-top: 24px; display: flex; justify-content: space-between; align-items: center; }
+.cta-title { font-family: var(--display); font-size: 18px; font-weight: 900; text-transform: uppercase; color: var(--white); }
+.cta-desc { font-family: var(--body); font-size: 12px; color: var(--muted); margin-top: 2px; }
+</style>
+
+<!-- JSON-LD HowTo Schema for AEO/GEO retrieval -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Resize a Photo for SSC CGL or IBPS PO Online",
+  "description": "Step-by-step guide to compress and resize document photos/signatures to match official Indian Government Exam requirements (under 50KB).",
+  "step": [
+    {
+      "@type": "HowToStep",
+      "name": "Select Exam Preset",
+      "text": "Choose your target exam (SSC CGL, IBPS PO, UPSC) and document type (Photo or Signature) from the dropdown."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Upload Image File",
+      "text": "Upload or drag and drop your photo or signature file (JPG/PNG format)."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Adjust Quality and Compression",
+      "text": "Use the quality slider to adjust the file size (KB) until it lights up green (meeting target limits, e.g. 20-50KB)."
+    },
+    {
+      "@type": "HowToStep",
+      "name": "Download Resized Document",
+      "text": "Click the Download button to obtain your optimized document ready for official upload."
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <div class="page-header">
+    <div class="page-label">Free Utility tool</div>
+    <h1 class="page-title">Govt Exam <em>Document Resizer</em></h1>
+  </div>
+
+  <div class="resizer-grid">
+    <!-- Left: Configurations -->
+    <div class="card">
+      <div class="card-title">01 // CONFIGURE PRESETS</div>
+
+      <div class="field-row">
+        <label>Select Target Exam Preset</label>
+        <select id="exam-preset">
+          <option value="ssc-photo">SSC CGL - Photo (20KB - 50KB)</option>
+          <option value="ssc-sign">SSC CGL - Signature (10KB - 20KB)</option>
+          <option value="ibps-photo">IBPS PO - Photo (20KB - 50KB)</option>
+          <option value="ibps-sign">IBPS PO - Signature (10KB - 20KB)</option>
+          <option value="upsc-all">UPSC CSE - Photo & Signature (20KB - 300KB)</option>
+        </select>
+      </div>
+
+      <div class="dropzone" id="upload-zone">
+        <div class="dropzone-label">Select Photo or Signature</div>
+        <div class="dropzone-hint">Drag & Drop JPG/PNG files here</div>
+        <input type="file" id="image-input" accept="image/jpeg, image/png" style="display:none;">
+      </div>
+
+      <div class="field-row">
+        <label>Compression & Quality (<span id="quality-val">80</span>%)</label>
+        <input type="range" id="quality-slider" min="10" max="100" value="80" style="accent-color: var(--primary);">
+      </div>
+
+      <button class="btn btn-primary" id="download-btn" disabled>Download Optimized Image</button>
+    </div>
+
+    <!-- Right: Real-Time Preview & Optimization Status -->
+    <div class="card">
+      <div class="card-title">02 // REAL-TIME OPTIMIZATION STATUS</div>
+
+      <div class="preview-container">
+        <div id="preview-placeholder" style="color: var(--muted); font-size: 11px; font-family: var(--mono);">
+          NO DOCUMENT LOADED
+        </div>
+        <img id="preview-image" alt="Optimized preview">
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px;">
+          <span>Target Size:</span>
+          <span id="target-range" style="color:var(--white);">20 KB - 50 KB</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px;">
+          <span>Current Size:</span>
+          <span id="current-size" class="size-info">—</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px;">
+          <span>Status:</span>
+          <span id="status-badge" class="size-info warn">WAITING FOR FILE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AEO/GEO FAQ Section -->
+  <div class="card" style="margin-top:24px;">
+    <div class="card-title">Frequently Asked Questions</div>
+    <div style="display:flex; flex-direction:column; gap:16px; font-family:var(--body); font-size:12px; line-height:1.6; color:var(--muted);">
+      <div>
+        <strong style="color:var(--white); display:block; margin-bottom:4px;">Q: What are the photo size requirements for the SSC CGL 2026 application?</strong>
+        <span>A: The photo must be in JPEG format, between 20 KB and 50 KB. The dimensions should be 3.5 cm (width) x 4.5 cm (height). Make sure the photo is taken without spectacles and cap, facing straight.</span>
+      </div>
+      <div>
+        <strong style="color:var(--white); display:block; margin-bottom:4px;">Q: How do I resize my signature for the IBPS PO application online?</strong>
+        <span>A: Upload your signature image on our Gov Resizer tool, select the IBPS PO Signature preset, adjust the quality slider to keep the file size between 10 KB and 20 KB, and click download.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acquisition CTA Banner -->
+  <div class="cta-banner">
+    <div>
+      <div class="cta-title">Applying for Government Exams?</div>
+      <div class="cta-desc">Create a fully ATS-compliant professional resume in 2 minutes. Free & unlimited.</div>
+    </div>
+    <a href="auth.html?signup=true" class="btn btn-primary" style="text-decoration:none; width:auto; padding:10px 24px; line-height:20px;">Generate Free Resume</a>
+  </div>
+</div>
+
+<script>
+// Navigation render
+renderNav(document.getElementById('main-nav'), 'gov-resizer.html');
+
+const uploadZone = document.getElementById('upload-zone');
+const imageInput = document.getElementById('image-input');
+const examPreset = document.getElementById('exam-preset');
+const qualitySlider = document.getElementById('quality-slider');
+const qualityVal = document.getElementById('quality-val');
+const downloadBtn = document.getElementById('download-btn');
+const previewImage = document.getElementById('preview-image');
+const previewPlaceholder = document.getElementById('preview-placeholder');
+
+const targetRangeEl = document.getElementById('target-range');
+const currentSizeEl = document.getElementById('current-size');
+const statusBadge = document.getElementById('status-badge');
+
+let loadedImage = null;
+let currentBlob = null;
+let minSizeKb = 20;
+let maxSizeKb = 50;
+let targetWidth = 350;
+let targetHeight = 450;
+
+// Presets registry
+const PRESETS = {
+  'ssc-photo': { min: 20, max: 50, w: 350, h: 450, text: '20 KB - 50 KB' },
+  'ssc-sign': { min: 10, max: 20, w: 400, h: 200, text: '10 KB - 20 KB' },
+  'ibps-photo': { min: 20, max: 50, w: 450, h: 350, text: '20 KB - 50 KB' },
+  'ibps-sign': { min: 10, max: 20, w: 140, h: 60, text: '10 KB - 20 KB' },
+  'upsc-all': { min: 20, max: 300, w: 350, h: 350, text: '20 KB - 300 KB' }
+};
+
+examPreset.addEventListener('change', () => {
+  const p = PRESETS[examPreset.value];
+  minSizeKb = p.min;
+  maxSizeKb = p.max;
+  targetWidth = p.w;
+  targetHeight = p.h;
+  targetRangeEl.textContent = p.text;
+  if (loadedImage) resizeAndCompress();
+});
+
+uploadZone.addEventListener('click', () => imageInput.click());
+imageInput.addEventListener('change', (e) => loadFile(e.target.files[0]));
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = 'var(--primary)'; });
+uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = 'var(--glass-border)'; });
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.style.borderColor = 'var(--glass-border)';
+  if (e.dataTransfer.files.length) loadFile(e.dataTransfer.files[0]);
+});
+
+qualitySlider.addEventListener('input', () => {
+  qualityVal.textContent = qualitySlider.value;
+  if (loadedImage) resizeAndCompress();
+});
+
+function loadFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      loadedImage = img;
+      previewPlaceholder.style.display = 'none';
+      previewImage.style.display = 'block';
+      resizeAndCompress();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resizeAndCompress() {
+  if (!loadedImage) return;
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext('2d');
+  
+  // Center crop/scale cover fitting
+  const hRatio = canvas.width / loadedImage.width;
+  const vRatio = canvas.height / loadedImage.height;
+  const ratio = Math.max(hRatio, vRatio);
+  const centerShift_x = (canvas.width - loadedImage.width * ratio) / 2;
+  const centerShift_y = (canvas.height - loadedImage.height * ratio) / 2;
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(loadedImage, 0, 0, loadedImage.width, loadedImage.height, centerShift_x, centerShift_y, loadedImage.width * ratio, loadedImage.height * ratio);
+  
+  const quality = qualitySlider.value / 100;
+  canvas.toBlob((blob) => {
+    currentBlob = blob;
+    const sizeKb = blob.size / 1024;
+    currentSizeEl.textContent = sizeKb.toFixed(2) + ' KB';
+    previewImage.src = URL.createObjectURL(blob);
+    
+    if (sizeKb >= minSizeKb && sizeKb <= maxSizeKb) {
+      statusBadge.textContent = '✓ VERIFIED: READY TO UPLOAD';
+      statusBadge.className = 'size-info success';
+      downloadBtn.disabled = false;
+    } else {
+      statusBadge.textContent = sizeKb < minSizeKb ? '⚠️ TOO SMALL (ADJUST SLIDER)' : '⚠️ TOO LARGE (ADJUST SLIDER)';
+      statusBadge.className = 'size-info warn';
+      downloadBtn.disabled = true;
+    }
+  }, 'image/jpeg', quality);
+}
+
+downloadBtn.addEventListener('click', () => {
+  if (!currentBlob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(currentBlob);
+  a.download = `optimized_${examPreset.value}_document.jpg`;
+  a.click();
+});
+</script>
+</body>
+</html>
