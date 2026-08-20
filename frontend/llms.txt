@@ -1,0 +1,19 @@
+# /llms.txt
+# JobXApply
+> One profile. Every resume, ATS score check, and job-application autofill.
+
+JobXApply is a resume builder, ATS resume score checker, and browser extension that auto-fills job applications across major portals (Naukri, LinkedIn, Indeed, and others) from a single user profile.
+
+## Key facts
+- Founded: 2026
+- Primary market: students and jobseekers in India
+- Core tools: Resume Builder, ATS Score Checker, Auto-Fill Extension, Application Tracker
+- Pricing: free tier available; paid Pro tier is a time-boxed pass, not a recurring subscription
+
+## Pages
+- /: Product overview and waitlist
+- /ats-checker: How ATS scoring works, and the tool itself
+- /extension-setup: How the auto-fill browser extension works
+
+## Contact
+- support@jobxapply.app

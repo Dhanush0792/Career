@@ -5,6 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="JobXApply — Mission-class career automation. One profile. 50+ portals. Zero friction.">
 <title>JobXApply // One-Click Job Application Assistant</title>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://jobxapply.netlify.app/#organization",
+      "name": "JobXApply",
+      "url": "https://jobxapply.netlify.app/",
+      "logo": "https://jobxapply.netlify.app/logo.png"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "JobXApply",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "Resume builder, ATS score checker, and job-application autofill in one profile."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is an ATS resume score?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An ATS resume score estimates how closely a resume's content and formatting match a target job description, based on keyword coverage, section structure, and formatting compatibility with applicant tracking software. A score above 70% is generally considered a strong match."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the JobXApply browser extension work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The JobXApply extension runs securely in your browser to detect application forms on job portals (like LinkedIn, Naukri, and Indeed) and auto-fills them instantly using your master profile details, saving hours of manual data entry."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson@3"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -426,13 +468,14 @@ body.on-interactive #cur-ring {
   margin-top: 0;
 }
 #globe-canvas {
-  width: 380px;
-  height: 380px;
+  width: 440px;
+  height: 440px;
   max-width: 100%;
   aspect-ratio: 1 / 1;
   display: block;
   cursor: grab;
   margin: 0 auto;
+  border-radius: 50%;
 }
 #globe-canvas:active { cursor: grabbing; }
 /* Globe label overlay */
@@ -1155,7 +1198,7 @@ footer {
         </div>
       </div>
 
-      <!-- Signature element: Interactive 3D Globe Showcase -->
+      <!-- Interactive 3D Globe Showcase -->
       <style>
       .resume-card-wrap {
         display: flex;
@@ -1165,35 +1208,27 @@ footer {
         margin-top: 0;
       }
       .globe-wrap {
-        width: 380px;
-        height: 380px;
+        width: 440px;
+        height: 440px;
         max-width: 100%;
-        max-height: 380px;
         aspect-ratio: 1 / 1;
         position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: grab;
+        flex-shrink: 0;
       }
       .globe-wrap:active {
         cursor: grabbing;
       }
-      #globe-canvas {
-        display: block;
-        width: 380px;
-        height: 380px;
-        max-width: 100%;
-        max-height: 100%;
-        aspect-ratio: 1 / 1;
-      }
       .globe-status-badge {
         position: absolute;
-        bottom: -24px;
+        bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(8, 12, 28, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(8, 12, 28, 0.90);
+        border: 1px solid rgba(47, 221, 196, 0.25);
         border-radius: 20px;
         padding: 6px 14px;
         font-family: var(--mono);
@@ -1205,7 +1240,7 @@ footer {
         display: flex;
         align-items: center;
         gap: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
       }
       .pulse-green {
         color: #2FDDC4;
@@ -1219,7 +1254,7 @@ footer {
 
       <div class="resume-card-wrap">
         <div class="globe-wrap">
-          <canvas id="globe-canvas" width="380" height="380" style="max-width: 100%; height: auto;"></canvas>
+          <canvas id="globe-canvas" width="440" height="440" style="max-width:100%;height:auto;display:block;"></canvas>
           <div class="globe-status-badge">
             <span class="pulse-green">●</span>
             <span id="globe-banner-stat">Initializing vector maps...</span>
