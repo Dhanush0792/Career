@@ -239,9 +239,7 @@ function isRateLimited(key, limit, windowMs, trackerMap) {
 function writeCorsHeaders(req, res) {
   const origin = req.headers.origin;
   if (origin) {
-    if (origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://") || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-    }
+    res.setHeader("Access-Control-Allow-Origin", origin);
   } else {
     res.setHeader("Access-Control-Allow-Origin", "*");
   }
