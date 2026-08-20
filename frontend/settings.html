@@ -90,19 +90,24 @@ body::after {
   </div>
 
   <div class="settings-section">
-    <h2 class="section-title">Profile Snapshot</h2>
-    <div class="data-row">
-      <span class="data-label">Account Email</span>
-      <span class="data-val" id="disp-email">user@example.com</span>
+    <h2 class="section-title">Update Credentials</h2>
+    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
+      <label class="data-label">Full Name</label>
+      <input type="text" class="form-input" id="update-name" style="max-width:100%;">
     </div>
-    <div class="data-row">
-      <span class="data-label">Full Name</span>
-      <span class="data-val" id="disp-name">-</span>
+    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
+      <label class="data-label">Email Address</label>
+      <input type="email" class="form-input" id="update-email" style="max-width:100%;">
     </div>
-    <div class="data-row">
-      <span class="data-label">Account Created</span>
-      <span class="data-val">Aug 14, 2026</span>
+    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px; margin-top:16px;">
+      <label class="data-label">New Password (optional)</label>
+      <input type="password" class="form-input" id="update-new-password" placeholder="Leave blank to keep current" style="max-width:100%;">
     </div>
+    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px; margin-top:16px; margin-bottom:16px;">
+      <label class="data-label" style="color:var(--alert); font-weight:600;">Current Password (Required to apply changes)</label>
+      <input type="password" class="form-input" id="update-current-password" placeholder="Confirm current password" style="max-width:100%;">
+    </div>
+    <button class="btn btn-primary" onclick="updateAccountDetails()">Update Account</button>
   </div>
 
   <div class="settings-section">
@@ -213,15 +218,63 @@ function showToast(msg, type='success') {
   setTimeout(() => toast.remove(), 3000);
 }
 
-function loadSettings() {
-  document.getElementById('disp-email').innerText = localStorage.getItem('jxa_user_email') || 'Unknown';
+async function loadSettings() {
+  const token = localStorage.getItem('jxa_token');
   try {
-    const prof = JSON.parse(localStorage.getItem('jxa_local_profile'));
-    if(prof && prof.personal && prof.personal.fullName) {
-      document.getElementById('disp-name').innerText = prof.personal.fullName;
+    const res = await fetch(`${SYNC_API}/profile`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      // Try to populate from user profile
+      const prof = data.profile || {};
+      const personal = prof.personal || {};
+      document.getElementById('update-name').value = personal.fullName || data.user?.name || '';
+      document.getElementById('update-email').value = data.user?.email || localStorage.getItem('jxa_user_email') || '';
+    } else {
+      document.getElementById('update-email').value = localStorage.getItem('jxa_user_email') || '';
     }
-  } catch(e){}
+  } catch (e) {
+    document.getElementById('update-email').value = localStorage.getItem('jxa_user_email') || '';
+  }
   loadSmartAnswers();
+}
+
+async function updateAccountDetails() {
+  const name = document.getElementById('update-name').value.trim();
+  const email = document.getElementById('update-email').value.trim();
+  const newPassword = document.getElementById('update-new-password').value;
+  const currentPassword = document.getElementById('update-current-password').value;
+
+  if (!currentPassword) {
+    return showToast('Current password is required to save changes', 'error');
+  }
+
+  showToast('Updating account details...');
+  try {
+    const token = localStorage.getItem('jxa_token');
+    const res = await fetch(`${SYNC_API}/auth/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ name, email, newPassword, currentPassword })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to update account');
+    }
+    
+    if (data.token) localStorage.setItem('jxa_token', data.token);
+    if (data.user?.email) localStorage.setItem('jxa_user_email', data.user.email);
+    
+    showToast('Account details updated successfully!');
+    document.getElementById('update-new-password').value = '';
+    document.getElementById('update-current-password').value = '';
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }
 
 let activeProfile = {};

@@ -32,6 +32,13 @@ async function initializeDatabase(p) {
   `);
 
   await p.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_hash VARCHAR(255);
+  `);
+  await p.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry BIGINT;
+  `);
+
+  await p.query(`
     CREATE TABLE IF NOT EXISTS userdata (
       user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
       profile TEXT,
@@ -348,6 +355,85 @@ module.exports = {
       user.email = email;
       user.name = name;
       user.passwordHash = passwordHash;
+      saveRegistry(registry);
+      return true;
+    }
+    return false;
+  },
+
+  async setUserResetToken(email, tokenHash, expiry) {
+    if (usePg) {
+      const res = await pool.query(
+        "UPDATE users SET reset_token_hash = $1, reset_token_expiry = $2 WHERE email = $3",
+        [tokenHash, expiry, email.toLowerCase().trim()]
+      );
+      return res.rowCount > 0;
+    }
+
+    const registry = loadRegistry();
+    const user = registry.find(u => u.email.toLowerCase().trim() === email.toLowerCase().trim());
+    if (user) {
+      user.resetTokenHash = tokenHash;
+      user.resetTokenExpiry = expiry;
+      saveRegistry(registry);
+      return true;
+    }
+    return false;
+  },
+
+  async getUserByResetToken(tokenHash) {
+    if (usePg) {
+      const res = await pool.query(
+        "SELECT * FROM users WHERE reset_token_hash = $1",
+        [tokenHash]
+      );
+      if (res.rows.length === 0) return null;
+      const u = res.rows[0];
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        passwordHash: u.password_hash,
+        role: u.role,
+        tier: u.tier,
+        createdAt: Number(u.created_at),
+        lastSync: Number(u.last_sync),
+        resetTokenHash: u.reset_token_hash,
+        resetTokenExpiry: u.reset_token_expiry ? Number(u.reset_token_expiry) : null
+      };
+    }
+
+    const registry = loadRegistry();
+    const u = registry.find(u => u.resetTokenHash === tokenHash);
+    if (!u) return null;
+    return {
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      passwordHash: u.passwordHash,
+      role: u.role,
+      tier: u.tier,
+      createdAt: u.createdAt,
+      lastSync: u.lastSync,
+      resetTokenHash: u.resetTokenHash,
+      resetTokenExpiry: u.resetTokenExpiry
+    };
+  },
+
+  async clearUserResetToken(userId) {
+    if (usePg) {
+      await pool.query(
+        "UPDATE users SET reset_token_hash = NULL, reset_token_expiry = NULL WHERE id = $1",
+        [userId]
+      );
+      return true;
+    }
+
+    const registry = loadRegistry();
+    const user = registry.find(u => u.id === userId);
+    if (user) {
+      delete user.resetTokenHash;
+      delete user.resetTokenExpiry;
       saveRegistry(registry);
       return true;
     }

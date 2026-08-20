@@ -222,6 +222,15 @@ const userRateLimits = new Map();
 const anonAtsScans = new Map(); // clientIp -> lastScanTimestamp
 const loginFailures = new Map(); // email -> { count, lockedUntil }
 
+const adminActivityLog = [];
+function logAdminActivity(msg, status = "SUCCESS") {
+  const timeStr = new Date().toLocaleTimeString();
+  adminActivityLog.unshift({ time: timeStr, msg, status });
+  if (adminActivityLog.length > 50) {
+    adminActivityLog.pop();
+  }
+}
+
 // ── Constants ──────────────────────────────────────────────────────────────
 const MAX_BODY_BYTES = 256 * 1024; // 256 KB — reject bodies larger than this
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -474,7 +483,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Authentication routes
-  if (req.method === "POST" && (urlObj.pathname === "/api/auth/register" || urlObj.pathname === "/api/auth/login")) {
+  if (req.method === "POST" && (urlObj.pathname === "/api/auth/register" || urlObj.pathname === "/api/auth/login" || urlObj.pathname === "/api/auth/forgot-password" || urlObj.pathname === "/api/auth/reset-password")) {
     // Use only the first IP from X-Forwarded-For to prevent spoofing (trusting Render's proxy)
     const xfwd = req.headers["x-forwarded-for"];
     const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
@@ -503,6 +512,28 @@ const server = http.createServer(async (req, res) => {
       await auth.loginUser(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures });
     } catch (e) {
       sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: e.message === "Request body too large" ? "Request body too large" : "Invalid JSON format" });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && urlObj.pathname === "/api/auth/forgot-password") {
+    try {
+      const body = await readBody(req);
+      const payload = JSON.parse(body || "{}");
+      await auth.forgotPassword(req, res, payload);
+    } catch (e) {
+      sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && urlObj.pathname === "/api/auth/reset-password") {
+    try {
+      const body = await readBody(req);
+      const payload = JSON.parse(body || "{}");
+      await auth.resetPassword(req, res, payload);
+    } catch (e) {
+      sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
     }
     return;
   }
@@ -631,6 +662,27 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // POST Update User Account Details (Name, Email, Password)
+  if (req.method === "POST" && urlObj.pathname === "/api/auth/update") {
+    if (!activeUser) {
+      sendJson(res, 401, { ok: false, error: "Authentication required" });
+      return;
+    }
+    let body;
+    try {
+      body = await readBody(req, 16 * 1024); // 16KB limit for update credentials
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const payload = JSON.parse(body || "{}");
+      await auth.updateUserAccount(req, res, payload, activeUser);
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: "Invalid JSON format" });
+    }
+    return;
+  }
+
   // GET Root Status Check
   if (req.method === "GET" && (urlObj.pathname === "/" || urlObj.pathname === "")) {
     sendJson(res, 200, { ok: true, message: "JobXApply Sync API Server is running. Access the user panel at http://localhost:8000" });
@@ -720,6 +772,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       await db.saveProfile(activeUser.id, stateData);
+      logAdminActivity(`Profile synced for ${activeUser.email}`);
 
       const responsePayload = {
         profiles: stateData.profiles,
@@ -839,6 +892,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && urlObj.pathname === "/api/admin/stats") {
     const stats = await db.getStats();
     sendJson(res, 200, { ok: true, stats });
+    return;
+  }
+
+  // GET Admin Activity Log
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/activity-log") {
+    sendJson(res, 200, { ok: true, logs: adminActivityLog });
     return;
   }
 

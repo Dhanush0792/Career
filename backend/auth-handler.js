@@ -228,6 +228,84 @@ async function updateUserAccount(req, res, bodyData, activeUser) {
   }
 }
 
+// Forgot password token generation
+async function forgotPassword(req, res, bodyData) {
+  try {
+    const { email } = bodyData;
+    if (!email) {
+      return sendJson(res, 400, { ok: false, error: "Email is required" });
+    }
+    if (!validateEmail(email)) {
+      return sendJson(res, 400, { ok: false, error: "Invalid email address format" });
+    }
+
+    const user = await db.getUserByEmail(email);
+    if (!user) {
+      // Respond with ok: true even if user doesn't exist to prevent email enumeration
+      return sendJson(res, 200, { ok: true, message: "If the email is registered, instructions have been logged/sent." });
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const expiry = Date.now() + 3600000; // 1 hour expiry
+
+    await db.setUserResetToken(email, tokenHash, expiry);
+
+    // Secure SMTP simulation / Dev mock logging:
+    console.log(`\n================================================================================`);
+    console.log(`[SMTP MOCK] Password reset link for ${email}:`);
+    console.log(`http://localhost:3000/reset-password.html?token=${token}&email=${encodeURIComponent(email)}`);
+    console.log(`================================================================================\n`);
+
+    sendJson(res, 200, { ok: true, message: "If the email is registered, instructions have been logged/sent." });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    sendJson(res, 500, { ok: false, error: "Forgot password flow failed" });
+  }
+}
+
+// Reset password execution
+async function resetPassword(req, res, bodyData) {
+  try {
+    const { email, token, newPassword } = bodyData;
+    if (!email || !token || !newPassword) {
+      return sendJson(res, 400, { ok: false, error: "Email, token, and new password are required" });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await db.getUserByResetToken(tokenHash);
+
+    if (!user || user.email.toLowerCase().trim() !== email.toLowerCase().trim()) {
+      return sendJson(res, 400, { ok: false, error: "Invalid or expired password reset token" });
+    }
+
+    if (user.resetTokenExpiry && Date.now() > user.resetTokenExpiry) {
+      return sendJson(res, 400, { ok: false, error: "Reset token has expired. Please request a new one." });
+    }
+
+    const pwCheck = validatePassword(newPassword);
+    if (!pwCheck.ok) {
+      return sendJson(res, 400, { ok: false, error: pwCheck.reason });
+    }
+
+    const salt = bcrypt.genSaltSync(12);
+    const passwordHash = bcrypt.hashSync(newPassword, salt);
+
+    await db.updateUserCredentials(user.id, {
+      email: user.email,
+      name: user.name,
+      passwordHash
+    });
+
+    await db.clearUserResetToken(user.id);
+
+    sendJson(res, 200, { ok: true, message: "Password reset successfully!" });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    sendJson(res, 500, { ok: false, error: "Password reset failed" });
+  }
+}
+
 // Middleware helper
 function verifyToken(req) {
   const authHeader = req.headers.authorization;
@@ -246,6 +324,8 @@ module.exports = {
   registerUser,
   loginUser,
   updateUserAccount,
+  forgotPassword,
+  resetPassword,
   verifyToken,
   JWT_SECRET
 };
