@@ -678,58 +678,64 @@ const server = http.createServer(async (req, res) => {
 
   // POST Update Profile
   if (req.method === "POST" && urlObj.pathname === "/api/profile") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", async () => {
-      try {
-        const incoming = JSON.parse(body || "{}");
-        
-        const currentUsers = await db.getUsersList();
-        if (currentUsers.length === 0) {
-          if (!incoming.passcodeHash) {
-            return sendJson(res, 400, { ok: false, error: "Passcode hash is required to initialize the server" });
-          }
-          const defaultUser = await db.createUser({
-            email: "default@jobxapply.local",
-            name: "Default Profile",
-            passwordHash: ""
-          });
-          await db.updateUserPasscodeHash(defaultUser.id, incoming.passcodeHash);
-          activeUser = defaultUser;
+    if (activeUser && isRateLimited(activeUser.id + ":profile", 60, 3600000, userRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Too many profile updates. Limit is 60 per hour." });
+      return;
+    }
+    let body;
+    try {
+      body = await readBody(req, 256 * 1024); // 256KB profile limit
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      
+      const currentUsers = await db.getUsersList();
+      if (currentUsers.length === 0) {
+        if (!incoming.passcodeHash) {
+          return sendJson(res, 400, { ok: false, error: "Passcode hash is required to initialize the server" });
         }
-
-        const stateData = normalizeState(incoming);
-        stateData.version = (stateData.version || 0) + 1;
-        stateData.updatedAt = Date.now();
-        stateData.origin = incoming.origin || "server";
-
-        const errors = validateState(stateData);
-        if (errors.length) {
-          return sendJson(res, 400, { ok: false, errors });
-        }
-
-        if (incoming.passcodeHash) {
-          await db.updateUserPasscodeHash(activeUser.id, incoming.passcodeHash);
-        }
-
-        await db.saveProfile(activeUser.id, stateData);
-
-        const responsePayload = {
-          profiles: stateData.profiles,
-          activeProfileId: stateData.activeProfileId,
-          profile: stateData.profile,
-          version: stateData.version,
-          updatedAt: stateData.updatedAt,
-          origin: stateData.origin
-        };
-
-        broadcast(activeUser.id, responsePayload);
-
-        sendJson(res, 200, { ok: true, state: responsePayload });
-      } catch (err) {
-        sendJson(res, 400, { ok: false, error: err.message });
+        const defaultUser = await db.createUser({
+          email: "default@jobxapply.local",
+          name: "Default Profile",
+          passwordHash: ""
+        });
+        await db.updateUserPasscodeHash(defaultUser.id, incoming.passcodeHash);
+        activeUser = defaultUser;
       }
-    });
+
+      const stateData = normalizeState(incoming);
+      stateData.version = (stateData.version || 0) + 1;
+      stateData.updatedAt = Date.now();
+      stateData.origin = incoming.origin || "server";
+
+      const errors = validateState(stateData);
+      if (errors.length) {
+        return sendJson(res, 400, { ok: false, errors });
+      }
+
+      if (incoming.passcodeHash) {
+        await db.updateUserPasscodeHash(activeUser.id, incoming.passcodeHash);
+      }
+
+      await db.saveProfile(activeUser.id, stateData);
+
+      const responsePayload = {
+        profiles: stateData.profiles,
+        activeProfileId: stateData.activeProfileId,
+        profile: stateData.profile,
+        version: stateData.version,
+        updatedAt: stateData.updatedAt,
+        origin: stateData.origin
+      };
+
+      broadcast(activeUser.id, responsePayload);
+
+      sendJson(res, 200, { ok: true, state: responsePayload });
+    } catch (err) {
+      sendJson(res, 400, { ok: false, error: err.message });
+    }
     return;
   }
 
@@ -742,21 +748,27 @@ const server = http.createServer(async (req, res) => {
 
   // POST Sync Applications Tracker
   if (req.method === "POST" && urlObj.pathname === "/api/tracker") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", async () => {
-      try {
-        const payload = JSON.parse(body || "{}");
-        if (!Array.isArray(payload.applications)) {
-          return sendJson(res, 400, { ok: false, error: "applications must be an array" });
-        }
-        await db.saveApplications(activeUser.id, payload.applications);
-        broadcast(activeUser.id, payload.applications, "tracker");
-        sendJson(res, 200, { ok: true, syncedCount: payload.applications.length });
-      } catch (e) {
-        sendJson(res, 400, { ok: false, error: e.message });
+    if (activeUser && isRateLimited(activeUser.id + ":tracker", 60, 3600000, userRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Too many tracker updates. Limit is 60 per hour." });
+      return;
+    }
+    let body;
+    try {
+      body = await readBody(req, 256 * 1024); // 256KB tracker limit
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const payload = JSON.parse(body || "{}");
+      if (!Array.isArray(payload.applications)) {
+        return sendJson(res, 400, { ok: false, error: "applications must be an array" });
       }
-    });
+      await db.saveApplications(activeUser.id, payload.applications);
+      broadcast(activeUser.id, payload.applications, "tracker");
+      sendJson(res, 200, { ok: true, syncedCount: payload.applications.length });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: e.message });
+    }
     return;
   }
 
@@ -900,9 +912,8 @@ const server = http.createServer(async (req, res) => {
     } catch (e) {
       return sendJson(res, 413, { ok: false, error: "Request body too large" });
     }
-    (() => {
-      try {
-        const payload = JSON.parse(body || "{}");
+    try {
+      const payload = JSON.parse(body || "{}");
         const role = payload.role || "default";
         const jdText = payload.jdText || "";
         const profile = payload.profile || {};
@@ -1056,9 +1067,8 @@ const server = http.createServer(async (req, res) => {
           suggestions: suggestions
         });
       } catch (err) {
-        sendJson(res, 500, { ok: false, error: err.message });
+        sendJson(res, 500, { ok: false, error: "Analysis failed. Please try again." });
       }
-    });
     return;
   }
 
@@ -1301,11 +1311,9 @@ const server = http.createServer(async (req, res) => {
       } catch (err) {
         sendJson(res, 500, { ok: false, error: err.message });
       }
-    });
-    return;
-  }
+      return;
+    }
 
-  // POST /api/cover-letter/generate
   if (req.method === "POST" && urlObj.pathname === "/api/cover-letter/generate") {
     if (activeUser) {
       if (isRateLimited(activeUser.id, 5, 3600000, userRateLimits)) {
@@ -1313,77 +1321,86 @@ const server = http.createServer(async (req, res) => {
         return;
       }
     }
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", () => {
-      try {
-        const payload = JSON.parse(body || "{}");
-        const templateId = payload.templateId || "01";
-        const data = payload.data || {};
+    let body;
+    try {
+      body = await readBody(req, 64 * 1024); // 64KB cover letter data limit
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const payload = JSON.parse(body || "{}");
+      const templateId = payload.templateId || "01";
+      const data = payload.data || {};
 
-        const templates = {
-          "01": "cover_01_classic.tex",
-          "02": "cover_02_minimal.tex",
-          "03": "cover_03_narrative.tex",
-          "04": "cover_04_executive.tex",
-          "05": "cover_05_technical.tex",
-          "06": "cover_06_bold.tex",
-          "07": "cover_07_academic.tex",
-          "08": "cover_08_startup.tex",
-          "09": "cover_09_transition.tex",
-          "10": "cover_10_referral.tex"
-        };
+      const templates = {
+        "01": "cover_01_classic.tex",
+        "02": "cover_02_minimal.tex",
+        "03": "cover_03_narrative.tex",
+        "04": "cover_04_executive.tex",
+        "05": "cover_05_technical.tex",
+        "06": "cover_06_bold.tex",
+        "07": "cover_07_academic.tex",
+        "08": "cover_08_startup.tex",
+        "09": "cover_09_transition.tex",
+        "10": "cover_10_referral.tex"
+      };
 
-        const fileName = templates[templateId] || templates["01"];
-        const templatePath = path.join(__dirname, "templates", "coverletter", fileName);
+      const fileName = templates[templateId] || templates["01"];
+      const coverDir = path.join(__dirname, "templates", "coverletter");
+      const templatePath = path.join(coverDir, fileName);
 
-        if (!fs.existsSync(templatePath)) {
-          sendJson(res, 404, { ok: false, error: "Cover letter template file not found" });
-          return;
-        }
-
-        let content = fs.readFileSync(templatePath, "utf8");
-
-        // LaTeX Escaper
-        const escapeLatex = (str) => {
-          if (!str) return "";
-          return String(str)
-            .replace(/\\/g, "\\textbackslash{}")
-            .replace(/([&%$#_{}])/g, "\\$1")
-            .replace(/\^/g, "\\textasciicircum{}")
-            .replace(/~/g, "\\textasciitilde{}")
-            .replace(/</g, "\\textless{}")
-            .replace(/>/g, "\\textgreater{}")
-            .replace(/\n/g, " ");
-        };
-
-        // Substitute placeholders
-        content = content
-          .replace(/\{\{FULL_NAME\}\}/g, escapeLatex(data.fullName || ""))
-          .replace(/\{\{EMAIL\}\}/g, escapeLatex(data.email || ""))
-          .replace(/\{\{PHONE\}\}/g, escapeLatex(data.phone || ""))
-          .replace(/\{\{LINKEDIN_URL\}\}/g, escapeLatex(data.linkedinUrl || ""))
-          .replace(/\{\{PORTFOLIO_URL\}\}/g, escapeLatex(data.portfolioUrl || ""))
-          .replace(/\{\{DATE\}\}/g, escapeLatex(data.date || ""))
-          .replace(/\{\{RECIPIENT_NAME\}\}/g, escapeLatex(data.recipientName || "Hiring Team"))
-          .replace(/\{\{RECIPIENT_TITLE\}\}/g, escapeLatex(data.recipientTitle || "Hiring Manager"))
-          .replace(/\{\{COMPANY_NAME\}\}/g, escapeLatex(data.companyName || ""))
-          .replace(/\{\{COMPANY_ADDRESS\}\}/g, escapeLatex(data.companyAddress || ""))
-          .replace(/\{\{SUBJECT_LINE\}\}/g, data.subjectLine ? `\\textbf{Subject: ${escapeLatex(data.subjectLine)}}` : "")
-          .replace(/\{\{SALUTATION\}\}/g, escapeLatex(data.salutation || "Dear Hiring Team,"))
-          .replace(/\{\{OPENING_PARAGRAPH\}\}/g, escapeLatex(data.openingParagraph || ""))
-          .replace(/\{\{BODY_PARAGRAPH_1\}\}/g, escapeLatex(data.bodyParagraph1 || ""))
-          .replace(/\{\{BODY_PARAGRAPH_2\}\}/g, escapeLatex(data.bodyParagraph2 || ""))
-          .replace(/\{\{CLOSING_PARAGRAPH\}\}/g, escapeLatex(data.closingParagraph || ""))
-          .replace(/\{\{SIGN_OFF\}\}/g, escapeLatex(data.signOff || "Sincerely,"))
-          .replace(/\{\{ENCLOSURE_LINE\}\}/g, data.enclosureLine ? `Enclosures: ${escapeLatex(data.enclosureLine)}` : "");
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, latex: content }));
-      } catch (err) {
-        sendJson(res, 500, { ok: false, error: err.message });
+      // Path traversal check
+      if (!templatePath.startsWith(coverDir + path.sep) && templatePath !== coverDir) {
+        sendJson(res, 400, { ok: false, error: "Invalid template" });
+        return;
       }
-    });
+
+      if (!fs.existsSync(templatePath)) {
+        sendJson(res, 404, { ok: false, error: "Cover letter template file not found" });
+        return;
+      }
+
+      let content = fs.readFileSync(templatePath, "utf8");
+
+      // LaTeX Escaper
+      const escapeLatex = (str) => {
+        if (!str) return "";
+        return String(str)
+          .replace(/\\/g, "\\textbackslash{}")
+          .replace(/([&%$#_{}])/g, "\\$1")
+          .replace(/\^/g, "\\textasciicircum{}")
+          .replace(/~/g, "\\textasciitilde{}")
+          .replace(/</g, "\\textless{}")
+          .replace(/>/g, "\\textgreater{}")
+          .replace(/\n/g, " ");
+      };
+
+      // Substitute placeholders
+      content = content
+        .replace(/\{\{FULL_NAME\}\}/g, escapeLatex(data.fullName || ""))
+        .replace(/\{\{EMAIL\}\}/g, escapeLatex(data.email || ""))
+        .replace(/\{\{PHONE\}\}/g, escapeLatex(data.phone || ""))
+        .replace(/\{\{LINKEDIN_URL\}\}/g, escapeLatex(data.linkedinUrl || ""))
+        .replace(/\{\{PORTFOLIO_URL\}\}/g, escapeLatex(data.portfolioUrl || ""))
+        .replace(/\{\{DATE\}\}/g, escapeLatex(data.date || ""))
+        .replace(/\{\{RECIPIENT_NAME\}\}/g, escapeLatex(data.recipientName || "Hiring Team"))
+        .replace(/\{\{RECIPIENT_TITLE\}\}/g, escapeLatex(data.recipientTitle || "Hiring Manager"))
+        .replace(/\{\{COMPANY_NAME\}\}/g, escapeLatex(data.companyName || ""))
+        .replace(/\{\{COMPANY_ADDRESS\}\}/g, escapeLatex(data.companyAddress || ""))
+        .replace(/\{\{SUBJECT_LINE\}\}/g, data.subjectLine ? `\\textbf{Subject: ${escapeLatex(data.subjectLine)}}` : "")
+        .replace(/\{\{SALUTATION\}\}/g, escapeLatex(data.salutation || "Dear Hiring Team,"))
+        .replace(/\{\{OPENING_PARAGRAPH\}\}/g, escapeLatex(data.openingParagraph || ""))
+        .replace(/\{\{BODY_PARAGRAPH_1\}\}/g, escapeLatex(data.bodyParagraph1 || ""))
+        .replace(/\{\{BODY_PARAGRAPH_2\}\}/g, escapeLatex(data.bodyParagraph2 || ""))
+        .replace(/\{\{CLOSING_PARAGRAPH\}\}/g, escapeLatex(data.closingParagraph || ""))
+        .replace(/\{\{SIGN_OFF\}\}/g, escapeLatex(data.signOff || "Sincerely,"))
+        .replace(/\{\{ENCLOSURE_LINE\}\}/g, data.enclosureLine ? `Enclosures: ${escapeLatex(data.enclosureLine)}` : "");
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, latex: content }));
+    } catch (err) {
+      sendJson(res, 500, { ok: false, error: err.message });
+    }
     return;
   }
 

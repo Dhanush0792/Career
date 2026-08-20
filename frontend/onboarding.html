@@ -73,9 +73,24 @@ body { padding-top: 80px; }
     <h1 class="page-title">Profile <em>Onboarding Wizard</em></h1>
   </div>
 
-  <div class="onboard-grid">
+  <!-- Setup Method Choice Overlay -->
+  <div id="method-selector-card" class="card" style="margin-bottom: 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; border-color: rgba(91, 79, 232, 0.3); padding: 40px 24px;">
+    <div class="card-title">Initialisation Option Selection</div>
+    <div style="font-family: var(--display); font-size: 24px; font-weight: 900; color: var(--white); text-transform: uppercase;">
+      How would you like to set up your profile?
+    </div>
+    <p style="font-family: var(--body); font-size: 13px; color: var(--muted); max-width: 520px; line-height: 1.6;">
+      Sync your existing Resume/LinkedIn files to fill all fields instantly (recommended), or input your details manually.
+    </p>
+    <div style="display: flex; gap: 16px; width: 100%; max-width: 480px; margin-top: 8px;">
+      <button class="btn btn-primary" onclick="selectOnboardMethod('autofill')">⚡ Auto-Fill Profile</button>
+      <button class="btn btn-ghost" onclick="selectOnboardMethod('manual')">✏️ Manual Entry</button>
+    </div>
+  </div>
+
+  <div class="onboard-grid" id="onboard-workspace" style="display:none;">
     <!-- Left Panel: Import options -->
-    <div class="card">
+    <div class="card" id="import-source-panel">
       <div class="card-title">01 // SELECT IMPORT SOURCE</div>
 
       <div class="tabs">
@@ -233,6 +248,35 @@ function switchTab(tab) {
   }
 }
 
+let chosenMethod = null;
+
+function selectOnboardMethod(method) {
+  chosenMethod = method;
+  
+  document.getElementById('method-selector-card').style.display = 'none';
+  document.getElementById('onboard-workspace').style.display = 'grid';
+  
+  const inputs = ['out-name', 'out-email', 'out-phone', 'out-headline', 'out-skills'];
+  
+  if (method === 'autofill') {
+    addLog('[SYS] Auto-fill selected. Please upload your Resume or LinkedIn files.', 'info');
+    inputs.forEach(id => {
+      document.getElementById(id).disabled = true;
+    });
+    document.getElementById('import-source-panel').style.opacity = '1';
+    document.getElementById('import-source-panel').style.pointerEvents = 'auto';
+    commitBtn.disabled = true;
+  } else {
+    addLog('[SYS] Manual entry selected. Edit fields directly on the right and save.', 'success');
+    inputs.forEach(id => {
+      document.getElementById(id).disabled = false;
+    });
+    document.getElementById('import-source-panel').style.opacity = '0.3';
+    document.getElementById('import-source-panel').style.pointerEvents = 'none';
+    commitBtn.disabled = false;
+  }
+}
+
 // Load existing profile to enable duplicate detection
 (async () => {
   try {
@@ -369,6 +413,12 @@ async function parseLinkedInCsvs() {
       document.getElementById('out-headline').value = `${extractedState.experience[0].jobTitle} at ${extractedState.experience[0].company}`;
     }
     
+    // Unlock inputs after autofilling
+    const inputs = ['out-name', 'out-email', 'out-phone', 'out-headline', 'out-skills'];
+    inputs.forEach(id => {
+      document.getElementById(id).disabled = false;
+    });
+
     commitBtn.disabled = false;
     showToast('LinkedIn CSV profiles extracted successfully.');
   } catch(err) {
@@ -515,6 +565,12 @@ function parseAndExtractText(text) {
   } else {
     document.getElementById('unresolved-box').style.display = "none";
   }
+
+  // Unlock inputs after autofilling
+  const inputs = ['out-name', 'out-email', 'out-phone', 'out-headline', 'out-skills'];
+  inputs.forEach(id => {
+    document.getElementById(id).disabled = false;
+  });
 
   addLog('[SUCCESS] Extraction complete. Review fields on the right.', 'success');
   commitBtn.disabled = false;

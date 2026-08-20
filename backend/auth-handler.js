@@ -145,6 +145,89 @@ async function loginUser(req, res, bodyData, { recordLoginFailure, isAccountLock
   }
 }
 
+// Update user account details
+async function updateUserAccount(req, res, bodyData, activeUser) {
+  try {
+    const { name, email, currentPassword, newPassword } = bodyData;
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, error: "Authentication required" });
+    }
+
+    const user = await db.getUserById(activeUser.id);
+    if (!user) {
+      return sendJson(res, 404, { ok: false, error: "User not found" });
+    }
+
+    // Verify current password
+    if (currentPassword || newPassword || email) {
+      if (!currentPassword) {
+        return sendJson(res, 400, { ok: false, error: "Current password is required to update email or password" });
+      }
+      const valid = bcrypt.compareSync(currentPassword, user.passwordHash);
+      if (!valid) {
+        return sendJson(res, 401, { ok: false, error: "Invalid current password" });
+      }
+    }
+
+    let updatedPasswordHash = user.passwordHash;
+    if (newPassword) {
+      const pwCheck = validatePassword(newPassword);
+      if (!pwCheck.ok) {
+        return sendJson(res, 400, { ok: false, error: pwCheck.reason });
+      }
+      const salt = bcrypt.genSaltSync(12);
+      updatedPasswordHash = bcrypt.hashSync(newPassword, salt);
+    }
+
+    let updatedEmail = user.email;
+    if (email && email.toLowerCase().trim() !== user.email) {
+      const newEmailNormalized = email.toLowerCase().trim();
+      if (!validateEmail(newEmailNormalized)) {
+        return sendJson(res, 400, { ok: false, error: "Invalid email format" });
+      }
+      const existing = await db.getUserByEmail(newEmailNormalized);
+      if (existing) {
+        return sendJson(res, 400, { ok: false, error: "Email already in use" });
+      }
+      updatedEmail = newEmailNormalized;
+    }
+
+    let updatedName = user.name;
+    if (name && name.trim() !== user.name) {
+      if (name.trim().length < 2 || name.trim().length > 100) {
+        return sendJson(res, 400, { ok: false, error: "Name must be between 2 and 100 characters" });
+      }
+      updatedName = name.trim();
+    }
+
+    await db.updateUserCredentials(activeUser.id, {
+      email: updatedEmail,
+      name: updatedName,
+      passwordHash: updatedPasswordHash
+    });
+
+    const token = jwt.sign(
+      { userId: user.id, email: updatedEmail, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    sendJson(res, 200, {
+      ok: true,
+      token,
+      user: {
+        id: user.id,
+        email: updatedEmail,
+        name: updatedName,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error("Update account error:", err);
+    sendJson(res, 500, { ok: false, error: "Account update failed" });
+  }
+}
+
 // Middleware helper
 function verifyToken(req) {
   const authHeader = req.headers.authorization;
@@ -162,6 +245,7 @@ function verifyToken(req) {
 module.exports = {
   registerUser,
   loginUser,
+  updateUserAccount,
   verifyToken,
   JWT_SECRET
 };

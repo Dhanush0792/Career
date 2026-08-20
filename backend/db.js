@@ -333,6 +333,27 @@ module.exports = {
     return false;
   },
 
+  async updateUserCredentials(userId, { email, name, passwordHash }) {
+    if (usePg) {
+      const res = await pool.query(
+        "UPDATE users SET email = $1, name = $2, password_hash = $3 WHERE id = $4",
+        [email, name, passwordHash, userId]
+      );
+      return res.rowCount > 0;
+    }
+
+    const registry = loadRegistry();
+    const user = registry.find(u => u.id === userId);
+    if (user) {
+      user.email = email;
+      user.name = name;
+      user.passwordHash = passwordHash;
+      saveRegistry(registry);
+      return true;
+    }
+    return false;
+  },
+
   async getUsersList() {
     if (usePg) {
       const res = await pool.query("SELECT id, email, name, role, tier, created_at, last_sync, passcode_hash FROM users");
