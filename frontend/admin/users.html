@@ -237,15 +237,38 @@
 
 <script>
   requireAuth();
-  
-  if (localStorage.getItem('jxa_role') !== 'admin') {
-    window.location.href = '../dashboard.html';
-  }
+
+  // CRIT-2: Verify admin role via live API call
+  (async function verifyAdminRole() {
+    const token = localStorage.getItem('jxa_token');
+    if (!token) { window.location.href = '../auth.html'; return; }
+    try {
+      const res = await fetch(`${SYNC_API}/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const serverRole = data.role || data.user?.role;
+      if (serverRole !== 'admin') {
+        localStorage.removeItem('jxa_role');
+        window.location.href = '../dashboard.html';
+        return;
+      }
+      localStorage.setItem('jxa_role', 'admin');
+      loadUsers();
+    } catch (e) { window.location.href = '../dashboard.html'; }
+  })();
 
   function logout() {
-    localStorage.removeItem('jxa_token');
-    localStorage.removeItem('jxa_role');
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
+    keys.forEach(k => localStorage.removeItem(k));
     window.location.href = '../auth.html';
+  }
+
+  // MED-2: Sanitize user-controlled data before injecting into HTML
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str || '');
+    return div.innerHTML;
   }
 
   const mockUsers = [
@@ -303,15 +326,20 @@
     users.forEach(u => {
       const tr = document.createElement('tr');
       const roleClass = u.role === 'admin' ? 'role-admin' : 'role-user';
+      const safeEmail = escapeHtml(u.email);
+      const safeName = escapeHtml(u.name);
+      const safeId = escapeHtml(u.id);
+      const safeRole = escapeHtml(u.role);
+      const safeSync = escapeHtml(u.sync);
       
       tr.innerHTML = `
-        <td class="td-mono" style="color:var(--white)">${u.email}</td>
-        <td>${u.name}</td>
-        <td class="td-mono">${u.version}</td>
-        <td class="td-mono">${u.sync}</td>
-        <td><span class="role-badge ${roleClass}">${u.role}</span></td>
+        <td class="td-mono" style="color:var(--white)">${safeEmail}</td>
+        <td>${safeName}</td>
+        <td class="td-mono">${escapeHtml(u.version)}</td>
+        <td class="td-mono">${safeSync}</td>
+        <td><span class="role-badge ${roleClass === 'role-admin' ? 'role-admin' : 'role-user'}">${safeRole}</span></td>
         <td>
-          <select class="select-input" style="padding:4px 8px; font-size:11px; font-family:var(--mono);" onchange="updateTier('${u.id}', this.value)">
+          <select class="select-input" style="padding:4px 8px; font-size:11px; font-family:var(--mono);" onchange="updateTier('${safeId}', this.value)">
             <option value="free" ${u.tier === 'free' ? 'selected' : ''}>FREE</option>
             <option value="paid" ${u.tier === 'paid' ? 'selected' : ''}>PAID</option>
           </select>

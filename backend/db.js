@@ -92,7 +92,9 @@ if (DATABASE_URL) {
     pool = new Pool({
       connectionString: DATABASE_URL,
       ssl: {
-        rejectUnauthorized: false // Required for Supabase external TLS queries
+        // LOW-10: Enable proper TLS validation. Supabase uses valid certificates.
+        // If you are using a self-signed cert, set PGSSLMODE=no-verify in env instead.
+        rejectUnauthorized: process.env.PGSSLMODE === "no-verify" ? false : true
       }
     });
     pool.query("SELECT NOW()")

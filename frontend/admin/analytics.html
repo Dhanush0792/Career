@@ -316,14 +316,30 @@
 
 <script>
   requireAuth();
-  
-  if (localStorage.getItem('jxa_role') !== 'admin') {
-    window.location.href = '../dashboard.html';
-  }
+
+  // CRIT-2: Verify admin role via live API call
+  (async function verifyAdminRole() {
+    const token = localStorage.getItem('jxa_token');
+    if (!token) { window.location.href = '../auth.html'; return; }
+    try {
+      const res = await fetch(`${SYNC_API}/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const serverRole = data.role || data.user?.role;
+      if (serverRole !== 'admin') {
+        localStorage.removeItem('jxa_role');
+        window.location.href = '../dashboard.html';
+        return;
+      }
+      localStorage.setItem('jxa_role', 'admin');
+      loadAnalytics();
+    } catch (e) { window.location.href = '../dashboard.html'; }
+  })();
 
   function logout() {
-    localStorage.removeItem('jxa_token');
-    localStorage.removeItem('jxa_role');
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
+    keys.forEach(k => localStorage.removeItem(k));
     window.location.href = '../auth.html';
   }
 

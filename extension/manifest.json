@@ -32,7 +32,7 @@
       "run_at": "document_idle"
     }
   ],
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
       "id": "jobxapply_autofill@jobxapply.local",
       "strict_min_version": "109.0"

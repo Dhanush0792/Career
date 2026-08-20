@@ -9,7 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
+<!-- HIGH-1: DOMPurify to sanitize rich text HTML before rendering -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script src="shared-shell.js?v=2"></script>
+
 <style>
 body { padding-top: 80px; }
 body::after {
@@ -390,7 +393,7 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     if (cl.summarySelect) document.getElementById('summary-select').value = cl.summarySelect;
     if (cl.jdText) document.getElementById('jd-input').value = cl.jdText;
     
-    if (cl.richText) richPreview.innerHTML = cl.richText;
+    if (cl.richText) richPreview.innerHTML = (window.DOMPurify ? DOMPurify.sanitize(cl.richText) : cl.richText);
     if (cl.latexCode) {
       generatedLatex = cl.latexCode;
       latexPreview.textContent = cl.latexCode;
@@ -515,7 +518,7 @@ function updateFieldsFromSync(cl) {
   updateVal('summary-select', cl.summarySelect);
   
   if (cl.richText && richPreview !== focused) {
-    richPreview.innerHTML = cl.richText;
+      richPreview.innerHTML = (window.DOMPurify ? DOMPurify.sanitize(cl.richText) : cl.richText);
   }
   if (cl.latexCode) {
     generatedLatex = cl.latexCode;
@@ -713,7 +716,7 @@ function renderRichPreview(data) {
   }
 
   html += `</div>`;
-  richPreview.innerHTML = html;
+  richPreview.innerHTML = (window.DOMPurify ? DOMPurify.sanitize(html) : html);
 }
 
 // Tabs Switcher

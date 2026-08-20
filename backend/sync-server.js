@@ -618,10 +618,8 @@ const server = http.createServer(async (req, res) => {
       });
       return;
     }
-    if (!activeUser && usersList.length > 0) {
-      activeUser = usersList[0];
-      isUnauthProfileRequest = true;
-    }
+    // MED-8: Removed unauthenticated profile fallback — all profile access requires authentication
+    // The browser extension must provide a valid JWT or passcode hash
   }
 
   if (isUninitialized && urlObj.pathname === "/api/profile" && req.method === "POST") {
@@ -784,15 +782,28 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "Access-Control-Allow-Origin": res.getHeader("Access-Control-Allow-Origin") || "*"
+      "Connection": "keep-alive",
+      "X-Accel-Buffering": "no", // Disable Nginx buffering
+      "Access-Control-Allow-Origin": res.getHeader("Access-Control-Allow-Origin") || (req.headers.origin || "null"),
+      "Access-Control-Allow-Credentials": "true"
     });
-    res.write("\n");
+    res.write(": SSE connected\n\n");
 
     const clientWrapper = { userId: sseUser.id, res };
     clients.add(clientWrapper);
 
+    // LOW-6: Send heartbeat every 25s to prevent proxy timeout
+    const heartbeatTimer = setInterval(() => {
+      try {
+        res.write(": keepalive\n\n");
+      } catch (e) {
+        clearInterval(heartbeatTimer);
+        clients.delete(clientWrapper);
+      }
+    }, 25000);
+
     req.on("close", () => {
+      clearInterval(heartbeatTimer);
       clients.delete(clientWrapper);
     });
     return;
@@ -877,11 +888,19 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // POST /api/ats/analyze
+  // POST /api/ats/analyze — HIGH-3: Rate limited to 20 scans/hour per user
   if (req.method === "POST" && urlObj.pathname === "/api/ats/analyze") {
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", () => {
+    if (activeUser && isRateLimited(activeUser.id + ":ats", 20, 3600000, userRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Too many ATS scans. Limit is 20 per hour." });
+      return;
+    }
+    let body;
+    try {
+      body = await readBody(req, 128 * 1024); // 128KB for JD + profile text
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    (() => {
       try {
         const payload = JSON.parse(body || "{}");
         const role = payload.role || "default";
@@ -1069,36 +1088,46 @@ const server = http.createServer(async (req, res) => {
         return;
       }
     }
-    let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", () => {
-      try {
-        const payload = JSON.parse(body || "{}");
-        const templateId = payload.templateId || "01";
-        const data = payload.data || {};
+    let body;
+    try {
+      body = await readBody(req, 64 * 1024); // 64KB limit for resume data
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const payload = JSON.parse(body || "{}");
+      const templateId = payload.templateId || "01";
+      const data = payload.data || {};
 
-        const templates = {
-          "01": "resume_01_classic_chronological.tex",
-          "02": "resume_02_sidebar_twocolumn.tex",
-          "03": "resume_03_compact_dense.tex",
-          "04": "resume_04_skills_first_functional.tex",
-          "05": "resume_05_timeline.tex",
-          "06": "resume_06_academic_cv.tex",
-          "07": "resume_07_executive_minimalist.tex",
-          "08": "resume_08_conservative_finance.tex",
-          "09": "resume_09_modern_tech_sans.tex",
-          "10": "resume_10_grid_modular.tex"
-        };
+      const templates = {
+        "01": "resume_01_classic_chronological.tex",
+        "02": "resume_02_sidebar_twocolumn.tex",
+        "03": "resume_03_compact_dense.tex",
+        "04": "resume_04_skills_first_functional.tex",
+        "05": "resume_05_timeline.tex",
+        "06": "resume_06_academic_cv.tex",
+        "07": "resume_07_executive_minimalist.tex",
+        "08": "resume_08_conservative_finance.tex",
+        "09": "resume_09_modern_tech_sans.tex",
+        "10": "resume_10_grid_modular.tex"
+      };
 
-        const fileName = templates[templateId] || templates["01"];
-        const templatePath = path.join(__dirname, "templates", fileName);
+      const fileName = templates[templateId] || templates["01"];
+      const templatesDir = path.join(__dirname, "templates");
+      const templatePath = path.join(templatesDir, fileName);
 
-        if (!fs.existsSync(templatePath)) {
-          sendJson(res, 404, { ok: false, error: "Template file not found" });
-          return;
-        }
+      // MED-3: Path traversal protection — ensure resolved path stays within templates/
+      if (!templatePath.startsWith(templatesDir + path.sep) && templatePath !== templatesDir) {
+        sendJson(res, 400, { ok: false, error: "Invalid template" });
+        return;
+      }
 
-        let content = fs.readFileSync(templatePath, "utf8");
+      if (!fs.existsSync(templatePath)) {
+        sendJson(res, 404, { ok: false, error: "Template file not found" });
+        return;
+      }
+
+      let content = fs.readFileSync(templatePath, "utf8");
 
         // LaTeX Escaper
         const escapeLatex = (str) => {

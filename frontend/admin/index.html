@@ -368,23 +368,44 @@
   <div class="info-box">
     <div class="info-box-icon">ℹ️</div>
     <div class="info-box-content">
-      <h3>How to manage admin access</h3>
-      <p>In this local prototype, authentication is simulated via local storage. To elevate a user to admin or revoke access, modify the local storage payload.</p>
-      <div class="code-snippet">localStorage.setItem('jxa_role', 'admin');</div>
+      <h3>Admin Access</h3>
+      <p>Admin access is granted server-side to the first registered user, or via the admin panel user management. Role assignments are verified on every page load from the API — they cannot be modified from the browser.</p>
     </div>
   </div>
 </div>
 
 <script>
   requireAuth();
-  
-  if (localStorage.getItem('jxa_role') !== 'admin') {
-    window.location.href = '../dashboard.html';
-  }
+
+  // CRIT-2: Verify admin role via live API call — do not trust localStorage alone
+  (async function verifyAdminRole() {
+    const token = localStorage.getItem('jxa_token');
+    if (!token) {
+      window.location.href = '../auth.html';
+      return;
+    }
+    try {
+      const res = await fetch(`${SYNC_API}/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const serverRole = data.role || data.user?.role;
+      if (serverRole !== 'admin') {
+        localStorage.removeItem('jxa_role');
+        window.location.href = '../dashboard.html';
+        return;
+      }
+      // Update cached role to match server truth
+      localStorage.setItem('jxa_role', 'admin');
+      checkHealth();
+    } catch (e) {
+      window.location.href = '../dashboard.html';
+    }
+  })();
 
   function logout() {
-    localStorage.removeItem('jxa_token');
-    localStorage.removeItem('jxa_role');
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
+    keys.forEach(k => localStorage.removeItem(k));
     window.location.href = '../auth.html';
   }
 
@@ -434,8 +455,6 @@
       console.error("Telemetry fetch failed:", e);
     }
   }
-
-  checkHealth();
 </script>
 </body>
 </html>
