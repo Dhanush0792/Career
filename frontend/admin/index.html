@@ -335,32 +335,10 @@
   </div>
 
   <div class="card">
-    <h2 class="card-header">Recent Sync Log (Simulated)</h2>
-    <ul class="log-list">
-      <li class="log-item">
-        <span class="log-time">09:54:12</span>
-        <span class="log-msg">Profile delta received from usr_9x21</span>
-        <span class="log-status">SUCCESS</span>
-      </li>
-      <li class="log-item">
-        <span class="log-time">09:51:05</span>
-        <span class="log-msg">New extension install connected (v2.1.0)</span>
-        <span class="log-status">SUCCESS</span>
-      </li>
-      <li class="log-item">
-        <span class="log-time">09:44:30</span>
-        <span class="log-msg">Application logged: Software Engineer at Stripe</span>
-        <span class="log-status">SUCCESS</span>
-      </li>
-      <li class="log-item">
-        <span class="log-time">09:30:11</span>
-        <span class="log-msg">Failed to match portal rules for 'unknown-ats.com'</span>
-        <span class="log-status" style="color:var(--alert)">WARNING</span>
-      </li>
-      <li class="log-item">
-        <span class="log-time">09:12:45</span>
-        <span class="log-msg">User usr_8a12 authenticated successfully</span>
-        <span class="log-status">SUCCESS</span>
+    <h2 class="card-header">Live Platform Activity Feed</h2>
+    <ul class="log-list" id="activity-log-list">
+      <li class="log-item" style="color:var(--muted); font-style:italic; padding:20px 0; justify-content:center;">
+        Connecting to live activity feed...
       </li>
     </ul>
   </div>
@@ -453,6 +431,43 @@
       }
     } catch(e) {
       console.error("Telemetry fetch failed:", e);
+    }
+
+    try {
+      const token = localStorage.getItem("jxa_token");
+      const res = await fetch(`${SYNC_API}/admin/activity-log`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const logs = data.logs || [];
+        const container = document.getElementById('activity-log-list');
+        container.innerHTML = '';
+        if (logs.length === 0) {
+          container.innerHTML = `<li class="log-item" style="color:var(--muted); font-style:italic; padding:20px 0; justify-content:center;">No activity logged yet.</li>`;
+        } else {
+          logs.forEach(log => {
+            const li = document.createElement('li');
+            li.className = 'log-item';
+            
+            const safeMsg = String(log.msg || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeStatus = String(log.status || 'SUCCESS').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeTime = String(log.time || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            const isWarning = safeStatus.toLowerCase() === 'warning';
+            const statusStyle = isWarning ? 'style="color:var(--alert)"' : '';
+            
+            li.innerHTML = `
+              <span class="log-time">${safeTime}</span>
+              <span class="log-msg">${safeMsg}</span>
+              <span class="log-status" ${statusStyle}>${safeStatus}</span>
+            `;
+            container.appendChild(li);
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Activity log fetch failed:", e);
     }
   }
 </script>

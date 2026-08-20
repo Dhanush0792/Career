@@ -498,7 +498,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readBody(req);
       const payload = JSON.parse(body || "{}");
-      await auth.registerUser(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures });
+      await auth.registerUser(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures, logAdminActivity });
     } catch (e) {
       sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: e.message === "Request body too large" ? "Request body too large" : "Invalid JSON format" });
     }
@@ -509,7 +509,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readBody(req);
       const payload = JSON.parse(body || "{}");
-      await auth.loginUser(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures });
+      await auth.loginUser(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures, logAdminActivity });
     } catch (e) {
       sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: e.message === "Request body too large" ? "Request body too large" : "Invalid JSON format" });
     }
@@ -587,6 +587,7 @@ const server = http.createServer(async (req, res) => {
         reporterEmail: typeof payload.reporterEmail === "string" ? payload.reporterEmail.slice(0, 255) : "anonymous"
       };
       const entry = await db.createReport(sanitized);
+      logAdminActivity(`Broken field report filed for ${sanitized.portal} - ${sanitized.field}`);
       sendJson(res, 200, { ok: true, report: entry });
     } catch (e) {
       sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
@@ -817,6 +818,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { ok: false, error: "applications must be an array" });
       }
       await db.saveApplications(activeUser.id, payload.applications);
+      logAdminActivity(`Tracker synced (${payload.applications.length} apps) for ${activeUser.email}`);
       broadcast(activeUser.id, payload.applications, "tracker");
       sendJson(res, 200, { ok: true, syncedCount: payload.applications.length });
     } catch (e) {
@@ -1118,6 +1120,7 @@ const server = http.createServer(async (req, res) => {
           suggestions.push(`**Critical revisions needed**: Align your resume keywords and summary with your target role preset to avoid auto-rejection by applicant trackers.`);
         }
 
+        logAdminActivity(`ATS analysis run (${role}) for ${activeUser ? activeUser.email : "anonymous"} - Score: ${finalScore}%`);
         sendJson(res, 200, {
           ok: true,
           score: finalScore,
@@ -1365,6 +1368,7 @@ const server = http.createServer(async (req, res) => {
           .replace(/\{\{CERTIFICATIONS_BLOCK\}\}/g, certsContent)
           .replace(/\{\{ADDITIONAL_BLOCK\}\}/g, addContent);
 
+        logAdminActivity(`Resume PDF generated (template ${templateId}) for ${activeUser ? activeUser.email : "anonymous"}`);
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end(content);
       } catch (err) {
@@ -1455,6 +1459,7 @@ const server = http.createServer(async (req, res) => {
         .replace(/\{\{SIGN_OFF\}\}/g, escapeLatex(data.signOff || "Sincerely,"))
         .replace(/\{\{ENCLOSURE_LINE\}\}/g, data.enclosureLine ? `Enclosures: ${escapeLatex(data.enclosureLine)}` : "");
 
+      logAdminActivity(`Cover letter generated (template ${templateId}) for ${activeUser ? activeUser.email : "anonymous"}`);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true, latex: content }));
     } catch (err) {

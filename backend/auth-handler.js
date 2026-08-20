@@ -34,7 +34,7 @@ function sendJson(res, code, payload) {
 }
 
 // Register user
-async function registerUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures } = {}) {
+async function registerUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures, logAdminActivity } = {}) {
   try {
     const { name, email, password } = bodyData;
     if (!email || !password || !name) {
@@ -76,6 +76,10 @@ async function registerUser(req, res, bodyData, { recordLoginFailure, isAccountL
       { expiresIn: "24h" } // Shortened from 7d to 24h
     );
 
+    if (logAdminActivity) {
+      logAdminActivity(`New user registered (${role}): ${user.email}`);
+    }
+
     sendJson(res, 200, {
       ok: true,
       token,
@@ -93,7 +97,7 @@ async function registerUser(req, res, bodyData, { recordLoginFailure, isAccountL
 }
 
 // Login user
-async function loginUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures } = {}) {
+async function loginUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures, logAdminActivity } = {}) {
   try {
     const { email, password } = bodyData;
     if (!email || !password) {
@@ -128,6 +132,10 @@ async function loginUser(req, res, bodyData, { recordLoginFailure, isAccountLock
       JWT_SECRET,
       { expiresIn: "24h" }
     );
+
+    if (logAdminActivity) {
+      logAdminActivity(`User logged in: ${user.email}`);
+    }
 
     sendJson(res, 200, {
       ok: true,

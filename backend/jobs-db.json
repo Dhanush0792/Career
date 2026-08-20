@@ -8,7 +8,7 @@
     "description": "We are seeking a Backend Software Engineer with experience in Node.js, Express, and SQL. You will build and scale high-throughput sync gateways and real-time APIs. Must know security practices like AES-GCM and OAuth.",
     "portal": "Greenhouse",
     "skillsRequired": ["Node.js", "Express", "SQL", "JavaScript", "REST APIs"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "1 day ago"
   },
   {
@@ -20,7 +20,7 @@
     "description": "Looking for a Frontend Developer expert in React, HTML5, CSS3, and browser DOM API. Responsibilities include building fast, accessible web applications and pairing with browser extension modules.",
     "portal": "Lever",
     "skillsRequired": ["React", "HTML5", "CSS3", "JavaScript", "DOM API"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "3 days ago"
   },
   {
@@ -32,7 +32,7 @@
     "description": "Build premium state-of-the-art web portals. Knowledge of client-side encryption and offline-first storage model is required. Work closely with product design and backend security teams.",
     "portal": "Workday",
     "skillsRequired": ["JavaScript", "Node.js", "React", "SQLite", "Git"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "2 days ago"
   },
   {
@@ -44,7 +44,7 @@
     "description": "Drive product execution for AI and automation developer tools. Collaborate with engineering, research target portals, design user flows, and coordinate release plans.",
     "portal": "Ashby",
     "skillsRequired": ["Product Strategy", "Roadmap", "Wireframing", "Agile"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "Just now"
   },
   {
@@ -56,7 +56,7 @@
     "description": "Validate autofill browser extension logic against standard ATS pipelines like Greenhouse, Workday, Lever, and Ashby. Build visual integration tests.",
     "portal": "LinkedIn",
     "skillsRequired": ["Selenium", "Playwright", "QA Automation", "Cypress"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "4 days ago"
   },
   {
@@ -68,7 +68,7 @@
     "description": "Manage multi-tenant containerized architectures, secure JWT auth servers, database clusters, and PM2 load balancing configurations.",
     "portal": "Workday",
     "skillsRequired": ["Docker", "PM2", "AWS", "CI/CD", "Nginx"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "5 days ago"
   },
   {
@@ -80,7 +80,7 @@
     "description": "Join our cloud scaling division to build APIs with Python, Django, FastAPIs and SQL databases. Docker containerization experience is required.",
     "portal": "Greenhouse",
     "skillsRequired": ["Python", "Django", "SQL", "Docker", "REST APIs"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "Today"
   },
   {
@@ -92,7 +92,7 @@
     "description": "Design core dashboard experiences. Expert knowledge of React, Redux toolkit, CSS variables, CSS grid and custom hook performance is required.",
     "portal": "Lever",
     "skillsRequired": ["React", "JavaScript", "CSS3", "Redux", "Git"],
-    "url": "http://localhost:3000/frontend/portals.html",
+    "url": "https://careerhub-app.netlify.app/portals.html",
     "postedAt": "6 hours ago"
   }
 ]

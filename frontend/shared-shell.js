@@ -84,6 +84,7 @@ function requireAuth() {
     }
     // Background pull tracker data from server on startup
     pullApplicationsFromServer().catch(() => {});
+    connectSSE().catch(() => {});
   }
 }
 
@@ -510,6 +511,8 @@ async function connectSSE() {
     });
     source.addEventListener('error', () => {
       document.dispatchEvent(new CustomEvent('jobxapply:offline'));
+      source.close();
+      setTimeout(connectSSE, 5000); // Auto-reconnect after 5 seconds
     });
     return source;
   } catch (_) {
