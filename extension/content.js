@@ -267,6 +267,94 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ ok: true });
     return true;
   }
+const QUESTION_BANK = {
+  knockout: [
+    "authorized to work", "legally authorized", "visa sponsorship", "require sponsorship", "willing to relocate", "relocate to", "working on-site", "on-site", "willing to work", "shift/weekend", "background check"
+  ],
+  compensation: [
+    "expected salary", "current salary", "salary expectations", "expected ctc", "current ctc", "salary range"
+  ],
+  logistics: [
+    "notice period", "available to start", "earliest start date", "willing to travel", "travel"
+  ],
+  eeo: [
+    "gender", "disability", "disabled", "veteran status", "veteran", "race", "ethnicity", "demographic"
+  ],
+  essay: [
+    "why do you want to work", "why should we hire you", "tell us about yourself", "describe your relevant experience", "looking for in your next role", "walk us through your background"
+  ]
+};
+
+function identifyQuestionCategory(label) {
+  const norm = normalize(label);
+  for (const [category, keywords] of Object.entries(QUESTION_BANK)) {
+    if (keywords.some(kw => norm.includes(kw))) {
+      return category;
+    }
+  }
+  return null;
+}
+
+function getElementLabelText(el) {
+  if (!el) return "";
+  const attrs = [
+    el.getAttribute("aria-label"),
+    el.getAttribute("placeholder"),
+    el.getAttribute("name"),
+    el.getAttribute("id")
+  ].filter(Boolean).join(" ");
+  
+  let labelText = attrs;
+  try {
+    const id = el.getAttribute("id");
+    if (id) {
+      const label = document.querySelector(`label[for='${id}']`);
+      if (label) labelText += " " + label.textContent;
+    }
+  } catch (e) {}
+  
+  const closestLabel = el.closest("label");
+  if (closestLabel) {
+    labelText += " " + closestLabel.textContent;
+  } else if (el.parentElement) {
+    labelText += " " + el.parentElement.textContent;
+  }
+  return labelText;
+}
+
+function showKnockoutSuggestion(el, value) {
+  const rect = el.getBoundingClientRect();
+  const tip = document.createElement("div");
+  tip.className = "jxa-knockout-tip";
+  tip.style.position = "absolute";
+  tip.style.zIndex = "2147483647";
+  tip.style.top = `${window.scrollY + rect.top - 32}px`;
+  tip.style.left = `${window.scrollX + rect.left}px`;
+  tip.style.background = "#fff";
+  tip.style.color = "#000";
+  tip.style.border = "1px solid #ff9800";
+  tip.style.padding = "4px 8px";
+  tip.style.borderRadius = "4px";
+  tip.style.fontSize = "11px";
+  tip.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+  tip.innerHTML = `Suggested: <strong>${value}</strong> <button style="background:#5b4fe8;color:#fff;border:none;padding:2px 6px;margin-left:6px;cursor:pointer;border-radius:2px;">Fill</button>`;
+  
+  tip.querySelector("button").addEventListener("click", () => {
+    setValue(el, value);
+    tip.remove();
+  });
+  document.body.appendChild(tip);
+  setTimeout(() => tip.remove(), 8000);
+}
+
+// Block auto submits if essay or knockout tips exist
+document.addEventListener("submit", (e) => {
+  if (document.querySelector(".jxa-knockout-tip")) {
+    e.preventDefault();
+    alert("Please review the knockout question confirmations before submitting.");
+  }
+}, true);
+
   if (message?.type === "jobxapply:applyAutofill") {
     const profile = message.profile || {};
     const payload = buildAutofillPayload(profile, message.fields || []);
@@ -274,24 +362,53 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const portalMap = resp?.map || {};
       const results = [];
       for (const [field, value] of Object.entries(payload.payload || {})) {
-        let filled = false;
         const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
-        if (mapSelector) {
-          try {
-            const el = document.querySelector(mapSelector);
-            if (el && setValue(el, value)) {
-              results.push({ field, status: "filled", via: "map" });
-              filled = true;
+        const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
+        
+        if (el) {
+          const labelText = getElementLabelText(el);
+          const category = identifyQuestionCategory(labelText);
+          
+          if (category === "knockout") {
+            showKnockoutSuggestion(el, value);
+            results.push({ field, status: "suggested", via: "knockout-rule" });
+          } else if (category === "compensation") {
+            const expected = profile.preferences?.expectedSalary || "";
+            if (expected) {
+              setValue(el, expected);
+              results.push({ field, status: "filled", via: "compensation-rule" });
+            } else {
+              el.style.border = "1px solid #eb5757";
+              results.push({ field, status: "empty-flagged", via: "compensation-rule" });
             }
-          } catch (e) {}
-        }
-        if (!filled) {
-          const el = findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
-          if (el && setValue(el, value)) {
-            results.push({ field, status: "filled", via: "heuristic" });
+          } else if (category === "logistics") {
+            const empStatus = profile.preferences?.employmentStatus || "employed";
+            let logisticsVal = value;
+            if (empStatus === "student") {
+              logisticsVal = "Immediate / Date-based (Graduation)";
+            } else if (empStatus === "unemployed") {
+              logisticsVal = "Immediate";
+            } else if (profile.preferences?.noticePeriod) {
+              logisticsVal = profile.preferences.noticePeriod;
+            }
+            setValue(el, logisticsVal);
+            el.style.backgroundColor = "#ffffe0";
+            el.style.border = "1px solid #ffeb3b";
+            results.push({ field, status: "filled-review", via: "logistics-rule" });
+          } else if (category === "eeo") {
+            results.push({ field, status: "skipped", via: "eeo-rule" });
+          } else if (category === "essay") {
+            const draft = `As a professional with experience in ${profile.skills ? profile.skills.slice(0, 3).join(', ') : 'product development'}, I am highly interested in this role. My background aligns with your core requirements, and I am excited about the opportunity to add value to your team.`;
+            setValue(el, draft);
+            el.focus();
+            el.style.outline = "2px solid #ffeb3b";
+            results.push({ field, status: "drafted", via: "essay-rule" });
           } else {
-            results.push({ field, status: "not-found" });
+            setValue(el, value);
+            results.push({ field, status: "filled", via: "heuristic" });
           }
+        } else {
+          results.push({ field, status: "not-found" });
         }
       }
       sendResponse({ ok: true, payload, results });

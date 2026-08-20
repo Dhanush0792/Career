@@ -416,16 +416,16 @@ document.getElementById('auth-form').addEventListener('submit', (e) => {
           addLog('[SYS_QUERY] Existing profile loaded. Redirecting to dashboard...', 'success');
           setTimeout(() => window.location.href = 'dashboard.html', 700);
         } else {
-          addLog('[SYS_QUERY] Profile blank. Launching master profile setup wizard...', 'info');
-          setTimeout(() => window.location.href = 'profile-setup.html', 700);
+          addLog('[SYS_QUERY] Profile blank. Launching master onboarding import wizard...', 'info');
+          setTimeout(() => window.location.href = 'onboarding.html', 700);
         }
       } else {
-        addLog('[SYS_QUERY] Profile request failed. Initializing wizard...', 'info');
-        setTimeout(() => window.location.href = 'profile-setup.html', 700);
+        addLog('[SYS_QUERY] Profile request failed. Initializing onboarding...', 'info');
+        setTimeout(() => window.location.href = 'onboarding.html', 700);
       }
     } catch (e) {
-      addLog('[SYS_QUERY] Remote sync error. Running setup wizard offline...', 'info');
-      setTimeout(() => window.location.href = 'profile-setup.html', 700);
+      addLog('[SYS_QUERY] Remote sync error. Running onboarding wizard offline...', 'info');
+      setTimeout(() => window.location.href = 'onboarding.html', 700);
     }
   })
   .catch(err => {

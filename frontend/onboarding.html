@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Master Onboarding Wizard</title>
+<meta name="description" content="Onboarding: Import resume or LinkedIn self-service exports.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js?v=2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
+<style>
+body { padding-top: 80px; }
+.container { max-width: 1000px; margin: 0 auto; padding: 0 20px; z-index: 10; position: relative; }
+.page-header { border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 24px; }
+.page-label { font-family: var(--mono); font-size: 10px; color: var(--primary); letter-spacing: .14em; text-transform: uppercase; }
+.page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); }
+.page-title em { font-style: normal; color: var(--primary); }
+
+.onboard-grid { display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
+.card { border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); padding: 24px; border-radius: 14px; backdrop-filter: blur(16px); display: flex; flex-direction: column; gap: 16px; }
+.card-title { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; }
+
+.dropzone { border: 2px dashed var(--glass-border); border-radius: 10px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
+.dropzone:hover { border-color: var(--primary); background: rgba(91, 79, 232, 0.05); }
+.dropzone-label { font-family: var(--mono); font-size: 12px; color: var(--white); text-transform: uppercase; }
+.dropzone-hint { font-size: 10px; color: var(--muted); margin-top: 6px; }
+
+.tabs { display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 8px; }
+.tab-btn { background: transparent; border: none; color: var(--muted); padding: 8px 12px; font-family: var(--mono); font-size: 10px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; }
+.tab-btn.active { color: var(--white); border-bottom-color: var(--primary); }
+
+.tab-pane { display: none; }
+.tab-pane.active { display: flex; flex-direction: column; gap: 14px; }
+
+/* Input verification block styling */
+.field-row { display: flex; flex-direction: column; gap: 4px; }
+.field-row label { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; }
+.field-row input, .field-row textarea { background: rgba(7, 10, 24, 0.6); border: 1px solid var(--glass-border); padding: 8px 12px; color: var(--white); font-family: var(--mono); font-size: 11px; border-radius: 8px; outline: none; }
+.field-row input:focus, .field-row textarea:focus { border-color: var(--primary); }
+
+/* Confidence classes */
+.med-confidence { border-color: #ff9800 !important; box-shadow: 0 0 6px rgba(255, 152, 0, 0.2); }
+.med-tag { color: #ff9800; font-size: 8px; font-weight: bold; }
+
+.unresolved-box { background: rgba(235, 87, 87, 0.05); border: 1px solid rgba(235, 87, 87, 0.3); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 10px; color: var(--white); display: flex; flex-direction: column; gap: 8px; }
+.unresolved-title { font-weight: bold; color: var(--rejected); text-transform: uppercase; font-size: 9px; }
+.unresolved-item { background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+
+.dup-box { background: rgba(46, 204, 113, 0.05); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 11px; display: flex; flex-direction: column; gap: 8px; }
+
+.action-row { display: flex; gap: 10px; margin-top: 10px; }
+.btn { flex: 1; height: 40px; font-family: var(--mono); font-size: 10px; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
+.btn-primary { background: var(--primary); color: var(--white); border: 1px solid var(--primary); }
+.btn-primary:hover { background: rgba(91, 79, 232, 0.85); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--glass-border); }
+.btn-ghost:hover { color: var(--white); border-color: var(--white); }
+
+#console { background: #000; border: 1px solid var(--glass-border); padding: 10px; font-family: var(--mono); font-size: 10px; color: var(--muted); height: 70px; overflow-y: auto; border-radius: 8px; }
+</style>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+</head>
+<body>
+
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <div class="page-header">
+    <div class="page-label">System Initialisation</div>
+    <h1 class="page-title">Profile <em>Onboarding Wizard</em></h1>
+  </div>
+
+  <div class="onboard-grid">
+    <!-- Left Panel: Import options -->
+    <div class="card">
+      <div class="card-title">01 // SELECT IMPORT SOURCE</div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('resume')">Resume Upload</button>
+        <button class="tab-btn" onclick="switchTab('linkedin')">LinkedIn CSV</button>
+      </div>
+
+      <!-- Tab Content: Resume -->
+      <div id="tab-resume" class="tab-pane active">
+        <div class="dropzone" id="resume-dropzone">
+          <div class="dropzone-label">Drag & Drop Resume</div>
+          <div class="dropzone-hint">PDF or DOCX formats accepted</div>
+          <input type="file" id="resume-input" accept="application/pdf, .docx" style="display:none;">
+        </div>
+
+        <button class="btn btn-ghost" onclick="launchGooglePicker()">
+          ▲ Select from Google Drive
+        </button>
+
+        <div style="font-size:10px; color:var(--muted); line-height:1.5; border-top:1px solid var(--glass-border); padding-top:10px;">
+          💡 <strong>LinkedIn Import Method A (Primary)</strong>:<br>
+          Open your LinkedIn profile &rarr; click <strong>More</strong> &rarr; click <strong>Save to PDF</strong>. Drag that PDF here to automatically parse your entire history.
+        </div>
+      </div>
+
+      <!-- Tab Content: LinkedIn Method B -->
+      <div id="tab-linkedin" class="tab-pane">
+        <div style="font-size:10px; color:var(--muted); line-height:1.5;">
+          Download your official data export from LinkedIn Settings &rarr; "Get a copy of your data". Upload the CSV sheets below:
+        </div>
+
+        <div class="field-row">
+          <label>Positions.csv</label>
+          <input type="file" id="csv-positions" accept=".csv">
+        </div>
+        <div class="field-row">
+          <label>Education.csv</label>
+          <input type="file" id="csv-education" accept=".csv">
+        </div>
+        <div class="field-row">
+          <label>Skills.csv</label>
+          <input type="file" id="csv-skills" accept=".csv">
+        </div>
+
+        <button class="btn btn-primary" onclick="parseLinkedInCsvs()">
+          Parse CSV Files
+        </button>
+      </div>
+
+      <div id="console">
+        <div style="color:var(--primary)">[SYS_READY] Select a parsing method to initiate onboarding.</div>
+      </div>
+    </div>
+
+    <!-- Right Panel: Side-by-Side Review Screen -->
+    <div class="card" id="review-panel">
+      <div class="card-title">02 // VERIFY DETECTED PROFILE FIELDS</div>
+
+      <div id="dup-detect-box" class="dup-box" style="display:none;">
+        <strong style="color:var(--success)">[CONFLICT DETECTION] Existing Data Detected:</strong>
+        <div style="display:flex; gap:12px; margin-top:4px;">
+          <label><input type="radio" name="dup-action" value="keep" checked> Keep Existing Details</label>
+          <label><input type="radio" name="dup-action" value="overwrite"> Overwrite with Imported</label>
+        </div>
+      </div>
+
+      <!-- Verification Form -->
+      <div class="field-row">
+        <label>Full Name <span id="tag-name" class="med-tag"></span></label>
+        <input type="text" id="out-name" placeholder="Not detected">
+      </div>
+
+      <div class="field-row">
+        <label>Email Address <span id="tag-email" class="med-tag"></span></label>
+        <input type="email" id="out-email" placeholder="Not detected">
+      </div>
+
+      <div class="field-row">
+        <label>Phone Number <span id="tag-phone" class="med-tag"></span></label>
+        <input type="text" id="out-phone" placeholder="Not detected">
+      </div>
+
+      <div class="field-row">
+        <label>Summary / Headline <span id="tag-headline" class="med-tag"></span></label>
+        <textarea id="out-headline" style="height:60px;" placeholder="Not detected"></textarea>
+      </div>
+
+      <div class="field-row">
+        <label>Skills (Comma separated) <span id="tag-skills" class="med-tag"></span></label>
+        <textarea id="out-skills" style="height:50px;" placeholder="Not detected"></textarea>
+      </div>
+
+      <!-- Low confidence unresolved info panel -->
+      <div class="unresolved-box" id="unresolved-box" style="display:none;">
+        <span class="unresolved-title">Unmatched Raw Information (Low Confidence)</span>
+        <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">
+          The system found the following fragments. Select a target field to map it manually:
+        </div>
+        <div id="unresolved-items-container"></div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-ghost" onclick="skipToSetup()">Skip / Manual Entry</button>
+        <button class="btn btn-primary" onclick="commitProfile()" id="commit-btn" disabled>Save & Confirm Profile</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Authentication check
+requireAuth();
+renderNav(document.getElementById('main-nav'), 'onboarding.html');
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+const logBox = document.getElementById('console');
+const resumeDropzone = document.getElementById('resume-dropzone');
+const resumeInput = document.getElementById('resume-input');
+const commitBtn = document.getElementById('commit-btn');
+
+let existingProfile = {};
+let extractedState = {
+  fullName: "",
+  email: "",
+  phone: "",
+  headline: "",
+  skills: [],
+  experience: [],
+  education: [],
+  unresolved: []
+};
+
+function addLog(text, cls = '') {
+  const line = document.createElement('div');
+  line.style.marginBottom = '2px';
+  if (cls === 'success') line.style.color = 'var(--success)';
+  if (cls === 'warn') line.style.color = 'var(--alert)';
+  line.textContent = text;
+  logBox.appendChild(line);
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+// Tabs switcher
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  
+  if (tab === 'resume') {
+    document.querySelector('.tab-btn[onclick="switchTab(\'resume\')"]').classList.add('active');
+    document.getElementById('tab-resume').classList.add('active');
+  } else {
+    document.querySelector('.tab-btn[onclick="switchTab(\'linkedin\')"]').classList.add('active');
+    document.getElementById('tab-linkedin').classList.add('active');
+  }
+}
+
+// Load existing profile to enable duplicate detection
+(async () => {
+  try {
+    const state = await loadProfile();
+    existingProfile = state?.profile || {};
+    if (existingProfile.fullName) {
+      document.getElementById('dup-detect-box').style.display = 'block';
+    }
+  } catch(e) {}
+})();
+
+// File picker triggers
+resumeDropzone.addEventListener('click', () => resumeInput.click());
+resumeInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+resumeDropzone.addEventListener('dragover', (e) => { e.preventDefault(); resumeDropzone.style.borderColor = 'var(--primary)'; });
+resumeDropzone.addEventListener('dragleave', () => { resumeDropzone.style.borderColor = 'var(--glass-border)'; });
+resumeDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  resumeDropzone.style.borderColor = 'var(--glass-border)';
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+
+async function handleFile(file) {
+  if (!file) return;
+  addLog(`[FILE] Selected: ${file.name.toUpperCase()}`);
+  
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const arrayBuffer = e.target.result;
+    try {
+      let rawText = "";
+      if (file.name.endsWith('.pdf')) {
+        addLog('[PARSING] Scanning PDF text channels...');
+        const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let textStr = "";
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const content = await page.getTextContent();
+          content.items.forEach(item => { textStr += item.str + " "; });
+        }
+        rawText = textStr;
+      } else if (file.name.endsWith('.docx')) {
+        addLog('[PARSING] Reading DOCX structures...');
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        rawText = result.value || "";
+      } else {
+        addLog('[WARN] Format not supported. Use PDF or DOCX.', 'warn');
+        return;
+      }
+
+      if (rawText.trim().length < 60) {
+        addLog('[ERROR] Scanned image/blank document detected. Parsing failed.', 'warn');
+        showToast('Empty or Scanned PDF detected. Enter details manually.', 'error');
+        return;
+      }
+
+      parseAndExtractText(rawText);
+    } catch(err) {
+      console.error(err);
+      addLog('[ERROR] Extraction error: ' + err.message, 'warn');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Google Drive Picker Simulator/Placeholder (scoped drive.file)
+function launchGooglePicker() {
+  addLog('[GDRIVE] Connecting picker API (drive.file scope)...');
+  showToast('Google Drive Picker is locked in file scope.');
+  
+  // Create a mock selector for simulation as official client secrets are locked in Render dash
+  const mockFileSelect = document.createElement('input');
+  mockFileSelect.type = 'file';
+  mockFileSelect.accept = 'application/pdf, .docx';
+  mockFileSelect.onchange = (e) => handleFile(e.target.files[0]);
+  mockFileSelect.click();
+}
+
+// Parse LinkedIn CSV files (Positions.csv, Education.csv, Skills.csv)
+async function parseLinkedInCsvs() {
+  const posFile = document.getElementById('csv-positions').files[0];
+  const eduFile = document.getElementById('csv-education').files[0];
+  const sklFile = document.getElementById('csv-skills').files[0];
+
+  if (!posFile && !eduFile && !sklFile) {
+    addLog('[WARN] Select at least one CSV file to parse.', 'warn');
+    return;
+  }
+
+  addLog('[CSV] Reading files...');
+  
+  const readText = (file) => new Promise(res => {
+    const r = new FileReader();
+    r.onload = (e) => res(e.target.result);
+    r.readAsText(file);
+  });
+
+  try {
+    if (posFile) {
+      const txt = await readText(posFile);
+      const rows = parseCsv(txt);
+      extractedState.experience = rows.map(r => ({
+        company: r['company name'] || r['company'] || '',
+        jobTitle: r['title'] || '',
+        startDate: r['started on'] || '',
+        endDate: r['finished on'] || 'Present',
+        description: r['description'] || ''
+      }));
+      addLog(`✓ Parsed ${rows.length} positions from Positions.csv`, 'success');
+    }
+
+    if (eduFile) {
+      const txt = await readText(eduFile);
+      const rows = parseCsv(txt);
+      extractedState.education = rows.map(r => ({
+        school: r['school'] || r['school name'] || '',
+        degree: r['degree name'] || r['degree'] || '',
+        startDate: r['start date'] || '',
+        endDate: r['end date'] || ''
+      }));
+      addLog(`✓ Parsed ${rows.length} schools from Education.csv`, 'success');
+    }
+
+    if (sklFile) {
+      const txt = await readText(sklFile);
+      const rows = parseCsv(txt);
+      extractedState.skills = rows.map(r => r['name']).filter(Boolean);
+      addLog(`✓ Parsed ${extractedState.skills.length} skills from Skills.csv`, 'success');
+    }
+
+    // Populate review inputs
+    document.getElementById('out-skills').value = extractedState.skills.join(', ');
+    if (extractedState.experience.length) {
+      document.getElementById('out-headline').value = `${extractedState.experience[0].jobTitle} at ${extractedState.experience[0].company}`;
+    }
+    
+    commitBtn.disabled = false;
+    showToast('LinkedIn CSV profiles extracted successfully.');
+  } catch(err) {
+    addLog('[ERROR] CSV parsing failed: ' + err.message, 'warn');
+  }
+}
+
+function parseCsv(text) {
+  const lines = text.split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    const values = [];
+    let current = '';
+    let inQuotes = false;
+    for (let char of line) {
+      if (char === '"' || char === "'") {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim());
+    
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] ? values[index].replace(/^["']|["']$/g, '').trim() : '';
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+// Regex heuristics for PDF/DOCX Parsing
+function parseAndExtractText(text) {
+  addLog('[HEURISTIC] Segementing elements and parsing metadata...');
+  
+  // Name (First line or inferred from email prefix)
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  let name = lines[0] || "";
+  let nameConfidence = "High";
+  if (name.includes('@') || name.match(/\d/)) {
+    name = "";
+    nameConfidence = "Low";
+  }
+
+  // Email
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/;
+  const emailMatch = text.match(emailRegex);
+  const email = emailMatch ? emailMatch[0] : "";
+  
+  if (!name && email) {
+    name = email.split('@')[0].replace(/[._-]/g, ' ');
+    nameConfidence = "Medium";
+  }
+
+  // Phone
+  const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+  const phoneMatch = text.match(phoneRegex);
+  const phone = phoneMatch ? phoneMatch[0] : "";
+
+  // Skills
+  const commonSkills = ["react", "node", "javascript", "python", "java", "sql", "aws", "docker", "kubernetes", "c++", "c#", "html", "css", "git", "ci/cd"];
+  const skills = [];
+  commonSkills.forEach(s => {
+    const rx = new RegExp('\\b' + s + '\\b', 'i');
+    if (text.match(rx)) skills.push(s.toUpperCase());
+  });
+
+  // Headline (tries to match first job title found)
+  let headline = "";
+  const roleRegex = /(?:software engineer|developer|manager|analyst|consultant|designer|engineer)/i;
+  const headlineMatch = text.match(roleRegex);
+  if (headlineMatch) {
+    headline = headlineMatch[0].toUpperCase();
+  }
+
+  // Unresolved lines (Low confidence elements)
+  const unresolved = [];
+  lines.slice(1, 6).forEach(l => {
+    if (l.length > 15 && l.length < 80 && !l.includes('@') && !l.match(phoneRegex)) {
+      unresolved.push(l);
+    }
+  });
+
+  extractedState = {
+    fullName: name,
+    email,
+    phone,
+    headline,
+    skills,
+    experience: [],
+    education: [],
+    unresolved
+  };
+
+  // Populate inputs with visual confidence borders
+  const setValAndStyle = (id, tagId, val, confidence) => {
+    const el = document.getElementById(id);
+    const tag = document.getElementById(tagId);
+    el.value = val;
+    if (confidence === "Medium") {
+      el.classList.add('med-confidence');
+      tag.textContent = "[⚠️ Please Verify]";
+    } else {
+      el.classList.remove('med-confidence');
+      tag.textContent = "";
+    }
+  };
+
+  setValAndStyle('out-name', 'tag-name', name, nameConfidence);
+  setValAndStyle('out-email', 'tag-email', email, "High");
+  setValAndStyle('out-phone', 'tag-phone', phone, phone ? "High" : "Medium");
+  setValAndStyle('out-headline', 'tag-headline', headline, headline ? "High" : "Medium");
+  setValAndStyle('out-skills', 'tag-skills', skills.join(', '), "High");
+
+  // Populate unresolved box
+  const container = document.getElementById('unresolved-items-container');
+  container.innerHTML = "";
+  if (unresolved.length > 0) {
+    document.getElementById('unresolved-box').style.display = "flex";
+    unresolved.forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = "unresolved-item";
+      div.innerHTML = `
+        <span>${item}</span>
+        <select onchange="assignUnresolved(this, ${index})" style="background:#070a18; border:1px solid var(--glass-border); color:var(--white); font-size:9px; padding:2px;">
+          <option value="">Map To...</option>
+          <option value="name">Full Name</option>
+          <option value="headline">Headline</option>
+          <option value="skills">Skills</option>
+          <option value="discard">Discard</option>
+        </select>
+      `;
+      container.appendChild(div);
+    });
+  } else {
+    document.getElementById('unresolved-box').style.display = "none";
+  }
+
+  addLog('[SUCCESS] Extraction complete. Review fields on the right.', 'success');
+  commitBtn.disabled = false;
+}
+
+function assignUnresolved(select, index) {
+  const field = select.value;
+  const val = extractedState.unresolved[index];
+  if (!field || field === 'discard') return;
+
+  if (field === 'name') {
+    document.getElementById('out-name').value = val;
+    document.getElementById('out-name').classList.remove('med-confidence');
+    document.getElementById('tag-name').textContent = "";
+  } else if (field === 'headline') {
+    document.getElementById('out-headline').value = val;
+  } else if (field === 'skills') {
+    const curr = document.getElementById('out-skills').value;
+    document.getElementById('out-skills').value = curr ? `${curr}, ${val}` : val;
+  }
+  
+  select.parentElement.style.opacity = "0.4";
+  select.disabled = true;
+  showToast(`Mapped text to ${field.toUpperCase()}`);
+}
+
+function skipToSetup() {
+  window.location.href = 'profile-setup.html';
+}
+
+async function commitProfile() {
+  commitBtn.disabled = true;
+  addLog('[SYS_EXEC] Submitting details to Sync Server...');
+
+  // Check duplicate conflict action
+  const dupDetect = document.getElementById('dup-detect-box');
+  if (dupDetect.style.display !== 'none') {
+    const action = document.querySelector('input[name="dup-action"]:checked').value;
+    if (action === 'keep') {
+      addLog('[SYS_INFO] User opted to preserve existing profile. Sync skipped.', 'success');
+      setTimeout(() => window.location.href = 'dashboard.html', 1000);
+      return;
+    }
+  }
+
+  const updatedProfile = {
+    ...existingProfile,
+    fullName: document.getElementById('out-name').value.trim(),
+    email: document.getElementById('out-email').value.trim(),
+    phone: document.getElementById('out-phone').value.trim(),
+    headline: document.getElementById('out-headline').value.trim(),
+    skills: document.getElementById('out-skills').value.split(',').map(s => s.trim()).filter(Boolean),
+    experience: extractedState.experience,
+    education: extractedState.education
+  };
+
+  const res = await saveProfile(updatedProfile);
+  if (res.ok) {
+    addLog('[SYS_SYNC] Profile synced successfully! Launching dashboard...', 'success');
+    showToast('Import completed successfully!');
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 1200);
+  } else {
+    addLog('[ERROR] Cloud sync failed: ' + (res.errors ? res.errors.join(', ') : 'Unknown error'), 'warn');
+    commitBtn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

@@ -7,12 +7,11 @@ require("dotenv").config();
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
 
 function sendJson(res, code, payload) {
-  res.writeHead(code, {
-    "Content-Type": "application/json; charset=utf-8",
-    "Cache-Control": "no-store",
-    "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "frame-ancestors 'none'"
-  });
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Content-Security-Policy", "frame-ancestors 'none'");
+  res.statusCode = code;
   res.end(JSON.stringify(payload));
 }
 
