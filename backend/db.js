@@ -16,6 +16,76 @@ if (!fs.existsSync(USERS_DIR)) {
 let usePg = false;
 let pool = null;
 
+async function initializeDatabase(p) {
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(255) PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      name VARCHAR(255),
+      password_hash VARCHAR(255) NOT NULL,
+      role VARCHAR(50) DEFAULT 'user',
+      tier VARCHAR(50) DEFAULT 'free',
+      created_at BIGINT,
+      last_sync BIGINT,
+      passcode_hash VARCHAR(255)
+    )
+  `);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS userdata (
+      user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      profile TEXT,
+      applications TEXT
+    )
+  `);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS reports (
+      id VARCHAR(255) PRIMARY KEY,
+      portal VARCHAR(255),
+      field VARCHAR(255),
+      selector_tried TEXT,
+      reporter_email VARCHAR(255),
+      submitted_at BIGINT,
+      status VARCHAR(50) DEFAULT 'pending'
+    )
+  `);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS telemetry (
+      metric_key VARCHAR(255) PRIMARY KEY,
+      metric_value INT DEFAULT 0
+    )
+  `);
+
+  // Seed default users if users table is empty
+  const userCountRes = await p.query("SELECT COUNT(*) FROM users");
+  const count = parseInt(userCountRes.rows[0].count, 10);
+  if (count === 0) {
+    console.log("[DB] Seeding default database users...");
+    // Seeds default candidate
+    await p.query(
+      "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+      ["u_0n89pch3tr59", "candidate@jobxapply.app", "John Candidate", "$2b$10$.e2vkzVHk2KP.yzsmc4QEuMZaNqW7gzu/gNNxCVbJfJrHEDPUj6aq", "user", "free", Date.now(), Date.now()]
+    );
+    await p.query(
+      "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3)",
+      ["u_0n89pch3tr59", null, JSON.stringify([])]
+    );
+
+    // Seeds default admin
+    await p.query(
+      "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+      ["u_pa52u5ad0x", "admin@jobxapply.app", "System Admin", "$2b$10$M8B68dO6n/H.0CFp0jd6vueWcFD2sjmyznwxE7LFiEkLn9fKwP84O", "admin", "paid", Date.now(), Date.now()]
+    );
+    await p.query(
+      "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3)",
+      ["u_pa52u5ad0x", null, JSON.stringify([])]
+    );
+    console.log("[DB] Default users seeded successfully.");
+  }
+}
+
 const DATABASE_URL = process.env.DATABASE_URL;
 if (DATABASE_URL) {
   try {
@@ -26,9 +96,14 @@ if (DATABASE_URL) {
       }
     });
     pool.query("SELECT NOW()")
-      .then(() => {
+      .then(async () => {
         usePg = true;
         console.log("[DB] Connection established: Supabase PostgreSQL Cloud DB is ACTIVE.");
+        try {
+          await initializeDatabase(pool);
+        } catch (e) {
+          console.error("[DB] Database schema initialization failed:", e);
+        }
       })
       .catch(err => {
         console.error("[DB] Supabase connection failed. Falling back to local files.", err);
