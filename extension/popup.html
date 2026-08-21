@@ -5,135 +5,134 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JobXApply</title>
     <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        margin: 0;
-        width: 340px;
+        width: 300px;
         font-family: Inter, system-ui, sans-serif;
         background: #0b1020;
         color: #f4f7ff;
       }
-      .wrap {
-        padding: 16px;
-        display: grid;
-        gap: 12px;
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
       }
-      .card {
-        border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(255,255,255,0.08);
-        border-radius: 16px;
-        padding: 12px;
+      .logo-img {
+        width: 28px; height: 28px;
+        border-radius: 6px;
+        object-fit: contain;
+        flex-shrink: 0;
       }
-      label { display:block; font-size: 12px; color: rgba(244,247,255,0.7); margin-bottom: 6px; }
-      input, textarea, select, button {
-        width: 100%;
-        box-sizing: border-box;
+      .header-title { font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
+      .header-sub { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 1px; }
+      .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+      .portal-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.10);
         border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.12);
-        background: rgba(7,10,24,0.55);
-        color: #f4f7ff;
-        padding: 10px 12px;
+        padding: 10px 14px;
+        display: flex; align-items: center; gap: 10px;
       }
-      textarea { min-height: 88px; resize: vertical; }
-      button { cursor: pointer; background: linear-gradient(135deg, #5b4fe8, #796df0); border: 0; }
-      .muted { color: rgba(244,247,255,0.72); font-size: 12px; }
-      .row { display: grid; gap: 8px; }
-      .inline { display:flex; gap:8px; }
-      .inline > * { flex: 1; }
-      pre {
-        margin: 0;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font-size: 11px;
+      .portal-dot { width: 8px; height: 8px; border-radius: 50%; background: #2fddc4; flex-shrink: 0; }
+      .portal-dot.unknown { background: rgba(255,255,255,0.2); }
+      .portal-name { font-size: 13px; font-weight: 600; }
+      .portal-tier { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 2px; }
+
+      .profile-row {
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(91,79,232,0.08);
+        border: 1px solid rgba(91,79,232,0.2);
+        border-radius: 10px; padding: 10px 12px;
       }
+      .profile-avatar {
+        width: 30px; height: 30px; border-radius: 50%;
+        background: linear-gradient(135deg, #5b4fe8, #2fddc4);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700; flex-shrink: 0; color: white;
+      }
+      .profile-info { flex: 1; min-width: 0; }
+      .profile-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .profile-email { font-size: 10px; color: rgba(244,247,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+      .setup-banner {
+        background: rgba(255,152,0,0.08);
+        border: 1px solid rgba(255,152,0,0.3);
+        border-radius: 10px; padding: 10px 12px;
+        font-size: 11px; line-height: 1.5; color: #ff9800; display: none;
+      }
+      .setup-banner strong { display: block; margin-bottom: 3px; font-size: 12px; }
+
+      .btn-primary {
+        width: 100%; padding: 11px;
+        background: linear-gradient(135deg, #5b4fe8, #796df0);
+        border: none; border-radius: 10px; color: white;
+        font-size: 13px; font-weight: 700; cursor: pointer;
+        letter-spacing: 0.03em; transition: opacity 0.15s;
+      }
+      .btn-primary:hover { opacity: 0.85; }
+      .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      .btn-secondary {
+        flex: 1; padding: 9px;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 10px; color: rgba(244,247,255,0.8);
+        font-size: 12px; font-weight: 600; cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+      }
+      .btn-secondary:hover { border-color: rgba(91,79,232,0.6); color: #f4f7ff; }
+
+      .btn-row { display: flex; gap: 8px; }
+      .status { font-size: 11px; color: rgba(244,247,255,0.55); text-align: center; min-height: 16px; line-height: 1.4; }
+      .status.success { color: #2fddc4; }
+      .status.error { color: #e8547b; }
+      .status.warn { color: #ff9800; }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <div class="card" style="padding-bottom: 16px;">
-        <div class="row">
-          <label style="margin-bottom: 4px; font-weight: 700;">Active Profile</label>
-          <select id="profileSelect" style="cursor: pointer;">
-            <option value="">Loading profiles...</option>
-          </select>
-        </div>
-      </div>
-      <div class="card">
-        <div class="row">
-          <div class="muted">Portal</div>
-          <div id="portalName">Loading...</div>
-          <div id="portalTier" class="muted"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="row">
-          <label for="fields">Fields to fill</label>
-          <input id="fields" value="fullName, headline, summary, location, portfolio" />
-          <label for="notes">Portal note</label>
-          <textarea id="notes" placeholder="Optional note for this site"></textarea>
-          <div class="inline">
-            <button id="apply">Apply autofill</button>
-            <button id="editProfile">Edit profile</button>
-          </div>
-          <div style="display:flex; gap:8px; margin-top:8px;">
-            <button id="toggleMapper" style="background: linear-gradient(135deg, #2fddc4, #1fa390); color: #070a18; font-weight: 700; font-size: 11px;">Map Custom Fields</button>
-            <button id="report" style="font-size: 11px;">Report map issue</button>
-          </div>
-          
-          <div style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
-            <div style="font-size: 11px; font-weight:700; color:var(--white); text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-              <span>Application Proof</span>
-              <button id="captureSnapshot" style="padding: 4px 8px; font-size: 9px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; color: #fff; cursor: pointer; font-family:inherit;">Capture Screen</button>
-            </div>
-            <div id="snapshotPreview" style="display:none; width: 100%; height: 75px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); background-size: cover; background-position: center; position: relative; margin-bottom:8px;">
-              <button id="removeSnapshot" style="position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; border: none; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; line-height: 1;">&times;</button>
-            </div>
-            
-            <div id="logForm" style="display:none; gap:6px; flex-direction:column; margin-top:8px;">
-              <input id="logCompany" placeholder="Company Name" style="padding:6px; font-size:11px;" />
-              <input id="logRole" placeholder="Job Title" style="padding:6px; font-size:11px;" />
-              <button id="logApp" style="width:100%; padding:8px; font-size:11px; background:var(--green); color:#070a18; font-weight:700; border:none; border-radius:6px; cursor:pointer;">Save & Track Application</button>
-            </div>
-          </div>
-          
-          <div id="status" class="muted" style="margin-top:8px;">Ready</div>
-        </div>
-      </div>
-      <div class="card" id="atsCard" style="display:none;">
-        <div class="row">
-          <div style="font-family: var(--display); font-size: 13px; font-weight: 700; color: var(--white); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <span>ATS Compatibility</span>
-            <span id="popupAtsScore" style="color: var(--green); font-size: 14px; font-weight: 900;">0%</span>
-          </div>
-          <div style="font-family: var(--mono); font-size: 9px; line-height: 1.5; margin-bottom: 4px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-            <span style="color: var(--muted);">Matched:</span>
-            <span id="popupMatchedSkills" style="color: var(--green);">None</span>
-          </div>
-          <div style="font-family: var(--mono); font-size: 9px; line-height: 1.5; display: flex; flex-wrap: wrap; gap: 4px; align-items: center;">
-            <span style="color: var(--muted);">Missing:</span>
-            <span id="popupMissingSkills" style="color: #5b4fe8;">None</span>
-          </div>
-        </div>
-      </div>
-      <div class="card" id="smartAnswersCard" style="display:none;">
-        <div class="row">
-          <div style="font-family: var(--display); font-size: 13px; font-weight: 700; color: var(--white); text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; margin-bottom: 8px;">
-            Smart Answers
-          </div>
-          <div style="font-family: var(--mono); font-size: 9px; color: var(--muted); margin-bottom: 8px; line-height: 1.4;">
-            Click a tag to paste the saved response into the active/focused browser text field.
-          </div>
-          <div id="smartAnswersList" style="display: flex; flex-wrap: wrap; gap: 6px;">
-            <!-- Render tags dynamically -->
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="row">
-          <div class="muted">Payload preview</div>
-          <pre id="payload">{}</pre>
-        </div>
+    <div class="header">
+      <img src="icon.png" class="logo-img" alt="Logo">
+      <div>
+        <div class="header-title">JobXApply</div>
+        <div class="header-sub">Autofill Engine</div>
       </div>
     </div>
+
+    <div class="body">
+      <div class="portal-card">
+        <div class="portal-dot" id="portalDot"></div>
+        <div>
+          <div class="portal-name" id="portalName">Detecting...</div>
+          <div class="portal-tier" id="portalTier"></div>
+        </div>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">No profile loaded</div>
+          <div class="profile-email" id="profileEmail">Set up your profile first</div>
+        </div>
+      </div>
+
+      <div class="setup-banner" id="setupBanner">
+        <strong>⚠ Profile not set up</strong>
+        Click <b>Edit Profile</b>, enter your Sync Passcode, then click <b>Fetch from Cloud</b> to load your details.
+      </div>
+
+      <button class="btn-primary" id="apply" disabled>⚡ Apply Autofill</button>
+
+      <div class="btn-row">
+        <button class="btn-secondary" id="editProfile">✏ Edit Profile</button>
+        <button class="btn-secondary" id="syncCloud">🔄 Sync</button>
+      </div>
+
+      <div class="status" id="status">Ready</div>
+    </div>
+
     <script type="module" src="popup.js"></script>
   </body>
 </html>

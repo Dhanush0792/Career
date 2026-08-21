@@ -1,164 +1,272 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>JobXApply - Edit Profile</title>
+    <title>JobXApply — Edit Profile</title>
     <style>
-      body { font-family: Inter, system-ui, sans-serif; background: #0b1020; color: #f4f7ff; margin: 0; padding: 20px; }
-      .wrap { max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.06); padding: 32px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(24px); }
-      label { display:block; margin-top: 12px; font-size: 11px; font-family: monospace; text-transform: uppercase; color: rgba(244,247,255,0.7); }
-      input, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(7,10,24,0.6); color: #fff; outline: none; }
-      input:focus, textarea:focus { border-color: #5b4fe8; }
-      textarea { min-height: 100px; }
-      button { margin-top: 16px; padding: 10px 18px; border-radius: 8px; background: #5b4fe8; color: white; border: none; cursor: pointer; font-weight: bold; }
-      .row { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      .muted { color: rgba(244,247,255,0.6); font-size: 13px; margin-bottom: 20px; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: Inter, system-ui, sans-serif;
+        background: #0b1020;
+        color: #f4f7ff;
+        padding: 20px;
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 660px;
+        margin: 0 auto;
+        background: rgba(255,255,255,0.05);
+        padding: 28px;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.10);
+      }
+      h2 {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .sub {
+        color: rgba(244,247,255,0.55);
+        font-size: 12px;
+        margin-bottom: 24px;
+        line-height: 1.5;
+      }
+
+      /* Cloud sync box */
+      .sync-box {
+        background: rgba(91,79,232,0.07);
+        border: 1px solid rgba(91,79,232,0.22);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+      }
+      .sync-box label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: rgba(244,247,255,0.65);
+        display: block;
+        margin-bottom: 8px;
+      }
+      .sync-row {
+        display: flex;
+        gap: 8px;
+      }
+      .sync-row input {
+        flex: 1;
+      }
+      .sync-note {
+        font-size: 10px;
+        color: rgba(244,247,255,0.45);
+        margin-top: 6px;
+        line-height: 1.5;
+      }
+
+      /* Section labels */
+      .section-label {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: rgba(91,79,232,0.9);
+        border-bottom: 1px solid rgba(91,79,232,0.2);
+        padding-bottom: 6px;
+        margin-bottom: 12px;
+        margin-top: 20px;
+      }
+
+      /* Fields */
+      label {
+        display: block;
+        font-size: 11px;
+        color: rgba(244,247,255,0.6);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      input, textarea {
+        width: 100%;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(7,10,24,0.6);
+        color: #f4f7ff;
+        font-size: 13px;
+        outline: none;
+        font-family: inherit;
+      }
+      input:focus, textarea:focus {
+        border-color: #5b4fe8;
+      }
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+      .row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .field { margin-bottom: 12px; }
+
+      /* Buttons */
+      .btn-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+        flex-wrap: wrap;
+      }
+      .btn-save {
+        flex: 1;
+        padding: 11px;
+        background: linear-gradient(135deg, #5b4fe8, #796df0);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        min-width: 140px;
+      }
+      .btn-save:hover { opacity: 0.85; }
+      .btn-sync-cloud {
+        padding: 11px 16px;
+        background: rgba(47,221,196,0.12);
+        border: 1px solid rgba(47,221,196,0.35);
+        border-radius: 10px;
+        color: #2fddc4;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn-sync-cloud:hover { background: rgba(47,221,196,0.2); }
+      .btn-close {
+        padding: 11px 16px;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        color: rgba(244,247,255,0.6);
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .btn-close:hover { border-color: rgba(255,255,255,0.3); color: #f4f7ff; }
+
+      /* Status */
+      #status {
+        margin-top: 14px;
+        font-size: 12px;
+        font-weight: 600;
+        min-height: 18px;
+        line-height: 1.4;
+      }
+      #status.ok { color: #2fddc4; }
+      #status.err { color: #e8547b; }
+      #status.warn { color: #ff9800; }
+
+      /* Conflict UI */
+      #conflictUI {
+        display: none;
+        margin-top: 16px;
+        padding: 14px;
+        background: rgba(255,100,100,0.07);
+        border-radius: 12px;
+        border: 1px solid rgba(255,100,100,0.25);
+      }
+      #conflictUI h3 { margin-bottom: 6px; font-size: 14px; }
+      #conflictUI p { color: rgba(244,247,255,0.6); font-size: 12px; margin-bottom: 10px; }
+      .conflict-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+      .conflict-btns button {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 12px;
+        cursor: pointer;
+        color: white;
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <h2>JobXApply — Edit Profile</h2>
-      <div class="muted">Edit fields you want autofill to use. Click Save to persist and sync.</div>
-      
-      <div style="margin-top:12px; margin-bottom:12px; padding:12px; background:rgba(91,79,232,0.08); border:1px solid rgba(91,79,232,0.2); border-radius:8px;">
-        <label style="margin-top:0; font-weight:700;">Sync Encryption Passcode *</label>
-        <div style="display:flex; gap:8px; margin-top:4px;">
-          <input id="syncPasscode" type="password" placeholder="Key for zero-knowledge AES-GCM local encryption" style="margin-top:0;" />
-          <button id="pullCloud" style="margin-top:0; white-space:nowrap; background:#2fddc4; color:#070a18; font-weight:bold; padding:8px 12px; font-size:11px;">Fetch from Cloud</button>
+      <h2>✏ Edit Profile</h2>
+      <div class="sub">Your details are saved locally on this device. Use "Save to Cloud" to back them up securely.</div>
+
+      <!-- Cloud sync -->
+      <div class="sync-box">
+        <label>Sync Passcode (optional)</label>
+        <div class="sync-row">
+          <input id="syncPasscode" type="password" placeholder="Enter passcode to sync with cloud" />
+          <button class="btn-sync-cloud" id="pullCloud" style="white-space:nowrap; padding:9px 14px; font-size:12px;">⬇ Fetch from Cloud</button>
         </div>
-        <div class="muted" style="margin-top:4px; font-size:11px; margin-bottom:0;">This passcode is never sent to the server in plaintext. It is used locally to encrypt/decrypt details. Use the "Fetch from Cloud" button to load your synced profile.</div>
+        <div class="sync-note">Your passcode is never sent to the server in plaintext — it encrypts your data locally. Leave blank to save locally only.</div>
       </div>
 
-      <div class="row">
-        <div>
-          <label>Full name</label>
-          <input id="fullName" />
-        </div>
-        <div>
-          <label>Email</label>
-          <input id="email" />
-        </div>
+      <!-- Personal -->
+      <div class="section-label">Personal Info</div>
+      <div class="row2">
+        <div class="field"><label>Full Name</label><input id="fullName" placeholder="e.g. Dhanush Kumar" /></div>
+        <div class="field"><label>Email</label><input id="email" type="email" placeholder="you@email.com" /></div>
       </div>
-      
-      <div class="row">
-        <div>
-          <label>First name</label>
-          <input id="firstName" />
-        </div>
-        <div>
-          <label>Last name</label>
-          <input id="lastName" />
-        </div>
+      <div class="row2">
+        <div class="field"><label>First Name</label><input id="firstName" /></div>
+        <div class="field"><label>Last Name</label><input id="lastName" /></div>
       </div>
-      
-      <div class="row">
-        <div>
-          <label>Phone</label>
-          <input id="phone" />
-        </div>
-        <div>
-          <label>DOB</label>
-          <input id="dob" type="date" />
-        </div>
+      <div class="row2">
+        <div class="field"><label>Phone</label><input id="phone" placeholder="+91 9876543210" /></div>
+        <div class="field"><label>Date of Birth</label><input id="dob" type="date" /></div>
       </div>
 
-      <div class="row">
-        <div>
-          <label>Father's Name</label>
-          <input id="fatherName" />
-        </div>
-        <div>
-          <label>Mother's Name</label>
-          <input id="motherName" />
-        </div>
+      <!-- Location -->
+      <div class="section-label">Location</div>
+      <div class="field"><label>Street Address</label><input id="address" placeholder="123, Street Name" /></div>
+      <div class="row2">
+        <div class="field"><label>City</label><input id="city" /></div>
+        <div class="field"><label>State</label><input id="state" /></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Country</label><input id="country" /></div>
+        <div class="field"><label>Zip / Pincode</label><input id="zip" /></div>
       </div>
 
-      <div class="row">
-        <div>
-          <label>Age</label>
-          <input id="age" type="number" />
-        </div>
-        <div>
-          <label>Target Role</label>
-          <input id="targetRole" />
-        </div>
+      <!-- Professional -->
+      <div class="section-label">Professional</div>
+      <div class="field"><label>Headline</label><input id="headline" placeholder="e.g. Full Stack Developer | 3 YOE" /></div>
+      <div class="field"><label>Target Role</label><input id="targetRole" placeholder="e.g. Software Engineer" /></div>
+      <div class="field"><label>Summary / Bio</label><textarea id="summary" placeholder="A brief professional summary…"></textarea></div>
+      <div class="field"><label>Skills (comma separated)</label><input id="skills" placeholder="Python, React, Node.js, SQL" /></div>
+
+      <!-- Links -->
+      <div class="section-label">Links</div>
+      <div class="row2">
+        <div class="field"><label>LinkedIn</label><input id="linkedin" placeholder="https://linkedin.com/in/…" /></div>
+        <div class="field"><label>GitHub</label><input id="github" placeholder="https://github.com/…" /></div>
+      </div>
+      <div class="field"><label>Portfolio / Website</label><input id="portfolio" placeholder="https://yoursite.com" /></div>
+
+      <!-- Experience & Education -->
+      <div class="section-label">Experience & Education</div>
+      <div class="field"><label>Experience</label><textarea id="experience" placeholder="Company, Role, Dates&#10;Brief description of responsibilities…"></textarea></div>
+      <div class="field"><label>Education</label><textarea id="education" placeholder="Degree, Institution, Year&#10;e.g. B.Tech CS, XYZ University, 2023"></textarea></div>
+
+      <!-- Actions -->
+      <div class="btn-row">
+        <button class="btn-save" id="save">💾 Save Profile</button>
+        <button class="btn-sync-cloud" id="pushCloud">☁ Save to Cloud</button>
+        <button class="btn-close" id="close">✕ Close</button>
       </div>
 
-      <label>Street Address</label>
-      <input id="address" />
+      <div id="status"></div>
 
-      <div class="row">
-        <div>
-          <label>City</label>
-          <input id="city" />
-        </div>
-        <div>
-          <label>State</label>
-          <input id="state" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Country</label>
-          <input id="country" />
-        </div>
-        <div>
-          <label>Zip / Pincode</label>
-          <input id="zip" />
-        </div>
-      </div>
-
-      <label>Headline</label>
-      <input id="headline" />
-      
-      <label>Summary</label>
-      <textarea id="summary"></textarea>
-      
-      <label>College / Institution</label>
-      <input id="college" />
-
-      <label>Education Details</label>
-      <textarea id="education"></textarea>
-      
-      <label>Experience Details</label>
-      <textarea id="experience"></textarea>
-      
-      <label>Skills</label>
-      <input id="skills" />
-
-      <div class="row">
-        <div>
-          <label>LinkedIn</label>
-          <input id="linkedin" />
-        </div>
-        <div>
-          <label>GitHub</label>
-          <input id="github" />
-        </div>
-      </div>
-      
-      <label>Portfolio / Website</label>
-      <input id="portfolio" />
-
-      <label>Resume / CV text draft</label>
-      <textarea id="resumeDraft"></textarea>
-
-      <div style="display:flex; gap:12px;">
-        <button id="save">Save & Sync</button>
-        <button id="close">Close</button>
-      </div>
-      
-      <div id="status" style="margin-top: 10px; font-weight: bold; font-family: monospace;"></div>
-      
-      <div id="conflictUI" style="display:none; margin-top:20px; padding:16px; background:rgba(255,100,100,0.1); border-radius:12px; border:1px solid rgba(255,100,100,0.3);">
-        <h3 style="margin-top:0;">Conflict detected</h3>
-        <p class="muted">Another device or user changed this profile. Choose how to proceed.</p>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
-          <button id="conflictUseServer" style="background:#2fddc4; border:0; border-radius:8px; color:white; padding:8px 12px; cursor:pointer;">Use server state</button>
-          <button id="conflictKeepLocal" style="background:#e8547b; border:0; border-radius:8px; color:white; padding:8px 12px; cursor:pointer;">Keep my changes</button>
-          <button id="conflictReload" style="background:#666; border:0; border-radius:8px; color:white; padding:8px 12px; cursor:pointer;">Reload</button>
+      <!-- Conflict UI -->
+      <div id="conflictUI">
+        <h3>⚠ Conflict Detected</h3>
+        <p>Another device saved a different version. Choose which to keep:</p>
+        <div class="conflict-btns">
+          <button id="conflictUseServer" style="background:#2fddc4; color:#070a18;">Use Cloud Version</button>
+          <button id="conflictKeepLocal" style="background:#e8547b;">Keep My Changes</button>
+          <button id="conflictReload" style="background:#555;">Reload</button>
         </div>
       </div>
     </div>

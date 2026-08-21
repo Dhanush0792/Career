@@ -1,382 +1,142 @@
-import { buildAutofillPayload, getPortalRule } from "./shared.js";
+﻿import { buildAutofillPayload, getPortalRule } from "./shared.js";
 
-const els = {
-  portalName: document.getElementById("portalName"),
-  portalTier: document.getElementById("portalTier"),
-  fields: document.getElementById("fields"),
-  notes: document.getElementById("notes"),
-  apply: document.getElementById("apply"),
-  editProfile: document.getElementById("editProfile"),
-  report: document.getElementById("report"),
-  status: document.getElementById("status"),
-  payload: document.getElementById("payload"),
-  toggleMapper: document.getElementById("toggleMapper"),
-  captureSnapshot: document.getElementById("captureSnapshot"),
-  snapshotPreview: document.getElementById("snapshotPreview"),
-  removeSnapshot: document.getElementById("removeSnapshot"),
-  logForm: document.getElementById("logForm"),
-  logCompany: document.getElementById("logCompany"),
-  logRole: document.getElementById("logRole"),
-  logApp: document.getElementById("logApp")
-};
+// ── Helpers ────────────────────────────────────────────────────────────────
+function setStatus(msg, cls = "") {
+  const el = document.getElementById("status");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = "status " + cls;
+}
 
 async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab;
 }
 
+// ── Portal Detection ────────────────────────────────────────────────────────
 async function loadPortalInfo() {
   const tab = await getActiveTab();
   const rule = getPortalRule(tab?.url || "");
-  els.portalName.textContent = rule.portal;
-  els.portalTier.textContent = `${rule.tier} · ${rule.notes}`;
+  const nameEl = document.getElementById("portalName");
+  const tierEl = document.getElementById("portalTier");
+  const dotEl  = document.getElementById("portalDot");
+  if (nameEl) nameEl.textContent = rule.portal || "Unknown Site";
+  if (tierEl) tierEl.textContent = rule.notes ? `${rule.tier} · ${rule.notes}` : rule.tier || "";
+  if (dotEl) {
+    if (!rule.portal || rule.portal === "unknown") dotEl.classList.add("unknown");
+    else dotEl.classList.remove("unknown");
+  }
   return { tab, rule };
 }
 
-let currentProfiles = {};
-let currentActiveId = "";
+// ── Profile Loading ─────────────────────────────────────────────────────────
+async function loadAndDisplayProfile() {
+  // First try local storage for fast load
+  const local = await new Promise((r) =>
+    chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], r)
+  );
 
-async function loadProfile() {
-  const response = await chrome.runtime.sendMessage({ type: "jobxapply:getProfile" });
-  currentProfiles = response?.profiles || {};
-  currentActiveId = response?.activeProfileId || "";
-  return response?.profile || {};
-}
-
-async function populateProfileDropdown() {
-  const select = document.getElementById("profileSelect");
-  if (!select) return;
-
-  const activeProfile = await loadProfile();
-  select.innerHTML = "";
-  for (const id of Object.keys(currentProfiles)) {
-    const p = currentProfiles[id];
-    const opt = document.createElement("option");
-    opt.value = id;
-    opt.textContent = p.profileName || id;
-    if (id === currentActiveId) {
-      opt.selected = true;
-    }
-    select.appendChild(opt);
+  let profile = local.jobxapplyProfile || {};
+  // If profiles map exists, pick active one
+  if (local.jobxapplyProfiles && local.jobxapplyActiveProfileId) {
+    profile = local.jobxapplyProfiles[local.jobxapplyActiveProfileId] || profile;
   }
-}
 
-async function refreshPreview() {
-  const profile = await loadProfile();
-  const requested = els.fields.value.split(/[\n,]/).map((v) => v.trim()).filter(Boolean);
-  const payload = buildAutofillPayload(profile, requested);
-  if (els.notes.value.trim()) {
-    payload.note = els.notes.value.trim();
-  }
-  els.payload.textContent = JSON.stringify(payload, null, 2);
-  return payload;
-}
+  const hasData = profile && (profile.fullName || profile.email || profile.phone);
 
-document.getElementById("profileSelect").addEventListener("change", async (e) => {
-  const newActiveId = e.target.value;
-  if (!newActiveId) return;
-  els.status.textContent = "Swapping profile...";
-  const res = await chrome.runtime.sendMessage({
-    type: "jobxapply:setActiveProfile",
-    activeProfileId: newActiveId
-  });
-  if (res?.ok) {
-    els.status.textContent = "Profile swapped.";
-    await refreshPreview();
-    await runLocalAtsMatch();
-    await renderSmartAnswers();
+  const nameEl   = document.getElementById("profileName");
+  const emailEl  = document.getElementById("profileEmail");
+  const avatarEl = document.getElementById("profileAvatar");
+  const applyBtn = document.getElementById("apply");
+  const banner   = document.getElementById("setupBanner");
+
+  if (hasData) {
+    if (nameEl)  nameEl.textContent  = profile.fullName || profile.firstName + " " + (profile.lastName || "") || "Profile Loaded";
+    if (emailEl) emailEl.textContent = profile.email || profile.phone || "Ready to autofill";
+    if (avatarEl) avatarEl.textContent = (profile.fullName || profile.firstName || "?")[0].toUpperCase();
+    if (applyBtn) applyBtn.disabled = false;
+    if (banner)  banner.style.display = "none";
+    setStatus("Profile loaded — ready to autofill", "success");
   } else {
-    els.status.textContent = "Swap failed: " + (res?.error || "unknown");
+    if (nameEl)  nameEl.textContent  = "No profile loaded";
+    if (emailEl) emailEl.textContent = "Set up your profile first";
+    if (avatarEl) avatarEl.textContent = "?";
+    if (applyBtn) applyBtn.disabled = true;
+    if (banner)  banner.style.display = "block";
+    setStatus("Profile not set up — click Edit Profile", "warn");
   }
-});
 
-els.fields.addEventListener("input", refreshPreview);
-els.notes.addEventListener("input", refreshPreview);
+  return profile;
+}
 
-els.apply.addEventListener("click", async () => {
+// ── Autofill ────────────────────────────────────────────────────────────────
+async function doAutofill() {
   const { tab } = await loadPortalInfo();
-  const profile = await loadProfile();
-  const requested = els.fields.value.split(/[\n,]/).map((v) => v.trim()).filter(Boolean);
-  const response = await chrome.tabs.sendMessage(tab.id, {
-    type: "jobxapply:applyAutofill",
-    profile,
-    fields: requested
-  });
-  els.status.textContent = response?.ok
-    ? `Applied ${response.results.filter((item) => item.status === "filled").length} fields`
-    : "No response from page";
-  els.payload.textContent = JSON.stringify(response?.payload || {}, null, 2);
-});
+  if (!tab?.id) { setStatus("No active tab found", "error"); return; }
 
-els.editProfile.addEventListener("click", async () => {
-  // open the extension profile editor page
-  const url = chrome.runtime.getURL("profile.html");
-  await chrome.tabs.create({ url });
-});
-
-els.report.addEventListener("click", async () => {
-  const tab = await getActiveTab();
-  const rule = getPortalRule(tab?.url || "");
-  const report = {
-    url: tab?.url || "",
-    title: tab?.title || "",
-    portal: rule.portal,
-    fields: els.fields.value,
-    note: els.notes.value
-  };
-  const resp = await chrome.runtime.sendMessage({ type: "jobxapply:reportMapIssue", report });
-  els.status.textContent = resp?.ok ? 'Reported map issue' : `Report failed: ${resp?.error || 'unknown'}`;
-});
-
-els.toggleMapper.addEventListener("click", async () => {
-  const tab = await getActiveTab();
-  if (!tab) return;
-  await chrome.tabs.sendMessage(tab.id, { type: "jobxapply:toggleMappingMode" });
-  window.close();
-});
-
-let currentSnapshotUrl = null;
-
-function parseTitle(title, url) {
-  let company = "";
-  let role = "";
-  
-  if (url) {
-    try {
-      const host = new URL(url).hostname;
-      const parts = host.split('.');
-      if (parts.length > 1) {
-        company = parts[parts.length - 2];
-        if (company.toLowerCase() === 'co' && parts.length > 2) {
-          company = parts[parts.length - 3];
-        }
-        company = company.charAt(0).toUpperCase() + company.slice(1);
-      }
-    } catch(e) {}
-  }
-  
-  if (title) {
-    const splitters = [" - ", " | ", " at ", " @ "];
-    for (const sp of splitters) {
-      const index = title.indexOf(sp);
-      if (index !== -1) {
-        const part1 = title.substring(0, index).trim();
-        const part2 = title.substring(index + sp.length).trim();
-        if (part2.toLowerCase().includes("careers") || part2.toLowerCase().includes("jobs")) {
-          role = part1;
-        } else {
-          role = part1;
-          company = part2;
-        }
-        break;
-      }
-    }
-    if (!role) {
-      role = title.replace(/jobs/gi, '').replace(/careers/gi, '').trim();
-    }
-  }
-  
-  return {
-    company: company || "Unknown Company",
-    role: role || "Software Engineer"
-  };
-}
-
-els.captureSnapshot.addEventListener("click", async () => {
-  els.status.textContent = "Capturing screen...";
-  const resp = await chrome.runtime.sendMessage({ type: "jobxapply:captureTab" });
-  if (resp?.ok && resp.dataUrl) {
-    currentSnapshotUrl = resp.dataUrl;
-    els.snapshotPreview.style.backgroundImage = `url(${resp.dataUrl})`;
-    els.snapshotPreview.style.display = "block";
-    els.logForm.style.display = "flex";
-    
-    const tab = await getActiveTab();
-    const info = parseTitle(tab.title || "", tab.url || "");
-    els.logCompany.value = info.company;
-    els.logRole.value = info.role;
-    els.status.textContent = "Screen captured. Verify details below.";
-  } else {
-    els.status.textContent = `Capture failed: ${resp?.error || "unknown"}`;
-  }
-});
-
-els.removeSnapshot.addEventListener("click", () => {
-  currentSnapshotUrl = null;
-  els.snapshotPreview.style.display = "none";
-  els.logForm.style.display = "none";
-  els.status.textContent = "Snapshot removed.";
-});
-
-els.logApp.addEventListener("click", async () => {
-  const company = els.logCompany.value.trim();
-  const role = els.logRole.value.trim();
-  if (!company || !role) {
-    els.status.textContent = "Company and role are required.";
+  const profile = await loadAndDisplayProfile();
+  const hasData = profile && (profile.fullName || profile.email || profile.phone);
+  if (!hasData) {
+    setStatus("Profile is empty — fetch from cloud first!", "error");
     return;
   }
-  
-  els.logApp.disabled = true;
-  els.status.textContent = "Saving application to tracker...";
-  
-  const tab = await getActiveTab();
-  const rule = getPortalRule(tab?.url || "");
-  
-  const resp = await chrome.runtime.sendMessage({
-    type: "jobxapply:logApplication",
-    company,
-    role,
-    portal: rule.portal || "Direct",
-    snapshot: currentSnapshotUrl
-  });
-  
-  els.logApp.disabled = false;
-  if (resp?.ok) {
-    els.status.textContent = "Application logged successfully!";
-    currentSnapshotUrl = null;
-    els.snapshotPreview.style.display = "none";
-    els.logForm.style.display = "none";
-    els.logCompany.value = "";
-    els.logRole.value = "";
-  } else {
-    els.status.textContent = `Save failed: ${resp?.error || "unknown"}`;
-  }
-});
 
-async function runLocalAtsMatch() {
-  const profile = await loadProfile();
-  const skillsRaw = profile.skills || "";
-  const profileSkills = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
-  
-  const atsCard = document.getElementById("atsCard");
-  const scoreEl = document.getElementById("popupAtsScore");
-  const matchedEl = document.getElementById("popupMatchedSkills");
-  const missingEl = document.getElementById("popupMissingSkills");
-  
-  if (!atsCard || !scoreEl || !matchedEl || !missingEl) return;
-  
-  if (profileSkills.length === 0) {
-    atsCard.style.display = "none";
-    return;
-  }
-  
-  const tab = await getActiveTab();
-  if (!tab) return;
-  
-  try {
-    const resp = await chrome.tabs.sendMessage(tab.id, { type: "jobxapply:getPageText" });
-    if (resp?.ok && resp.text) {
-      const stopWords = new Set([
-        'the','and','or','to','a','an','in','for','of','with','is','are','be',
-        'that','this','will','have','on','at','by','from','as','we','you','our',
-        'their','it','not','your','can','all','more','about','if','been','use',
-        'any','one','also','its','but','has','was','were','they','who','what',
-        'when','how','into','than','then','so','up','out','them','these','those',
-        'should','would','could','may','must','shall','do','does','did','get',
-        'per','role','work','team','job','experience','position','company',
-      ]);
+  setStatus("Running autofill…");
+  const payload = buildAutofillPayload(profile, Object.keys(profile).filter(k => profile[k]));
 
-      const tokens = resp.text.toLowerCase()
-        .replace(/[^a-z0-9\s.+#]/g, ' ')
-        .split(/\s+/)
-        .filter(w => w.length > 1 && !stopWords.has(w));
-      const textSet = new Set(tokens);
-      
-      const matched = [];
-      const missing = [];
-      
-      profileSkills.forEach(skill => {
-        const skillTokens = skill.toLowerCase().split(/\s+/);
-        const isFound = skillTokens.some(t => {
-          if (t.length <= 3) {
-            return textSet.has(t);
-          }
-          return textSet.has(t) || [...textSet].some(jw => jw.includes(t) || t.includes(jw));
-        });
-        (isFound ? matched : missing).push(skill);
-      });
-      
-      const total = matched.length + missing.length;
-      const score = total > 0 ? Math.round((matched.length / total) * 100) : 0;
-      
-      scoreEl.textContent = `${score}%`;
-      scoreEl.style.color = score >= 70 ? "var(--green)" : score >= 40 ? "#5B4FE8" : "rgba(255,255,255,0.4)";
-      
-      matchedEl.textContent = matched.length > 0 ? matched.join(", ") : "None";
-      missingEl.textContent = missing.length > 0 ? missing.join(", ") : "None";
-      
-      atsCard.style.display = "block";
+  chrome.tabs.sendMessage(tab.id, { type: "jobxapply:applyAutofill", profile: payload }, (res) => {
+    if (chrome.runtime.lastError) {
+      setStatus("Error: " + chrome.runtime.lastError.message, "error");
+      return;
+    }
+    if (res?.filled > 0) {
+      setStatus(`✓ Filled ${res.filled} field(s)`, "success");
     } else {
-      atsCard.style.display = "none";
+      setStatus("No matching fields found on this page", "warn");
     }
-  } catch (e) {
-    atsCard.style.display = "none";
-  }
-}
-
-async function renderSmartAnswers() {
-  const profile = await loadProfile();
-  const answers = profile.answers || [];
-  
-  const card = document.getElementById("smartAnswersCard");
-  const list = document.getElementById("smartAnswersList");
-  if (!card || !list) return;
-  
-  if (!Array.isArray(answers) || answers.length === 0) {
-    card.style.display = "none";
-    return;
-  }
-  
-  list.innerHTML = "";
-  answers.forEach(item => {
-    const btn = document.createElement("button");
-    btn.style.background = "rgba(91,79,232,0.1)";
-    btn.style.border = "1px solid rgba(91,79,232,0.3)";
-    btn.style.color = "var(--text)";
-    btn.style.padding = "4px 8px";
-    btn.style.fontFamily = "var(--mono)";
-    btn.style.fontSize = "9px";
-    btn.style.borderRadius = "4px";
-    btn.style.cursor = "pointer";
-    btn.style.transition = "all 0.15s";
-    btn.textContent = `#${item.tag}`;
-    
-    btn.addEventListener("mouseover", () => {
-      btn.style.borderColor = "var(--green)";
-      btn.style.background = "rgba(47,221,196,0.08)";
-    });
-    btn.addEventListener("mouseout", () => {
-      btn.style.borderColor = "rgba(91,79,232,0.3)";
-      btn.style.background = "rgba(91,79,232,0.1)";
-    });
-    
-    btn.addEventListener("click", async () => {
-      // Clipboard fallback
-      navigator.clipboard.writeText(item.answer).catch(() => {});
-      
-      const tab = await getActiveTab();
-      if (tab) {
-        chrome.tabs.sendMessage(tab.id, { 
-          type: "jobxapply:insertText", 
-          text: item.answer 
-        }, (resp) => {
-          if (resp?.ok) {
-            els.status.textContent = `Pasted answer: #${item.tag}`;
-          } else {
-            els.status.textContent = `Copied #${item.tag} to clipboard (click a field first)`;
-          }
-        });
-      }
-    });
-    
-    list.appendChild(btn);
   });
-  
-  card.style.display = "block";
 }
 
-await loadPortalInfo();
-await populateProfileDropdown();
-await refreshPreview();
-await runLocalAtsMatch();
-await renderSmartAnswers();
+// ── Sync from Cloud ──────────────────────────────────────────────────────────
+async function syncFromCloud() {
+  const passcode = await new Promise((r) =>
+    chrome.storage.local.get(["jobxapplyPasscode"], (res) => r(res.jobxapplyPasscode || ""))
+  );
+
+  if (!passcode) {
+    // Ask for passcode inline
+    const entered = prompt("Enter your Sync Passcode to fetch profile from cloud:");
+    if (!entered) return;
+    await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: entered }, r));
+  }
+
+  setStatus("Syncing from cloud…");
+  chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
+    if (chrome.runtime.lastError) {
+      setStatus("Sync error: " + chrome.runtime.lastError.message, "error");
+      return;
+    }
+    if (res?.profile && (res.profile.fullName || res.profile.email)) {
+      setStatus("✓ Profile synced from cloud!", "success");
+      await loadAndDisplayProfile();
+    } else {
+      setStatus("No profile on server — enter profile manually", "warn");
+    }
+  });
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+(async function init() {
+  await loadPortalInfo();
+  await loadAndDisplayProfile();
+
+  document.getElementById("apply")?.addEventListener("click", doAutofill);
+
+  document.getElementById("editProfile")?.addEventListener("click", () => {
+    chrome.runtime.openOptionsPage
+      ? chrome.runtime.openOptionsPage()
+      : chrome.tabs.create({ url: chrome.runtime.getURL("profile.html") });
+  });
+
+  document.getElementById("syncCloud")?.addEventListener("click", syncFromCloud);
+})();
