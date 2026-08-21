@@ -15,11 +15,11 @@
   --black:   #0B1020;
   --s1:      rgba(255, 255, 255, 0.07);
   --s2:      rgba(7, 10, 24, 0.6);
-  --border:  rgba(255, 255, 255, 0.12);
+  --border:  rgba(255, 255, 255, 0.22);
   --white:   #ffffff;
   --text:    #f4f7ff;
-  --muted:   rgba(244, 247, 255, 0.65);
-  --dim:     rgba(244, 247, 255, 0.4);
+  --muted:   rgba(244, 247, 255, 0.88);
+  --dim:     rgba(244, 247, 255, 0.65);
   --orange:  #5B4FE8;
   --green:   #2FDDC4;
   --mono:    'JetBrains Mono', monospace;
@@ -136,6 +136,12 @@ body::after {
   border-radius: 6px;
   outline: none;
   cursor: pointer;
+}
+.select-input option {
+  background-color: #0b1020 !important;
+  color: #f4f7ff !important;
+  font-family: var(--mono) !important;
+  font-size: 11px !important;
 }
 .select-input:focus {
   border-color: var(--orange);

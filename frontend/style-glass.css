@@ -13,8 +13,8 @@
   --alert:   #F5A623;
   --white:   #ffffff;
   --text:    #f4f7ff;
-  --muted:   rgba(244, 247, 255, 0.65);
-  --dim:     rgba(244, 247, 255, 0.4);
+  --muted:   rgba(244, 247, 255, 0.88);
+  --dim:     rgba(244, 247, 255, 0.65);
   
   --glass-bg:     rgba(255, 255, 255, 0.08);
   --glass-tint:   rgba(255, 255, 255, 0.03);
@@ -290,4 +290,55 @@ body {
   font-size: 13px;
   font-weight: 700;
   color: var(--success);
+}
+
+/* ─── Typography & Form Element Visibility Overrides ───────────────────── */
+
+/* Make select dropdown options highly visible across all platforms */
+select option,
+.form-input option,
+.select-input option,
+.form-control option {
+  background-color: #0b1020 !important;
+  color: #f4f7ff !important;
+  font-family: var(--mono) !important;
+  font-size: 13px !important;
+  padding: 12px !important;
+}
+
+/* Ensure text box placeholders are easily legible */
+.form-input::placeholder,
+.select-input::placeholder,
+.form-textarea::placeholder,
+textarea::placeholder,
+input::placeholder {
+  color: rgba(244, 247, 255, 0.45) !important;
+}
+
+/* Color arrow marks globally to stand out in Teal instead of dull white */
+span.arrow-mark,
+a span,
+.action-btn span,
+.btn-ghost span,
+.warn-banner a span {
+  color: var(--success) !important;
+  font-weight: 700;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+a:hover span,
+.action-btn:hover span {
+  transform: translateX(4px);
+}
+
+/* Ensure headings have distinct font family and colors */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--display) !important;
+  letter-spacing: 0.04em !important;
+  color: var(--white) !important;
+}
+
+.pane-title {
+  color: var(--primary) !important;
 }
