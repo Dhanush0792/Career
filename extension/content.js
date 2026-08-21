@@ -355,11 +355,21 @@ document.addEventListener("submit", (e) => {
 
   if (message?.type === "jobxapply:applyAutofill") {
     const profile = message.profile || {};
-    const payload = buildAutofillPayload(profile, message.fields || []);
+
+    // Guard: if no meaningful data, abort and report to popup
+    const hasData = Object.values(profile).some((v) => v && String(v).trim().length > 0);
+    if (!hasData) {
+      sendResponse({ ok: false, filled: 0, reason: "Profile is empty — set up your profile first" });
+      return true;
+    }
+
+    const payload = buildAutofillPayload(profile, message.fields || Object.keys(profile));
     chrome.runtime.sendMessage({ type: "jobxapply:getPortalMap", url: location.href }, (resp) => {
       const portalMap = resp?.map || {};
       const results = [];
+      let filledCount = 0;
       for (const [field, value] of Object.entries(payload.payload || {})) {
+        if (!value) continue; // skip empty values
         const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
         const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
         
@@ -374,6 +384,7 @@ document.addEventListener("submit", (e) => {
             const expected = profile.preferences?.expectedSalary || "";
             if (expected) {
               setValue(el, expected);
+              filledCount++;
               results.push({ field, status: "filled", via: "compensation-rule" });
             } else {
               el.style.border = "1px solid #eb5757";
@@ -392,24 +403,26 @@ document.addEventListener("submit", (e) => {
             setValue(el, logisticsVal);
             el.style.backgroundColor = "#ffffe0";
             el.style.border = "1px solid #ffeb3b";
+            filledCount++;
             results.push({ field, status: "filled-review", via: "logistics-rule" });
           } else if (category === "eeo") {
             results.push({ field, status: "skipped", via: "eeo-rule" });
           } else if (category === "essay") {
-            const draft = `As a professional with experience in ${profile.skills ? profile.skills.slice(0, 3).join(', ') : 'product development'}, I am highly interested in this role. My background aligns with your core requirements, and I am excited about the opportunity to add value to your team.`;
+            const draft = `As a professional with experience in ${profile.skills ? String(profile.skills).split(',').slice(0, 3).join(', ') : 'product development'}, I am highly interested in this role. My background aligns with your core requirements, and I am excited about the opportunity to add value to your team.`;
             setValue(el, draft);
-            el.focus();
             el.style.outline = "2px solid #ffeb3b";
+            filledCount++;
             results.push({ field, status: "drafted", via: "essay-rule" });
           } else {
             setValue(el, value);
+            filledCount++;
             results.push({ field, status: "filled", via: "heuristic" });
           }
         } else {
           results.push({ field, status: "not-found" });
         }
       }
-      sendResponse({ ok: true, payload, results });
+      sendResponse({ ok: true, filled: filledCount, payload, results });
     });
     return true;
   }

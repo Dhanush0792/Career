@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "rep_7l4rbrgp5",
+    "portal": "Greenhouse",
+    "field": "fullName",
+    "selectorTried": "input#name",
+    "reporterEmail": "anonymous",
+    "submittedAt": 1787286785487,
+    "status": "pending"
+  },
+  {
+    "id": "rep_1ktyurhr5",
+    "portal": "Greenhouse",
+    "field": "fullName",
+    "selectorTried": "input#name",
+    "reporterEmail": "anonymous",
+    "submittedAt": 1787286865570,
+    "status": "pending"
+  }
+]

@@ -12,54 +12,104 @@
 <script src="shared-shell.js?v=2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
+
 <style>
+/* 3-Step Wizard Overrides */
 body { padding-top: 80px; }
-.container { max-width: 1000px; margin: 0 auto; padding: 0 20px; z-index: 10; position: relative; }
-.page-header { border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 24px; }
+.container { max-width: 760px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; }
+
+.page-header { border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 28px; }
 .page-label { font-family: var(--mono); font-size: 10px; color: var(--primary); letter-spacing: .14em; text-transform: uppercase; }
 .page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); }
 .page-title em { font-style: normal; color: var(--primary); }
 
-.onboard-grid { display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
-.card { border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); padding: 24px; border-radius: 14px; backdrop-filter: blur(16px); display: flex; flex-direction: column; gap: 16px; }
-.card-title { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: .1em; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; }
+/* Step indicator */
+.step-bar { display: flex; gap: 0; margin-bottom: 28px; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
+.step-indicator {
+  flex: 1; padding: 12px 8px; text-align: center;
+  font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase;
+  color: var(--muted); background: rgba(7,10,24,0.4); cursor: default;
+  transition: all 0.2s; border-right: 1px solid var(--glass-border);
+}
+.step-indicator:last-child { border-right: none; }
+.step-indicator.active { color: var(--white); background: rgba(91,79,232,0.15); }
+.step-indicator.done { color: var(--success); background: rgba(47,221,196,0.05); }
+.step-num { display: block; font-size: 18px; margin-bottom: 2px; }
 
-.dropzone { border: 2px dashed var(--glass-border); border-radius: 10px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
-.dropzone:hover { border-color: var(--primary); background: rgba(91, 79, 232, 0.05); }
+/* Step panels */
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* Card style */
+.wiz-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 28px;
+  backdrop-filter: blur(16px);
+}
+.wiz-card-title {
+  font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--primary);
+  letter-spacing: .1em; text-transform: uppercase;
+  border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; margin-bottom: 20px;
+}
+
+/* Fields */
+.field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.field-group.full { grid-template-columns: 1fr; }
+.field-item { display: flex; flex-direction: column; gap: 4px; }
+.field-item label {
+  font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.field-item input, .field-item textarea, .field-item select {
+  background: rgba(7, 10, 24, 0.6); border: 1px solid var(--glass-border);
+  padding: 9px 12px; color: var(--white); font-family: var(--mono); font-size: 12px;
+  border-radius: 8px; outline: none; width: 100%; box-sizing: border-box;
+}
+.field-item input:focus, .field-item textarea:focus { border-color: var(--primary); }
+.field-item textarea { min-height: 90px; resize: vertical; }
+
+/* Nav buttons */
+.wiz-nav { display: flex; gap: 12px; margin-top: 24px; }
+.btn-next {
+  flex: 1; height: 42px; background: var(--primary); color: var(--white);
+  border: none; border-radius: 10px; font-family: var(--mono); font-size: 11px;
+  font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+}
+.btn-next:hover { background: rgba(91,79,232,0.85); }
+.btn-back {
+  height: 42px; padding: 0 20px;
+  background: transparent; color: var(--muted); border: 1px solid var(--glass-border);
+  border-radius: 10px; font-family: var(--mono); font-size: 11px;
+  font-weight: 700; text-transform: uppercase; cursor: pointer;
+}
+.btn-back:hover { color: var(--white); border-color: var(--white); }
+.btn-finish {
+  flex: 1; height: 42px;
+  background: linear-gradient(135deg, #2fddc4, #1fa390);
+  color: #070a18; border: none; border-radius: 10px;
+  font-family: var(--mono); font-size: 11px; font-weight: 900;
+  text-transform: uppercase; cursor: pointer; letter-spacing: 0.05em;
+}
+.btn-finish:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Import section */
+.dropzone {
+  border: 2px dashed var(--glass-border); border-radius: 10px;
+  padding: 32px 20px; text-align: center; cursor: pointer;
+  transition: all 0.2s; background: rgba(0,0,0,0.2); margin-bottom: 12px;
+}
+.dropzone:hover { border-color: var(--primary); background: rgba(91,79,232,0.05); }
 .dropzone-label { font-family: var(--mono); font-size: 12px; color: var(--white); text-transform: uppercase; }
 .dropzone-hint { font-size: 10px; color: var(--muted); margin-top: 6px; }
 
-.tabs { display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 8px; }
-.tab-btn { background: transparent; border: none; color: var(--muted); padding: 8px 12px; font-family: var(--mono); font-size: 10px; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; }
-.tab-btn.active { color: var(--white); border-bottom-color: var(--primary); }
+.or-divider { text-align: center; font-family: var(--mono); font-size: 9px; color: var(--muted); margin: 12px 0; }
 
-.tab-pane { display: none; }
-.tab-pane.active { display: flex; flex-direction: column; gap: 14px; }
-
-/* Input verification block styling */
-.field-row { display: flex; flex-direction: column; gap: 4px; }
-.field-row label { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; display: flex; justify-content: space-between; }
-.field-row input, .field-row textarea { background: rgba(7, 10, 24, 0.6); border: 1px solid var(--glass-border); padding: 8px 12px; color: var(--white); font-family: var(--mono); font-size: 11px; border-radius: 8px; outline: none; }
-.field-row input:focus, .field-row textarea:focus { border-color: var(--primary); }
-
-/* Confidence classes */
-.med-confidence { border-color: #ff9800 !important; box-shadow: 0 0 6px rgba(255, 152, 0, 0.2); }
-.med-tag { color: #ff9800; font-size: 8px; font-weight: bold; }
-
-.unresolved-box { background: rgba(235, 87, 87, 0.05); border: 1px solid rgba(235, 87, 87, 0.3); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 10px; color: var(--white); display: flex; flex-direction: column; gap: 8px; }
-.unresolved-title { font-weight: bold; color: var(--rejected); text-transform: uppercase; font-size: 9px; }
-.unresolved-item { background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-
-.dup-box { background: rgba(46, 204, 113, 0.05); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 11px; display: flex; flex-direction: column; gap: 8px; }
-
-.action-row { display: flex; gap: 10px; margin-top: 10px; }
-.btn { flex: 1; height: 40px; font-family: var(--mono); font-size: 10px; font-weight: bold; text-transform: uppercase; cursor: pointer; border-radius: 8px; transition: all 0.2s; }
-.btn-primary { background: var(--primary); color: var(--white); border: 1px solid var(--primary); }
-.btn-primary:hover { background: rgba(91, 79, 232, 0.85); }
-.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--glass-border); }
-.btn-ghost:hover { color: var(--white); border-color: var(--white); }
-
-#console { background: #000; border: 1px solid var(--glass-border); padding: 10px; font-family: var(--mono); font-size: 10px; color: var(--muted); height: 70px; overflow-y: auto; border-radius: 8px; }
+.log-box {
+  background: #000; border: 1px solid var(--glass-border);
+  padding: 10px; font-family: var(--mono); font-size: 10px;
+  color: var(--muted); height: 70px; overflow-y: auto; border-radius: 8px; margin-top: 12px;
+}
 </style>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
@@ -69,139 +119,114 @@ body { padding-top: 80px; }
 
 <div class="container">
   <div class="page-header">
-    <div class="page-label">System Initialisation</div>
-    <h1 class="page-title">Profile <em>Onboarding Wizard</em></h1>
+    <div class="page-label">Profile Setup</div>
+    <h1 class="page-title">Complete <em>Your Profile</em></h1>
   </div>
 
-  <!-- Setup Method Choice Overlay -->
-  <div id="method-selector-card" class="card" style="margin-bottom: 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; border-color: rgba(91, 79, 232, 0.3); padding: 40px 24px;">
-    <div class="card-title">Initialisation Option Selection</div>
-    <div style="font-family: var(--display); font-size: 24px; font-weight: 900; color: var(--white); text-transform: uppercase;">
-      How would you like to set up your profile?
-    </div>
-    <p style="font-family: var(--body); font-size: 13px; color: var(--muted); max-width: 520px; line-height: 1.6;">
-      Sync your existing Resume/LinkedIn files to fill all fields instantly (recommended), or input your details manually.
-    </p>
-    <div style="display: flex; gap: 16px; width: 100%; max-width: 480px; margin-top: 8px;">
-      <button class="btn btn-primary" onclick="selectOnboardMethod('autofill')">⚡ Auto-Fill Profile</button>
-      <button class="btn btn-ghost" onclick="selectOnboardMethod('manual')">✏️ Manual Entry</button>
-    </div>
+  <!-- Step progress bar -->
+  <div class="step-bar">
+    <div class="step-indicator active" id="si-1"><span class="step-num">1</span>Basics</div>
+    <div class="step-indicator" id="si-2"><span class="step-num">2</span>Professional</div>
+    <div class="step-indicator" id="si-3"><span class="step-num">3</span>Import & Finish</div>
   </div>
 
-  <div class="onboard-grid" id="onboard-workspace" style="display:none;">
-    <!-- Left Panel: Import options -->
-    <div class="card" id="import-source-panel">
-      <div class="card-title">01 // SELECT IMPORT SOURCE</div>
-
-      <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('resume')">Resume Upload</button>
-        <button class="tab-btn" onclick="switchTab('linkedin')">LinkedIn CSV</button>
+  <!-- Step 1: Basics -->
+  <div class="step-panel active" id="panel-1">
+    <div class="wiz-card">
+      <div class="wiz-card-title">01 // Personal Information</div>
+      <div class="field-group">
+        <div class="field-item"><label>Full Name *</label><input id="f-fullName" placeholder="e.g. Dhanush Kumar" /></div>
+        <div class="field-item"><label>Email Address *</label><input id="f-email" type="email" placeholder="you@email.com" /></div>
       </div>
-
-      <!-- Tab Content: Resume -->
-      <div id="tab-resume" class="tab-pane active">
-        <div class="dropzone" id="resume-dropzone">
-          <div class="dropzone-label">Drag & Drop Resume</div>
-          <div class="dropzone-hint">PDF or DOCX formats accepted</div>
-          <input type="file" id="resume-input" accept="application/pdf, .docx" style="display:none;">
-        </div>
-
-        <button class="btn btn-ghost" onclick="launchGooglePicker()">
-          ▲ Select from Google Drive
-        </button>
-
-        <div style="font-size:10px; color:var(--muted); line-height:1.5; border-top:1px solid var(--glass-border); padding-top:10px;">
-          💡 <strong>LinkedIn Import Method A (Primary)</strong>:<br>
-          Open your LinkedIn profile &rarr; click <strong>More</strong> &rarr; click <strong>Save to PDF</strong>. Drag that PDF here to automatically parse your entire history.
-        </div>
+      <div class="field-group">
+        <div class="field-item"><label>First Name</label><input id="f-firstName" /></div>
+        <div class="field-item"><label>Last Name</label><input id="f-lastName" /></div>
       </div>
-
-      <!-- Tab Content: LinkedIn Method B -->
-      <div id="tab-linkedin" class="tab-pane">
-        <div style="font-size:10px; color:var(--muted); line-height:1.5;">
-          Download your official data export from LinkedIn Settings &rarr; "Get a copy of your data". Upload the CSV sheets below:
-        </div>
-
-        <div class="field-row">
-          <label>Positions.csv</label>
-          <input type="file" id="csv-positions" accept=".csv">
-        </div>
-        <div class="field-row">
-          <label>Education.csv</label>
-          <input type="file" id="csv-education" accept=".csv">
-        </div>
-        <div class="field-row">
-          <label>Skills.csv</label>
-          <input type="file" id="csv-skills" accept=".csv">
-        </div>
-
-        <button class="btn btn-primary" onclick="parseLinkedInCsvs()">
-          Parse CSV Files
-        </button>
+      <div class="field-group">
+        <div class="field-item"><label>Phone Number</label><input id="f-phone" placeholder="+91 9876543210" /></div>
+        <div class="field-item"><label>Date of Birth</label><input id="f-dob" type="date" /></div>
       </div>
-
-      <div id="console">
-        <div style="color:var(--primary)">[SYS_READY] Select a parsing method to initiate onboarding.</div>
+      <div class="field-group">
+        <div class="field-item"><label>City</label><input id="f-city" placeholder="Bangalore" /></div>
+        <div class="field-item"><label>Country</label><input id="f-country" placeholder="India" /></div>
       </div>
-    </div>
-
-    <!-- Right Panel: Side-by-Side Review Screen -->
-    <div class="card" id="review-panel">
-      <div class="card-title">02 // VERIFY DETECTED PROFILE FIELDS</div>
-
-      <div id="dup-detect-box" class="dup-box" style="display:none;">
-        <strong style="color:var(--success)">[CONFLICT DETECTION] Existing Data Detected:</strong>
-        <div style="display:flex; gap:12px; margin-top:4px;">
-          <label><input type="radio" name="dup-action" value="keep" checked> Keep Existing Details</label>
-          <label><input type="radio" name="dup-action" value="overwrite"> Overwrite with Imported</label>
-        </div>
-      </div>
-
-      <!-- Verification Form -->
-      <div class="field-row">
-        <label>Full Name <span id="tag-name" class="med-tag"></span></label>
-        <input type="text" id="out-name" placeholder="Not detected">
-      </div>
-
-      <div class="field-row">
-        <label>Email Address <span id="tag-email" class="med-tag"></span></label>
-        <input type="email" id="out-email" placeholder="Not detected">
-      </div>
-
-      <div class="field-row">
-        <label>Phone Number <span id="tag-phone" class="med-tag"></span></label>
-        <input type="text" id="out-phone" placeholder="Not detected">
-      </div>
-
-      <div class="field-row">
-        <label>Summary / Headline <span id="tag-headline" class="med-tag"></span></label>
-        <textarea id="out-headline" style="height:60px;" placeholder="Not detected"></textarea>
-      </div>
-
-      <div class="field-row">
-        <label>Skills (Comma separated) <span id="tag-skills" class="med-tag"></span></label>
-        <textarea id="out-skills" style="height:50px;" placeholder="Not detected"></textarea>
-      </div>
-
-      <!-- Low confidence unresolved info panel -->
-      <div class="unresolved-box" id="unresolved-box" style="display:none;">
-        <span class="unresolved-title">Unmatched Raw Information (Low Confidence)</span>
-        <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">
-          The system found the following fragments. Select a target field to map it manually:
-        </div>
-        <div id="unresolved-items-container"></div>
-      </div>
-
-      <div class="action-row">
-        <button class="btn btn-ghost" onclick="skipToSetup()">Skip / Manual Entry</button>
-        <button class="btn btn-primary" onclick="commitProfile()" id="commit-btn" disabled>Save & Confirm Profile</button>
+      <div class="wiz-nav">
+        <button class="btn-next" onclick="goStep(2)">Next: Professional →</button>
       </div>
     </div>
   </div>
+
+  <!-- Step 2: Professional -->
+  <div class="step-panel" id="panel-2">
+    <div class="wiz-card">
+      <div class="wiz-card-title">02 // Professional Details</div>
+      <div class="field-group full">
+        <div class="field-item"><label>Job Headline</label><input id="f-headline" placeholder="e.g. Full Stack Developer | 3 YOE" /></div>
+      </div>
+      <div class="field-group full">
+        <div class="field-item"><label>Target Role</label><input id="f-targetRole" placeholder="e.g. Software Engineer" /></div>
+      </div>
+      <div class="field-group full">
+        <div class="field-item"><label>Skills (comma-separated)</label><input id="f-skills" placeholder="Python, React, Node.js, SQL, Docker" /></div>
+      </div>
+      <div class="field-group full">
+        <div class="field-item"><label>Professional Summary</label><textarea id="f-summary" placeholder="A brief summary of your experience and goals…"></textarea></div>
+      </div>
+      <div class="field-group">
+        <div class="field-item"><label>LinkedIn URL</label><input id="f-linkedin" placeholder="https://linkedin.com/in/yourname" /></div>
+        <div class="field-item"><label>GitHub URL</label><input id="f-github" placeholder="https://github.com/yourname" /></div>
+      </div>
+      <div class="field-group full">
+        <div class="field-item"><label>Portfolio / Website</label><input id="f-portfolio" placeholder="https://yoursite.com" /></div>
+      </div>
+      <div class="wiz-nav">
+        <button class="btn-back" onclick="goStep(1)">← Back</button>
+        <button class="btn-next" onclick="goStep(3)">Next: Import & Finish →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Import & Finish -->
+  <div class="step-panel" id="panel-3">
+    <div class="wiz-card">
+      <div class="wiz-card-title">03 // Import Resume (Optional) & Confirm</div>
+      <p style="font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:16px; line-height:1.6;">
+        Optionally upload your resume to auto-fill Experience and Education fields. Or skip and enter them manually below.
+      </p>
+
+      <!-- Drop zone -->
+      <div class="dropzone" id="resume-dropzone">
+        <div class="dropzone-label">📄 Drag & Drop Resume</div>
+        <div class="dropzone-hint">PDF or DOCX · Click to browse</div>
+        <input type="file" id="resume-input" accept="application/pdf,.docx" style="display:none;">
+      </div>
+
+      <div class="log-box" id="console">
+        <div style="color:var(--primary)">[READY] Upload a resume or fill fields manually below.</div>
+      </div>
+
+      <!-- Experience & Education - always editable -->
+      <div style="margin-top:20px;">
+        <div class="field-group full">
+          <div class="field-item"><label>Experience</label><textarea id="f-experience" placeholder="Company, Role, Dates&#10;Brief description of responsibilities…" style="min-height:100px;"></textarea></div>
+        </div>
+        <div class="field-group full">
+          <div class="field-item"><label>Education</label><textarea id="f-education" placeholder="Degree, Institution, Year&#10;e.g. B.Tech CS, XYZ University, 2023" style="min-height:80px;"></textarea></div>
+        </div>
+      </div>
+
+      <div class="wiz-nav">
+        <button class="btn-back" onclick="goStep(2)">← Back</button>
+        <button class="btn-finish" id="commit-btn" onclick="commitProfile()">✓ Save Profile & Continue</button>
+      </div>
+
+      <div id="commit-status" style="margin-top:12px; font-family:var(--mono); font-size:10px; color:var(--muted); min-height:16px;"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-// Authentication check
 requireAuth();
 renderNav(document.getElementById('main-nav'), 'onboarding.html');
 
@@ -211,18 +236,8 @@ const logBox = document.getElementById('console');
 const resumeDropzone = document.getElementById('resume-dropzone');
 const resumeInput = document.getElementById('resume-input');
 const commitBtn = document.getElementById('commit-btn');
-
 let existingProfile = {};
-let extractedState = {
-  fullName: "",
-  email: "",
-  phone: "",
-  headline: "",
-  skills: [],
-  experience: [],
-  education: [],
-  unresolved: []
-};
+let extractedExtra = { experience: [], education: [], skills: [] };
 
 function addLog(text, cls = '') {
   const line = document.createElement('div');
@@ -234,61 +249,19 @@ function addLog(text, cls = '') {
   logBox.scrollTop = logBox.scrollHeight;
 }
 
-// Tabs switcher
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  
-  if (tab === 'resume') {
-    document.querySelector('.tab-btn[onclick="switchTab(\'resume\')"]').classList.add('active');
-    document.getElementById('tab-resume').classList.add('active');
-  } else {
-    document.querySelector('.tab-btn[onclick="switchTab(\'linkedin\')"]').classList.add('active');
-    document.getElementById('tab-linkedin').classList.add('active');
-  }
+// ── Step Navigation ──────────────────────────────────────────────────────────
+function goStep(step) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.step-indicator').forEach((si, i) => {
+    si.classList.remove('active', 'done');
+    if (i + 1 < step) si.classList.add('done');
+    if (i + 1 === step) si.classList.add('active');
+  });
+  document.getElementById(`panel-${step}`).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-let chosenMethod = null;
-
-function selectOnboardMethod(method) {
-  chosenMethod = method;
-  
-  document.getElementById('method-selector-card').style.display = 'none';
-  document.getElementById('onboard-workspace').style.display = 'grid';
-  
-  const inputs = ['out-name', 'out-email', 'out-phone', 'out-headline', 'out-skills'];
-  
-  if (method === 'autofill') {
-    addLog('[SYS] Auto-fill selected. Please upload your Resume or LinkedIn files.', 'info');
-    inputs.forEach(id => {
-      document.getElementById(id).disabled = true;
-    });
-    document.getElementById('import-source-panel').style.opacity = '1';
-    document.getElementById('import-source-panel').style.pointerEvents = 'auto';
-    commitBtn.disabled = true;
-  } else {
-    addLog('[SYS] Manual entry selected. Edit fields directly on the right and save.', 'success');
-    inputs.forEach(id => {
-      document.getElementById(id).disabled = false;
-    });
-    document.getElementById('import-source-panel').style.opacity = '0.3';
-    document.getElementById('import-source-panel').style.pointerEvents = 'none';
-    commitBtn.disabled = false;
-  }
-}
-
-// Load existing profile to enable duplicate detection
-(async () => {
-  try {
-    const state = await loadProfile();
-    existingProfile = state?.profile || {};
-    if (existingProfile.fullName) {
-      document.getElementById('dup-detect-box').style.display = 'block';
-    }
-  } catch(e) {}
-})();
-
-// File picker triggers
+// ── File upload ──────────────────────────────────────────────────────────────
 resumeDropzone.addEventListener('click', () => resumeInput.click());
 resumeInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
 resumeDropzone.addEventListener('dragover', (e) => { e.preventDefault(); resumeDropzone.style.borderColor = 'var(--primary)'; });
@@ -301,344 +274,155 @@ resumeDropzone.addEventListener('drop', (e) => {
 
 async function handleFile(file) {
   if (!file) return;
-  addLog(`[FILE] Selected: ${file.name.toUpperCase()}`);
-  
+  addLog(`[FILE] Selected: ${file.name}`);
   const reader = new FileReader();
   reader.onload = async (e) => {
     const arrayBuffer = e.target.result;
     try {
-      let rawText = "";
+      let rawText = '';
       if (file.name.endsWith('.pdf')) {
-        addLog('[PARSING] Scanning PDF text channels...');
+        addLog('[PARSING] Reading PDF...');
         const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let textStr = "";
+        let textStr = '';
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
           const content = await page.getTextContent();
-          content.items.forEach(item => { textStr += item.str + " "; });
+          content.items.forEach(item => { textStr += item.str + ' '; });
         }
         rawText = textStr;
       } else if (file.name.endsWith('.docx')) {
-        addLog('[PARSING] Reading DOCX structures...');
+        addLog('[PARSING] Reading DOCX...');
         const result = await mammoth.extractRawText({ arrayBuffer });
-        rawText = result.value || "";
+        rawText = result.value || '';
       } else {
-        addLog('[WARN] Format not supported. Use PDF or DOCX.', 'warn');
-        return;
+        addLog('[WARN] Use PDF or DOCX only.', 'warn'); return;
       }
-
       if (rawText.trim().length < 60) {
-        addLog('[ERROR] Scanned image/blank document detected. Parsing failed.', 'warn');
-        showToast('Empty or Scanned PDF detected. Enter details manually.', 'error');
-        return;
+        addLog('[ERROR] Scanned/blank document. Enter details manually.', 'warn'); return;
       }
-
       parseAndExtractText(rawText);
     } catch(err) {
-      console.error(err);
-      addLog('[ERROR] Extraction error: ' + err.message, 'warn');
+      addLog('[ERROR] ' + err.message, 'warn');
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
-// Google Drive Picker Simulator/Placeholder (scoped drive.file)
-function launchGooglePicker() {
-  addLog('[GDRIVE] Connecting picker API (drive.file scope)...');
-  showToast('Google Drive Picker is locked in file scope.');
-  
-  // Create a mock selector for simulation as official client secrets are locked in Render dash
-  const mockFileSelect = document.createElement('input');
-  mockFileSelect.type = 'file';
-  mockFileSelect.accept = 'application/pdf, .docx';
-  mockFileSelect.onchange = (e) => handleFile(e.target.files[0]);
-  mockFileSelect.click();
+function parseAndExtractText(text) {
+  addLog('[HEURISTIC] Parsing resume text...');
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Email
+  const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+  const email = emailMatch ? emailMatch[0] : '';
+  // Phone
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+  const phone = phoneMatch ? phoneMatch[0] : '';
+  // Name
+  let name = lines[0] || '';
+  if (name.includes('@') || name.match(/\d/)) name = email ? email.split('@')[0].replace(/[._-]/g, ' ') : '';
+  // Skills
+  const commonSkills = ['React','Node.js','JavaScript','Python','Java','SQL','AWS','Docker','Kubernetes','C++','HTML','CSS','Git'];
+  const skills = commonSkills.filter(s => new RegExp('\\b' + s.replace(/[.+]/g, '\\$&') + '\\b', 'i').test(text));
+  // Role
+  const roleMatch = text.match(/(?:software engineer|developer|manager|analyst|consultant|designer|engineer)/i);
+  const headline = roleMatch ? roleMatch[0] : '';
+
+  extractedExtra = { experience: [], education: [], skills };
+
+  // Prefill step 1 fields if empty
+  if (!document.getElementById('f-fullName').value && name) document.getElementById('f-fullName').value = name;
+  if (!document.getElementById('f-email').value && email) document.getElementById('f-email').value = email;
+  if (!document.getElementById('f-phone').value && phone) document.getElementById('f-phone').value = phone;
+  // Prefill step 2 fields if empty
+  if (!document.getElementById('f-headline').value && headline) document.getElementById('f-headline').value = headline;
+  if (!document.getElementById('f-skills').value && skills.length) document.getElementById('f-skills').value = skills.join(', ');
+
+  // Prefill experience/education textareas with raw lines
+  const expSection = text.match(/experience[\s\S]{0,2000}?(education|skills|$)/i);
+  if (expSection && !document.getElementById('f-experience').value) {
+    document.getElementById('f-experience').value = expSection[0].substring(0, 600).trim();
+  }
+  const eduSection = text.match(/education[\s\S]{0,800}?(experience|skills|$)/i);
+  if (eduSection && !document.getElementById('f-education').value) {
+    document.getElementById('f-education').value = eduSection[0].substring(0, 400).trim();
+  }
+
+  addLog('[SUCCESS] Resume parsed! Fields pre-filled above. Review and continue.', 'success');
+  resumeDropzone.style.borderColor = 'var(--success)';
 }
 
-// Parse LinkedIn CSV files (Positions.csv, Education.csv, Skills.csv)
-async function parseLinkedInCsvs() {
-  const posFile = document.getElementById('csv-positions').files[0];
-  const eduFile = document.getElementById('csv-education').files[0];
-  const sklFile = document.getElementById('csv-skills').files[0];
+// ── Commit ────────────────────────────────────────────────────────────────────
+async function commitProfile() {
+  commitBtn.disabled = true;
+  const statusEl = document.getElementById('commit-status');
+  statusEl.textContent = 'Saving profile...';
+  statusEl.style.color = 'var(--muted)';
 
-  if (!posFile && !eduFile && !sklFile) {
-    addLog('[WARN] Select at least one CSV file to parse.', 'warn');
+  const profile = {
+    fullName: document.getElementById('f-fullName').value.trim(),
+    firstName: document.getElementById('f-firstName').value.trim(),
+    lastName: document.getElementById('f-lastName').value.trim(),
+    email: document.getElementById('f-email').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    dob: document.getElementById('f-dob').value.trim(),
+    city: document.getElementById('f-city').value.trim(),
+    country: document.getElementById('f-country').value.trim(),
+    headline: document.getElementById('f-headline').value.trim(),
+    targetRole: document.getElementById('f-targetRole').value.trim(),
+    skills: document.getElementById('f-skills').value.trim(),
+    summary: document.getElementById('f-summary').value.trim(),
+    linkedin: document.getElementById('f-linkedin').value.trim(),
+    github: document.getElementById('f-github').value.trim(),
+    portfolio: document.getElementById('f-portfolio').value.trim(),
+    experience: document.getElementById('f-experience').value.trim(),
+    education: document.getElementById('f-education').value.trim(),
+  };
+
+  if (!profile.fullName || !profile.email) {
+    statusEl.textContent = '⚠ Full Name and Email are required.';
+    statusEl.style.color = 'var(--alert)';
+    commitBtn.disabled = false;
     return;
   }
 
-  addLog('[CSV] Reading files...');
-  
-  const readText = (file) => new Promise(res => {
-    const r = new FileReader();
-    r.onload = (e) => res(e.target.result);
-    r.readAsText(file);
-  });
-
   try {
-    if (posFile) {
-      const txt = await readText(posFile);
-      const rows = parseCsv(txt);
-      extractedState.experience = rows.map(r => ({
-        company: r['company name'] || r['company'] || '',
-        jobTitle: r['title'] || '',
-        startDate: r['started on'] || '',
-        endDate: r['finished on'] || 'Present',
-        description: r['description'] || ''
-      }));
-      addLog(`✓ Parsed ${rows.length} positions from Positions.csv`, 'success');
-    }
-
-    if (eduFile) {
-      const txt = await readText(eduFile);
-      const rows = parseCsv(txt);
-      extractedState.education = rows.map(r => ({
-        school: r['school'] || r['school name'] || '',
-        degree: r['degree name'] || r['degree'] || '',
-        startDate: r['start date'] || '',
-        endDate: r['end date'] || ''
-      }));
-      addLog(`✓ Parsed ${rows.length} schools from Education.csv`, 'success');
-    }
-
-    if (sklFile) {
-      const txt = await readText(sklFile);
-      const rows = parseCsv(txt);
-      extractedState.skills = rows.map(r => r['name']).filter(Boolean);
-      addLog(`✓ Parsed ${extractedState.skills.length} skills from Skills.csv`, 'success');
-    }
-
-    // Populate review inputs
-    document.getElementById('out-skills').value = extractedState.skills.join(', ');
-    if (extractedState.experience.length) {
-      document.getElementById('out-headline').value = `${extractedState.experience[0].jobTitle} at ${extractedState.experience[0].company}`;
-    }
-    
-    // Unlock inputs after autofilling
-    const inputs = ['out-name', 'out-email', 'out-phone', 'out-headline', 'out-skills'];
-    inputs.forEach(id => {
-      document.getElementById(id).disabled = false;
-    });
-
-    commitBtn.disabled = false;
-    showToast('LinkedIn CSV profiles extracted successfully.');
-  } catch(err) {
-    addLog('[ERROR] CSV parsing failed: ' + err.message, 'warn');
-  }
-}
-
-function parseCsv(text) {
-  const lines = text.split('\n');
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase());
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    
-    const values = [];
-    let current = '';
-    let inQuotes = false;
-    for (let char of line) {
-      if (char === '"' || char === "'") {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
-    
-    const row = {};
-    headers.forEach((header, index) => {
-      row[header] = values[index] ? values[index].replace(/^["']|["']$/g, '').trim() : '';
-    });
-    rows.push(row);
-  }
-  return rows;
-}
-
-// Regex heuristics for PDF/DOCX Parsing
-function parseAndExtractText(text) {
-  addLog('[HEURISTIC] Segementing elements and parsing metadata...');
-  
-  // Name (First line or inferred from email prefix)
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  let name = lines[0] || "";
-  let nameConfidence = "High";
-  if (name.includes('@') || name.match(/\d/)) {
-    name = "";
-    nameConfidence = "Low";
-  }
-
-  // Email
-  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/;
-  const emailMatch = text.match(emailRegex);
-  const email = emailMatch ? emailMatch[0] : "";
-  
-  if (!name && email) {
-    name = email.split('@')[0].replace(/[._-]/g, ' ');
-    nameConfidence = "Medium";
-  }
-
-  // Phone
-  const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
-  const phoneMatch = text.match(phoneRegex);
-  const phone = phoneMatch ? phoneMatch[0] : "";
-
-  // Skills
-  const commonSkills = ["react", "node", "javascript", "python", "java", "sql", "aws", "docker", "kubernetes", "c++", "c#", "html", "css", "git", "ci/cd"];
-  const skills = [];
-  commonSkills.forEach(s => {
-    const rx = new RegExp('\\b' + s + '\\b', 'i');
-    if (text.match(rx)) skills.push(s.toUpperCase());
-  });
-
-  // Headline (tries to match first job title found)
-  let headline = "";
-  const roleRegex = /(?:software engineer|developer|manager|analyst|consultant|designer|engineer)/i;
-  const headlineMatch = text.match(roleRegex);
-  if (headlineMatch) {
-    headline = headlineMatch[0].toUpperCase();
-  }
-
-  // Unresolved lines (Low confidence elements)
-  const unresolved = [];
-  lines.slice(1, 6).forEach(l => {
-    if (l.length > 15 && l.length < 80 && !l.includes('@') && !l.match(phoneRegex)) {
-      unresolved.push(l);
-    }
-  });
-
-  extractedState = {
-    fullName: name,
-    email,
-    phone,
-    headline,
-    skills,
-    experience: [],
-    education: [],
-    unresolved
-  };
-
-  // Populate inputs with visual confidence borders
-  const setValAndStyle = (id, tagId, val, confidence) => {
-    const el = document.getElementById(id);
-    const tag = document.getElementById(tagId);
-    el.value = val;
-    if (confidence === "Medium") {
-      el.classList.add('med-confidence');
-      tag.textContent = "[⚠️ Please Verify]";
+    const res = await saveProfile(profile);
+    if (res.ok) {
+      statusEl.textContent = '✓ Profile saved! Redirecting to dashboard...';
+      statusEl.style.color = 'var(--success)';
+      showToast('Profile saved successfully!');
+      setTimeout(() => window.location.href = 'dashboard.html', 1200);
     } else {
-      el.classList.remove('med-confidence');
-      tag.textContent = "";
+      statusEl.textContent = '✓ Saved locally. Cloud sync may be pending.';
+      statusEl.style.color = 'var(--alert)';
+      setTimeout(() => window.location.href = 'dashboard.html', 1500);
     }
-  };
-
-  setValAndStyle('out-name', 'tag-name', name, nameConfidence);
-  setValAndStyle('out-email', 'tag-email', email, "High");
-  setValAndStyle('out-phone', 'tag-phone', phone, phone ? "High" : "Medium");
-  setValAndStyle('out-headline', 'tag-headline', headline, headline ? "High" : "Medium");
-  setValAndStyle('out-skills', 'tag-skills', skills.join(', '), "High");
-
-  // Populate unresolved box
-  const container = document.getElementById('unresolved-items-container');
-  container.innerHTML = "";
-  if (unresolved.length > 0) {
-    document.getElementById('unresolved-box').style.display = "flex";
-    unresolved.forEach((item, index) => {
-      const div = document.createElement('div');
-      div.className = "unresolved-item";
-      div.innerHTML = `
-        <span>${item}</span>
-        <select onchange="assignUnresolved(this, ${index})" style="background:#070a18; border:1px solid var(--glass-border); color:var(--white); font-size:9px; padding:2px;">
-          <option value="">Map To...</option>
-          <option value="name">Full Name</option>
-          <option value="headline">Headline</option>
-          <option value="skills">Skills</option>
-          <option value="discard">Discard</option>
-        </select>
-      `;
-      container.appendChild(div);
-    });
-  } else {
-    document.getElementById('unresolved-box').style.display = "none";
-  }
-
-  // Unlock inputs after autofilling
-  const inputs = ['out-name', 'out-email', 'out-phone', 'out-headline', 'out-skills'];
-  inputs.forEach(id => {
-    document.getElementById(id).disabled = false;
-  });
-
-  addLog('[SUCCESS] Extraction complete. Review fields on the right.', 'success');
-  commitBtn.disabled = false;
-}
-
-function assignUnresolved(select, index) {
-  const field = select.value;
-  const val = extractedState.unresolved[index];
-  if (!field || field === 'discard') return;
-
-  if (field === 'name') {
-    document.getElementById('out-name').value = val;
-    document.getElementById('out-name').classList.remove('med-confidence');
-    document.getElementById('tag-name').textContent = "";
-  } else if (field === 'headline') {
-    document.getElementById('out-headline').value = val;
-  } else if (field === 'skills') {
-    const curr = document.getElementById('out-skills').value;
-    document.getElementById('out-skills').value = curr ? `${curr}, ${val}` : val;
-  }
-  
-  select.parentElement.style.opacity = "0.4";
-  select.disabled = true;
-  showToast(`Mapped text to ${field.toUpperCase()}`);
-}
-
-function skipToSetup() {
-  window.location.href = 'profile-setup.html';
-}
-
-async function commitProfile() {
-  commitBtn.disabled = true;
-  addLog('[SYS_EXEC] Submitting details to Sync Server...');
-
-  // Check duplicate conflict action
-  const dupDetect = document.getElementById('dup-detect-box');
-  if (dupDetect.style.display !== 'none') {
-    const action = document.querySelector('input[name="dup-action"]:checked').value;
-    if (action === 'keep') {
-      addLog('[SYS_INFO] User opted to preserve existing profile. Sync skipped.', 'success');
-      setTimeout(() => window.location.href = 'dashboard.html', 1000);
-      return;
-    }
-  }
-
-  const updatedProfile = {
-    ...existingProfile,
-    fullName: document.getElementById('out-name').value.trim(),
-    email: document.getElementById('out-email').value.trim(),
-    phone: document.getElementById('out-phone').value.trim(),
-    headline: document.getElementById('out-headline').value.trim(),
-    skills: document.getElementById('out-skills').value.split(',').map(s => s.trim()).filter(Boolean),
-    experience: extractedState.experience,
-    education: extractedState.education
-  };
-
-  const res = await saveProfile(updatedProfile);
-  if (res.ok) {
-    addLog('[SYS_SYNC] Profile synced successfully! Launching dashboard...', 'success');
-    showToast('Import completed successfully!');
-    setTimeout(() => {
-      window.location.href = 'dashboard.html';
-    }, 1200);
-  } else {
-    addLog('[ERROR] Cloud sync failed: ' + (res.errors ? res.errors.join(', ') : 'Unknown error'), 'warn');
+  } catch(e) {
+    statusEl.textContent = 'Error: ' + e.message;
+    statusEl.style.color = 'var(--rejected)';
     commitBtn.disabled = false;
   }
 }
+
+// ── Load existing ─────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    const state = await loadProfile();
+    existingProfile = state?.profile || {};
+    // Pre-populate if returning user
+    if (existingProfile.fullName) {
+      document.getElementById('f-fullName').value = existingProfile.fullName || '';
+      document.getElementById('f-email').value = existingProfile.email || '';
+      document.getElementById('f-phone').value = existingProfile.phone || '';
+      document.getElementById('f-city').value = existingProfile.city || '';
+      document.getElementById('f-country').value = existingProfile.country || '';
+      document.getElementById('f-headline').value = existingProfile.headline || '';
+      document.getElementById('f-skills').value = Array.isArray(existingProfile.skills) ? existingProfile.skills.join(', ') : (existingProfile.skills || '');
+      document.getElementById('f-summary').value = existingProfile.summary || '';
+    }
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>

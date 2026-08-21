@@ -1,184 +1,197 @@
-import { encryptProfileData, decryptProfileData, generatePasscodeHash } from "./shared.js";
+﻿import { encryptProfileData, decryptProfileData, generatePasscodeHash } from "./shared.js";
 
-async function $(id) { return document.getElementById(id); }
+const FIELDS = [
+  "fullName", "firstName", "lastName", "email", "phone", "dob",
+  "address", "city", "state", "country", "zip",
+  "headline", "targetRole", "summary", "skills",
+  "linkedin", "github", "portfolio",
+  "experience", "education"
+];
 
-async function loadProfile() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["jobxapplyProfile"], (result) => {
-      resolve(result.jobxapplyProfile || {});
-    });
-  });
+function setStatus(msg, cls = "") {
+  const el = document.getElementById("status");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = cls;
+}
+
+function readFields() {
+  const p = {};
+  for (const f of FIELDS) {
+    const el = document.getElementById(f);
+    if (el) p[f] = el.value.trim();
+  }
+  return p;
+}
+
+function populateFields(p) {
+  for (const f of FIELDS) {
+    const el = document.getElementById(f);
+    if (el) el.value = p[f] || "";
+  }
 }
 
 async function loadPasscode() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(["jobxapplyPasscode"], (result) => {
-      resolve(result.jobxapplyPasscode || "");
-    });
-  });
+  return new Promise((r) => chrome.storage.local.get(["jobxapplyPasscode"], (res) => r(res.jobxapplyPasscode || "")));
 }
 
-async function saveProfile(profile, passcodeHash) {
-  return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: "jobxapply:setProfile", profile, passcodeHash }, (res) => {
-      resolve(res);
-    });
-  });
+// ── Save locally ─────────────────────────────────────────────────────────────
+async function saveLocal(profile) {
+  const existing = await new Promise((r) =>
+    chrome.storage.local.get(["jobxapplyProfiles", "jobxapplyActiveProfileId"], r)
+  );
+  const activeId = existing.jobxapplyActiveProfileId || "default";
+  const profiles = existing.jobxapplyProfiles || {};
+  profiles[activeId] = { ...profiles[activeId], ...profile, id: activeId, profileName: profile.fullName || "My Profile" };
+
+  await new Promise((r) => chrome.storage.local.set({
+    jobxapplyProfile: profile,
+    jobxapplyProfiles: profiles,
+    jobxapplyActiveProfileId: activeId
+  }, r));
 }
 
-(async function init() {
-  const profile = await loadProfile();
-  const cachedPasscode = await loadPasscode();
-  
-  const fields = [
-    "fullName", "firstName", "lastName", "email", "phone", "dob", "headline", 
-    "summary", "education", "experience", "linkedin", "github", "portfolio"
-  ];
-  
-  for (const f of fields) {
-    const el = document.getElementById(f);
-    if (!el) continue;
-    el.value = profile[f] || "";
+// ── Push to cloud ─────────────────────────────────────────────────────────────
+async function pushToCloud(profile, passcode) {
+  if (!passcode) {
+    setStatus("Enter a passcode above to sync to cloud", "warn");
+    return false;
   }
-  
-  const passcodeEl = document.getElementById("syncPasscode");
-  if (passcodeEl) {
-    passcodeEl.value = cachedPasscode;
-  }
-  
-  let pendingLocalProfile = null;
-  let currentConflictServer = null;
-  
-  document.getElementById('save').addEventListener('click', async () => {
-    const passcode = document.getElementById("syncPasscode").value.trim();
-    if (!passcode) {
-      document.getElementById('status').textContent = 'Error: Passcode is required to secure sync';
-      return;
-    }
-    
-    // Save passcode locally
-    await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
-    const passcodeHash = await generatePasscodeHash(passcode);
-    
-    const newProfile = {};
-    for (const f of fields) newProfile[f] = document.getElementById(f).value || "";
-    pendingLocalProfile = newProfile;
-    
-    document.getElementById('status').textContent = 'Encrypting & saving...';
-    try {
-      const encryptedProfile = await encryptProfileData(newProfile, passcode);
-      const res = await saveProfile(encryptedProfile, passcodeHash);
-      if (res?.ok) {
-        document.getElementById('status').textContent = 'Saved and synced (Encrypted)';
-        document.getElementById('conflictUI').style.display = 'none';
-      } else if (res?.conflict && res.current) {
-        try {
-          currentConflictServer = await decryptProfileData(res.current, passcode);
-        } catch (e) {
-          currentConflictServer = res.current.profile || {};
-        }
-        document.getElementById('conflictUI').style.display = 'block';
-        document.getElementById('status').textContent = 'Conflict detected — choose how to proceed.';
-      } else if (res?.errors) {
-        document.getElementById('status').textContent = 'Validation errors: ' + (Array.isArray(res.errors) ? res.errors.join('; ') : String(res.errors));
-      } else {
-        document.getElementById('status').textContent = 'Saved locally (server offline or access denied)';
-      }
-    } catch (err) {
-      document.getElementById('status').textContent = 'Encryption Error: ' + err.message;
-    }
-  });
-  
-  document.getElementById('conflictUseServer').addEventListener('click', async () => {
-    if (!currentConflictServer) return;
-    for (const f of fields) {
-      const el = document.getElementById(f);
-      if (!el) continue;
-      el.value = currentConflictServer[f] || "";
-    }
-    document.getElementById('conflictUI').style.display = 'none';
-    document.getElementById('status').textContent = 'Loaded server state. Edit and save again to apply changes.';
-  });
-  
-  document.getElementById('conflictKeepLocal').addEventListener('click', async () => {
-    if (!pendingLocalProfile) return;
-    const passcode = document.getElementById("syncPasscode").value.trim();
-    if (!passcode) return;
-    
-    document.getElementById('status').textContent = 'Encrypting & forcing sync...';
-    try {
-      const passcodeHash = await generatePasscodeHash(passcode);
-      const encryptedProfile = await encryptProfileData(pendingLocalProfile, passcode);
-      const res = await saveProfile(encryptedProfile, passcodeHash);
-      if (res?.ok) {
-        document.getElementById('status').textContent = 'Local changes saved (Encrypted)';
-        document.getElementById('conflictUI').style.display = 'none';
-      } else if (res?.conflict) {
-        document.getElementById('status').textContent = 'Another conflict occurred. Choose again.';
-      } else {
-        document.getElementById('status').textContent = 'Error: ' + (res?.error || 'unknown');
-      }
-    } catch (err) {
-      document.getElementById('status').textContent = 'Error: ' + err.message;
-    }
-  });
-  
-  document.getElementById('conflictReload').addEventListener('click', async () => {
-    document.getElementById('status').textContent = 'Reloading from server...';
-    const passcode = document.getElementById("syncPasscode").value.trim();
-    if (!passcode) return;
-    
-    const serverPayload = await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => resolve(res?.state || null));
-    });
-    
-    if (serverPayload) {
-      try {
-        const decryptedServerProfile = await decryptProfileData(serverPayload, passcode);
-        for (const f of fields) {
-          const el = document.getElementById(f);
-          if (!el) continue;
-          el.value = decryptedServerProfile[f] || "";
-        }
-        document.getElementById('status').textContent = 'Reloaded and decrypted from server.';
-      } catch (err) {
-        document.getElementById('status').textContent = 'Reloaded. Decryption failed (check passcode).';
-      }
-    } else {
-      document.getElementById('status').textContent = 'Error: Reload failed.';
-    }
-    document.getElementById('conflictUI').style.display = 'none';
-  });
-  
-  document.getElementById('pullCloud').addEventListener('click', async (e) => {
-    e.preventDefault();
-    const passcode = document.getElementById("syncPasscode").value.trim();
-    if (!passcode) {
-      document.getElementById('status').textContent = 'Error: Passcode is required to fetch profile';
-      return;
-    }
-    
-    document.getElementById('status').textContent = 'Fetching encrypted profile from server...';
-    try {
-      await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
-      const passcodeHash = await generatePasscodeHash(passcode);
-      
-      chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
-        if (res && res.profile && Object.keys(res.profile).length > 0) {
-          const p = res.profile;
-          for (const f of fields) {
-            const el = document.getElementById(f);
-            if (el) el.value = p[f] || "";
+  await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
+  const passcodeHash = await generatePasscodeHash(passcode);
+
+  try {
+    const encryptedProfile = await encryptProfileData(profile, passcode);
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        { type: "jobxapply:setProfile", profile: encryptedProfile, passcodeHash },
+        (res) => {
+          if (chrome.runtime.lastError) {
+            setStatus("Cloud sync failed — saved locally only", "warn");
+            resolve(false);
+            return;
           }
-          document.getElementById('status').textContent = 'Successfully fetched and decrypted profile from cloud!';
-        } else {
-          document.getElementById('status').textContent = 'No profile found on server or decryption failed. Check your passcode.';
+          if (res?.ok) {
+            setStatus("✓ Saved and synced to cloud!", "ok");
+            document.getElementById("conflictUI").style.display = "none";
+            resolve(true);
+          } else if (res?.conflict && res.current) {
+            document.getElementById("conflictUI").style.display = "block";
+            setStatus("Conflict detected — choose how to proceed", "warn");
+            resolve(false);
+          } else {
+            // Server returned error but we already saved locally
+            const errMsg = res?.error || res?.errors || "Server unavailable";
+            setStatus(`Saved locally ✓ — Cloud sync failed: ${errMsg}`, "warn");
+            resolve(false);
+          }
         }
-      });
-    } catch (err) {
-      document.getElementById('status').textContent = 'Fetch Error: ' + err.message;
+      );
+    });
+  } catch (err) {
+    setStatus("Encryption error: " + err.message, "err");
+    return false;
+  }
+}
+
+// ── Fetch from cloud ─────────────────────────────────────────────────────────
+async function fetchFromCloud(passcode) {
+  if (!passcode) {
+    setStatus("Enter your Sync Passcode first", "warn");
+    return;
+  }
+  await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
+  setStatus("Fetching from cloud…");
+
+  chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
+    if (chrome.runtime.lastError) {
+      setStatus("Fetch error: " + chrome.runtime.lastError.message, "err");
+      return;
+    }
+    const p = res?.profile;
+    if (p && (p.fullName || p.email || p.phone)) {
+      populateFields(p);
+      // Also save locally
+      await saveLocal(p);
+      setStatus("✓ Profile fetched and loaded from cloud!", "ok");
+    } else {
+      setStatus("No profile found on server — check your passcode", "warn");
+    }
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  // Load local profile
+  const local = await new Promise((r) =>
+    chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], r)
+  );
+  let profile = local.jobxapplyProfile || {};
+  if (local.jobxapplyProfiles && local.jobxapplyActiveProfileId) {
+    profile = local.jobxapplyProfiles[local.jobxapplyActiveProfileId] || profile;
+  }
+  populateFields(profile);
+
+  // Load cached passcode
+  const cachedPasscode = await loadPasscode();
+  const passcodeEl = document.getElementById("syncPasscode");
+  if (passcodeEl && cachedPasscode) passcodeEl.value = cachedPasscode;
+
+  // Save Profile (local only)
+  document.getElementById("save")?.addEventListener("click", async () => {
+    const profile = readFields();
+    setStatus("Saving…");
+    try {
+      await saveLocal(profile);
+      setStatus("✓ Profile saved on this device!", "ok");
+    } catch (e) {
+      setStatus("Save failed: " + e.message, "err");
     }
   });
 
-  document.getElementById('close').addEventListener('click', () => window.close());
+  // Save to Cloud
+  document.getElementById("pushCloud")?.addEventListener("click", async () => {
+    const profile = readFields();
+    const passcode = passcodeEl?.value.trim() || "";
+    setStatus("Saving locally first…");
+    await saveLocal(profile);
+    await pushToCloud(profile, passcode);
+  });
+
+  // Fetch from Cloud
+  document.getElementById("pullCloud")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const passcode = passcodeEl?.value.trim() || "";
+    await fetchFromCloud(passcode);
+  });
+
+  // Conflict resolution
+  let pendingProfile = null;
+  document.getElementById("conflictUseServer")?.addEventListener("click", async () => {
+    chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
+      const passcode = passcodeEl?.value.trim() || "";
+      let p = res?.profile || {};
+      if (p.encryptedBlob && passcode) {
+        try { p = await decryptProfileData(p, passcode); } catch (e) {}
+      }
+      populateFields(p);
+      await saveLocal(p);
+      document.getElementById("conflictUI").style.display = "none";
+      setStatus("✓ Cloud version loaded. Review and save again if needed.", "ok");
+    });
+  });
+
+  document.getElementById("conflictKeepLocal")?.addEventListener("click", async () => {
+    const passcode = passcodeEl?.value.trim() || "";
+    const profile = readFields();
+    pendingProfile = profile;
+    setStatus("Forcing local changes to cloud…");
+    await pushToCloud(profile, passcode);
+  });
+
+  document.getElementById("conflictReload")?.addEventListener("click", () => {
+    window.location.reload();
+  });
+
+  document.getElementById("close")?.addEventListener("click", () => window.close());
 })();

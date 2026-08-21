@@ -464,6 +464,32 @@ function addLog(text, cls = '') {
   consoleBox.scrollTop = consoleBox.scrollHeight;
 }
 
+// ── Browser SVG Icons ────────────────────────────────────────────────────────
+const BROWSER_SVGS = {
+  edge: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M21.5 14.5C21.5 19.19 17.69 23 13 23C8.31 23 4.5 19.19 4.5 14.5C4.5 14.17 4.52 13.84 4.55 13.52C5.66 14.95 7.4 15.87 9.36 15.87C13.04 15.87 16.06 12.84 16.06 9.16C16.06 7.73 15.59 6.41 14.8 5.34C18.74 6.67 21.5 10.26 21.5 14.5Z" fill="#0078D4"/>
+    <path d="M14.8 5.34C13.83 4.06 12.32 3.22 10.62 3.22C7.7 3.22 5.22 5.38 4.64 8.26C4.59 8.49 4.56 8.73 4.55 8.97C4.55 8.97 4.5 9.06 4.5 9.16C4.5 9.96 4.63 10.73 4.87 11.45C5.28 10.38 5.97 9.44 6.88 8.72C8.24 7.67 9.92 7.06 11.76 7.06C12.84 7.06 13.87 7.29 14.8 7.7C14.8 7.7 14.8 5.34 14.8 5.34Z" fill="#00A4EF"/>
+    <path d="M9.36 15.87C7.4 15.87 5.66 14.95 4.55 13.52C4.52 13.84 4.5 14.17 4.5 14.5C4.5 14.5 4.5 14.5 4.5 14.5C2.56 14.5 1 12.94 1 11C1 9.74 1.67 8.63 2.67 8L2.68 7.99C3.3 7.62 4.02 7.4 4.8 7.4C4.8 7.4 4.84 7.4 4.87 7.4C4.63 8.17 4.5 8.98 4.5 9.81C4.5 9.93 4.51 10.05 4.52 10.17C5.24 10.17 5.86 10.59 6.18 11.19C6.72 11.08 7.27 11.03 7.83 11.03C9.44 11.03 10.93 11.54 12.12 12.41C10.82 13.16 9.84 14.4 9.47 15.86C9.43 15.87 9.4 15.87 9.36 15.87Z" fill="#50E6FF"/>
+  </svg>`,
+  chrome: `<svg viewBox="0 0 24 24" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="4.5" fill="white"/>
+    <path d="M12 7.5A4.5 4.5 0 0 1 16.5 12H22A10 10 0 0 0 2.24 7.5Z" fill="#EA4335"/>
+    <path d="M7.5 12A4.5 4.5 0 0 1 12 7.5L9.12 2.68A10 10 0 0 0 2 17Z" fill="#34A853"/>
+    <path d="M12 16.5A4.5 4.5 0 0 1 7.5 12L2 17A10 10 0 0 0 21.76 16.5Z" fill="#FBBC05"/>
+    <circle cx="12" cy="12" r="3.5" fill="white"/>
+  </svg>`,
+  firefox: `<svg viewBox="0 0 24 24" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" fill="#FF9500"/>
+    <path d="M12 2C8.13 2 4.83 4.11 3.07 7.2C4.43 5.88 6.49 5 8.5 5C10.5 5 12.5 6 14 8C15.5 6 17.5 5 19.5 5C18 3.2 15.1 2 12 2Z" fill="#FF0039"/>
+    <circle cx="12" cy="12" r="5" fill="#FF9500"/>
+    <circle cx="12" cy="12" r="3" fill="#FFB900"/>
+  </svg>`,
+  generic: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+    <path d="M12 2a10 10 0 0 0 0 20M12 2a10 10 0 0 1 0 20M2 12h20M12 2C9.5 5 8 8.5 8 12s1.5 7 4 10M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+  </svg>`
+};
+
 // ── Browser Detection ────────────────────────────────────────────────────────
 function detectBrowser() {
   const ua = navigator.userAgent;
@@ -473,31 +499,32 @@ function detectBrowser() {
   const btnLabel = document.getElementById('add-btn-label');
 
   let browser = 'Chrome';
-  let icon = '🌐';
+  let svgKey = 'chrome';
   let compatible = true;
   let sub = 'Chromium-based · Full support';
 
   if (/Edg\//.test(ua)) {
-    browser = 'Microsoft Edge'; icon = '🔷'; sub = 'Chromium-based · Full support';
+    browser = 'Microsoft Edge'; svgKey = 'edge'; sub = 'Chromium-based · Full support';
     switchBrowserTab('edge');
   } else if (/Firefox\//.test(ua)) {
-    browser = 'Mozilla Firefox'; icon = '🦊'; sub = 'Gecko-based · Full support';
+    browser = 'Mozilla Firefox'; svgKey = 'firefox'; sub = 'Gecko-based · Full support';
     switchBrowserTab('firefox');
   } else if (/OPR\//.test(ua)) {
-    browser = 'Opera'; icon = '🔴'; sub = 'Chromium-based · Full support';
+    browser = 'Opera'; svgKey = 'chrome'; sub = 'Chromium-based · Full support';
   } else if (/Chrome\//.test(ua)) {
-    browser = 'Google Chrome'; icon = '🟡'; sub = 'Chromium-based · Full support';
+    browser = 'Google Chrome'; svgKey = 'chrome'; sub = 'Chromium-based · Full support';
   } else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) {
-    browser = 'Safari'; icon = '🧭'; compatible = false;
+    browser = 'Safari'; svgKey = 'generic'; compatible = false;
     sub = 'Safari has limited extension support. Use Chrome or Firefox.';
   } else {
-    browser = 'Unknown Browser'; icon = '🌐'; sub = 'Install Chrome or Firefox for full support.';
+    browser = 'Unknown Browser'; svgKey = 'generic'; sub = 'Install Chrome or Firefox for full support.';
   }
 
-  iconEl.textContent = icon;
-  nameEl.textContent = browser.toUpperCase();
-  subEl.textContent = sub;
-  btnLabel.textContent = `ADD TO ${browser.split(' ')[1] || browser}`.toUpperCase();
+  // Use SVG instead of emoji
+  if (iconEl) iconEl.innerHTML = BROWSER_SVGS[svgKey] || BROWSER_SVGS.generic;
+  if (nameEl) nameEl.textContent = browser.toUpperCase();
+  if (subEl)  subEl.textContent = sub;
+  if (btnLabel) btnLabel.textContent = `ADD TO ${browser.split(' ').pop()}`.toUpperCase();
 
   addLog(`[DETECT] Browser identified: ${browser}.`, 'info');
   if (!compatible) {
@@ -509,49 +536,74 @@ function detectBrowser() {
 }
 detectBrowser();
 
-// ── Add to Browser button ────────────────────────────────────────────────────
+// ── Add to Browser button (Modal approach) ───────────────────────────────────
 function handleAddToBrowser() {
   const ua = navigator.userAgent;
-  let targetUrl = 'chrome://extensions';
-  let instructions = 'Enable Developer Mode → Load Unpacked.';
+  let managerUrl = 'chrome://extensions';
+  let browserName = 'Chrome';
 
   if (/Firefox\//.test(ua)) {
-    targetUrl = 'about:debugging#/runtime/this-firefox';
-    instructions = 'Click "Load Temporary Add-on" and select manifest.json.';
+    managerUrl = 'about:debugging#/runtime/this-firefox';
+    browserName = 'Firefox';
   } else if (/Edg\//.test(ua)) {
-    targetUrl = 'edge://extensions';
-    instructions = 'Enable Developer Mode → Load Unpacked.';
+    managerUrl = 'edge://extensions';
+    browserName = 'Edge';
   }
 
-  addLog('[ACTION] Copying extension manager URL to clipboard...', 'info');
+  // Copy to clipboard
+  const copyUrl = (url) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).catch(() => fallbackCopy(url));
+    } else {
+      fallbackCopy(url);
+    }
+  };
+  const fallbackCopy = (url) => {
+    const el = document.createElement('textarea');
+    el.value = url; document.body.appendChild(el); el.select();
+    document.execCommand('copy'); document.body.removeChild(el);
+  };
 
-  navigator.clipboard.writeText(targetUrl)
-    .then(() => {
-      addLog(`[SUCCESS] Copied '${targetUrl}' to clipboard!`, 'success');
-      showToast(`URL Copied! Paste '${targetUrl}' in a new tab.`, 'success');
-    })
-    .catch(() => {
-      const el = document.createElement('textarea');
-      el.value = targetUrl;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      addLog(`[SUCCESS] Copied '${targetUrl}' to clipboard!`, 'success');
-      showToast(`URL Copied! Paste '${targetUrl}' in a new tab.`, 'success');
-    });
+  copyUrl(managerUrl);
 
-  addLog(`[GUIDE] Open a new tab, paste '${targetUrl}' in the address bar, and press Enter.`, 'info');
-  addLog(`[GUIDE] Instructions: ${instructions}`, 'info');
+  // Trigger download at same time
+  downloadExtension();
 
-  try {
-    window.open(targetUrl, '_blank');
-  } catch (e) {}
+  // Show prominent modal
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;`;
+  overlay.innerHTML = `
+    <div style="background:#0d1426;border:1px solid rgba(91,79,232,0.4);border-radius:20px;padding:32px;max-width:500px;width:100%;font-family:monospace;">
+      <div style="font-size:18px;font-weight:900;color:#f4f7ff;margin-bottom:6px;">⚡ Install in ${browserName}</div>
+      <div style="font-size:11px;color:rgba(244,247,255,0.55);margin-bottom:24px;">Follow these steps — takes about 30 seconds</div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#5b4fe8;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+          <div><div style="color:#f4f7ff;font-size:12px;font-weight:700;margin-bottom:2px;">Extract the ZIP file</div><div style="color:rgba(244,247,255,0.5);font-size:11px;">Unzip the downloaded file to a folder you'll remember (e.g. Desktop/jobxapply-ext)</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#5b4fe8;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+          <div><div style="color:#f4f7ff;font-size:12px;font-weight:700;margin-bottom:2px;">Open Extensions Manager</div><div style="color:rgba(244,247,255,0.5);font-size:11px;">Open a new tab and paste this address:</div><div style="background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 10px;margin-top:6px;font-size:12px;color:#2fddc4;user-select:all;">${managerUrl}</div><div style="font-size:10px;color:rgba(244,247,255,0.4);margin-top:4px;">✓ Already copied to your clipboard</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#5b4fe8;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+          <div><div style="color:#f4f7ff;font-size:12px;font-weight:700;margin-bottom:2px;">Enable Developer Mode</div><div style="color:rgba(244,247,255,0.5);font-size:11px;">Toggle "Developer mode" in the top-right corner of the extensions page.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:24px;height:24px;border-radius:50%;background:#2fddc4;color:#070a18;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
+          <div><div style="color:#2fddc4;font-size:12px;font-weight:700;margin-bottom:2px;">Load Unpacked</div><div style="color:rgba(244,247,255,0.5);font-size:11px;">Click "Load unpacked" and select the <b style="color:#f4f7ff">extracted folder</b> (the one containing manifest.json).</div></div>
+        </div>
+      </div>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:12px;background:linear-gradient(135deg,#5b4fe8,#796df0);border:none;border-radius:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;">✓ Got It — Opening Downloads</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 
-  setTimeout(() => {
-    addLog('[TIP] Select the extracted JobXApply extension folder (the one with manifest.json).', 'info');
-  }, 1000);
+  addLog(`[ACTION] Copied '${managerUrl}' to clipboard. Install modal shown.`, 'success');
 }
+
+
 
 // ── Download Extension ───────────────────────────────────────────────────────
 function downloadExtension() {

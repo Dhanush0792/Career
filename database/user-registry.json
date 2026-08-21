@@ -29,5 +29,45 @@
     "tier": "paid",
     "createdAt": 1786712391450,
     "lastSync": 1786712391450
+  },
+  {
+    "id": "u_0r5oesix1ch",
+    "email": "lockout_test_1787286781719@jobxapply.local",
+    "name": "Lockout Test",
+    "passwordHash": "$2b$12$E/1Uo1bjxFUUvFOxLUJJreKXigT.z9U1kjGoOrIIyXg8fM/U57Uc2",
+    "role": "user",
+    "tier": "free",
+    "createdAt": 1787286782091,
+    "lastSync": 1787286782091
+  },
+  {
+    "id": "u_suquynpo0ij",
+    "email": "traversal_1787286785499@jobxapply.local",
+    "name": "Traversal Test",
+    "passwordHash": "$2b$12$YDlTb9qMSm8NTZmBYn/4POvoZxP1cQRK154dlfCaBZCUdP1CZbn0G",
+    "role": "user",
+    "tier": "free",
+    "createdAt": 1787286786567,
+    "lastSync": 1787286786567
+  },
+  {
+    "id": "u_r151v171g5f",
+    "email": "lockout_test_1787286863371@jobxapply.local",
+    "name": "Lockout Test",
+    "passwordHash": "$2b$12$4HJYLFto67bSAbDtbME/uOOZXSXMcryi2NfGqo9IV8MMK5FEjD9pa",
+    "role": "user",
+    "tier": "free",
+    "createdAt": 1787286863730,
+    "lastSync": 1787286863730
+  },
+  {
+    "id": "u_qk919tncoic",
+    "email": "traversal_1787286865574@jobxapply.local",
+    "name": "Traversal Test",
+    "passwordHash": "$2b$12$o13aGZty8ucl33M061B/1emygyyDbzpJgjKgntsgal/KPjkJ6kA22",
+    "role": "user",
+    "tier": "free",
+    "createdAt": 1787286865923,
+    "lastSync": 1787286865923
   }
 ]
