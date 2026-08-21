@@ -1168,7 +1168,10 @@ const server = http.createServer(async (req, res) => {
     }
     try {
       const payload = JSON.parse(body || "{}");
-      const templateId = payload.templateId || "01";
+      const templateId = String(payload.templateId || "01");
+      if (templateId.includes("..") || templateId.includes("/") || templateId.includes("\\")) {
+        return sendJson(res, 400, { ok: false, error: "Invalid template ID format" });
+      }
       const data = payload.data || {};
 
       const templates = {
@@ -1392,7 +1395,10 @@ const server = http.createServer(async (req, res) => {
     }
     try {
       const payload = JSON.parse(body || "{}");
-      const templateId = payload.templateId || "01";
+      const templateId = String(payload.templateId || "01");
+      if (templateId.includes("..") || templateId.includes("/") || templateId.includes("\\")) {
+        return sendJson(res, 400, { ok: false, error: "Invalid template ID format" });
+      }
       const data = payload.data || {};
 
       const templates = {
