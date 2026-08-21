@@ -22,13 +22,17 @@ async function initializeDatabase(p) {
       id VARCHAR(255) PRIMARY KEY,
       email VARCHAR(255) UNIQUE NOT NULL,
       name VARCHAR(255),
-      password_hash VARCHAR(255) NOT NULL,
+      password_hash VARCHAR(255),
       role VARCHAR(50) DEFAULT 'user',
       tier VARCHAR(50) DEFAULT 'free',
       created_at BIGINT,
       last_sync BIGINT,
       passcode_hash VARCHAR(255)
     )
+  `);
+
+  await p.query(`
+    ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
   `);
 
   await p.query(`
@@ -208,6 +212,36 @@ function saveUserData(userId, data) {
 // ─── DB Interface Exports ──────────────────────────────────────────────────
 module.exports = {
   // Authentication / Users
+  async createUserOnSync({ id, email, name, role = "user", tier = "free" }) {
+    if (usePg) {
+      const emailLower = email.toLowerCase();
+      const existing = await pool.query("SELECT id FROM users WHERE LOWER(email) = $1", [emailLower]);
+      if (existing.rows.length > 0) return;
+      await pool.query(
+        "INSERT INTO users (id, email, name, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        [id, emailLower, name || "", role, tier, Date.now(), Date.now()]
+      );
+      await pool.query(
+        "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3)",
+        [id, null, JSON.stringify([])]
+      );
+      return;
+    }
+    const registry = loadRegistry();
+    if (registry.find(u => u.email.toLowerCase() === email.toLowerCase())) return;
+    const newUser = {
+      id,
+      email: email.toLowerCase(),
+      name: name || "",
+      role,
+      tier,
+      createdAt: Date.now(),
+      lastSync: Date.now()
+    };
+    registry.push(newUser);
+    saveRegistry(registry);
+  },
+
   async createUser({ email, name, passwordHash, role = "user" }) {
     if (usePg) {
       const emailLower = email.toLowerCase();

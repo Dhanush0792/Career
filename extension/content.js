@@ -699,16 +699,18 @@ function handleFieldClick(e) {
   }
 }
 
-function highlightExistingMappedFields() {
-  chrome.runtime.sendMessage({ type: "jobxapply:getPortalMap", url: location.href }, (resp) => {
-    const map = resp?.map || {};
-    for (const selector of Object.values(map)) {
-      try {
-        const el = document.querySelector(selector);
-        if (el) {
-          el.classList.add("jxa-mapper-mapped");
-        }
-      } catch(e) {}
-    }
-  });
 }
+
+// Listen for pairing event from the JobXApply website
+window.addEventListener("jobxapply:shareAuth", (e) => {
+  const { token, passcode, email } = e.detail || {};
+  if (token || passcode || email) {
+    chrome.runtime.sendMessage({
+      type: "jobxapply:saveAuth",
+      token: token || "",
+      passcode: passcode || "",
+      email: email || ""
+    });
+  }
+});
+

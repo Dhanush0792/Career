@@ -1,16 +1,26 @@
-/**
- * JobXApply // shared-shell.js
- * Central shell utilities: auth guard, nav injection, profile fetch, SSE sync.
- * Import this as the FIRST script on every inner page.
- */
-
+// ─── Auto-pair Extension ───────────────────────────────────────────────────
+(function() {
+  const token = localStorage.getItem('jxa_token') || "";
+  const passcode = localStorage.getItem('jxa_passcode') || "";
+  const email = localStorage.getItem('jxa_user_email') || "";
+  if (token || passcode || email) {
+    const dispatch = () => {
+      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+        detail: { token, passcode, email }
+      }));
+    };
+    setTimeout(dispatch, 100);
+    setTimeout(dispatch, 500);
+    setTimeout(dispatch, 1500); // multiple retries for delayed content scripts
+  }
+})();
 
 // ─── Local Storage Migration ───────────────────────────────────────────────
 (function() {
   const legacyKeys = ['token', 'passcode', 'local_profile', 'local_profiles', 'active_profile_id', 'local_state', 'applications', 'role'];
   legacyKeys.forEach(k => {
     const val = localStorage.getItem('ch_' + k);
-    if (val && !localStorage.getItem('jxa_' + k)) {
+    if (val && !localStorage.getItem('jxa_token')) { // Fix ch_ to jxa_ migration key check
       localStorage.setItem('jxa_' + k, val);
     }
   });

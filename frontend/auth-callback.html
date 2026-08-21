@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Authentication Callback</title>
+<link rel="stylesheet" href="style-glass.css">
+<style>
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0B1020;
+  color: #f4f7ff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.loader-card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  backdrop-filter: blur(20px);
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: #5B4FE8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="loader-card">
+  <div class="spinner"></div>
+  <h3 style="font-family: var(--mono); font-size: 14px; letter-spacing: 0.05em; text-transform: uppercase;">
+    Verifying OAuth Signature...
+  </h3>
+  <p id="callback-status" style="font-size: 11px; color: var(--muted); margin-top: 10px;">
+    Connecting to secure sync vault...
+  </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
+<script src="shared-shell.js?v=2"></script>
+<script>
+// Supabase Configuration
+const SUPABASE_URL = window.SUPABASE_URL || "https://your-project.supabase.co";
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "your-supabase-anon-key";
+
+const statusText = document.getElementById("callback-status");
+
+async function handleCallback() {
+  try {
+    if (SUPABASE_URL === "https://your-project.supabase.co") {
+      throw new Error("Supabase is not configured yet. Set SUPABASE_URL and SUPABASE_ANON_KEY in auth-callback.html.");
+    }
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Allow Supabase to parse hash fragments
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    if (error) throw error;
+    if (!session) {
+      throw new Error("No active session found. Redirecting to login...");
+    }
+
+    const token = session.access_token;
+    const email = session.user.email;
+
+    statusText.textContent = "Session verified. Checking profile metadata...";
+    
+    // Save authentication details in local storage
+    localStorage.setItem("jxa_token", token);
+    localStorage.setItem("jxa_user_email", email);
+
+    // Call profile endpoint to fetch or auto-create the user profile row on the backend
+    const profileRes = await fetch(`${SYNC_API}/profile`, {
+      headers: { "Authorization": `Bearer ${token}` },
+      cache: "no-store"
+    });
+
+    if (profileRes.ok) {
+      const stateData = await profileRes.json();
+      localStorage.setItem("jxa_role", stateData.role || "user");
+      
+      const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
+      if (hasProfile) {
+        localStorage.setItem("jxa_local_profile", JSON.stringify(stateData.profile));
+        localStorage.setItem("jxa_local_state", JSON.stringify(stateData));
+        statusText.textContent = "Redirecting to dashboard...";
+        setTimeout(() => {
+          if (stateData.role === "admin") {
+            window.location.replace("admin/index.html");
+          } else {
+            window.location.replace("dashboard.html");
+          }
+        }, 800);
+      } else {
+        statusText.textContent = "Launching onboarding wizard...";
+        setTimeout(() => window.location.replace("onboarding.html"), 800);
+      }
+    } else {
+      // Fallback
+      statusText.textContent = "Failed to sync details. Launching onboarding...";
+      setTimeout(() => window.location.replace("onboarding.html"), 1200);
+    }
+  } catch (err) {
+    statusText.style.color = "#ff6b6b";
+    statusText.textContent = err.message;
+    console.error("Callback error:", err);
+    setTimeout(() => window.location.replace("auth.html"), 3000);
+  }
+}
+
+// Run immediately
+handleCallback();
+</script>
+</body>
+</html>

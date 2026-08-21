@@ -212,97 +212,44 @@ body::after {
 <body>
 
 <div class="auth-container">
-  <div class="auth-header">
-    <button class="auth-tab active" id="tab-login">01 // SIGN IN</button>
-    <button class="auth-tab" id="tab-signup">02 // SIGN UP</button>
-  </div>
-  
   <div class="auth-body">
     <h2 class="auth-title" id="auth-title">OPERATIVE <em>SIGN IN</em></h2>
-    
-    <form id="auth-form">
-      <div class="form-group signup-only" id="fg-name">
-        <label>Full Name</label>
-        <input type="text" class="form-input" id="auth-name" placeholder="Your full name" autocomplete="name">
-        <div class="field-error" id="err-name">Name is required for signup.</div>
-      </div>
+    <p style="font-size: 12px; color: var(--muted); margin-bottom: 24px; line-height: 1.5;">
+      Access your secure job application space and profile sync vault. Signup and Signin are managed seamlessly via Google.
+    </p>
 
-      <div class="form-group">
-        <label>Operative ID (Email)</label>
-        <input type="email" class="form-input" id="auth-email" placeholder="your@email.com" required autocomplete="email">
-        <div class="field-error" id="err-email">Enter a valid email address.</div>
-      </div>
-      
-      <div class="form-group">
-        <label>Access Code (Password)</label>
-        <div class="pw-wrap">
-          <input type="password" class="form-input" id="auth-password" placeholder="Min. 8 characters" required autocomplete="current-password">
-          <button type="button" class="pw-toggle" onclick="togglePw('auth-password', this)" title="Show/hide password">👁</button>
-        </div>
-        <div class="field-error" id="err-password">Password must be at least 8 characters.</div>
-      </div>
+    <!-- Google Sign-In Button -->
+    <button type="button" class="google-btn" onclick="handleGoogleLogin()">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+      </svg>
+      Continue with Google
+    </button>
 
-      <div class="form-group signup-only" id="fg-confirm">
-        <label>Confirm Password</label>
-        <div class="pw-wrap">
-          <input type="password" class="form-input" id="auth-confirm" placeholder="Repeat your password" autocomplete="new-password">
-          <button type="button" class="pw-toggle" onclick="togglePw('auth-confirm', this)" title="Show/hide password">👁</button>
-        </div>
-        <div class="field-error" id="err-confirm">Passwords do not match.</div>
-      </div>
-      
-      <div class="form-group signup-only" id="fg-consent" style="margin-top:12px; display:none; flex-direction:row; align-items:center; gap:8px;">
-        <input type="checkbox" id="auth-consent" style="width:auto; margin:0;" required>
-        <label for="auth-consent" style="margin:0; font-size:11px; font-weight:normal; color:var(--muted); text-transform:none;">
-          I agree to the <a href="privacy-terms.html" target="_blank" style="color:var(--primary); text-decoration:underline;">Terms of Use & Privacy Policy</a>
-        </label>
-      </div>
-
-      <button type="submit" class="auth-submit-btn" id="auth-submit">AUTHENTICATE SYSTEM</button>
-
-      <div class="auth-links">
-        <a href="index.html" class="back-link">&lsaquo; RETURN HOME</a>
-        <a href="forgot-password.html" class="back-link" id="link-forgot">FORGOT PASSWORD?</a>
-      </div>
-    </form>
+    <div class="auth-links" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px;">
+      <a href="index.html" class="back-link">&lsaquo; RETURN HOME</a>
+      <a href="privacy-terms.html" target="_blank" class="back-link">PRIVACY & TERMS</a>
+    </div>
   </div>
   
   <div class="auth-terminal" id="auth-terminal">
-    <div class="term-line">[SYS_INIT] Authentication interface loaded. Ready.</div>
+    <div class="term-line">[SYS_INIT] Google OAuth Gateway ready.</div>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
 <script src="shared-shell.js?v=2"></script>
 <script>
-const tabLogin = document.getElementById('tab-login');
-const tabSignup = document.getElementById('tab-signup');
-const authTitle = document.getElementById('auth-title');
-const authSubmit = document.getElementById('auth-submit');
+// Supabase Configuration
+// IMPORTANT: Paste your actual Supabase project credentials below!
+const SUPABASE_URL = window.SUPABASE_URL || "https://your-project.supabase.co";
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "your-supabase-anon-key";
+
+let supabaseClient = null;
 const terminal = document.getElementById('auth-terminal');
-
-let mode = 'login';
-
-tabLogin.addEventListener('click', () => {
-  mode = 'login';
-  tabLogin.classList.add('active');
-  tabSignup.classList.remove('active');
-  authTitle.innerHTML = 'OPERATIVE <em>SIGN IN</em>';
-  authSubmit.textContent = 'AUTHENTICATE SYSTEM';
-  document.getElementById('link-forgot').style.display = '';
-  document.querySelectorAll('.signup-only').forEach(el => el.style.display = 'none');
-  addLog('[SYS_MODE] Switched to SIGN IN mode.');
-});
-
-tabSignup.addEventListener('click', () => {
-  mode = 'signup';
-  tabSignup.classList.add('active');
-  tabLogin.classList.remove('active');
-  authTitle.innerHTML = 'CREATE <em>NEW IDENTITY</em>';
-  authSubmit.textContent = 'PROVISION PROFILE';
-  document.getElementById('link-forgot').style.display = 'none';
-  document.querySelectorAll('.signup-only').forEach(el => el.style.display = 'flex');
-  addLog('[SYS_MODE] Switched to SIGN UP mode.');
-});
 
 function addLog(text, className = '') {
   const line = document.createElement('div');
@@ -312,148 +259,45 @@ function addLog(text, className = '') {
   terminal.scrollTop = terminal.scrollHeight;
 }
 
-function togglePw(inputId, btn) {
-  const inp = document.getElementById(inputId);
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-  else { inp.type = 'password'; btn.textContent = '👁'; }
-}
-
-function showError(id, show) {
-  const el = document.getElementById(id);
-  if (el) { el.classList.toggle('show', show); }
-}
-
-function setGroupError(inputEl, hasError) {
-  inputEl.closest('.form-group').classList.toggle('has-error', hasError);
-}
-
-document.getElementById('auth-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const email    = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value;
-  const confirm  = document.getElementById('auth-confirm')?.value || '';
-  const name     = document.getElementById('auth-name')?.value.trim() || '';
-
-  let valid = true;
-
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    setGroupError(document.getElementById('auth-email'), true);
-    valid = false;
-  } else { setGroupError(document.getElementById('auth-email'), false); }
-
-  if (!password || password.length < 8) {
-    setGroupError(document.getElementById('auth-password'), true);
-    valid = false;
-  } else { setGroupError(document.getElementById('auth-password'), false); }
-
-  if (mode === 'signup') {
-    if (!name) {
-      setGroupError(document.getElementById('auth-name'), true); valid = false;
-    } else { setGroupError(document.getElementById('auth-name'), false); }
-    if (confirm !== password) {
-      setGroupError(document.getElementById('auth-confirm'), true); valid = false;
-    } else { setGroupError(document.getElementById('auth-confirm'), false); }
-    
-    // Check Terms & Privacy consent checkbox
-    const consentBox = document.getElementById('auth-consent');
-    if (consentBox && !consentBox.checked) {
-      addLog('[AUTH_ERR] You must agree to the Terms of Use & Privacy Policy.', 'info');
-      valid = false;
-    }
+try {
+  if (SUPABASE_URL && SUPABASE_URL !== "https://your-project.supabase.co") {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    addLog('[SYS_INIT] Supabase client active.');
+  } else {
+    addLog('[SYS_WARN] Supabase credentials not set in auth.html.', 'info');
   }
+} catch (e) {
+  addLog('[SYS_ERR] Initialization failed: ' + e.message, 'info');
+}
 
-  if (!valid) { addLog('[AUTH_ERR] Validation failed. Correct errors above.', 'info'); return; }
-
-  authSubmit.disabled = true;
-  addLog(`[AUTH_EXEC] Initiating authentication for: ${email.toUpperCase()}...`);
-
-  const url = mode === 'login' ? `${SYNC_API}/auth/login` : `${SYNC_API}/auth/register`;
-  const bodyPayload = mode === 'login' 
-    ? { email, password } 
-    : { name, email, password };
-
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(bodyPayload)
-  })
-  .then(async res => {
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Authentication rejected by system');
-    }
-    return data;
-  })
-  .then(async data => {
-    addLog('[AUTH_EXEC] Credential signature verified.', 'info');
-    addLog('[AUTH_EXEC] JWT Session key issued. PASS.', 'success');
-
-    // Store tokens & details in localStorage matching the JobXApply namespace
-    localStorage.setItem('jxa_token', data.token);
-    localStorage.setItem('jxa_user_email', data.user.email);
-    localStorage.setItem('jxa_role', data.user.role || 'user');
-
-    if (data.user.role === 'admin') {
-      addLog('[SYS_QUERY] Admin session authorized. Redirecting to Admin Panel...', 'success');
-      setTimeout(() => window.location.href = 'admin/index.html', 700);
-      return;
-    }
-
-    addLog('[SYS_QUERY] Checking master profile on sync network...', 'info');
-
-    try {
-      const profileRes = await fetch(`${SYNC_API}/profile`, {
-        headers: { 'Authorization': `Bearer ${data.token}` },
-        cache: 'no-store'
-      });
-      if (profileRes.ok) {
-        const stateData = await profileRes.json();
-        const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
-        
-        if (hasProfile) {
-          localStorage.setItem('jxa_local_profile', JSON.stringify(stateData.profile));
-          localStorage.setItem('jxa_local_state', JSON.stringify(stateData));
-          addLog('[SYS_QUERY] Existing profile loaded. Redirecting to dashboard...', 'success');
-          setTimeout(() => window.location.href = 'dashboard.html', 700);
-        } else {
-          addLog('[SYS_QUERY] Profile blank. Launching master onboarding import wizard...', 'info');
-          setTimeout(() => window.location.href = 'onboarding.html', 700);
-        }
-      } else {
-        addLog('[SYS_QUERY] Profile request failed. Initializing onboarding...', 'info');
-        setTimeout(() => window.location.href = 'onboarding.html', 700);
+async function handleGoogleLogin() {
+  if (!supabaseClient) {
+    addLog('[AUTH_ERR] Supabase client is unconfigured.', 'info');
+    alert('Please configure SUPABASE_URL and SUPABASE_ANON_KEY inside auth.html.');
+    return;
+  }
+  
+  addLog('[AUTH_EXEC] Redirecting to Google OAuth...');
+  try {
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/auth-callback.html'
       }
-    } catch (e) {
-      addLog('[SYS_QUERY] Remote sync error. Running onboarding wizard offline...', 'info');
-      setTimeout(() => window.location.href = 'onboarding.html', 700);
-    }
-  })
-  .catch(err => {
-    addLog(`[AUTH_ERR] ${err.message}`, 'info');
-    authSubmit.disabled = false;
-  });
-});
+    });
+    if (error) throw error;
+  } catch (err) {
+    addLog('[AUTH_ERR] ' + err.message, 'info');
+  }
+}
 
-// Already logged in → skip auth page
+// Redirect if already logged in
 if (localStorage.getItem('jxa_token')) {
   if (localStorage.getItem('jxa_role') === 'admin') {
     window.location.replace('admin/index.html');
   } else {
     window.location.replace('dashboard.html');
   }
-}
-
-// Prefill email from query params (e.g. from landing CTA)
-const urlParams = new URLSearchParams(window.location.search);
-const emailParam = urlParams.get('email');
-if (emailParam) {
-  document.getElementById('auth-email').value = emailParam;
-  mode = 'signup';
-  tabSignup.classList.add('active');
-  tabLogin.classList.remove('active');
-  authTitle.innerHTML = 'CREATE <em>NEW IDENTITY</em>';
-  authSubmit.textContent = 'PROVISION PROFILE';
-  addLog('[SYS_INIT] Email pre-loaded from landing page. Ready to register.');
 }
 </script>
 </body>

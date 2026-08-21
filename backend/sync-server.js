@@ -343,12 +343,41 @@ async function getRequestUser(req) {
     return null;
   }
   const token = authHeader.substring(7).trim();
-  // Try JWT decode
-  const decoded = auth.verifyToken(req);
-  if (decoded) {
-    return await db.getUserById(decoded.userId);
+
+  // 1. Try Supabase JWT
+  try {
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET || process.env.JWT_SECRET || auth.JWT_SECRET;
+    const decoded = jwt.verify(token, jwtSecret);
+    if (decoded) {
+      const userId = decoded.sub; // Supabase uses 'sub' for user UUID
+      const email = decoded.email;
+      const name = decoded.user_metadata?.full_name || decoded.name || email.split("@")[0];
+      
+      let user = await db.getUserById(userId);
+      if (!user) {
+        // Auto-provision new user row on the fly
+        await db.createUserOnSync({
+          id: userId,
+          email: email,
+          name: name,
+          role: "user",
+          tier: "free"
+        });
+        user = await db.getUserById(userId);
+      }
+      return user;
+    }
+  } catch (e) {
+    // Ignore and proceed to fallback
   }
-  // Try passcode hash fallback
+
+  // 2. Legacy / local custom JWT check
+  const decodedLocal = auth.verifyToken(req);
+  if (decodedLocal) {
+    return await db.getUserById(decodedLocal.userId);
+  }
+
+  // 3. Sync passcode hash check (for browser extension / automation clients)
   return await db.getUserByPasscodeHash(token);
 }
 
@@ -1155,8 +1184,9 @@ const server = http.createServer(async (req, res) => {
   // POST /api/resume/generate
   if (req.method === "POST" && urlObj.pathname === "/api/resume/generate") {
     if (activeUser) {
-      if (isRateLimited(activeUser.id, 5, 3600000, userRateLimits)) {
-        sendJson(res, 429, { ok: false, error: "Too many resume generation attempts. Limit is 5 per hour." });
+      const limit = (activeUser.tier === "paid" || activeUser.tier === "premium") ? 50 : 5;
+      if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
+        sendJson(res, 429, { ok: false, error: `Too many resume generation attempts. Limit is ${limit} per hour.` });
         return;
       }
     }
@@ -1382,8 +1412,9 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && urlObj.pathname === "/api/cover-letter/generate") {
     if (activeUser) {
-      if (isRateLimited(activeUser.id, 5, 3600000, userRateLimits)) {
-        sendJson(res, 429, { ok: false, error: "Too many cover letter generation attempts. Limit is 5 per hour." });
+      const limit = (activeUser.tier === "paid" || activeUser.tier === "premium") ? 50 : 5;
+      if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
+        sendJson(res, 429, { ok: false, error: `Too many cover letter generation attempts. Limit is ${limit} per hour.` });
         return;
       }
     }

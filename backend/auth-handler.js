@@ -34,129 +34,19 @@ function sendJson(res, code, payload) {
 }
 
 // Register user
-async function registerUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures, logAdminActivity } = {}) {
-  try {
-    const { name, email, password } = bodyData;
-    if (!email || !password || !name) {
-      return sendJson(res, 400, { ok: false, error: "Name, email, and password are required" });
-    }
-    if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 100) {
-      return sendJson(res, 400, { ok: false, error: "Name must be between 2 and 100 characters" });
-    }
-    if (!validateEmail(email)) {
-      return sendJson(res, 400, { ok: false, error: "Invalid email address format" });
-    }
-    const pwCheck = validatePassword(password);
-    if (!pwCheck.ok) {
-      return sendJson(res, 400, { ok: false, error: pwCheck.reason });
-    }
-
-    const existingUser = await db.getUserByEmail(email);
-    if (existingUser) {
-      return sendJson(res, 400, { ok: false, error: "Email already registered" });
-    }
-
-    const salt = bcrypt.genSaltSync(12); // Upgraded from 10 to 12 rounds
-    const passwordHash = bcrypt.hashSync(password, salt);
-
-    // First user is automatically admin
-    const list = await db.getUsersList();
-    const role = list.length === 0 ? "admin" : "user";
-
-    const user = await db.createUser({
-      email: email.toLowerCase().trim(),
-      name: name.trim(),
-      passwordHash,
-      role
-    });
-
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "24h" } // Shortened from 7d to 24h
-    );
-
-    if (logAdminActivity) {
-      logAdminActivity(`New user registered (${role}): ${user.email}`);
-    }
-
-    sendJson(res, 200, {
-      ok: true,
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
-    });
-  } catch (err) {
-    console.error("Registration error:", err);
-    sendJson(res, 500, { ok: false, error: "Registration failed. Please try again." });
-  }
+async function registerUser(req, res, bodyData) {
+  return sendJson(res, 400, { ok: false, error: "Direct registration is deprecated. Please register using Google Sign-In." });
 }
 
 // Login user
-async function loginUser(req, res, bodyData, { recordLoginFailure, isAccountLocked, clearLoginFailures, logAdminActivity } = {}) {
-  try {
-    const { email, password } = bodyData;
-    if (!email || !password) {
-      return sendJson(res, 400, { ok: false, error: "Email and password are required" });
-    }
-    if (!validateEmail(email)) {
-      return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
-    }
-
-    // Check account lockout
-    if (isAccountLocked && isAccountLocked(email)) {
-      return sendJson(res, 429, { ok: false, error: "Account temporarily locked due to repeated failed attempts. Please wait 15 minutes." });
-    }
-
-    const user = await db.getUserByEmail(email);
-    if (!user) {
-      if (recordLoginFailure) recordLoginFailure(email);
-      return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
-    }
-
-    const validPassword = bcrypt.compareSync(password, user.passwordHash);
-    if (!validPassword) {
-      if (recordLoginFailure) recordLoginFailure(email);
-      return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
-    }
-
-    // Success: clear failure counter
-    if (clearLoginFailures) clearLoginFailures(email);
-
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "24h" }
-    );
-
-    if (logAdminActivity) {
-      logAdminActivity(`User logged in: ${user.email}`);
-    }
-
-    sendJson(res, 200, {
-      ok: true,
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
-    });
-  } catch (err) {
-    console.error("Login error:", err);
-    sendJson(res, 500, { ok: false, error: "Login failed. Please try again." });
-  }
+async function loginUser(req, res, bodyData) {
+  return sendJson(res, 400, { ok: false, error: "Direct login is deprecated. Please sign in using Google Sign-In." });
 }
 
 // Update user account details
 async function updateUserAccount(req, res, bodyData, activeUser) {
   try {
-    const { name, email, currentPassword, newPassword } = bodyData;
+    const { name } = bodyData;
     if (!activeUser) {
       return sendJson(res, 401, { ok: false, error: "Authentication required" });
     }
@@ -164,40 +54,6 @@ async function updateUserAccount(req, res, bodyData, activeUser) {
     const user = await db.getUserById(activeUser.id);
     if (!user) {
       return sendJson(res, 404, { ok: false, error: "User not found" });
-    }
-
-    // Verify current password
-    if (currentPassword || newPassword || email) {
-      if (!currentPassword) {
-        return sendJson(res, 400, { ok: false, error: "Current password is required to update email or password" });
-      }
-      const valid = bcrypt.compareSync(currentPassword, user.passwordHash);
-      if (!valid) {
-        return sendJson(res, 401, { ok: false, error: "Invalid current password" });
-      }
-    }
-
-    let updatedPasswordHash = user.passwordHash;
-    if (newPassword) {
-      const pwCheck = validatePassword(newPassword);
-      if (!pwCheck.ok) {
-        return sendJson(res, 400, { ok: false, error: pwCheck.reason });
-      }
-      const salt = bcrypt.genSaltSync(12);
-      updatedPasswordHash = bcrypt.hashSync(newPassword, salt);
-    }
-
-    let updatedEmail = user.email;
-    if (email && email.toLowerCase().trim() !== user.email) {
-      const newEmailNormalized = email.toLowerCase().trim();
-      if (!validateEmail(newEmailNormalized)) {
-        return sendJson(res, 400, { ok: false, error: "Invalid email format" });
-      }
-      const existing = await db.getUserByEmail(newEmailNormalized);
-      if (existing) {
-        return sendJson(res, 400, { ok: false, error: "Email already in use" });
-      }
-      updatedEmail = newEmailNormalized;
     }
 
     let updatedName = user.name;
@@ -209,23 +65,16 @@ async function updateUserAccount(req, res, bodyData, activeUser) {
     }
 
     await db.updateUserCredentials(activeUser.id, {
-      email: updatedEmail,
+      email: user.email,
       name: updatedName,
-      passwordHash: updatedPasswordHash
+      passwordHash: user.passwordHash
     });
-
-    const token = jwt.sign(
-      { userId: user.id, email: updatedEmail, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "24h" }
-    );
 
     sendJson(res, 200, {
       ok: true,
-      token,
       user: {
         id: user.id,
-        email: updatedEmail,
+        email: user.email,
         name: updatedName,
         role: user.role
       }
@@ -238,80 +87,12 @@ async function updateUserAccount(req, res, bodyData, activeUser) {
 
 // Forgot password token generation
 async function forgotPassword(req, res, bodyData) {
-  try {
-    const { email } = bodyData;
-    if (!email) {
-      return sendJson(res, 400, { ok: false, error: "Email is required" });
-    }
-    if (!validateEmail(email)) {
-      return sendJson(res, 400, { ok: false, error: "Invalid email address format" });
-    }
-
-    const user = await db.getUserByEmail(email);
-    if (!user) {
-      // Respond with ok: true even if user doesn't exist to prevent email enumeration
-      return sendJson(res, 200, { ok: true, message: "If the email is registered, instructions have been logged/sent." });
-    }
-
-    const token = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const expiry = Date.now() + 3600000; // 1 hour expiry
-
-    await db.setUserResetToken(email, tokenHash, expiry);
-
-    // Secure SMTP simulation / Dev mock logging:
-    console.log(`\n================================================================================`);
-    console.log(`[SMTP MOCK] Password reset link for ${email}:`);
-    console.log(`http://localhost:3000/reset-password.html?token=${token}&email=${encodeURIComponent(email)}`);
-    console.log(`================================================================================\n`);
-
-    sendJson(res, 200, { ok: true, message: "If the email is registered, instructions have been logged/sent." });
-  } catch (err) {
-    console.error("Forgot password error:", err);
-    sendJson(res, 500, { ok: false, error: "Forgot password flow failed" });
-  }
+  return sendJson(res, 400, { ok: false, error: "Password recovery is deprecated. Please sign in using Google Sign-In." });
 }
 
 // Reset password execution
 async function resetPassword(req, res, bodyData) {
-  try {
-    const { email, token, newPassword } = bodyData;
-    if (!email || !token || !newPassword) {
-      return sendJson(res, 400, { ok: false, error: "Email, token, and new password are required" });
-    }
-
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const user = await db.getUserByResetToken(tokenHash);
-
-    if (!user || user.email.toLowerCase().trim() !== email.toLowerCase().trim()) {
-      return sendJson(res, 400, { ok: false, error: "Invalid or expired password reset token" });
-    }
-
-    if (user.resetTokenExpiry && Date.now() > user.resetTokenExpiry) {
-      return sendJson(res, 400, { ok: false, error: "Reset token has expired. Please request a new one." });
-    }
-
-    const pwCheck = validatePassword(newPassword);
-    if (!pwCheck.ok) {
-      return sendJson(res, 400, { ok: false, error: pwCheck.reason });
-    }
-
-    const salt = bcrypt.genSaltSync(12);
-    const passwordHash = bcrypt.hashSync(newPassword, salt);
-
-    await db.updateUserCredentials(user.id, {
-      email: user.email,
-      name: user.name,
-      passwordHash
-    });
-
-    await db.clearUserResetToken(user.id);
-
-    sendJson(res, 200, { ok: true, message: "Password reset successfully!" });
-  } catch (err) {
-    console.error("Reset password error:", err);
-    sendJson(res, 500, { ok: false, error: "Password reset failed" });
-  }
+  return sendJson(res, 400, { ok: false, error: "Password reset is deprecated. Please sign in using Google Sign-In." });
 }
 
 // Middleware helper

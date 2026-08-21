@@ -4,12 +4,17 @@ const SYNC_API = "https://jobxapply-backend.onrender.com/api";
 
 async function authenticatedFetch(url, options = {}) {
   return new Promise((resolve, reject) => {
-    chrome.storage.local.get(["jobxapplyPasscode"], async (result) => {
+    chrome.storage.local.get(["jobxapplyToken", "jobxapplyPasscode"], async (result) => {
+      const token = result.jobxapplyToken || "";
       const passcode = result.jobxapplyPasscode || "";
       const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
       
       if (!options.headers) options.headers = {};
-      if (passcodeHash) {
+      
+      // Prioritize JWT token if present
+      if (token) {
+        options.headers["Authorization"] = `Bearer ${token}`;
+      } else if (passcodeHash) {
         options.headers["Authorization"] = `Bearer ${passcodeHash}`;
       }
       
@@ -134,6 +139,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "jobxapply:getPortalRule") {
     const rule = getPortalRule(message.url || sender?.url || "");
     sendResponse({ rule });
+    return true;
+  }
+  if (message?.type === "jobxapply:saveAuth") {
+    const { token, passcode, email } = message;
+    chrome.storage.local.set({
+      jobxapplyToken: token || "",
+      jobxapplyPasscode: passcode || "",
+      jobxapplyEmail: email || ""
+    }, () => {
+      sendResponse({ ok: true });
+    });
     return true;
   }
   if (message?.type === "jobxapply:getPortalMap") {
