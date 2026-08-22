@@ -90,6 +90,44 @@
       .status.success { color: #2fddc4; }
       .status.error { color: #e8547b; }
       .status.warn { color: #ff9800; }
+
+      /* Toggle Switch */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 38px;
+        height: 20px;
+      }
+      .switch input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(255,255,255,0.15);
+        transition: .2s;
+        border-radius: 20px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .2s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #5b4fe8;
+      }
+      input:checked + .slider:before {
+        transform: translateX(18px);
+      }
     </style>
   </head>
   <body>
@@ -108,6 +146,14 @@
           <div class="portal-name" id="portalName">Detecting...</div>
           <div class="portal-tier" id="portalTier"></div>
         </div>
+      </div>
+
+      <div class="toggle-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); margin-bottom: 2px;">
+        <span style="font-size:12px; font-weight:600; color:rgba(244,247,255,0.85)">Autofill floating button</span>
+        <label class="switch">
+          <input type="checkbox" id="extensionToggle" checked>
+          <span class="slider"></span>
+        </label>
       </div>
 
       <div class="profile-row">

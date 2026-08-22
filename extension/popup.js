@@ -1,4 +1,4 @@
-﻿import { buildAutofillPayload, getPortalRule } from "./shared.js";
+import { buildAutofillPayload, getPortalRule } from "./shared.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function setStatus(msg, cls = "") {
@@ -129,6 +129,16 @@ async function syncFromCloud() {
 (async function init() {
   await loadPortalInfo();
   await loadAndDisplayProfile();
+
+  const toggle = document.getElementById("extensionToggle");
+  if (toggle) {
+    chrome.storage.local.get("extensionEnabled", (res) => {
+      toggle.checked = res.extensionEnabled !== false;
+    });
+    toggle.addEventListener("change", (e) => {
+      chrome.storage.local.set({ extensionEnabled: e.target.checked });
+    });
+  }
 
   document.getElementById("apply")?.addEventListener("click", doAutofill);
 

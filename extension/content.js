@@ -28,6 +28,55 @@ const FIELD_ALIASES = {
   targetrole: ["role", "target role", "position", "designation"]
 };
 
+let extensionEnabled = true;
+chrome.storage.local.get("extensionEnabled", (res) => {
+  if (res.extensionEnabled !== undefined) {
+    extensionEnabled = res.extensionEnabled;
+  }
+});
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.extensionEnabled) {
+    extensionEnabled = changes.extensionEnabled.newValue;
+  }
+});
+
+const KNOWN_PORTALS = [
+  "naukri.com", "linkedin.com", "wellfound.com", "angel.co", "indeed.com",
+  "myworkdayjobs.com", "greenhouse.io", "lever.co", "icims.com", "smartrecruiters.com",
+  "internshala.com", "ashbyhq.com", "workday"
+];
+
+function isJobPage() {
+  const host = location.hostname.toLowerCase();
+  const path = location.pathname.toLowerCase();
+  const title = document.title ? document.title.toLowerCase() : "";
+  
+  const BLACKLISTED = [
+    "chatgpt.com", "openai.com", "google.com", "github.com", "gitlab.com",
+    "microsoft.com", "stripe.com", "paypal.com", "facebook.com", "instagram.com",
+    "twitter.com", "x.com", "youtube.com", "wikipedia.org", "netflix.com",
+    "amazon.com", "gmail.com", "outlook.com", "yahoo.com"
+  ];
+  
+  if (BLACKLISTED.some(d => host.includes(d))) {
+    return false;
+  }
+  
+  if (KNOWN_PORTALS.some(p => host.includes(p))) {
+    return true;
+  }
+  
+  const keywords = ["career", "job", "apply", "hiring", "recruit", "application", "candidate", "join-us", "opportunity"];
+  const urlMatches = keywords.some(kw => path.includes(kw) || host.includes(kw));
+  const titleMatches = keywords.some(kw => title.includes(kw));
+  
+  if (urlMatches || titleMatches) {
+    return true;
+  }
+  
+  return false;
+}
+
 function normalize(s) {
   return String(s || "").toLowerCase().trim();
 }
@@ -213,19 +262,57 @@ function guessKeyForElement(el) {
   return name || null;
 }
 
-document.addEventListener("focusin", (e) => {
+function cleanupOrphanedScript() {
+  try {
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("click", handleDocumentClick);
+    document.removeEventListener("submit", handleSubmit, true);
+    window.removeEventListener("jobxapply:shareAuth", handleShareAuth);
+  } catch (e) {}
+
+  if (autofillButton) {
+    try { autofillButton.remove(); } catch(err) {}
+    autofillButton = null;
+  }
+  
+  document.querySelectorAll(".jxa-knockout-tip, .jxa-mapper-hover, #jxa-mapper-banner, .jxa-mapper-mapped").forEach(el => {
+    try { el.remove(); } catch(err) {}
+  });
+}
+
+function checkContext() {
+  try {
+    if (chrome.runtime && chrome.runtime.id) {
+      return true;
+    }
+  } catch (e) {
+    // Context is invalidated
+  }
+  cleanupOrphanedScript();
+  return false;
+}
+
+function handleFocusIn(e) {
+  if (!checkContext()) return;
+  if (!extensionEnabled || !isJobPage()) {
+    hideButton();
+    return;
+  }
   const target = e.target;
   if (!target || !(target.matches && target.matches("input, textarea, [contenteditable='true'], select"))) {
     hideButton();
     return;
   }
   positionButtonNear(target);
-});
+}
 
-document.addEventListener("click", (e) => {
-  // hide when clicking away
+function handleDocumentClick(e) {
+  if (!checkContext()) return;
   if (!(e.target && e.target === autofillButton)) hideButton();
-});
+}
+
+document.addEventListener("focusin", handleFocusIn);
+document.addEventListener("click", handleDocumentClick);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "jobxapply:insertText") {
@@ -346,12 +433,14 @@ function showKnockoutSuggestion(el, value) {
 }
 
 // Block auto submits if essay or knockout tips exist
-document.addEventListener("submit", (e) => {
+function handleSubmit(e) {
+  if (!checkContext()) return;
   if (document.querySelector(".jxa-knockout-tip")) {
     e.preventDefault();
     alert("Please review the knockout question confirmations before submitting.");
   }
-}, true);
+}
+document.addEventListener("submit", handleSubmit, true);
 
   if (message?.type === "jobxapply:applyAutofill") {
     const profile = message.profile || {};
@@ -702,7 +791,8 @@ function handleFieldClick(e) {
 }
 
 // Listen for pairing event from the JobXApply website
-window.addEventListener("jobxapply:shareAuth", (e) => {
+function handleShareAuth(e) {
+  if (!checkContext()) return;
   const { token, passcode, email } = e.detail || {};
   if (token || passcode || email) {
     chrome.runtime.sendMessage({
@@ -710,7 +800,11 @@ window.addEventListener("jobxapply:shareAuth", (e) => {
       token: token || "",
       passcode: passcode || "",
       email: email || ""
+    }, () => {
+      // Catch context error silently if extension got disabled during message send
+      if (chrome.runtime.lastError) {}
     });
   }
-});
+}
+window.addEventListener("jobxapply:shareAuth", handleShareAuth);
 

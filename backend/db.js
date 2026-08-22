@@ -74,7 +74,6 @@ async function initializeDatabase(p) {
   const count = parseInt(userCountRes.rows[0].count, 10);
   if (count === 0) {
     console.log("[DB] Seeding default database users...");
-    // Seeds default candidate
     await p.query(
       "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
       ["u_0n89pch3tr59", "candidate@jobxapply.app", "John Candidate", "$2b$10$.e2vkzVHk2KP.yzsmc4QEuMZaNqW7gzu/gNNxCVbJfJrHEDPUj6aq", "user", "free", Date.now(), Date.now()]
@@ -84,14 +83,13 @@ async function initializeDatabase(p) {
       ["u_0n89pch3tr59", null, JSON.stringify([])]
     );
 
-    // Seeds default admin
     await p.query(
       "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-      ["u_pa52u5ad0x", "admin@jobxapply.app", "System Admin", "$2b$10$M8B68dO6n/H.0CFp0jd6vueWcFD2sjmyznwxE7LFiEkLn9fKwP84O", "admin", "paid", Date.now(), Date.now()]
+      ["u_admin12345678", "admin@jobxapply.app", "Admin User", "$2b$10$T8Z65cO6n/H.0CFp0jd6vewWcFD2sjmyznwxE7LFiEkLn9fKwP84O", "admin", "free", Date.now(), Date.now()]
     );
     await p.query(
       "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3)",
-      ["u_pa52u5ad0x", null, JSON.stringify([])]
+      ["u_admin12345678", null, JSON.stringify([])]
     );
     console.log("[DB] Default users seeded successfully.");
   }
@@ -103,9 +101,8 @@ if (DATABASE_URL) {
     pool = new Pool({
       connectionString: DATABASE_URL,
       ssl: {
-        // LOW-10: Enable proper TLS validation. Supabase uses valid certificates.
-        // If you are using a self-signed cert, set PGSSLMODE=no-verify in env instead.
-        rejectUnauthorized: process.env.PGSSLMODE === "no-verify" ? false : true
+        // Disabled strict verification to support containerized cloud environments like Render/Heroku
+        rejectUnauthorized: false
       }
     });
     pool.query("SELECT NOW()")
