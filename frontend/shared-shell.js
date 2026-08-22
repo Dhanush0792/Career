@@ -304,6 +304,15 @@ async function saveProfile(profileData) {
         profile: profileData
       };
       localStorage.setItem('jxa_local_state', JSON.stringify(decryptedServerState));
+
+      // Propagate updated credentials and passcode to extension instantly
+      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+        detail: {
+          token: localStorage.getItem('jxa_token') || "",
+          passcode: passcode || "",
+          email: localStorage.getItem('jxa_user_email') || ""
+        }
+      }));
       
       return { ok: true, state: decryptedServerState };
     }

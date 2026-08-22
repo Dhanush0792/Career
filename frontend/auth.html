@@ -11,16 +11,14 @@
 <style>
 :root {
   --black:   #0B1020;
-  --s1:      rgba(255, 255, 255, 0.07);
+  --s1:      rgba(255, 255, 255, 0.04);
   --s2:      rgba(7, 10, 24, 0.6);
   --border:  rgba(255, 255, 255, 0.12);
-  --border2: rgba(255, 255, 255, 0.2);
   --white:   #ffffff;
   --text:    #f4f7ff;
   --muted:   rgba(244, 247, 255, 0.65);
   --dim:     rgba(244, 247, 255, 0.4);
-  --orange:  #5B4FE8;
-  --orange3: rgba(91, 79, 232, 0.06);
+  --primary: #5B4FE8;
   --green:   #2FDDC4;
   --mono:    'JetBrains Mono', monospace;
   --display: 'Barlow Condensed', sans-serif;
@@ -41,184 +39,171 @@ body {
   overflow-y: auto;
 }
 body::after {
-  content: '';
-  position: fixed; inset: 0;
-  z-index: 1; pointer-events: none;
-  opacity: 0.022;
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
 .auth-container {
-  width: 100%;
-  max-width: 480px;
+  width: 100%; max-width: 460px;
   border: 1px solid var(--border);
   background: var(--s1);
   border-radius: 20px;
   overflow: hidden;
   backdrop-filter: blur(24px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-  position: relative;
-  z-index: 10;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.4);
+  position: relative; z-index: 10;
 }
-.auth-header {
-  border-bottom: 1px solid var(--border);
-  display: flex;
+.auth-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
 }
 .auth-tab {
-  flex: 1;
-  padding: 16px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-align: center;
-  color: var(--dim);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.1s;
+  flex: 1; padding: 16px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-align: center;
+  color: var(--dim); background: transparent; border: none;
+  cursor: pointer; transition: all 0.2s;
+  border-bottom: 2px solid transparent;
 }
 .auth-tab.active {
   color: var(--white);
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 2px solid var(--orange);
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 2px solid var(--primary);
 }
-.auth-body {
-  padding: 24px;
-}
+.auth-body { padding: 28px; }
 .auth-title {
-  font-family: var(--display);
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: -.01em;
-  text-transform: uppercase;
-  color: var(--white);
-  margin-bottom: 16px;
+  font-family: var(--display); font-size: 26px; font-weight: 900;
+  text-transform: uppercase; color: var(--white); margin-bottom: 20px;
 }
-.auth-title em {
-  font-style: normal;
-  color: var(--orange);
-}
-.form-group {
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.auth-title em { font-style: normal; color: var(--primary); }
+
+.form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
 .form-group label {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  color: var(--muted);
-  text-transform: uppercase;
+  font-family: var(--mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .08em; color: var(--muted); text-transform: uppercase;
 }
 .form-input {
-  background: var(--s2);
-  border: 1px solid var(--border);
-  padding: 10px 14px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--white);
-  outline: none;
-  border-radius: 8px;
-  transition: border-color 0.2s;
+  background: var(--s2); border: 1px solid var(--border);
+  padding: 11px 14px; font-family: var(--mono); font-size: 13px;
+  color: var(--white); outline: none; border-radius: 8px;
+  transition: all 0.2s; width: 100%;
 }
 .form-input:focus {
-  border-color: var(--orange);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(91, 79, 232, 0.15);
 }
-.auth-submit-btn {
-  width: 100%;
-  height: 44px;
-  background: var(--orange);
-  color: var(--white);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  border: 1px solid var(--orange);
-  cursor: pointer;
-  border-radius: 12px;
-  margin-top: 10px;
+.submit-btn {
+  width: 100%; height: 44px;
+  background: var(--primary); color: var(--white);
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  border: 1px solid var(--primary); cursor: pointer;
+  border-radius: 10px; margin-top: 10px;
   transition: all 0.2s;
-  box-shadow: 0 4px 14px rgba(91, 79, 232, 0.3);
 }
-.auth-submit-btn:hover {
+.submit-btn:hover {
   background: rgba(91, 79, 232, 0.85);
-  box-shadow: 0 6px 20px rgba(91, 79, 232, 0.4);
+  transform: translateY(-1px);
 }
-.auth-submit-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.divider-row {
+  display: flex; align-items: center; text-align: center;
+  color: var(--dim); font-family: var(--mono); font-size: 9px;
+  margin: 24px 0;
 }
+.divider-row::before, .divider-row::after {
+  content: ''; flex: 1; border-bottom: 1px solid var(--border);
+}
+.divider-row:not(:empty)::before { margin-right: .5em; }
+.divider-row:not(:empty)::after { margin-left: .5em; }
+
+.google-btn {
+  width: 100%; height: 44px;
+  background: rgba(255, 255, 255, 0.03); color: var(--white);
+  border: 1px solid var(--border); border-radius: 10px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 10px; transition: all 0.2s;
+}
+.google-btn:hover {
+  background: rgba(255, 255, 255, 0.08); border-color: rgba(255,255,255,0.25);
+}
+.google-icon { width: 18px; height: 18px; }
+
 .auth-terminal {
-  background: #000;
-  border-top: 1px solid var(--border);
-  padding: 16px;
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted);
-  height: 100px;
-  overflow-y: auto;
-  line-height: 1.5;
+  background: #000; border-top: 1px solid var(--border);
+  padding: 14px 20px; font-family: var(--mono); font-size: 10px;
+  color: var(--muted); height: 95px; overflow-y: auto; line-height: 1.5;
 }
-.term-line {
-  margin-bottom: 2px;
-}
-.term-line.info { color: var(--orange); }
+.term-line { margin-bottom: 2px; }
+.term-line.info { color: var(--primary); }
 .term-line.success { color: var(--green); }
+.term-line.error { color: #ff7878; }
+
+.auth-panel { display: none; }
+.auth-panel.active { display: block; }
 
 .back-link {
-  display: inline-block;
-  margin-top: 16px;
-  font-family: var(--mono);
-  font-size: 9px;
-  color: var(--dim);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: color 0.2s;
+  display: inline-block; margin-top: 16px;
+  font-family: var(--mono); font-size: 9px;
+  color: var(--dim); letter-spacing: .08em;
+  text-transform: uppercase; text-decoration: none;
 }
-.back-link:hover {
-  color: var(--orange);
-}
-.form-input { width: 100%; }
-.pw-wrap { position: relative; }
-.pw-wrap .form-input { padding-right: 44px; width: 100%; }
-.pw-toggle {
-  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer;
-  color: var(--dim); font-size: 14px; padding: 4px;
-  transition: color .2s;
-}
-.pw-toggle:hover { color: var(--orange); }
-.field-error {
-  font-family: var(--mono); font-size: 9px; color: #ff6b6b;
-  margin-top: 4px; display: none;
-}
-.field-error.show { display: block; }
-.form-group.has-error .form-input { border-color: rgba(255,107,107,0.6); }
-.form-group.has-error .field-error { display: block; }
-.auth-links {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-top: 16px;
-}
-.signup-only { display: none; }
+.back-link:hover { color: var(--primary); }
 </style>
-
-  <link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
 
 <div class="auth-container">
-  <div class="auth-body">
-    <h2 class="auth-title" id="auth-title">OPERATIVE <em>SIGN IN</em></h2>
-    <p style="font-size: 12px; color: var(--muted); margin-bottom: 24px; line-height: 1.5;">
-      Access your secure job application space and profile sync vault. Signup and Signin are managed seamlessly via Google.
-    </p>
+  <!-- Tabs -->
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tab-btn-signin" onclick="showPanel('signin')">SIGN IN</button>
+    <button class="auth-tab" id="tab-btn-signup" onclick="showPanel('signup')">SIGN UP</button>
+  </div>
 
-    <!-- Google Sign-In Button -->
+  <div class="auth-body">
+    <!-- Sign In Panel -->
+    <div class="auth-panel active" id="panel-signin">
+      <h2 class="auth-title">OPERATIVE <em>SIGN IN</em></h2>
+      <form onsubmit="handleLocalLogin(event)">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" class="form-input" required placeholder="candidate@jobxapply.app">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-input" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="submit-btn" id="signin-btn">Authenticate ➔</button>
+      </form>
+    </div>
+
+    <!-- Sign Up Panel -->
+    <div class="auth-panel" id="panel-signup">
+      <h2 class="auth-title">CREATION <em>GATEWAY</em></h2>
+      <form onsubmit="handleLocalRegister(event)">
+        <div class="form-group">
+          <label for="reg-name">Full Name</label>
+          <input type="text" id="reg-name" class="form-input" required placeholder="e.g. Dhanush Kumar">
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email Address</label>
+          <input type="email" id="reg-email" class="form-input" required placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Password</label>
+          <input type="password" id="reg-password" class="form-input" required placeholder="At least 8 chars, 1 uppercase, 1 special">
+        </div>
+        <button type="submit" class="submit-btn" id="signup-btn">Create Account ➔</button>
+      </form>
+    </div>
+
+    <!-- OAuth Divider -->
+    <div class="divider-row">OR USE INTEGRATION</div>
+
+    <!-- Google Sign-In -->
     <button type="button" class="google-btn" onclick="handleGoogleLogin()">
       <svg class="google-icon" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -229,55 +214,170 @@ body::after {
       Continue with Google
     </button>
 
-    <div class="auth-links" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px;">
-      <a href="index.html" class="back-link">&lsaquo; RETURN HOME</a>
-      <a href="privacy-terms.html" target="_blank" class="back-link">PRIVACY & TERMS</a>
+    <div style="display: flex; justify-content: space-between; margin-top: 16px;">
+      <a href="index.html" class="back-link">&lsaquo; Back to Home</a>
+      <a href="privacy-terms.html" target="_blank" class="back-link">Privacy Policy</a>
     </div>
   </div>
-  
+
   <div class="auth-terminal" id="auth-terminal">
-    <div class="term-line">[SYS_INIT] Google OAuth Gateway ready.</div>
+    <div class="term-line">[SYS_INIT] Authentication Gateway initialized. Ready for local/cloud login.</div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
 <script src="shared-shell.js?v=2"></script>
 <script>
-// Supabase Configuration
-// IMPORTANT: Paste your actual Supabase project credentials below!
-const SUPABASE_URL = window.SUPABASE_URL || "https://your-project.supabase.co";
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "your-supabase-anon-key";
-
+const SUPABASE_URL = window.SUPABASE_URL || "https://fbyjrfrejgzcpqtdwudu.supabase.co";
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZieWpyZnJlamd6Y3BxdGR3dWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3ODk0NTIsImV4cCI6MjEwMjM2NTQ1Mn0.L_21DGKOHU4HQ05IY9MqvDwklh2knTkjMObHmDIB0Ic";
 let supabaseClient = null;
+
 const terminal = document.getElementById('auth-terminal');
 
 function addLog(text, className = '') {
   const line = document.createElement('div');
   line.className = 'term-line ' + className;
-  line.textContent = text;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
   terminal.appendChild(line);
   terminal.scrollTop = terminal.scrollHeight;
 }
 
-try {
-  if (SUPABASE_URL && SUPABASE_URL !== "https://your-project.supabase.co") {
+// Init Supabase if configured
+if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+  try {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    addLog('[SYS_INIT] Supabase client active.');
-  } else {
-    addLog('[SYS_WARN] Supabase credentials not set in auth.html.', 'info');
+    addLog('Supabase OAuth link is available.', 'info');
+  } catch(e) {
+    addLog('Supabase init failed: ' + e.message, 'error');
   }
-} catch (e) {
-  addLog('[SYS_ERR] Initialization failed: ' + e.message, 'info');
+} else {
+  addLog('Local development server authentication is active.', 'info');
 }
 
+function showPanel(panel) {
+  document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  
+  if (panel === 'signin') {
+    document.getElementById('panel-signin').classList.add('active');
+    document.getElementById('tab-btn-signin').classList.add('active');
+  } else {
+    document.getElementById('panel-signup').classList.add('active');
+    document.getElementById('tab-btn-signup').classList.add('active');
+  }
+}
+
+// Local Traditional Auth Handlers
+async function handleLocalLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('signin-btn');
+
+  btn.disabled = true;
+  addLog(`Authenticating user: ${email}...`, 'info');
+
+  try {
+    const res = await fetch(`${SYNC_API}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || 'Invalid credentials');
+    }
+
+    addLog('Login successful! Generating session token...', 'success');
+    
+    // Store in localStorage
+    localStorage.setItem('jxa_token', data.token);
+    localStorage.setItem('jxa_user_email', data.user.email);
+    localStorage.setItem('jxa_user_name', data.user.name);
+    localStorage.setItem('jxa_role', data.user.role);
+
+    // Auto-dispatch pairing to the extension
+    window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+      detail: {
+        token: data.token,
+        email: data.user.email,
+        passcode: localStorage.getItem('jxa_passcode') || ""
+      }
+    }));
+
+    addLog('Redirecting to dashboard...', 'success');
+    setTimeout(() => {
+      if (data.user.role === 'admin') {
+        window.location.href = 'admin/index.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    }, 1000);
+
+  } catch(err) {
+    addLog('Authentication failed: ' + err.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+async function handleLocalRegister(e) {
+  e.preventDefault();
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const btn = document.getElementById('signup-btn');
+
+  btn.disabled = true;
+  addLog(`Registering new operative account: ${email}...`, 'info');
+
+  try {
+    const res = await fetch(`${SYNC_API}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || 'Registration failed');
+    }
+
+    addLog('Account created successfully! Auto-signing in...', 'success');
+    
+    localStorage.setItem('jxa_token', data.token);
+    localStorage.setItem('jxa_user_email', data.user.email);
+    localStorage.setItem('jxa_user_name', data.user.name);
+    localStorage.setItem('jxa_role', data.user.role);
+
+    window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+      detail: {
+        token: data.token,
+        email: data.user.email,
+        passcode: localStorage.getItem('jxa_passcode') || ""
+      }
+    }));
+
+    addLog('Redirecting to onboarding...', 'success');
+    setTimeout(() => {
+      window.location.href = 'onboarding.html';
+    }, 1000);
+
+  } catch(err) {
+    addLog('Registration failed: ' + err.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+// Google OAuth Handler
 async function handleGoogleLogin() {
   if (!supabaseClient) {
-    addLog('[AUTH_ERR] Supabase client is unconfigured.', 'info');
-    alert('Please configure SUPABASE_URL and SUPABASE_ANON_KEY inside auth.html.');
+    addLog('Google OAuth is only available in cloud deployment mode.', 'error');
+    alert('Google login requires Supabase credentials to be configured. Please use Email/Password login for local dev.');
     return;
   }
   
-  addLog('[AUTH_EXEC] Redirecting to Google OAuth...');
+  addLog('Redirecting to Google OAuth gateway...', 'info');
   try {
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
@@ -287,17 +387,20 @@ async function handleGoogleLogin() {
     });
     if (error) throw error;
   } catch (err) {
-    addLog('[AUTH_ERR] ' + err.message, 'info');
+    addLog('OAuth failed: ' + err.message, 'error');
   }
 }
 
 // Redirect if already logged in
 if (localStorage.getItem('jxa_token')) {
-  if (localStorage.getItem('jxa_role') === 'admin') {
-    window.location.replace('admin/index.html');
-  } else {
-    window.location.replace('dashboard.html');
-  }
+  addLog('Active session detected. Auto-redirecting...', 'success');
+  setTimeout(() => {
+    if (localStorage.getItem('jxa_role') === 'admin') {
+      window.location.href = 'admin/index.html';
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  }, 500);
 }
 </script>
 </body>

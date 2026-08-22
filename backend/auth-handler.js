@@ -35,12 +35,83 @@ function sendJson(res, code, payload) {
 
 // Register user
 async function registerUser(req, res, bodyData) {
-  return sendJson(res, 400, { ok: false, error: "Direct registration is deprecated. Please register using Google Sign-In." });
+  try {
+    const { email, password, name } = bodyData;
+    
+    if (!validateEmail(email)) {
+      return sendJson(res, 400, { ok: false, error: "Invalid email format" });
+    }
+    
+    const pwVal = validatePassword(password);
+    if (!pwVal.ok) {
+      return sendJson(res, 400, { ok: false, error: pwVal.reason });
+    }
+    
+    // Check if user already exists
+    const existing = await db.getUserByEmail(email);
+    if (existing) {
+      return sendJson(res, 400, { ok: false, error: "User with this email already exists" });
+    }
+    
+    // Hash password and create user
+    const passwordHash = bcrypt.hashSync(password, 10);
+    const user = await db.createUser({ email, name: name || "", passwordHash });
+    
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+    
+    sendJson(res, 201, {
+      ok: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error("Register error:", err);
+    sendJson(res, 500, { ok: false, error: "Registration failed: " + err.message });
+  }
 }
 
 // Login user
 async function loginUser(req, res, bodyData) {
-  return sendJson(res, 400, { ok: false, error: "Direct login is deprecated. Please sign in using Google Sign-In." });
+  try {
+    const { email, password } = bodyData;
+    
+    if (!email || !password) {
+      return sendJson(res, 400, { ok: false, error: "Email and password are required" });
+    }
+    
+    const user = await db.getUserByEmail(email);
+    if (!user || !user.passwordHash) {
+      return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
+    }
+    
+    const isMatch = bcrypt.compareSync(password, user.passwordHash);
+    if (!isMatch) {
+      return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
+    
+    sendJson(res, 200, {
+      ok: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    sendJson(res, 500, { ok: false, error: "Login failed: " + err.message });
+  }
 }
 
 // Update user account details

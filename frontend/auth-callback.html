@@ -56,14 +56,14 @@ body {
 <script src="shared-shell.js?v=2"></script>
 <script>
 // Supabase Configuration
-const SUPABASE_URL = window.SUPABASE_URL || "https://your-project.supabase.co";
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "your-supabase-anon-key";
+const SUPABASE_URL = window.SUPABASE_URL || "https://fbyjrfrejgzcpqtdwudu.supabase.co";
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZieWpyZnJlamd6Y3BxdGR3dWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3ODk0NTIsImV4cCI6MjEwMjM2NTQ1Mn0.L_21DGKOHU4HQ05IY9MqvDwklh2knTkjMObHmDIB0Ic";
 
 const statusText = document.getElementById("callback-status");
 
 async function handleCallback() {
   try {
-    if (SUPABASE_URL === "https://your-project.supabase.co") {
+    if (SUPABASE_URL === "https://your-project.supabase.co" || !SUPABASE_URL) {
       throw new Error("Supabase is not configured yet. Set SUPABASE_URL and SUPABASE_ANON_KEY in auth-callback.html.");
     }
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

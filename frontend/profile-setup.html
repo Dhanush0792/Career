@@ -3,1039 +3,477 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply // Profile Setup Wizard</title>
+<title>JobXApply // Profile Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
 <script src="shared-shell.js?v=2"></script>
 <style>
-:root {
-  --base:    #0B1020;
-  --primary: #5B4FE8;
-  --success: #2FDDC4;
-  --alert:   #F5A623;
-  --white:   #ffffff;
-  --text:    #f4f7ff;
-  --glass-bg:   rgba(255, 255, 255, 0.07);
-  --glass-tint: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-focus: rgba(91, 79, 232, 0.4);
-  --mono:    'JetBrains Mono', monospace;
-  --display: 'Barlow Condensed', sans-serif;
-  --body:    'Inter', sans-serif;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: var(--body);
-  background: var(--base);
-  color: var(--text);
-  min-height: 100vh;
-  padding: 40px 20px;
-  background-image: radial-gradient(circle at 10% 20%, rgba(91, 79, 232, 0.15) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 80%, rgba(47, 221, 196, 0.08) 0%, transparent 40%);
-}
+body { padding-top: 80px; }
 body::after {
-  content: '';
-  position: fixed; inset: 0;
-  z-index: 1; pointer-events: none;
-  opacity: 0.015;
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
-.container {
-  max-width: 960px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 10;
-}
+.container { max-width:1100px; margin:0 auto; padding:0 20px; position:relative; z-index:10; padding-bottom:60px; }
+.page-header { border-bottom:1px solid var(--glass-border); padding-bottom:16px; margin-bottom:28px; display:flex; justify-content:space-between; align-items:flex-end; }
+.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; }
+.page-title { font-family:var(--display); font-size:32px; font-weight:900; text-transform:uppercase; color:var(--white); margin:0; }
+.page-title em { font-style:normal; color:var(--primary); }
 
-/* Header */
-.header {
-  margin-bottom: 40px;
-  border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 24px;
-}
-.section-num {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--primary);
-  letter-spacing: .16em;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
-.title {
-  font-family: var(--display);
-  font-size: 42px;
-  font-weight: 900;
-  text-transform: uppercase;
-  color: var(--white);
-  line-height: .95;
-  letter-spacing: -0.02em;
-}
-.title em { font-style: normal; color: var(--primary); }
+/* Main Grid Layout */
+.profile-grid { display: grid; grid-template-columns: 240px 1fr; gap: 32px; }
+@media (max-width: 768px) { .profile-grid { grid-template-columns: 1fr; } }
 
-/* Wizard Grid */
-.wizard-grid {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 32px;
-}
-.wizard-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.nav-step {
-  text-align: left;
-  padding: 16px 20px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-tint);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  color: rgba(244, 247, 255, 0.5);
-  cursor: pointer;
-  border-radius: 12px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(12px);
-}
-.nav-step:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  color: var(--white);
-}
-.nav-step.active {
-  border-color: var(--primary);
-  color: var(--white);
-  background: rgba(91, 79, 232, 0.12);
-  box-shadow: 0 4px 12px rgba(91, 79, 232, 0.1);
-}
-.wizard-content {
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  padding: 40px;
-  border-radius: 20px;
-  backdrop-filter: blur(24px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
-}
+/* Sidebar Tabs */
+.tabs-nav { display: flex; flex-direction: column; gap: 8px; }
+.tab-btn { text-align: left; padding: 14px 18px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; border-radius: 10px; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
+.tab-btn:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+.tab-btn.active { background: rgba(91, 79, 232, 0.12); border-color: var(--primary); color: var(--white); }
 
-.step-panel {
-  display: none;
-}
-.step-panel.active {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+/* Card Content Area */
+.profile-card { border:1px solid var(--glass-border); background:rgba(255,255,255,.05); padding:28px; border-radius:16px; backdrop-filter:blur(16px); min-height: 480px; display: flex; flex-direction: column; }
+.section-title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; margin-bottom:20px; }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.form-group.full-width {
-  grid-column: span 2;
-}
-.form-group label {
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  color: rgba(244, 247, 255, 0.65);
-  text-transform: uppercase;
-}
-.form-input {
-  background: rgba(7, 10, 24, 0.6);
-  border: 1px solid var(--glass-border);
-  padding: 12px 16px;
-  font-family: var(--body);
-  font-size: 13.5px;
-  color: var(--white);
-  outline: none;
-  border-radius: 8px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-input::placeholder {
-  color: rgba(244, 247, 255, 0.3);
-}
-.form-input:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 10px var(--glass-focus);
-}
-.form-textarea {
-  min-height: 110px;
-  resize: vertical;
-}
+/* Form Fields */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: span 2; }
+@media (max-width: 600px) { .form-group.full { grid-column: span 1; } }
+.form-group label { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.form-group input, .form-group textarea, .form-group select { background: rgba(7, 10, 24, 0.6); border: 1px solid var(--glass-border); padding: 10px 14px; color: var(--white); font-family: var(--body); font-size: 13px; border-radius: 8px; outline: none; transition: all 0.2s; width: 100%; }
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91, 79, 232, 0.15); }
+.form-group textarea { resize: vertical; min-height: 100px; }
 
-/* Upload zone */
-.import-box {
-  border: 1.5px dashed var(--glass-border);
-  padding: 40px 20px;
-  text-align: center;
-  font-family: var(--mono);
-  color: rgba(244, 247, 255, 0.5);
-  cursor: pointer;
-  background: rgba(7, 10, 24, 0.4);
-  border-radius: 12px;
-  transition: border-color 0.2s, background 0.2s;
-}
-.import-box:hover {
-  border-color: var(--primary);
-  background: rgba(91, 79, 232, 0.05);
-}
-.import-title {
-  color: var(--white);
-  font-weight: 700;
-  font-size: 13px;
-  margin-bottom: 8px;
-  font-family: var(--body);
-}
+/* Lock Overlay */
+.lock-container { position: relative; }
+.lock-badge { position: absolute; right: 12px; top: 38px; cursor: pointer; color: var(--muted); font-size: 12px; transition: color 0.2s; z-index: 5; }
+.lock-badge:hover { color: var(--primary); }
+.form-group.locked input, .form-group.locked textarea { background: rgba(255, 255, 255, 0.02); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.05); cursor: not-allowed; }
 
-.btn-row {
-  margin-top: 28px;
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid var(--glass-border);
-  padding-top: 24px;
-}
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  padding: 0 24px;
-  height: 42px;
-  border: 1px solid;
-  cursor: pointer;
-  border-radius: 12px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.btn-primary {
-  background: var(--primary);
-  color: var(--white);
-  border-color: var(--primary);
-  box-shadow: 0 4px 14px rgba(91, 79, 232, 0.3);
-}
-.btn-primary:hover {
-  background: rgba(91, 79, 232, 0.85);
-  box-shadow: 0 6px 20px rgba(91, 79, 232, 0.4);
-}
-.btn-ghost {
-  background: transparent;
-  color: rgba(244, 247, 255, 0.7);
-  border-color: var(--glass-border);
-}
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--white);
-}
+/* Buttons & Footer */
+.actions-footer { margin-top: auto; padding-top: 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.btn { padding: 12px 20px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; }
+.btn-primary { background: var(--primary); color: var(--white); border-color: var(--primary); }
+.btn-primary:hover { background: rgba(91, 79, 232, 0.85); transform: translateY(-1px); }
+.btn-success { background: var(--success); color: #070a18; border-color: var(--success); font-weight: 900; }
+.btn-success:hover { background: #26bba6; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--muted); border-color: var(--glass-border); }
+.btn-ghost:hover { color: var(--white); border-color: var(--white); }
 
-.console-box {
-  background: rgba(7, 10, 24, 0.85);
-  border: 1px solid var(--glass-border);
-  padding: 16px;
-  font-family: var(--mono);
-  font-size: 11px;
-  color: rgba(244, 247, 255, 0.6);
-  height: 90px;
-  overflow-y: auto;
-  line-height: 1.5;
-  border-radius: 8px;
-  margin-top: 16px;
-}
-.console-line { margin-bottom: 2px; }
-.console-line.info { color: var(--primary); }
+/* Import Dropzone */
+.dropzone { border: 2px dashed var(--glass-border); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.15); margin-bottom: 20px; }
+.dropzone:hover { border-color: var(--primary); background: rgba(91, 79, 232, 0.03); }
+.dropzone-title { font-family: var(--mono); font-size: 12px; color: var(--white); text-transform: uppercase; margin-bottom: 4px; }
+.dropzone-desc { font-size: 10px; color: var(--muted); }
+
+/* Logs Terminal */
+.console-box { background: #000; border: 1px solid var(--glass-border); padding: 10px 14px; font-family: var(--mono); font-size: 10px; color: var(--muted); height: 75px; overflow-y: auto; border-radius: 8px; margin-bottom: 20px; line-height: 1.5; }
 .console-line.success { color: var(--success); }
 .console-line.warn { color: var(--alert); }
-</style>
 
-  <link rel="icon" type="image/png" href="assets/favicon.png">
+/* Tab Panes */
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+</style>
+<link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
 
+<nav class="nav" id="main-nav"></nav>
+
 <div class="container">
-  
-  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+  <div class="page-header">
     <div>
-      <div class="section-num">Setup Phase // Cloud Vault initialization</div>
-      <h1 class="title">PROVISION <em>MASTER SCHEMA</em></h1>
+      <div class="page-label">MANAGEMENT CONSOLE</div>
+      <h1 class="page-title">MASTER <em>PROFILE</em></h1>
     </div>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <span class="section-num" style="margin-bottom:0; font-size:10px;">EDITING PROFILE:</span>
-      <select id="active-profile-select" style="
-        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 8px; color: #fff; padding: 6px 12px; font-family: var(--mono);
-        font-size: 11px; outline: none; cursor: pointer;
-      ">
-        <option value="">Loading...</option>
-      </select>
-      <button id="btn-rename-profile" class="btn btn-ghost" style="padding: 4px 8px; font-size: 10px; border-radius: 8px; font-family: var(--mono); cursor: pointer;">RENAME</button>
-      <button id="btn-delete-profile" class="btn btn-ghost" style="padding: 4px 8px; font-size: 10px; border-radius: 8px; font-family: var(--mono); color: var(--alert); border-color: rgba(245, 166, 35, 0.3); cursor: pointer;">DELETE</button>
+    <div style="text-align: right;">
+      <button class="btn btn-ghost" onclick="window.location.href='dashboard.html'" style="padding: 8px 16px; font-size: 10px;">&lsaquo; Dashboard</button>
     </div>
   </div>
 
-  <form id="profile-form" onsubmit="return false;">
-    <div class="wizard-grid">
-      
-      <!-- Left step tracker -->
-      <div class="wizard-nav">
-        <button type="button" class="nav-step active" id="step-btn-1" onclick="switchStep(1)">01 // PERSONAL ID</button>
-        <button type="button" class="nav-step" id="step-btn-2" onclick="switchStep(2)">02 // EDUCATION</button>
-        <button type="button" class="nav-step" id="step-btn-3" onclick="switchStep(3)">03 // RECRUITMENT</button>
-        <button type="button" class="nav-step" id="step-btn-4" onclick="switchStep(4)">04 // PROJECTS & LINKS</button>
-        <button type="button" class="nav-step" id="step-btn-5" onclick="switchStep(5)">05 // SYNC & COMMIT</button>
-      </div>
-
-      <!-- Right form pane -->
-      <div class="wizard-content">
-        
-        <!-- STEP 1: PERSONAL ID & LOCATION -->
-        <div class="step-panel active" id="panel-step-1">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Full Name *</label>
-              <input type="text" class="form-input" id="fullName" placeholder="Enter your full name" required>
-            </div>
-            <div class="form-group">
-              <label>First Name</label>
-              <input type="text" class="form-input" id="firstName" placeholder="Given name">
-            </div>
-            <div class="form-group">
-              <label>Last Name</label>
-              <input type="text" class="form-input" id="lastName" placeholder="Surname">
-            </div>
-            <div class="form-group">
-              <label>Age</label>
-              <input type="number" class="form-input" id="age" min="0" max="150" placeholder="Years">
-            </div>
-            <div class="form-group">
-              <label>Date of Birth</label>
-              <input type="date" class="form-input" id="dob">
-            </div>
-            <div class="form-group">
-              <label>Father's Name</label>
-              <input type="text" class="form-input" id="fatherName" placeholder="Father's full name">
-            </div>
-            <div class="form-group">
-              <label>Mother's Name</label>
-              <input type="text" class="form-input" id="motherName" placeholder="Mother's full name">
-            </div>
-            <div class="form-group">
-              <label>Primary Email Address</label>
-              <input type="email" class="form-input" id="email" placeholder="you@email.com">
-            </div>
-            <div class="form-group">
-              <label>Phone Number</label>
-              <div style="display: flex; gap: 8px;">
-                <select class="form-input" id="phoneCode" style="width: 90px; padding: 10px 4px;">
-                  <option value="+91">+91 (IN)</option>
-                  <option value="+1">+1 (US)</option>
-                  <option value="+44">+44 (UK)</option>
-                  <option value="+61">+61 (AU)</option>
-                  <option value="+81">+81 (JP)</option>
-                  <option value="+49">+49 (DE)</option>
-                </select>
-                <input type="text" class="form-input" id="phone" placeholder="9876543210" style="flex: 1;">
-              </div>
-            </div>
-            <div class="form-group full-width">
-              <label>Street Address</label>
-              <input type="text" class="form-input" id="address" placeholder="Flat No, Apartment, Street Name">
-            </div>
-            <div class="form-group">
-              <label>Town / City</label>
-              <input type="text" class="form-input" id="city" placeholder="e.g. Bangalore">
-            </div>
-            <div class="form-group">
-              <label>State</label>
-              <input type="text" class="form-input" id="state" placeholder="e.g. Karnataka">
-            </div>
-            <div class="form-group">
-              <label>Country</label>
-              <input type="text" class="form-input" id="country" placeholder="e.g. India">
-            </div>
-            <div class="form-group">
-              <label>Pincode / ZIP</label>
-              <input type="text" class="form-input" id="zip" placeholder="6-digit ZIP code">
-            </div>
-          </div>
-        </div>
-
-        <!-- STEP 2: EDUCATION HISTORY -->
-        <div class="step-panel" id="panel-step-2">
-          <div class="form-grid">
-            <!-- 10th -->
-            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px;">
-              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">10th Standard / Matriculation</span>
-            </div>
-            <div class="form-group">
-              <label>School Name</label>
-              <input type="text" class="form-input" id="edu10_school" placeholder="High School Name">
-            </div>
-            <div class="form-group">
-              <label>Board</label>
-              <input type="text" class="form-input" id="edu10_board" placeholder="e.g. CBSE / ICSE / State Board">
-            </div>
-            <div class="form-group">
-              <label>Year of Completion</label>
-              <input type="text" class="form-input" id="edu10_year" placeholder="e.g. 2018">
-            </div>
-            <div class="form-group">
-              <label>CGPA / Percentage</label>
-              <input type="text" class="form-input" id="edu10_cgpa" placeholder="e.g. 9.4 CGPA or 92%">
-            </div>
-
-            <!-- 12th -->
-            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px; margin-top: 12px;">
-              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">12th Standard / Higher Secondary</span>
-            </div>
-            <div class="form-group">
-              <label>School / Junior College Name</label>
-              <input type="text" class="form-input" id="edu12_school" placeholder="School/College Name">
-            </div>
-            <div class="form-group">
-              <label>Board / Stream</label>
-              <input type="text" class="form-input" id="edu12_board" placeholder="e.g. State Board (MPC) or CBSE (Science)">
-            </div>
-            <div class="form-group">
-              <label>Year of Completion</label>
-              <input type="text" class="form-input" id="edu12_year" placeholder="e.g. 2020">
-            </div>
-            <div class="form-group">
-              <label>CGPA / Percentage</label>
-              <input type="text" class="form-input" id="edu12_cgpa" placeholder="e.g. 96% or 9.8 CGPA">
-            </div>
-
-            <!-- Graduation -->
-            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px; margin-top: 12px;">
-              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">Graduation Degree</span>
-            </div>
-            <div class="form-group">
-              <label>College / University Name</label>
-              <input type="text" class="form-input" id="eduGrad_college" placeholder="Graduation College Name">
-            </div>
-            <div class="form-group">
-              <label>Degree & Major</label>
-              <input type="text" class="form-input" id="eduGrad_degree" placeholder="e.g. B.Tech Computer Science">
-            </div>
-            <div class="form-group">
-              <label>Year of Completion</label>
-              <input type="text" class="form-input" id="eduGrad_year" placeholder="e.g. 2024">
-            </div>
-            <div class="form-group" id="grp-grad-cgpa">
-              <label>CGPA / Percentage</label>
-              <input type="text" class="form-input" id="eduGrad_cgpa" placeholder="e.g. 8.5 CGPA">
-            </div>
-            <div class="form-group full-width" style="flex-direction:row; align-items:center; gap:8px;">
-              <input type="checkbox" id="eduGrad_pursuing" style="width:16px; height:16px; cursor:pointer;" onchange="toggleGradCGPA()">
-              <label for="eduGrad_pursuing" style="cursor:pointer; font-size:10px;">I am currently pursuing this graduation degree (hide score)</label>
-            </div>
-
-            <!-- Post Graduation -->
-            <div class="form-group full-width" style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 12px; margin-bottom: 4px; margin-top: 12px;">
-              <span style="font-family: var(--mono); font-size: 10px; color: var(--primary); font-weight:700;">Post Graduation (Optional)</span>
-            </div>
-            <div class="form-group">
-              <label>College / University Name</label>
-              <input type="text" class="form-input" id="eduPG_college" placeholder="PG College Name">
-            </div>
-            <div class="form-group">
-              <label>Degree & Major</label>
-              <input type="text" class="form-input" id="eduPG_degree" placeholder="e.g. M.Tech Software Engineering">
-            </div>
-            <div class="form-group">
-              <label>Year of Completion</label>
-              <input type="text" class="form-input" id="eduPG_year" placeholder="e.g. 2026">
-            </div>
-            <div class="form-group" id="grp-pg-cgpa">
-              <label>CGPA / Percentage</label>
-              <input type="text" class="form-input" id="eduPG_cgpa" placeholder="e.g. 9.0 CGPA">
-            </div>
-            <div class="form-group full-width" style="flex-direction:row; align-items:center; gap:8px;">
-              <input type="checkbox" id="eduPG_pursuing" style="width:16px; height:16px; cursor:pointer;" onchange="togglePGCGPA()">
-              <label for="eduPG_pursuing" style="cursor:pointer; font-size:10px;">I am currently pursuing this post-graduation degree</label>
-            </div>
-          </div>
-        </div>
-
-        <!-- STEP 3: EXPERIENCE & RECRUITMENT DETAILS -->
-        <div class="step-panel" id="panel-step-3">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Total Experience (in Years)</label>
-              <input type="number" class="form-input" id="totalExperience" min="0" max="60" placeholder="e.g. 3">
-            </div>
-            <div class="form-group">
-              <label>Notice Period (in Days)</label>
-              <input type="number" class="form-input" id="noticePeriod" min="0" max="365" placeholder="e.g. 30">
-            </div>
-            <div class="form-group full-width">
-              <label>Current Availability</label>
-              <select class="form-input" id="availability">
-                <option value="immediate">Immediate Joiner</option>
-                <option value="15days">15 Days</option>
-                <option value="30days">30 Days</option>
-                <option value="60days">60 Days</option>
-                <option value="90days">90 Days</option>
-                <option value="not_available">Not looking for opportunities</option>
-              </select>
-            </div>
-            
-            <div class="form-group full-width" style="margin-top:16px;">
-              <label style="border-bottom:1px solid var(--glass-border); padding-bottom:6px; display:block; font-weight:700;">EMPLOYMENT & WORK HISTORY</label>
-              <div id="experience-list-container" style="margin-top:12px;"></div>
-              <button type="button" class="btn btn-add" id="btn-add-experience">+ ADD WORK EXPERIENCE</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- STEP 4: PROJECTS & LINKS -->
-        <div class="step-panel" id="panel-step-4">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>LinkedIn Profile URL</label>
-              <input type="text" class="form-input" id="linkedin" placeholder="https://linkedin.com/in/username">
-            </div>
-            <div class="form-group">
-              <label>GitHub Profile URL</label>
-              <input type="text" class="form-input" id="github" placeholder="https://github.com/username">
-            </div>
-            <div class="form-group">
-              <label>Personal Portfolio URL</label>
-              <input type="text" class="form-input" id="portfolio" placeholder="https://yourwebsite.com">
-            </div>
-            <div class="form-group">
-              <label>LeetCode URL</label>
-              <input type="text" class="form-input" id="leetcode" placeholder="https://leetcode.com/username">
-            </div>
-            
-            <div class="form-group full-width" style="margin-top: 16px;">
-              <label style="border-bottom:1px solid var(--glass-border); padding-bottom:6px; display:block; font-weight:700;">PROJECTS PORTFOLIO</label>
-              <div id="projects-list-container" style="margin-top:12px;"></div>
-              <button type="button" class="btn btn-add" id="btn-add-project">+ ADD PROJECT ENTRY</button>
-            </div>
-
-            <div class="form-group full-width" style="margin-top: 16px;">
-              <label style="border-bottom:1px solid var(--glass-border); padding-bottom:6px; display:block; font-weight:700;">CERTIFICATIONS & CREDENTIALS</label>
-              <div id="certifications-list-container" style="margin-top:12px;"></div>
-              <button type="button" class="btn btn-add" id="btn-add-certification">+ ADD CERTIFICATION</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- STEP 5: SYNC & VAULT COMMIT -->
-        <div class="step-panel" id="panel-step-5">
-          <h3 style="font-family:var(--mono); font-size:12px; color:var(--white); border-bottom:1px solid var(--glass-border); padding-bottom:8px; text-transform:uppercase; margin-bottom: 16px;">SECURE AND DEPLOY DATA VAULT</h3>
-          
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Target Role Designation</label>
-              <input type="text" class="form-input" id="targetRole" placeholder="e.g. Software Engineer">
-            </div>
-            <div class="form-group">
-              <label>Headline Tagline</label>
-              <input type="text" class="form-input" id="headline" placeholder="Professional summary headline">
-            </div>
-            <div class="form-group full-width">
-              <label>Technical Skills (Comma-separated)</label>
-              <input type="text" class="form-input" id="skills" placeholder="React, Node.js, Python, PostgreSQL, AWS">
-            </div>
-            <div class="form-group full-width">
-              <label>Short Bio / Executive Summary</label>
-              <textarea class="form-input form-textarea" id="summary" placeholder="Provide a brief summary of qualifications..."></textarea>
-            </div>
-          </div>
-
-          <div class="import-box" id="drop-zone" style="margin-top: 20px;">
-            <div class="import-title">OPTIONAL: PARSE FROM EXISTING RESUME FILE</div>
-            <div style="font-size:11px;color:var(--muted);">Drag and drop your PDF/DOCX resume here to pre-populate elements instantly.</div>
-            <input type="file" id="resume-file" style="display:none;" accept=".pdf,.doc,.docx,.txt">
-          </div>
-
-          <div class="form-group full-width">
-            <label>Raw Resume / CV Draft text (Backup Content)</label>
-            <textarea class="form-input form-textarea" style="min-height:140px;" id="resumeDraft" placeholder="Pasted raw CV text details used by the ATS Checker and autofills..."></textarea>
-          </div>
-
-          <div class="form-group full-width" style="margin-top:16px; padding:16px; background:rgba(91,79,232,0.12); border:1px solid var(--primary); border-radius:12px;">
-            <label style="color:var(--white); font-weight:700;">CHOOSE SYNC ENCRYPTION PASSCODE *</label>
-            <input type="password" class="form-input" id="syncPasscode" placeholder="Enter secure passcode to encrypt your profile" style="margin-top:6px;" required>
-            <div style="font-family:var(--mono); font-size:9px; color:var(--alert); margin-top:6px; line-height:1.4;">
-              WARNING: This passcode derived key encrypts your private details on the server. If lost, your profile cannot be decrypted.
-            </div>
-          </div>
-        </div>
-
-        <!-- Wizard Nav Actions -->
-        <div class="btn-row">
-          <button type="button" class="btn btn-ghost" id="btn-prev" onclick="moveStep(-1)" style="visibility:hidden;">&lsaquo; PREVIOUS</button>
-          <button type="button" class="btn btn-primary" id="btn-next" onclick="moveStep(1)">NEXT &rsaquo;</button>
-        </div>
-
-        <div class="console-box" id="console">
-          <div class="console-line">[SYS_INIT] Profile wizard loaded. Awaiting input registration.</div>
-        </div>
-
-      </div>
-
+  <div class="profile-grid">
+    <!-- Left Navigation -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-basics', this)">01 // BASICS <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-professional', this)">02 // PROFESSIONAL <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-experience', this)">03 // EXPERIENCE <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-import', this)">04 // RESUME IMPORT <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-security', this)">05 // SYNC & KEY <span>➔</span></button>
     </div>
-  </form>
+
+    <!-- Right Content Card -->
+    <div class="profile-card">
+      <form id="profile-form" onsubmit="event.preventDefault();">
+        
+        <!-- Tab 1: Basics -->
+        <div class="tab-pane active" id="tab-basics">
+          <div class="section-title">01 / Personal & Contact Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-fullName">Full Name *</label>
+              <input type="text" id="f-fullName" placeholder="e.g. Dhanush Kumar" required>
+            </div>
+            <div class="form-group">
+              <label for="f-email">Email Address *</label>
+              <input type="email" id="f-email" placeholder="you@email.com" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-firstName">First Name</label>
+              <input type="text" id="f-firstName">
+            </div>
+            <div class="form-group">
+              <label for="f-lastName">Last Name</label>
+              <input type="text" id="f-lastName">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-phone">Phone Number</label>
+              <input type="text" id="f-phone" placeholder="e.g. +91 98765 43210">
+            </div>
+            <div class="form-group">
+              <label for="f-dob">Date of Birth</label>
+              <input type="date" id="f-dob">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-city">City / Location</label>
+              <input type="text" id="f-city" placeholder="e.g. Bangalore">
+            </div>
+            <div class="form-group">
+              <label for="f-country">Country</label>
+              <input type="text" id="f-country" placeholder="e.g. India">
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Professional -->
+        <div class="tab-pane" id="tab-professional">
+          <div class="section-title">02 / Job Target & Skills</div>
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-headline">Headline</label>
+            <input type="text" id="f-headline" placeholder="e.g. Full Stack Developer | React & Node.js">
+          </div>
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-targetRole">Target Role</label>
+            <input type="text" id="f-targetRole" placeholder="e.g. Software Engineer">
+          </div>
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-skills">Skills (comma-separated)</label>
+            <input type="text" id="f-skills" placeholder="e.g. JavaScript, Python, SQL, Git">
+          </div>
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-summary">Professional Summary</label>
+            <textarea id="f-summary" placeholder="A brief intro detailing your technical expertises..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-linkedin">LinkedIn URL</label>
+              <input type="url" id="f-linkedin" placeholder="https://linkedin.com/in/username">
+            </div>
+            <div class="form-group">
+              <label for="f-github">GitHub URL</label>
+              <input type="url" id="f-github" placeholder="https://github.com/username">
+            </div>
+          </div>
+          <div class="form-group full" style="margin-top: 16px;">
+            <label for="f-portfolio">Portfolio / Personal Website</label>
+            <input type="url" id="f-portfolio" placeholder="https://yourwebsite.com">
+          </div>
+        </div>
+
+        <!-- Tab 3: Experience & Education -->
+        <div class="tab-pane" id="tab-experience">
+          <div class="section-title">03 / Work History & Academic Background</div>
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-experience">Work Experience</label>
+            <textarea id="f-experience" placeholder="Format: Job Title @ Company (Start - End)&#10;- Bullet points detailing responsibilities..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label for="f-education">Education History</label>
+            <textarea id="f-education" placeholder="Format: Degree @ Institution (Graduation Year)&#10;e.g. B.Tech Computer Science @ XYZ Institute (2024)"></textarea>
+          </div>
+        </div>
+
+        <!-- Tab 4: Resume Import -->
+        <div class="tab-pane" id="tab-import">
+          <div class="section-title">04 / Parse & Populate from File</div>
+          <div class="dropzone" id="resume-dropzone">
+            <div class="dropzone-title">📂 Drag & Drop Resume Here</div>
+            <div class="dropzone-desc">Accepts PDF or DOCX file. Click to browse.</div>
+            <input type="file" id="resume-input" accept="application/pdf,.docx" style="display:none;">
+          </div>
+          <div class="console-box" id="console-log">
+            <div style="color:var(--primary)">[SYSTEM] Ready for file upload.</div>
+          </div>
+          <p style="font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 16px;">
+            * Importing a file will extract details and overwrite existing fields. All fields will lock to let you review the extracted results before saving.
+          </p>
+        </div>
+
+        <!-- Tab 5: Security & Sync -->
+        <div class="tab-pane" id="tab-security">
+          <div class="section-title">05 / Sync Vault & Encryption Keys</div>
+          <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
+            Your profile data is encrypted client-side using a secure vault passcode. Without this passcode, the server cannot read your plaintext profile.
+          </p>
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-passcode">Sync Passcode *</label>
+            <input type="password" id="f-passcode" placeholder="Enter secure passcode to encrypt/decrypt data" required>
+            <div style="font-size: 10px; color: var(--alert); margin-top: 6px;">
+              ⚠ WARNING: Keep this passcode safe. If lost, your remote profile cannot be recovered.
+            </div>
+          </div>
+        </div>
+
+        <!-- Shared Action Footer -->
+        <div class="actions-footer">
+          <div id="save-status" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Ready</div>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn btn-primary" id="btn-save-local" onclick="saveLocalProfile()">💾 Save Locally</button>
+            <button type="button" class="btn btn-success" id="btn-save-cloud" onclick="saveCloudProfile()">☁ Save to Cloud</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
 </div>
 
 <script>
-const consoleBox = document.getElementById('console');
-const form = document.getElementById('profile-form');
-const dropZone = document.getElementById('drop-zone');
+// Tab Switching
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
 
-const fields = [
-  'fullName', 'firstName', 'lastName', 'age', 'dob', 'fatherName', 'motherName',
-  'email', 'phoneCode', 'phone', 'address', 'city', 'state', 'country', 'zip',
-  'targetRole', 'headline', 'summary', 'skills', 'resumeDraft', 'linkedin', 'github', 'portfolio',
-  'leetcode', 'availability', 'noticePeriod', 'totalExperience',
-  'edu10_school', 'edu10_board', 'edu10_year', 'edu10_cgpa',
-  'edu12_school', 'edu12_board', 'edu12_year', 'edu12_cgpa',
-  'eduGrad_college', 'eduGrad_degree', 'eduGrad_year', 'eduGrad_cgpa', 'eduGrad_pursuing',
-  'eduPG_college', 'eduPG_degree', 'eduPG_year', 'eduPG_cgpa', 'eduPG_pursuing'
-];
-
+// Logging
+const consoleLog = document.getElementById('console-log');
 function addLog(text, className = '') {
   const line = document.createElement('div');
   line.className = 'console-line ' + className;
-  line.textContent = text;
-  consoleBox.appendChild(line);
-  consoleBox.scrollTop = consoleBox.scrollHeight;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+  consoleLog.appendChild(line);
+  consoleLog.scrollTop = consoleLog.scrollHeight;
 }
 
-let activeStep = 1;
-const panels = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+// Resume Parser Integration
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-function switchStep(stepNum) {
-  activeStep = stepNum;
-  updatePanelVisibility();
-}
+const dropzone = document.getElementById('resume-dropzone');
+const fileInput = document.getElementById('resume-input');
 
-function moveStep(direction) {
-  const next = activeStep + direction;
-  if (next >= 1 && next <= 5) {
-    activeStep = next;
-    updatePanelVisibility();
-  }
-}
-
-function updatePanelVisibility() {
-  panels.forEach((p, idx) => {
-    const panel = document.getElementById(`panel-${p}`);
-    const btn = document.getElementById(`step-btn-${idx + 1}`);
-    if (idx + 1 === activeStep) {
-      panel.classList.add('active');
-      btn.classList.add('active');
-    } else {
-      panel.classList.remove('active');
-      btn.classList.remove('active');
-    }
-  });
-
-  const prevBtn = document.getElementById('btn-prev');
-  const nextBtn = document.getElementById('btn-next');
-
-  if (activeStep === 1) {
-    prevBtn.style.visibility = 'hidden';
-  } else {
-    prevBtn.style.visibility = 'visible';
-  }
-
-  if (activeStep === 5) {
-    nextBtn.textContent = 'COMMIT TO SYNC SERVER';
-  } else {
-    nextBtn.textContent = 'NEXT ›';
-  }
-}
-
-// Pursuing score visibility toggle helpers
-function toggleGradCGPA() {
-  const checkbox = document.getElementById('eduGrad_pursuing');
-  const scoreInput = document.getElementById('eduGrad_cgpa');
-  if (checkbox && checkbox.checked) {
-    scoreInput.disabled = true;
-    scoreInput.value = "";
-    scoreInput.placeholder = "CGPA/Percentage hidden while pursuing";
-  } else if (scoreInput) {
-    scoreInput.disabled = false;
-    scoreInput.placeholder = "e.g. 8.5 CGPA";
-  }
-}
-
-function togglePGCGPA() {
-  const checkbox = document.getElementById('eduPG_pursuing');
-  const scoreInput = document.getElementById('eduPG_cgpa');
-  if (checkbox && checkbox.checked) {
-    scoreInput.disabled = true;
-    scoreInput.value = "";
-    scoreInput.placeholder = "CGPA/Percentage hidden while pursuing";
-  } else if (scoreInput) {
-    scoreInput.disabled = false;
-    scoreInput.placeholder = "e.g. 9.0 CGPA";
-  }
-}
-
-// Dynamic Lists Management Functions
-function addExperienceItem(data = {}) {
-  const container = document.getElementById('experience-list-container');
-  const card = document.createElement('div');
-  card.className = 'dynamic-item-card experience-item';
-  card.innerHTML = `
-    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-      <div class="form-group">
-        <label>Company Name</label>
-        <input type="text" class="form-input exp-company" placeholder="e.g. Google" value="${escapeHtml(data.company || '')}">
-      </div>
-      <div class="form-group">
-        <label>Job Title</label>
-        <input type="text" class="form-input exp-title" placeholder="e.g. Software Engineer" value="${escapeHtml(data.title || '')}">
-      </div>
-      <div class="form-group">
-        <label>Start Date</label>
-        <input type="text" class="form-input exp-start" placeholder="e.g. June 2022" value="${escapeHtml(data.startDate || '')}">
-      </div>
-      <div class="form-group">
-        <label>End Date</label>
-        <input type="text" class="form-input exp-end" placeholder="e.g. Present" value="${escapeHtml(data.endDate || '')}">
-      </div>
-      <div class="form-group full-width">
-        <label>Description / Core Achievements</label>
-        <textarea class="form-input exp-desc" placeholder="Summary of responsibilities, technologies, metrics..." style="height: 60px;">${escapeHtml(data.description || '')}</textarea>
-      </div>
-    </div>
-  `;
-  container.appendChild(card);
-}
-
-function addProjectItem(data = {}) {
-  const container = document.getElementById('projects-list-container');
-  const card = document.createElement('div');
-  card.className = 'dynamic-item-card project-item';
-  card.innerHTML = `
-    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-      <div class="form-group">
-        <label>Project Name</label>
-        <input type="text" class="form-input proj-name" placeholder="e.g. E-Commerce Core" value="${escapeHtml(data.name || '')}">
-      </div>
-      <div class="form-group">
-        <label>Technologies Used</label>
-        <input type="text" class="form-input proj-tech" placeholder="e.g. React, Node.js" value="${escapeHtml(data.technologies || '')}">
-      </div>
-      <div class="form-group full-width">
-        <label>Project URL / Link</label>
-        <input type="text" class="form-input proj-link" placeholder="e.g. https://github.com/my-project" value="${escapeHtml(data.link || '')}">
-      </div>
-      <div class="form-group full-width">
-        <label>Project Description</label>
-        <textarea class="form-input proj-desc" placeholder="Brief explanation of the project scale, architecture, and role..." style="height: 60px;">${escapeHtml(data.description || '')}</textarea>
-      </div>
-    </div>
-  `;
-  container.appendChild(card);
-}
-
-function addCertificationItem(data = {}) {
-  const container = document.getElementById('certifications-list-container');
-  const card = document.createElement('div');
-  card.className = 'dynamic-item-card certification-item';
-  card.innerHTML = `
-    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-      <div class="form-group">
-        <label>Certification Name</label>
-        <input type="text" class="form-input cert-name" placeholder="e.g. AWS Solutions Architect" value="${escapeHtml(data.name || '')}">
-      </div>
-      <div class="form-group">
-        <label>Issuing Organization</label>
-        <input type="text" class="form-input cert-issuer" placeholder="e.g. Amazon Web Services" value="${escapeHtml(data.issuer || '')}">
-      </div>
-      <div class="form-group">
-        <label>Issue Date</label>
-        <input type="text" class="form-input cert-date" placeholder="e.g. Jan 2024" value="${escapeHtml(data.issueDate || '')}">
-      </div>
-      <div class="form-group">
-        <label>Credential ID / Verification URL</label>
-        <input type="text" class="form-input cert-id" placeholder="e.g. AWS-12345" value="${escapeHtml(data.id || '')}">
-      </div>
-    </div>
-  `;
-  container.appendChild(card);
-}
-
-// Add click listeners to Add buttons
-document.getElementById('btn-add-experience').addEventListener('click', () => addExperienceItem());
-document.getElementById('btn-add-project').addEventListener('click', () => addProjectItem());
-document.getElementById('btn-add-certification').addEventListener('click', () => addCertificationItem());
-
-// Retrieve dynamic items arrays
-function getExperienceList() {
-  const list = [];
-  document.querySelectorAll('.experience-item').forEach(item => {
-    list.push({
-      company: item.querySelector('.exp-company').value.trim(),
-      title: item.querySelector('.exp-title').value.trim(),
-      startDate: item.querySelector('.exp-start').value.trim(),
-      endDate: item.querySelector('.exp-end').value.trim(),
-      description: item.querySelector('.exp-desc').value.trim()
-    });
-  });
-  return list;
-}
-
-function getProjectsList() {
-  const list = [];
-  document.querySelectorAll('.project-item').forEach(item => {
-    list.push({
-      name: item.querySelector('.proj-name').value.trim(),
-      technologies: item.querySelector('.proj-tech').value.trim(),
-      link: item.querySelector('.proj-link').value.trim(),
-      description: item.querySelector('.proj-desc').value.trim()
-    });
-  });
-  return list;
-}
-
-function getCertificationsList() {
-  const list = [];
-  document.querySelectorAll('.certification-item').forEach(item => {
-    list.push({
-      name: item.querySelector('.cert-name').value.trim(),
-      issuer: item.querySelector('.cert-issuer').value.trim(),
-      issueDate: item.querySelector('.cert-date').value.trim(),
-      id: item.querySelector('.cert-id').value.trim()
-    });
-  });
-  return list;
-}
-
-// Drag & drop resume parser simulator
-if (dropZone) {
-  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; });
-  dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--glass-border)'; });
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.style.borderColor = 'var(--glass-border)';
-    const files = e.dataTransfer.files;
-    if (files.length > 0) parseMockResume(files[0]);
-  });
-  dropZone.addEventListener('click', () => { document.getElementById('resume-file').click(); });
-}
-
-document.getElementById('resume-file')?.addEventListener('change', (e) => {
-  const files = e.target.files;
-  if (files.length > 0) parseMockResume(files[0]);
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--primary)'; });
+dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--glass-border)'; });
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.style.borderColor = 'var(--glass-border)';
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 });
 
-function parseMockResume(file) {
-  addLog(`[PARSER] File selected: ${file.name}`);
-  addLog('[PARSER] Note: Auto-parsing is not available. Please fill in your details manually.', 'warn');
-}
-
-// Auth guard — must be logged in
-requireAuth();
-
-// Load current profile on startup
-async function load() {
-  const cachedPasscode = localStorage.getItem('jxa_passcode') || "";
-  const passcodeEl = document.getElementById("syncPasscode");
-  if (passcodeEl) passcodeEl.value = cachedPasscode;
-
-  const state = await loadProfile();
-  const p = state?.profile || {};
-  
-  if (Object.keys(p).some(k => p[k])) {
-    fields.forEach(f => {
-      const input = document.getElementById(f);
-      if (input && p[f] !== undefined && p[f] !== null) {
-        if (input.type === 'checkbox') {
-          input.checked = !!p[f];
-        } else {
-          input.value = p[f];
+async function handleFile(file) {
+  if (!file) return;
+  addLog(`Selected: ${file.name}`);
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const arrayBuffer = e.target.result;
+    try {
+      let rawText = '';
+      if (file.name.endsWith('.pdf')) {
+        addLog('Reading PDF...');
+        const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let textStr = '';
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const content = await page.getTextContent();
+          content.items.forEach(item => { textStr += item.str + ' '; });
         }
-      }
-    });
-
-    // Populate dynamic lists
-    document.getElementById('experience-list-container').innerHTML = "";
-    document.getElementById('projects-list-container').innerHTML = "";
-    document.getElementById('certifications-list-container').innerHTML = "";
-
-    if (Array.isArray(p.experienceList)) {
-      p.experienceList.forEach(item => addExperienceItem(item));
-    }
-    if (Array.isArray(p.projectsList)) {
-      p.projectsList.forEach(item => addProjectItem(item));
-    }
-    if (Array.isArray(p.certificationsList)) {
-      p.certificationsList.forEach(item => addCertificationItem(item));
-    }
-
-    // Toggle pursuing visibility
-    toggleGradCGPA();
-    togglePGCGPA();
-
-    addLog('[SYS_LOAD] Existing profile data loaded. Review and update.', 'info');
-  } else {
-    addLog('[SYS_INIT] No existing profile found. Fill in your details.', 'info');
-  }
-
-  // Populate profiles select dropdown
-  const select = document.getElementById('active-profile-select');
-  if (select && state?.profiles) {
-    select.innerHTML = '';
-    for (const key of Object.keys(state.profiles)) {
-      const opt = document.createElement('option');
-      opt.value = key;
-      opt.textContent = state.profiles[key].profileName || key;
-      if (key === state.activeProfileId) {
-        opt.selected = true;
-      }
-      select.appendChild(opt);
-    }
-  }
-}
-load();
-
-document.getElementById('active-profile-select').addEventListener('change', async (e) => {
-  const newActiveId = e.target.value;
-  if (!newActiveId) return;
-  addLog(`Swapping profile to ${newActiveId}...`, 'info');
-  const res = await setActiveProfile(newActiveId);
-  if (res.ok) {
-    showToast('Profile swapped.', 'success');
-    window.location.reload();
-  } else {
-    showToast('Failed to swap profile: ' + res.errors.join('; '), 'error');
-  }
-});
-
-document.getElementById('btn-rename-profile').addEventListener('click', async () => {
-  const currentActiveId = localStorage.getItem('jxa_active_profile_id') || 'default';
-  const localProfilesRaw = localStorage.getItem('jxa_local_profiles');
-  let localProfiles = {};
-  try { localProfiles = localProfilesRaw ? JSON.parse(localProfilesRaw) : {}; } catch(e) {}
-  
-  const currentName = localProfiles[currentActiveId]?.profileName || currentActiveId;
-  const newName = prompt('Enter a new name for this profile:', currentName);
-  if (!newName || newName.trim() === '' || newName === currentName) return;
-  
-  localProfiles[currentActiveId].profileName = newName.trim();
-  localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
-  
-  const activeProfile = localProfiles[currentActiveId];
-  const res = await saveProfile(activeProfile);
-  if (res.ok) {
-    showToast('Profile renamed successfully.', 'success');
-    window.location.reload();
-  } else {
-    showToast('Failed to rename profile: ' + res.errors.join('; '), 'error');
-  }
-});
-
-document.getElementById('btn-delete-profile').addEventListener('click', async () => {
-  const currentActiveId = localStorage.getItem('jxa_active_profile_id') || 'default';
-  if (currentActiveId === 'default') {
-    alert('Cannot delete the default profile.');
-    return;
-  }
-  if (!confirm('Are you sure you want to delete this profile? All its data will be permanently removed.')) {
-    return;
-  }
-  const res = await deleteProfile(currentActiveId);
-  if (res.ok) {
-    showToast('Profile deleted.', 'success');
-    window.location.reload();
-  } else {
-    showToast('Failed to delete profile: ' + res.errors.join('; '), 'error');
-  }
-});
-
-// Submit & sync state
-document.getElementById('btn-next').addEventListener('click', async () => {
-  if (activeStep < 5) {
-    moveStep(1);
-    return;
-  }
-
-  // Collect all form fields
-  const payload = {};
-  fields.forEach(f => {
-    const el = document.getElementById(f);
-    if (el) {
-      if (el.type === 'checkbox') {
-        payload[f] = el.checked;
+        rawText = textStr;
+      } else if (file.name.endsWith('.docx')) {
+        addLog('Reading DOCX...');
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        rawText = result.value || '';
       } else {
-        payload[f] = el.value.trim();
+        addLog('Error: Supported formats are PDF/DOCX only.', 'warn');
+        return;
       }
+      if (rawText.trim().length < 50) {
+        addLog('Error: Empty or scanned document. Fill details manually.', 'warn');
+        return;
+      }
+      parseResume(rawText);
+    } catch(err) {
+      addLog('Error: ' + err.message, 'warn');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseResume(text) {
+  addLog('Analyzing document content...');
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Match fields
+  const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
+  const email = emailMatch ? emailMatch[0] : '';
+  
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+  const phone = phoneMatch ? phoneMatch[0] : '';
+  
+  let name = lines[0] || '';
+  if (name.includes('@') || name.match(/\d/)) {
+    name = email ? email.split('@')[0].replace(/[._-]/g, ' ') : '';
+  }
+  
+  const commonSkills = ['React','Node.js','JavaScript','Python','Java','SQL','AWS','Docker','Kubernetes','Git','C++','HTML','CSS'];
+  const skills = commonSkills.filter(s => new RegExp('\\b' + s.replace(/[.+]/g, '\\$&') + '\\b', 'i').test(text));
+  
+  const roleMatch = text.match(/(?:software engineer|developer|manager|analyst|designer|engineer)/i);
+  const headline = roleMatch ? roleMatch[0] : '';
+
+  // Apply parsed results to inputs
+  if (name) document.getElementById('f-fullName').value = name;
+  if (email) document.getElementById('f-email').value = email;
+  if (phone) document.getElementById('f-phone').value = phone;
+  if (headline) document.getElementById('f-headline').value = headline;
+  if (skills.length) document.getElementById('f-skills').value = skills.join(', ');
+
+  const expSection = text.match(/experience[\s\S]{0,2000}?(education|skills|$)/i);
+  if (expSection) {
+    document.getElementById('f-experience').value = expSection[0].substring(0, 600).trim();
+  }
+  
+  const eduSection = text.match(/education[\s\S]{0,800}?(experience|skills|$)/i);
+  if (eduSection) {
+    document.getElementById('f-education').value = eduSection[0].substring(0, 400).trim();
+  }
+
+  // Visual feedback: lock fields to allow review
+  const inputsToLock = ['f-fullName', 'f-email', 'f-phone', 'f-headline', 'f-skills', 'f-experience', 'f-education'];
+  inputsToLock.forEach(id => {
+    const el = document.getElementById(id);
+    const grp = el.closest('.form-group');
+    grp.classList.add('locked');
+    el.disabled = true;
+
+    // Add unlock icon/button if not already present
+    if (!grp.querySelector('.lock-badge')) {
+      const lock = document.createElement('span');
+      lock.className = 'lock-badge';
+      lock.innerHTML = '🔒 Locked (Click to Edit)';
+      lock.onclick = () => {
+        el.disabled = false;
+        grp.classList.remove('locked');
+        lock.remove();
+      };
+      grp.style.position = 'relative';
+      grp.appendChild(lock);
     }
   });
 
-  // Extract lists arrays
-  payload.experienceList = getExperienceList();
-  payload.projectsList = getProjectsList();
-  payload.certificationsList = getCertificationsList();
+  addLog('Resume parsed successfully! Fields loaded & locked for review.', 'success');
+  switchTab('tab-basics', document.querySelector('.tabs-nav button'));
+}
 
-  if (!payload.fullName) {
-    addLog('[ERROR] Full Name is required before saving.', 'warn');
-    showToast('Full Name is required.', 'error');
-    return;
-  }
+// Save & Load Functions
+const FIELDS = [
+  'fullName', 'firstName', 'lastName', 'email', 'phone', 'dob', 'city', 'country',
+  'headline', 'targetRole', 'skills', 'summary', 'linkedin', 'github', 'portfolio',
+  'experience', 'education'
+];
 
-  const passcode = document.getElementById("syncPasscode").value.trim();
+async function saveLocalProfile() {
+  const passcode = document.getElementById('f-passcode').value.trim();
   if (!passcode) {
-    addLog('[ERROR] Passcode is required to secure sync.', 'warn');
-    showToast('Passcode is required.', 'error');
+    alert('Please enter a Sync Passcode in the "SYNC & KEY" tab to save.');
+    switchTab('tab-security', document.querySelectorAll('.tabs-nav button')[4]);
     return;
   }
 
   localStorage.setItem('jxa_passcode', passcode);
 
-  addLog('[SYS_SYNC] Saving profile...');
-  document.getElementById('btn-next').disabled = true;
+  const profile = {};
+  FIELDS.forEach(f => {
+    profile[f] = document.getElementById('f-' + f).value.trim();
+  });
 
-  const result = await saveProfile(payload);
-
-  document.getElementById('btn-next').disabled = false;
-
-  if (result.ok) {
-    const msg = result.offline
-      ? 'Profile saved locally (server offline).'
-      : 'Profile saved and synced successfully.';
-    addLog('[SYS_SYNC] ' + msg, 'success');
-    showToast(msg, 'success');
-    setTimeout(() => window.location.href = 'dashboard.html', 900);
-  } else {
-    const errMsg = (result.errors || []).join(', ') || 'Save failed.';
-    addLog('[ERROR] ' + errMsg, 'warn');
-    showToast(errMsg, 'error');
+  if (!profile.fullName || !profile.email) {
+    alert('Full Name and Email are required.');
+    return;
   }
-});
 
-// HTML escaping helper
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  localStorage.setItem('jxa_local_profile', JSON.stringify(profile));
+  document.getElementById('save-status').textContent = 'Saved locally ✓';
+  document.getElementById('save-status').style.color = 'var(--success)';
+  showToast('Profile saved locally.');
 }
+
+async function saveCloudProfile() {
+  const passcode = document.getElementById('f-passcode').value.trim();
+  if (!passcode) {
+    alert('Please enter a Sync Passcode in the "SYNC & KEY" tab to sync.');
+    switchTab('tab-security', document.querySelectorAll('.tabs-nav button')[4]);
+    return;
+  }
+
+  localStorage.setItem('jxa_passcode', passcode);
+
+  const profile = {};
+  FIELDS.forEach(f => {
+    profile[f] = document.getElementById('f-' + f).value.trim();
+  });
+
+  if (!profile.fullName || !profile.email) {
+    alert('Full Name and Email are required.');
+    return;
+  }
+
+  document.getElementById('save-status').textContent = 'Syncing...';
+  document.getElementById('save-status').style.color = 'var(--muted)';
+
+  const res = await saveProfile(profile);
+  if (res.ok) {
+    document.getElementById('save-status').textContent = 'Synced with Cloud ✓';
+    document.getElementById('save-status').style.color = 'var(--success)';
+    showToast('Profile synced successfully!');
+  } else {
+    document.getElementById('save-status').textContent = 'Cloud sync failed, saved locally.';
+    document.getElementById('save-status').style.color = 'var(--alert)';
+    showToast('Failed to sync to cloud.', 'error');
+  }
+}
+
+// Initial Loading
+(async () => {
+  requireAuth();
+  renderNav(document.getElementById('main-nav'), 'profile-setup.html');
+  
+  const savedPasscode = localStorage.getItem('jxa_passcode') || "";
+  document.getElementById('f-passcode').value = savedPasscode;
+
+  const state = await loadProfile();
+  const p = state?.profile || {};
+  if (p && Object.keys(p).length) {
+    FIELDS.forEach(f => {
+      const el = document.getElementById('f-' + f);
+      if (el && p[f] !== undefined) el.value = p[f];
+    });
+  }
+})();
 </script>
 </body>
 </html>

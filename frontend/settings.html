@@ -367,14 +367,40 @@ async function deleteSmartAnswer(index) {
   }
 }
 
-function savePasscode() {
+async function savePasscode() {
   const p1 = document.getElementById('new-passcode').value;
   const p2 = document.getElementById('confirm-passcode').value;
   if(!p1) return showToast('Passcode cannot be empty', 'error');
   if(p1 !== p2) return showToast('Passcodes do not match', 'error');
   
+  showToast('Updating passcode & re-encrypting vault...');
+  
+  // Update local storage first so saveProfile uses the new passcode
   localStorage.setItem('jxa_passcode', p1);
-  showToast('Passcode updated successfully');
+  
+  try {
+    const state = await loadProfile();
+    const activeProfile = state?.profile || {};
+    const res = await saveProfile(activeProfile);
+    if (res?.ok) {
+      showToast('Passcode updated and synced successfully');
+      
+      // Dispatch pairing event so the extension updates immediately
+      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+        detail: {
+          token: localStorage.getItem('jxa_token') || "",
+          passcode: p1,
+          email: localStorage.getItem('jxa_user_email') || ""
+        }
+      }));
+    } else {
+      showToast('Failed to sync new passcode to cloud. Saved locally.', 'warn');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Error syncing passcode: ' + err.message, 'error');
+  }
+  
   document.getElementById('passcode-form').style.display = 'none';
   document.getElementById('new-passcode').value = '';
   document.getElementById('confirm-passcode').value = '';

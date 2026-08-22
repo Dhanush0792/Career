@@ -3,113 +3,77 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply // Master Onboarding Wizard</title>
-<meta name="description" content="Onboarding: Import resume or LinkedIn self-service exports.">
+<title>JobXApply // Onboarding Wizard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
-<script src="shared-shell.js?v=2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
-
+<script src="shared-shell.js?v=2"></script>
 <style>
-/* 3-Step Wizard Overrides */
 body { padding-top: 80px; }
-.container { max-width: 760px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; }
-
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container { max-width: 800px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; padding-bottom: 60px; }
 .page-header { border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 28px; }
 .page-label { font-family: var(--mono); font-size: 10px; color: var(--primary); letter-spacing: .14em; text-transform: uppercase; }
-.page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); }
+.page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); margin: 0; }
 .page-title em { font-style: normal; color: var(--primary); }
 
-/* Step indicator */
-.step-bar { display: flex; gap: 0; margin-bottom: 28px; border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
-.step-indicator {
-  flex: 1; padding: 12px 8px; text-align: center;
-  font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase;
-  color: var(--muted); background: rgba(7,10,24,0.4); cursor: default;
-  transition: all 0.2s; border-right: 1px solid var(--glass-border);
-}
-.step-indicator:last-child { border-right: none; }
-.step-indicator.active { color: var(--white); background: rgba(91,79,232,0.15); }
-.step-indicator.done { color: var(--success); background: rgba(47,221,196,0.05); }
-.step-num { display: block; font-size: 18px; margin-bottom: 2px; }
+/* Step Progress Indicator */
+.step-bar { display: flex; justify-content: space-between; margin-bottom: 32px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px 18px; }
+.step-indicator { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
+.step-indicator.active { color: var(--white); }
+.step-indicator.done { color: var(--success); }
+.step-num { width: 22px; height: 22px; border-radius: 50%; border: 1px solid; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; }
+.step-indicator.active .step-num { border-color: var(--primary); background: rgba(91,79,232,0.15); color: var(--white); }
+.step-indicator.done .step-num { border-color: var(--success); background: rgba(47,221,196,0.15); color: var(--success); }
+
+/* Card Content Area */
+.wiz-card { border:1px solid var(--glass-border); background:rgba(255,255,255,.05); padding:28px; border-radius:16px; backdrop-filter:blur(16px); }
+.wiz-card-title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; margin-bottom:20px; }
+
+/* Form Fields */
+.field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.field-group.full { grid-template-columns: 1fr; }
+.field-item { display: flex; flex-direction: column; gap: 6px; }
+.field-item label { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.field-item input, .field-item textarea { background: rgba(7, 10, 24, 0.6); border: 1px solid var(--glass-border); padding: 10px 14px; color: var(--white); font-family: var(--body); font-size: 13px; border-radius: 8px; outline: none; transition: all 0.2s; }
+.field-item input:focus, .field-item textarea:focus { border-color: var(--primary); }
+.field-item textarea { resize: vertical; min-height: 100px; }
+
+/* Lock Overlay */
+.lock-container { position: relative; }
+.lock-badge { position: absolute; right: 12px; top: 38px; cursor: pointer; color: var(--muted); font-size: 12px; transition: color 0.2s; z-index: 5; }
+.lock-badge:hover { color: var(--primary); }
+.field-item.locked input, .field-item.locked textarea { background: rgba(255, 255, 255, 0.02); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.05); cursor: not-allowed; }
+
+/* Navigation Row */
+.wiz-nav { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--glass-border); display: flex; gap: 12px; justify-content: space-between; }
+.btn-next { flex: 1; height: 42px; background: var(--primary); color: var(--white); border: none; border-radius: 10px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.btn-next:hover { background: rgba(91, 79, 232, 0.85); }
+.btn-back { height: 42px; padding: 0 20px; background: transparent; color: var(--muted); border: 1px solid var(--glass-border); border-radius: 10px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.btn-back:hover { color: var(--white); border-color: var(--white); }
+.btn-finish { flex: 1; height: 42px; background: var(--success); color: #070a18; border: none; border-radius: 10px; font-family: var(--mono); font-size: 11px; font-weight: 900; text-transform: uppercase; cursor: pointer; }
+.btn-finish:hover { background: #26bba6; }
+
+/* Import section */
+.dropzone { border: 2px dashed var(--glass-border); border-radius: 10px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); margin-bottom: 12px; }
+.dropzone:hover { border-color: var(--primary); background: rgba(91,79,232,0.05); }
+.dropzone-title { font-family: var(--mono); font-size: 12px; color: var(--white); text-transform: uppercase; }
+.dropzone-desc { font-size: 10px; color: var(--muted); margin-top: 6px; }
+
+.log-box { background: #000; border: 1px solid var(--glass-border); padding: 10px; font-family: var(--mono); font-size: 10px; color: var(--muted); height: 75px; overflow-y: auto; border-radius: 8px; margin-top: 12px; }
+.log-line.success { color: var(--success); }
+.log-line.warn { color: var(--alert); }
 
 /* Step panels */
 .step-panel { display: none; }
 .step-panel.active { display: block; }
-
-/* Card style */
-.wiz-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 28px;
-  backdrop-filter: blur(16px);
-}
-.wiz-card-title {
-  font-family: var(--mono); font-size: 10px; font-weight: 700; color: var(--primary);
-  letter-spacing: .1em; text-transform: uppercase;
-  border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; margin-bottom: 20px;
-}
-
-/* Fields */
-.field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-.field-group.full { grid-template-columns: 1fr; }
-.field-item { display: flex; flex-direction: column; gap: 4px; }
-.field-item label {
-  font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
-}
-.field-item input, .field-item textarea, .field-item select {
-  background: rgba(7, 10, 24, 0.6); border: 1px solid var(--glass-border);
-  padding: 9px 12px; color: var(--white); font-family: var(--mono); font-size: 12px;
-  border-radius: 8px; outline: none; width: 100%; box-sizing: border-box;
-}
-.field-item input:focus, .field-item textarea:focus { border-color: var(--primary); }
-.field-item textarea { min-height: 90px; resize: vertical; }
-
-/* Nav buttons */
-.wiz-nav { display: flex; gap: 12px; margin-top: 24px; }
-.btn-next {
-  flex: 1; height: 42px; background: var(--primary); color: var(--white);
-  border: none; border-radius: 10px; font-family: var(--mono); font-size: 11px;
-  font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
-}
-.btn-next:hover { background: rgba(91,79,232,0.85); }
-.btn-back {
-  height: 42px; padding: 0 20px;
-  background: transparent; color: var(--muted); border: 1px solid var(--glass-border);
-  border-radius: 10px; font-family: var(--mono); font-size: 11px;
-  font-weight: 700; text-transform: uppercase; cursor: pointer;
-}
-.btn-back:hover { color: var(--white); border-color: var(--white); }
-.btn-finish {
-  flex: 1; height: 42px;
-  background: linear-gradient(135deg, #2fddc4, #1fa390);
-  color: #070a18; border: none; border-radius: 10px;
-  font-family: var(--mono); font-size: 11px; font-weight: 900;
-  text-transform: uppercase; cursor: pointer; letter-spacing: 0.05em;
-}
-.btn-finish:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* Import section */
-.dropzone {
-  border: 2px dashed var(--glass-border); border-radius: 10px;
-  padding: 32px 20px; text-align: center; cursor: pointer;
-  transition: all 0.2s; background: rgba(0,0,0,0.2); margin-bottom: 12px;
-}
-.dropzone:hover { border-color: var(--primary); background: rgba(91,79,232,0.05); }
-.dropzone-label { font-family: var(--mono); font-size: 12px; color: var(--white); text-transform: uppercase; }
-.dropzone-hint { font-size: 10px; color: var(--muted); margin-top: 6px; }
-
-.or-divider { text-align: center; font-family: var(--mono); font-size: 9px; color: var(--muted); margin: 12px 0; }
-
-.log-box {
-  background: #000; border: 1px solid var(--glass-border);
-  padding: 10px; font-family: var(--mono); font-size: 10px;
-  color: var(--muted); height: 70px; overflow-y: auto; border-radius: 8px; margin-top: 12px;
-}
 </style>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
@@ -119,11 +83,10 @@ body { padding-top: 80px; }
 
 <div class="container">
   <div class="page-header">
-    <div class="page-label">Profile Setup</div>
-    <h1 class="page-title">Complete <em>Your Profile</em></h1>
+    <div class="page-label">ONBOARDING GATEWAY</div>
+    <h1 class="page-title">SETUP <em>YOUR SECURE PROFILE</em></h1>
   </div>
 
-  <!-- Step progress bar -->
   <div class="step-bar">
     <div class="step-indicator active" id="si-1"><span class="step-num">1</span>Basics</div>
     <div class="step-indicator" id="si-2"><span class="step-num">2</span>Professional</div>
@@ -133,25 +96,26 @@ body { padding-top: 80px; }
   <!-- Step 1: Basics -->
   <div class="step-panel active" id="panel-1">
     <div class="wiz-card">
-      <div class="wiz-card-title">01 // Personal Information</div>
+      <div class="wiz-card-title">Step 01 // Personal Information</div>
       <div class="field-group">
-        <div class="field-item"><label>Full Name *</label><input id="f-fullName" placeholder="e.g. Dhanush Kumar" /></div>
-        <div class="field-item"><label>Email Address *</label><input id="f-email" type="email" placeholder="you@email.com" /></div>
+        <div class="field-item"><label>Full Name *</label><input id="f-fullName" placeholder="e.g. Dhanush Kumar"></div>
+        <div class="field-item"><label>Email Address *</label><input id="f-email" type="email" placeholder="you@email.com"></div>
       </div>
       <div class="field-group">
-        <div class="field-item"><label>First Name</label><input id="f-firstName" /></div>
-        <div class="field-item"><label>Last Name</label><input id="f-lastName" /></div>
+        <div class="field-item"><label>First Name</label><input id="f-firstName"></div>
+        <div class="field-item"><label>Last Name</label><input id="f-lastName"></div>
       </div>
       <div class="field-group">
-        <div class="field-item"><label>Phone Number</label><input id="f-phone" placeholder="+91 9876543210" /></div>
-        <div class="field-item"><label>Date of Birth</label><input id="f-dob" type="date" /></div>
+        <div class="field-item"><label>Phone Number</label><input id="f-phone" placeholder="e.g. +91 98765 43210"></div>
+        <div class="field-item"><label>Date of Birth</label><input id="f-dob" type="date"></div>
       </div>
       <div class="field-group">
-        <div class="field-item"><label>City</label><input id="f-city" placeholder="Bangalore" /></div>
-        <div class="field-item"><label>Country</label><input id="f-country" placeholder="India" /></div>
+        <div class="field-item"><label>City / Location</label><input id="f-city" placeholder="e.g. Bangalore"></div>
+        <div class="field-item"><label>Country</label><input id="f-country" placeholder="e.g. India"></div>
       </div>
       <div class="wiz-nav">
-        <button class="btn-next" onclick="goStep(2)">Next: Professional →</button>
+        <div></div>
+        <button class="btn-next" onclick="goStep(2)" style="max-width: 250px;">Next: Professional ➔</button>
       </div>
     </div>
   </div>
@@ -159,29 +123,29 @@ body { padding-top: 80px; }
   <!-- Step 2: Professional -->
   <div class="step-panel" id="panel-2">
     <div class="wiz-card">
-      <div class="wiz-card-title">02 // Professional Details</div>
+      <div class="wiz-card-title">Step 02 // Professional Profile</div>
       <div class="field-group full">
-        <div class="field-item"><label>Job Headline</label><input id="f-headline" placeholder="e.g. Full Stack Developer | 3 YOE" /></div>
+        <div class="field-item"><label>Job Headline</label><input id="f-headline" placeholder="e.g. Full Stack Developer | 3 YOE"></div>
       </div>
       <div class="field-group full">
-        <div class="field-item"><label>Target Role</label><input id="f-targetRole" placeholder="e.g. Software Engineer" /></div>
+        <div class="field-item"><label>Target Role</label><input id="f-targetRole" placeholder="e.g. Software Engineer"></div>
       </div>
       <div class="field-group full">
-        <div class="field-item"><label>Skills (comma-separated)</label><input id="f-skills" placeholder="Python, React, Node.js, SQL, Docker" /></div>
+        <div class="field-item"><label>Skills (comma-separated)</label><input id="f-skills" placeholder="e.g. Python, React, SQL, Git"></div>
       </div>
       <div class="field-group full">
-        <div class="field-item"><label>Professional Summary</label><textarea id="f-summary" placeholder="A brief summary of your experience and goals…"></textarea></div>
+        <div class="field-item"><label>Professional Summary</label><textarea id="f-summary" placeholder="A brief summary of your expertise and career goals..."></textarea></div>
       </div>
       <div class="field-group">
-        <div class="field-item"><label>LinkedIn URL</label><input id="f-linkedin" placeholder="https://linkedin.com/in/yourname" /></div>
-        <div class="field-item"><label>GitHub URL</label><input id="f-github" placeholder="https://github.com/yourname" /></div>
+        <div class="field-item"><label>LinkedIn URL</label><input id="f-linkedin" placeholder="https://linkedin.com/in/username"></div>
+        <div class="field-item"><label>GitHub URL</label><input id="f-github" placeholder="https://github.com/username"></div>
       </div>
-      <div class="field-group full">
-        <div class="field-item"><label>Portfolio / Website</label><input id="f-portfolio" placeholder="https://yoursite.com" /></div>
+      <div class="field-group full" style="margin-top: 16px;">
+        <div class="field-item"><label>Portfolio / Personal Website</label><input id="f-portfolio" placeholder="https://yourwebsite.com"></div>
       </div>
       <div class="wiz-nav">
         <button class="btn-back" onclick="goStep(1)">← Back</button>
-        <button class="btn-next" onclick="goStep(3)">Next: Import & Finish →</button>
+        <button class="btn-next" onclick="goStep(3)" style="max-width: 250px;">Next: Import & Finish ➔</button>
       </div>
     </div>
   </div>
@@ -189,37 +153,37 @@ body { padding-top: 80px; }
   <!-- Step 3: Import & Finish -->
   <div class="step-panel" id="panel-3">
     <div class="wiz-card">
-      <div class="wiz-card-title">03 // Import Resume (Optional) & Confirm</div>
-      <p style="font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:16px; line-height:1.6;">
-        Optionally upload your resume to auto-fill Experience and Education fields. Or skip and enter them manually below.
+      <div class="wiz-card-title">Step 03 // Import Resume & Complete</div>
+      <p style="font-family:var(--mono); font-size:11px; color:var(--muted); margin-bottom:20px; line-height:1.6;">
+        Upload your resume to automatically parse Experience and Education history. Or fill them in manually below.
       </p>
 
-      <!-- Drop zone -->
       <div class="dropzone" id="resume-dropzone">
-        <div class="dropzone-label">📄 Drag & Drop Resume</div>
-        <div class="dropzone-hint">PDF or DOCX · Click to browse</div>
+        <div class="dropzone-title">📄 Drag & Drop Resume here</div>
+        <div class="dropzone-desc">PDF or DOCX · Click to select</div>
         <input type="file" id="resume-input" accept="application/pdf,.docx" style="display:none;">
       </div>
 
       <div class="log-box" id="console">
-        <div style="color:var(--primary)">[READY] Upload a resume or fill fields manually below.</div>
+        <div style="color:var(--primary)">[SYSTEM] Ready for resume import.</div>
       </div>
 
-      <!-- Experience & Education - always editable -->
-      <div style="margin-top:20px;">
+      <div style="margin-top:24px;">
         <div class="field-group full">
-          <div class="field-item"><label>Experience</label><textarea id="f-experience" placeholder="Company, Role, Dates&#10;Brief description of responsibilities…" style="min-height:100px;"></textarea></div>
+          <div class="field-item"><label>Work Experience</label><textarea id="f-experience" placeholder="Detail your previous roles..." style="min-height:120px;"></textarea></div>
         </div>
         <div class="field-group full">
-          <div class="field-item"><label>Education</label><textarea id="f-education" placeholder="Degree, Institution, Year&#10;e.g. B.Tech CS, XYZ University, 2023" style="min-height:80px;"></textarea></div>
+          <div class="field-item"><label>Education</label><textarea id="f-education" placeholder="Detail your degrees..." style="min-height:80px;"></textarea></div>
+        </div>
+        <div class="field-group full" style="margin-top: 16px;">
+          <div class="field-item"><label>Security Sync Passcode *</label><input type="password" id="f-passcode" placeholder="Enter secure passcode to encrypt your profile" required></div>
         </div>
       </div>
 
       <div class="wiz-nav">
         <button class="btn-back" onclick="goStep(2)">← Back</button>
-        <button class="btn-finish" id="commit-btn" onclick="commitProfile()">✓ Save Profile & Continue</button>
+        <button class="btn-finish" id="commit-btn" onclick="commitProfile()">✓ Complete & Save</button>
       </div>
-
       <div id="commit-status" style="margin-top:12px; font-family:var(--mono); font-size:10px; color:var(--muted); min-height:16px;"></div>
     </div>
   </div>
@@ -236,8 +200,6 @@ const logBox = document.getElementById('console');
 const resumeDropzone = document.getElementById('resume-dropzone');
 const resumeInput = document.getElementById('resume-input');
 const commitBtn = document.getElementById('commit-btn');
-let existingProfile = {};
-let extractedExtra = { experience: [], education: [], skills: [] };
 
 function addLog(text, cls = '') {
   const line = document.createElement('div');
@@ -249,7 +211,6 @@ function addLog(text, cls = '') {
   logBox.scrollTop = logBox.scrollHeight;
 }
 
-// ── Step Navigation ──────────────────────────────────────────────────────────
 function goStep(step) {
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.step-indicator').forEach((si, i) => {
@@ -261,7 +222,6 @@ function goStep(step) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── File upload ──────────────────────────────────────────────────────────────
 resumeDropzone.addEventListener('click', () => resumeInput.click());
 resumeInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
 resumeDropzone.addEventListener('dragover', (e) => { e.preventDefault(); resumeDropzone.style.borderColor = 'var(--primary)'; });
@@ -297,8 +257,8 @@ async function handleFile(file) {
       } else {
         addLog('[WARN] Use PDF or DOCX only.', 'warn'); return;
       }
-      if (rawText.trim().length < 60) {
-        addLog('[ERROR] Scanned/blank document. Enter details manually.', 'warn'); return;
+      if (rawText.trim().length < 50) {
+        addLog('[ERROR] Scanned or empty file.', 'warn'); return;
       }
       parseAndExtractText(rawText);
     } catch(err) {
@@ -309,75 +269,93 @@ async function handleFile(file) {
 }
 
 function parseAndExtractText(text) {
-  addLog('[HEURISTIC] Parsing resume text...');
+  addLog('[PARSER] Analyzing content...');
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-  // Email
   const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
   const email = emailMatch ? emailMatch[0] : '';
-  // Phone
   const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
   const phone = phoneMatch ? phoneMatch[0] : '';
-  // Name
+  
   let name = lines[0] || '';
-  if (name.includes('@') || name.match(/\d/)) name = email ? email.split('@')[0].replace(/[._-]/g, ' ') : '';
-  // Skills
-  const commonSkills = ['React','Node.js','JavaScript','Python','Java','SQL','AWS','Docker','Kubernetes','C++','HTML','CSS','Git'];
+  if (name.includes('@') || name.match(/\d/)) {
+    name = email ? email.split('@')[0].replace(/[._-]/g, ' ') : '';
+  }
+
+  const commonSkills = ['React','Node.js','JavaScript','Python','Java','SQL','AWS','Docker','Kubernetes','Git','C++','HTML','CSS'];
   const skills = commonSkills.filter(s => new RegExp('\\b' + s.replace(/[.+]/g, '\\$&') + '\\b', 'i').test(text));
-  // Role
-  const roleMatch = text.match(/(?:software engineer|developer|manager|analyst|consultant|designer|engineer)/i);
+  
+  const roleMatch = text.match(/(?:software engineer|developer|manager|analyst|designer|engineer)/i);
   const headline = roleMatch ? roleMatch[0] : '';
 
-  extractedExtra = { experience: [], education: [], skills };
+  if (name) document.getElementById('f-fullName').value = name;
+  if (email) document.getElementById('f-email').value = email;
+  if (phone) document.getElementById('f-phone').value = phone;
+  if (headline) document.getElementById('f-headline').value = headline;
+  if (skills.length) document.getElementById('f-skills').value = skills.join(', ');
 
-  // Prefill step 1 fields if empty
-  if (!document.getElementById('f-fullName').value && name) document.getElementById('f-fullName').value = name;
-  if (!document.getElementById('f-email').value && email) document.getElementById('f-email').value = email;
-  if (!document.getElementById('f-phone').value && phone) document.getElementById('f-phone').value = phone;
-  // Prefill step 2 fields if empty
-  if (!document.getElementById('f-headline').value && headline) document.getElementById('f-headline').value = headline;
-  if (!document.getElementById('f-skills').value && skills.length) document.getElementById('f-skills').value = skills.join(', ');
-
-  // Prefill experience/education textareas with raw lines
   const expSection = text.match(/experience[\s\S]{0,2000}?(education|skills|$)/i);
-  if (expSection && !document.getElementById('f-experience').value) {
+  if (expSection) {
     document.getElementById('f-experience').value = expSection[0].substring(0, 600).trim();
   }
   const eduSection = text.match(/education[\s\S]{0,800}?(experience|skills|$)/i);
-  if (eduSection && !document.getElementById('f-education').value) {
+  if (eduSection) {
     document.getElementById('f-education').value = eduSection[0].substring(0, 400).trim();
   }
 
-  addLog('[SUCCESS] Resume parsed! Fields pre-filled above. Review and continue.', 'success');
-  resumeDropzone.style.borderColor = 'var(--success)';
+  // Lock inputs to let user review
+  const inputsToLock = ['f-fullName', 'f-email', 'f-phone', 'f-headline', 'f-skills', 'f-experience', 'f-education'];
+  inputsToLock.forEach(id => {
+    const el = document.getElementById(id);
+    const grp = el.closest('.field-item');
+    if (grp) {
+      grp.classList.add('locked');
+      el.disabled = true;
+      if (!grp.querySelector('.lock-badge')) {
+        const lock = document.createElement('span');
+        lock.className = 'lock-badge';
+        lock.innerHTML = '🔒 Locked (Click to Edit)';
+        lock.onclick = () => {
+          el.disabled = false;
+          grp.classList.remove('locked');
+          lock.remove();
+        };
+        grp.appendChild(lock);
+      }
+    }
+  });
+
+  addLog('[SUCCESS] Resume parsed! Fields loaded & locked for review.', 'success');
+  goStep(1);
 }
 
-// ── Commit ────────────────────────────────────────────────────────────────────
+const FIELDS = [
+  'fullName', 'firstName', 'lastName', 'email', 'phone', 'dob', 'city', 'country',
+  'headline', 'targetRole', 'skills', 'summary', 'linkedin', 'github', 'portfolio',
+  'experience', 'education'
+];
+
 async function commitProfile() {
   commitBtn.disabled = true;
   const statusEl = document.getElementById('commit-status');
   statusEl.textContent = 'Saving profile...';
   statusEl.style.color = 'var(--muted)';
 
-  const profile = {
-    fullName: document.getElementById('f-fullName').value.trim(),
-    firstName: document.getElementById('f-firstName').value.trim(),
-    lastName: document.getElementById('f-lastName').value.trim(),
-    email: document.getElementById('f-email').value.trim(),
-    phone: document.getElementById('f-phone').value.trim(),
-    dob: document.getElementById('f-dob').value.trim(),
-    city: document.getElementById('f-city').value.trim(),
-    country: document.getElementById('f-country').value.trim(),
-    headline: document.getElementById('f-headline').value.trim(),
-    targetRole: document.getElementById('f-targetRole').value.trim(),
-    skills: document.getElementById('f-skills').value.trim(),
-    summary: document.getElementById('f-summary').value.trim(),
-    linkedin: document.getElementById('f-linkedin').value.trim(),
-    github: document.getElementById('f-github').value.trim(),
-    portfolio: document.getElementById('f-portfolio').value.trim(),
-    experience: document.getElementById('f-experience').value.trim(),
-    education: document.getElementById('f-education').value.trim(),
-  };
+  const passcode = document.getElementById('f-passcode').value.trim();
+  if (!passcode) {
+    statusEl.textContent = '⚠ Passcode is required to sync profile.';
+    statusEl.style.color = 'var(--alert)';
+    commitBtn.disabled = false;
+    return;
+  }
+
+  localStorage.setItem('jxa_passcode', passcode);
+
+  const profile = {};
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f-' + f);
+    if (el) profile[f] = el.value.trim();
+  });
 
   if (!profile.fullName || !profile.email) {
     statusEl.textContent = '⚠ Full Name and Email are required.';
@@ -389,12 +367,12 @@ async function commitProfile() {
   try {
     const res = await saveProfile(profile);
     if (res.ok) {
-      statusEl.textContent = '✓ Profile saved! Redirecting to dashboard...';
+      statusEl.textContent = '✓ Profile saved! Redirecting...';
       statusEl.style.color = 'var(--success)';
       showToast('Profile saved successfully!');
       setTimeout(() => window.location.href = 'dashboard.html', 1200);
     } else {
-      statusEl.textContent = '✓ Saved locally. Cloud sync may be pending.';
+      statusEl.textContent = '✓ Saved locally. Cloud sync pending.';
       statusEl.style.color = 'var(--alert)';
       setTimeout(() => window.location.href = 'dashboard.html', 1500);
     }
@@ -405,21 +383,15 @@ async function commitProfile() {
   }
 }
 
-// ── Load existing ─────────────────────────────────────────────────────────────
 (async () => {
   try {
     const state = await loadProfile();
-    existingProfile = state?.profile || {};
-    // Pre-populate if returning user
-    if (existingProfile.fullName) {
-      document.getElementById('f-fullName').value = existingProfile.fullName || '';
-      document.getElementById('f-email').value = existingProfile.email || '';
-      document.getElementById('f-phone').value = existingProfile.phone || '';
-      document.getElementById('f-city').value = existingProfile.city || '';
-      document.getElementById('f-country').value = existingProfile.country || '';
-      document.getElementById('f-headline').value = existingProfile.headline || '';
-      document.getElementById('f-skills').value = Array.isArray(existingProfile.skills) ? existingProfile.skills.join(', ') : (existingProfile.skills || '');
-      document.getElementById('f-summary').value = existingProfile.summary || '';
+    const p = state?.profile || {};
+    if (p.fullName) {
+      FIELDS.forEach(f => {
+        const el = document.getElementById('f-' + f);
+        if (el && p[f] !== undefined) el.value = p[f];
+      });
     }
   } catch(e) {}
 })();
