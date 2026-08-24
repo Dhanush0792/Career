@@ -26,7 +26,8 @@ const FIELD_ALIASES = {
   github: ["github", "git hub"],
   portfolio: ["portfolio", "website", "site"],
   resume: ["resume", "cv"],
-  targetrole: ["role", "target role", "position", "designation"]
+  targetrole: ["role", "target role", "position", "designation"],
+  portalpassword: ["choose password", "password", "create password", "new password", "portal password"]
 };
 
 let extensionEnabled = true;
@@ -169,7 +170,25 @@ function findBestElementForKey(key) {
   return bestScore >= confidenceThreshold ? best : null;
 }
 
-function setValue(el, value) {
+function fillConfirmationFields(originalEl, value) {
+  const originalLabel = normalize(getElementLabelText(originalEl));
+  if (!originalLabel) return;
+  const inputs = Array.from(document.querySelectorAll("input, textarea"));
+  for (const el of inputs) {
+    if (el === originalEl) continue;
+    const label = normalize(getElementLabelText(el));
+    if (label.includes("confirm") || label.includes("retype") || label.includes("repeat") || label.includes("verify") || label.includes("re-type")) {
+      if (originalLabel.includes("email") && label.includes("email")) {
+        setValueRaw(el, value);
+      }
+      if (originalLabel.includes("password") && label.includes("password")) {
+        setValueRaw(el, value);
+      }
+    }
+  }
+}
+
+function setValueRaw(el, value) {
   if (!el) return false;
   if (el.isContentEditable) {
     el.focus();
@@ -250,6 +269,42 @@ function setValue(el, value) {
   return true;
 }
 
+function setValue(el, value) {
+  if (!el) return false;
+  const tag = el.tagName?.toLowerCase();
+  const role = el.getAttribute("role");
+  const cls = String(el.className || "");
+  
+  if (tag !== "select" && (role === "combobox" || role === "listbox" || cls.includes("select") || cls.includes("dropdown"))) {
+    el.focus();
+    el.click();
+    setTimeout(() => {
+      const optionItems = Array.from(document.querySelectorAll("li, [role='option'], .sapMSelectItem, .dropdown-item, [class*='option']"));
+      const normVal = normalize(value);
+      let matchedOpt = null;
+      for (const opt of optionItems) {
+        const text = normalize(opt.textContent);
+        if (text === normVal || text.startsWith(normVal) || text.includes(normVal)) {
+          matchedOpt = opt;
+          break;
+        }
+      }
+      if (matchedOpt) {
+        matchedOpt.click();
+      } else {
+        el.click();
+      }
+    }, 150);
+    return true;
+  }
+  
+  const filled = setValueRaw(el, value);
+  if (filled) {
+    fillConfirmationFields(el, value);
+  }
+  return filled;
+}
+
 function getPhoneCode(profile) {
   const phone = String(profile.phone || "");
   if (phone.startsWith("+")) {
@@ -264,6 +319,53 @@ function getPhoneCode(profile) {
   return "";
 }
 
+function getParsedLocationField(profile, fieldKey) {
+  const profileLower = {};
+  for (const [k, v] of Object.entries(profile || {})) {
+    profileLower[k.toLowerCase()] = v;
+  }
+  const rawVal = profileLower[fieldKey.toLowerCase()];
+  if (rawVal && String(rawVal).trim()) return String(rawVal).trim();
+  
+  const locStr = String(profileLower["address"] || profileLower["location"] || "");
+  if (!locStr) return "";
+  
+  const parts = locStr.split(",").map(s => s.trim());
+  if (parts.length === 1) {
+    if (fieldKey.toLowerCase() === "country") return parts[0];
+    if (fieldKey.toLowerCase() === "city") return parts[0];
+  } else if (parts.length === 2) {
+    if (fieldKey.toLowerCase() === "city") return parts[0];
+    if (fieldKey.toLowerCase() === "country") return parts[1];
+  } else if (parts.length >= 3) {
+    if (fieldKey.toLowerCase() === "city") return parts[0];
+    if (fieldKey.toLowerCase() === "state") return parts[1];
+    if (fieldKey.toLowerCase() === "country") return parts[parts.length - 1];
+  }
+  return "";
+}
+
+function getPortalPassword(profile) {
+  const profileLower = {};
+  for (const [k, v] of Object.entries(profile || {})) {
+    profileLower[k.toLowerCase()] = v;
+  }
+  if (profileLower["portalpassword"] && String(profileLower["portalpassword"]).trim()) {
+    return String(profileLower["portalpassword"]).trim();
+  }
+  if (profileLower["password"] && String(profileLower["password"]).trim()) {
+    return String(profileLower["password"]).trim();
+  }
+  
+  const host = location.hostname.toLowerCase();
+  let company = "Portal";
+  const match = host.match(/([a-z0-9\-]+)\.(com|org|net|co|io|edu|eu|in)/);
+  if (match) {
+    company = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+  }
+  return `JobXApply@${company}2026!`;
+}
+
 function buildAutofillPayload(profile, requestedFields) {
   const fields = requestedFields && requestedFields.length ? requestedFields : Object.keys(profile || {});
   const payload = {};
@@ -271,19 +373,31 @@ function buildAutofillPayload(profile, requestedFields) {
   for (const [k, v] of Object.entries(profile || {})) {
     profileLower[k.toLowerCase()] = v;
   }
-  for (const field of fields) {
-    const key = normalize(field).replace(/\s+/g, "");
+  
+  // Make sure password, city, state, country, phonecode keys are included in the fields list
+  const activeFields = new Set(fields.map(f => normalize(f).replace(/\s+/g, "")));
+  activeFields.add("portalpassword");
+  activeFields.add("city");
+  activeFields.add("state");
+  activeFields.add("country");
+  activeFields.add("phonecode");
+
+  for (const key of activeFields) {
     if (key === "resume") {
       payload[key] = profileLower["resumedraft"] || profileLower["resume"] || "";
     } else if (key === "phonecode") {
       payload[key] = getPhoneCode(profile);
+    } else if (key === "city" || key === "state" || key === "country") {
+      payload[key] = getParsedLocationField(profile, key);
+    } else if (key === "portalpassword") {
+      payload[key] = getPortalPassword(profile);
     } else if (profileLower[key] !== undefined) {
       payload[key] = profileLower[key];
     } else {
-      payload[key] = profile[field] || profile[key] || "";
+      payload[key] = profile[key] || "";
     }
   }
-  return { createdAt: new Date().toISOString(), source: "jobxapply-profile", fields, payload };
+  return { createdAt: new Date().toISOString(), source: "jobxapply-profile", fields: Array.from(activeFields), payload };
 }
 
 // Floating autofill button shown near focused inputs
