@@ -69,6 +69,57 @@ body::after {
 .export-btn:hover { color:var(--white); border-color:var(--glass-border); background:rgba(255,255,255,.04); }
 
 @media (max-width:850px) { .grid { grid-template-columns:1fr; } }
+
+@media print {
+  /* Hide everything except the letter output box */
+  body, html, .container, .grid, .card, .preview-container {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Hide all UI elements */
+  .nav, #main-nav, .page-label, .page-title, .card__title, .tabs-header, .ats-panel, .console-box, .export-row, .warn-banner, #scroll-progress, #profile-banner {
+    display: none !important;
+  }
+  
+  /* Hide left column inputs card specifically */
+  .grid > .card:first-child {
+    display: none !important;
+  }
+
+  /* Style the letter output box for print */
+  .output-letter-box {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: #1e293b !important;
+    font-family: inherit !important; /* Keep selected template font styling */
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    overflow: visible !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+}
 </style>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>

@@ -438,6 +438,50 @@
     @keyframes sync-spin {
       to { transform: rotate(360deg); }
     }
+    @media print {
+      /* Hide everything except the preview sheet */
+      body, html, #app-container, .main-content, .builder-grid, .preview-col, .sticky-preview, .preview-container {
+        background: white !important;
+        color: black !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        overflow: visible !important;
+        display: block !important;
+        box-shadow: none !important;
+        border: none !important;
+        backdrop-filter: none !important;
+      }
+      
+      /* Hide all UI elements */
+      .nav, .header, .editor-col, .card-header, .preview-actions, .sync-loading-overlay, #scroll-progress {
+        display: none !important;
+      }
+
+      /* Style the preview sheet for print */
+      .preview-sheet {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        transform: scale(1) !important; /* Reset dynamic scaling */
+        transform-origin: top left !important;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+      }
+
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
+    }
   </style>
 </head>
 <body>
