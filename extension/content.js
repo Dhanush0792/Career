@@ -250,6 +250,20 @@ function setValue(el, value) {
   return true;
 }
 
+function getPhoneCode(profile) {
+  const phone = String(profile.phone || "");
+  if (phone.startsWith("+")) {
+    const match = phone.match(/^\+(\d+)/);
+    if (match) return match[1];
+  }
+  const country = String(profile.country || "").toLowerCase();
+  const address = String(profile.address || "").toLowerCase();
+  if (country.includes("india") || address.includes("india")) return "91";
+  if (country.includes("united states") || country.includes("usa") || country.includes("us")) return "1";
+  if (country.includes("united kingdom") || country.includes("uk")) return "44";
+  return "";
+}
+
 function buildAutofillPayload(profile, requestedFields) {
   const fields = requestedFields && requestedFields.length ? requestedFields : Object.keys(profile || {});
   const payload = {};
@@ -261,6 +275,8 @@ function buildAutofillPayload(profile, requestedFields) {
     const key = normalize(field).replace(/\s+/g, "");
     if (key === "resume") {
       payload[key] = profileLower["resumedraft"] || profileLower["resume"] || "";
+    } else if (key === "phonecode") {
+      payload[key] = getPhoneCode(profile);
     } else if (profileLower[key] !== undefined) {
       payload[key] = profileLower[key];
     } else {
@@ -524,66 +540,65 @@ document.addEventListener("submit", handleSubmit, true);
     }
 
     const payload = buildAutofillPayload(rawProfile, message.fields || Object.keys(rawProfile));
-    chrome.runtime.sendMessage({ type: "jobxapply:getPortalMap", url: location.href }, (resp) => {
-      const portalMap = resp?.map || {};
-      const results = [];
-      let filledCount = 0;
-      for (const [field, value] of Object.entries(payload.payload || {})) {
-        if (!value) continue; // skip empty values
-        const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
-        const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
+    const portalMap = message.portalMap || {};
+    const results = [];
+    let filledCount = 0;
+    
+    for (const [field, value] of Object.entries(payload.payload || {})) {
+      if (!value) continue; // skip empty values
+      const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
+      const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
+      
+      if (el) {
+        const labelText = getElementLabelText(el);
+        const category = identifyQuestionCategory(labelText);
         
-        if (el) {
-          const labelText = getElementLabelText(el);
-          const category = identifyQuestionCategory(labelText);
-          
-          if (category === "knockout") {
-            showKnockoutSuggestion(el, value);
-            results.push({ field, status: "suggested", via: "knockout-rule" });
-          } else if (category === "compensation") {
-            const expected = profile.preferences?.expectedSalary || "";
-            if (expected) {
-              setValue(el, expected);
-              filledCount++;
-              results.push({ field, status: "filled", via: "compensation-rule" });
-            } else {
-              el.style.border = "1px solid #eb5757";
-              results.push({ field, status: "empty-flagged", via: "compensation-rule" });
-            }
-          } else if (category === "logistics") {
-            const empStatus = profile.preferences?.employmentStatus || "employed";
-            let logisticsVal = value;
-            if (empStatus === "student") {
-              logisticsVal = "Immediate / Date-based (Graduation)";
-            } else if (empStatus === "unemployed") {
-              logisticsVal = "Immediate";
-            } else if (profile.preferences?.noticePeriod) {
-              logisticsVal = profile.preferences.noticePeriod;
-            }
-            setValue(el, logisticsVal);
-            el.style.backgroundColor = "#ffffe0";
-            el.style.border = "1px solid #ffeb3b";
+        if (category === "knockout") {
+          showKnockoutSuggestion(el, value);
+          results.push({ field, status: "suggested", via: "knockout-rule" });
+        } else if (category === "compensation") {
+          const expected = rawProfile.preferences?.expectedSalary || "";
+          if (expected) {
+            setValue(el, expected);
             filledCount++;
-            results.push({ field, status: "filled-review", via: "logistics-rule" });
-          } else if (category === "eeo") {
-            results.push({ field, status: "skipped", via: "eeo-rule" });
-          } else if (category === "essay") {
-            const draft = `As a professional with experience in ${profile.skills ? String(profile.skills).split(',').slice(0, 3).join(', ') : 'product development'}, I am highly interested in this role. My background aligns with your core requirements, and I am excited about the opportunity to add value to your team.`;
-            setValue(el, draft);
-            el.style.outline = "2px solid #ffeb3b";
-            filledCount++;
-            results.push({ field, status: "drafted", via: "essay-rule" });
+            results.push({ field, status: "filled", via: "compensation-rule" });
           } else {
-            setValue(el, value);
-            filledCount++;
-            results.push({ field, status: "filled", via: "heuristic" });
+            el.style.border = "1px solid #eb5757";
+            results.push({ field, status: "empty-flagged", via: "compensation-rule" });
           }
+        } else if (category === "logistics") {
+          const empStatus = rawProfile.preferences?.employmentStatus || "employed";
+          let logisticsVal = value;
+          if (empStatus === "student") {
+            logisticsVal = "Immediate / Date-based (Graduation)";
+          } else if (empStatus === "unemployed") {
+            logisticsVal = "Immediate";
+          } else if (rawProfile.preferences?.noticePeriod) {
+            logisticsVal = rawProfile.preferences.noticePeriod;
+          }
+          setValue(el, logisticsVal);
+          el.style.backgroundColor = "#ffffe0";
+          el.style.border = "1px solid #ffeb3b";
+          filledCount++;
+          results.push({ field, status: "filled-review", via: "logistics-rule" });
+        } else if (category === "eeo") {
+          results.push({ field, status: "skipped", via: "eeo-rule" });
+        } else if (category === "essay") {
+          const draft = `As a professional with experience in ${rawProfile.skills ? String(rawProfile.skills).split(',').slice(0, 3).join(', ') : 'product development'}, I am highly interested in this role. My background aligns with your core requirements, and I am excited about the opportunity to add value to your team.`;
+          setValue(el, draft);
+          el.style.outline = "2px solid #ffeb3b";
+          filledCount++;
+          results.push({ field, status: "drafted", via: "essay-rule" });
         } else {
-          results.push({ field, status: "not-found" });
+          setValue(el, value);
+          filledCount++;
+          results.push({ field, status: "filled", via: "heuristic" });
         }
+      } else {
+        results.push({ field, status: "not-found" });
       }
-      sendResponse({ ok: true, filled: filledCount, payload, results });
-    });
+    }
+    sendResponse({ ok: true, filled: filledCount, payload, results });
     return true;
   }
 });

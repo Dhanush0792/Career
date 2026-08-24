@@ -1,4 +1,4 @@
-import { buildAutofillPayload, getPortalRule } from "./shared.js";
+import { buildAutofillPayload, getPortalRule, PORTAL_MAPS } from "./shared.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function setStatus(msg, cls = "") {
@@ -69,9 +69,21 @@ async function loadAndDisplayProfile() {
   return profile;
 }
 
+function getBaseDomain(hostname) {
+  const parts = hostname.replace("www.", "").split(".");
+  if (parts.length > 2) {
+    const pen = parts[parts.length - 2];
+    if (["co", "com", "net", "org", "gov", "edu"].includes(pen) && parts.length > 2) {
+      return parts.slice(-3).join(".");
+    }
+    return parts.slice(-2).join(".");
+  }
+  return parts.join(".");
+}
+
 // ── Autofill ────────────────────────────────────────────────────────────────
 async function doAutofill() {
-  const { tab } = await loadPortalInfo();
+  const { tab, rule } = await loadPortalInfo();
   if (!tab?.id) { setStatus("No active tab found", "error"); return; }
 
   const profile = await loadAndDisplayProfile();
@@ -84,7 +96,28 @@ async function doAutofill() {
   setStatus("Running autofill…");
   const payload = buildAutofillPayload(profile, Object.keys(profile).filter(k => profile[k]));
 
-  chrome.tabs.sendMessage(tab.id, { type: "jobxapply:applyAutofill", profile: payload }, (res) => {
+  // Resolve portal map in popup synchronously
+  const local = await new Promise((r) => chrome.storage.local.get(["jobxapplyMaps", "jobxapplyCustomMaps"], r));
+  const cached = local.jobxapplyMaps || null;
+  let map = {};
+  if (cached && cached.maps && cached.maps[rule.portal]) {
+    map = { ...cached.maps[rule.portal] };
+  } else if (cached && cached[rule.portal]) {
+    map = { ...cached[rule.portal] };
+  } else {
+    map = { ...(PORTAL_MAPS[rule.portal] || {}) };
+  }
+  
+  const customMaps = local.jobxapplyCustomMaps || {};
+  try {
+    const hostname = new URL(tab.url).hostname;
+    const domain = getBaseDomain(hostname);
+    if (customMaps[domain]) {
+      map = { ...map, ...customMaps[domain] };
+    }
+  } catch (e) {}
+
+  chrome.tabs.sendMessage(tab.id, { type: "jobxapply:applyAutofill", profile: payload, portalMap: map }, (res) => {
     if (chrome.runtime.lastError) {
       setStatus("Error: " + chrome.runtime.lastError.message, "error");
       return;
