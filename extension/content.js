@@ -223,6 +223,7 @@ function buildAutofillPayload(profile, requestedFields) {
 
 // Floating autofill button shown near focused inputs
 let autofillButton = null;
+let activeInput = null;
 function createAutofillButton() {
   if (autofillButton) return autofillButton;
   autofillButton = document.createElement("button");
@@ -257,6 +258,7 @@ function createAutofillButton() {
 
 function positionButtonNear(el) {
   if (!el) return;
+  activeInput = el;
   const btn = createAutofillButton();
   const rect = el.getBoundingClientRect();
   btn.style.top = `${window.scrollY + rect.top - 8}px`;
@@ -327,7 +329,7 @@ function handleFocusIn(e) {
 
 function handleDocumentClick(e) {
   if (!checkContext()) return;
-  if (!(e.target && e.target === autofillButton)) hideButton();
+  if (!(e.target && (e.target === autofillButton || e.target === activeInput))) hideButton();
 }
 
 document.addEventListener("focusin", handleFocusIn);
@@ -463,15 +465,16 @@ document.addEventListener("submit", handleSubmit, true);
 
   if (message?.type === "jobxapply:applyAutofill") {
     const profile = message.profile || {};
+    const rawProfile = profile.payload ? profile.payload : profile;
 
     // Guard: if no meaningful data, abort and report to popup
-    const hasData = Object.values(profile).some((v) => v && String(v).trim().length > 0);
+    const hasData = Object.values(rawProfile).some((v) => v && String(v).trim().length > 0);
     if (!hasData) {
       sendResponse({ ok: false, filled: 0, reason: "Profile is empty — set up your profile first" });
       return true;
     }
 
-    const payload = buildAutofillPayload(profile, message.fields || Object.keys(profile));
+    const payload = buildAutofillPayload(rawProfile, message.fields || Object.keys(rawProfile));
     chrome.runtime.sendMessage({ type: "jobxapply:getPortalMap", url: location.href }, (resp) => {
       const portalMap = resp?.map || {};
       const results = [];
