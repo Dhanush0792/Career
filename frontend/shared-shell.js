@@ -339,7 +339,9 @@ async function saveProfile(profileData) {
   } catch (e) {
     localStorage.setItem('jxa_local_profile', JSON.stringify(profileData));
     localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
-    return { ok: true, offline: true, state: { profile: profileData, profiles: localProfiles, activeProfileId: activeId, version: 0, updatedAt: Date.now(), origin: 'local' } };
+    const offlineState = { profile: profileData, profiles: localProfiles, activeProfileId: activeId, version: 0, updatedAt: Date.now(), origin: 'local' };
+    localStorage.setItem('jxa_local_state', JSON.stringify(offlineState));
+    return { ok: true, offline: true, state: offlineState };
   }
 }
 
@@ -1394,3 +1396,12 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     flags
   };
 }
+
+window.CareerBridgeSync = {
+  requireAuth,
+  logout,
+  loadProfile,
+  saveProfile,
+  setActiveProfile,
+  renderNav
+};

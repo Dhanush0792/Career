@@ -1,1612 +1,761 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply // LaTeX Resume Builder</title>
-<meta name="description" content="Generate, customize, and edit premium ATS-compliant LaTeX resumes with live preview.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style-glass.css">
-<script src="shared-shell.js?v=2"></script>
-<style>
-:root {
-  --black:   #0B1020;
-  --s1:      rgba(255, 255, 255, 0.07);
-  --s2:      rgba(7, 10, 24, 0.6);
-  --border:  rgba(255, 255, 255, 0.22);
-  --white:   #ffffff;
-  --text:    #f4f7ff;
-  --muted:   rgba(244, 247, 255, 0.88);
-  --dim:     rgba(244, 247, 255, 0.65);
-  --orange:  #5B4FE8;
-  --green:   #2FDDC4;
-  --mono:    'JetBrains Mono', monospace;
-  --display: 'Barlow Condensed', sans-serif;
-  --body:    'Inter', sans-serif;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: var(--body);
-  background: var(--black);
-  color: var(--text);
-  min-height: 100vh;
-  padding-top: 56px;
-  overflow: hidden;
-  background-image: radial-gradient(circle at 15% 20%, rgba(91, 79, 232, 0.12) 0%, transparent 45%),
-                    radial-gradient(circle at 85% 75%, rgba(47, 221, 196, 0.07) 0%, transparent 45%);
-}
-body::after {
-  content: '';
-  position: fixed; inset: 0;
-  z-index: 1; pointer-events: none;
-  opacity: 0.022;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Builder - JobXApply</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00f3ff;
+      --primary-glow: rgba(0, 243, 255, 0.15);
+      --bg-dark: #0a0e17;
+      --card-bg: rgba(16, 22, 35, 0.6);
+      --border-color: rgba(0, 243, 255, 0.2);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
 
-/* Nav */
-.nav {
-  position: fixed; top: 0; left: 0; right: 0;
-  height: 56px;
-  background: rgba(0,0,0,.92);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(16px);
-  z-index: 1000;
-  display: flex; align-items: center;
-}
-.nav__inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 20px;
-  width: 100%;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.logo {
-  display: flex; align-items: center; gap: 10px;
-  font-family: var(--mono); font-size: 12px; font-weight: 700;
-  color: var(--white);
-}
-.logo__bracket { color: var(--orange); }
-.nav__links { display: flex; gap: 8px; }
-.nav__link {
-  font-family: var(--mono); font-size: 10px; font-weight: 500;
-  color: var(--muted); padding: 8px 16px;
-  text-transform: uppercase;
-}
-.nav__link:hover { color: var(--orange); }
-.nav__link.active { color: var(--orange); }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-/* Split Pane Layout */
-.pane-wrap {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  height: calc(100vh - 56px);
-}
-.left-pane {
-  border-right: 1px solid var(--border);
-  background: var(--s1);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  position: relative;
-  z-index: 10;
-}
-.right-pane {
-  background: #070a18;
-  padding: 24px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  z-index: 5;
-}
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(0, 243, 255, 0.03) 0%, transparent 45%);
+      background-attachment: fixed;
+      padding-top: 80px;
+    }
 
-.pane-title {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  color: var(--orange);
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
-  margin-top: 8px;
-}
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.control-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--muted);
-  text-transform: uppercase;
-}
-.select-input {
-  background: rgba(7, 10, 24, 0.8);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 10px;
-  border-radius: 6px;
-  outline: none;
-  cursor: pointer;
-}
-.select-input option {
-  background-color: #0b1020 !important;
-  color: #f4f7ff !important;
-  font-family: var(--mono) !important;
-  font-size: 11px !important;
-}
-.select-input:focus {
-  border-color: var(--orange);
-}
+    #app-container {
+      display: flex;
+      min-height: 100vh;
+    }
 
-/* Tab controls */
-.tab-header {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  width: 720px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
-}
-.tab-btn {
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-}
-.tab-btn.active {
-  color: var(--white);
-  border-bottom-color: var(--orange);
-}
+    .main-content {
+      flex: 1;
+      padding: 40px;
+      max-width: 1600px;
+    }
 
-/* Printable A4 Page styling */
-.cv-page {
-  width: 720px;
-  min-height: 980px;
-  background: #ffffff;
-  color: #000000;
-  padding: 40px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  font-family: 'Inter', sans-serif;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  border-radius: 4px;
-}
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 20px;
+    }
 
-/* Visual Theme Classes for Browser Preview */
-.cv-page.serif { font-family: 'PT Serif', serif; }
-.cv-page.minimal { font-family: 'Inter', sans-serif; }
+    .page-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: var(--text-main);
+      text-transform: uppercase;
+    }
 
-.cv-header {
-  border-bottom: 1px solid #000000;
-  padding-bottom: 8px;
-  margin-bottom: 4px;
-}
-.cv-name {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-  margin-bottom: 2px;
-}
-.cv-contact {
-  font-family: var(--body);
-  font-size: 10px;
-  color: #333333;
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.cv-section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.cv-section-title {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  border-bottom: 1px solid #000000;
-  padding-bottom: 2px;
-  letter-spacing: 0.02em;
-  color: #000000;
-  margin-bottom: 4px;
-}
-.cv-body-text {
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: #111111;
-  white-space: pre-wrap;
-}
+    .builder-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 30px;
+      align-items: start;
+    }
 
-/* Source editor block */
-.source-pane {
-  width: 720px;
-  height: 980px;
-  display: none;
-  position: relative;
-}
-.source-area {
-  width: 100%;
-  height: 100%;
-  background: #070a18;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--green);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 16px;
-  outline: none;
-  resize: none;
-  line-height: 1.5;
-  box-shadow: inset 0 4px 12px rgba(0,0,0,0.5);
-}
+    @media (max-width: 1200px) {
+      .builder-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
-/* Button */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  height: 38px;
-  border: 1px solid;
-  cursor: pointer;
-  width: 100%;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-.btn-primary {
-  background: var(--orange);
-  color: var(--white);
-  border-color: var(--orange);
-}
-.btn-primary:hover {
-  background: transparent;
-  color: var(--orange);
-}
-.btn-secondary {
-  background: transparent;
-  color: var(--muted);
-  border-color: var(--border);
-}
-.btn-secondary:hover {
-  color: var(--white);
-  border-color: var(--white);
-}
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      margin-bottom: 25px;
+    }
 
-/* Premium Spinner animation */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+    .card-header {
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+      padding-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-/* PRINT CSS OVERRIDES */
-@media print {
-  body {
-    background: #ffffff !important;
-    padding-top: 0 !important;
-  }
-  body::after { display: none !important; }
-  .nav, .left-pane, .tab-header, #loading-overlay, #validation-overlay {
-    display: none !important;
-  }
-  .pane-wrap {
-    grid-template-columns: 1fr !important;
-    height: auto !important;
-  }
-  .right-pane {
-    padding: 0 !important;
-    background: #ffffff !important;
-    overflow: visible !important;
-    display: block !important;
-  }
-  .cv-page {
-    box-shadow: none !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    overflow: visible !important;
-  }
-}
+    .card-title {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--primary);
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
-/* ═══════════════════════════════════════
-   LATEX DYNAMIC HTML TEMPLATE OUTLINES
-═══════════════════════════════════════ */
-.cv-page {
-  background: #ffffff;
-  padding: 40px !important;
-  color: #111111 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 16px !important;
-  box-sizing: border-box !important;
-  min-height: 297mm !important;
-  width: 210mm !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
-  margin: 0 auto !important;
-  border-radius: 4px !important;
-  border: 1px solid #e2e8f0 !important;
-}
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-.cv-page .hdr { text-align: left; }
-.cv-page .name { font-size: 24px; font-weight: bold; margin-bottom: 4px; color: #111; }
-.cv-page .contact { display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; color: #444; margin-top: 4px; margin-bottom: 8px; border-bottom: none !important; }
-.cv-page .sec-title { font-size: 13px; font-weight: bold; border-bottom: 1px solid #111111; text-transform: uppercase; margin-top: 8px; margin-bottom: 6px; padding-bottom: 2px; color: #111; letter-spacing: 0.05em; }
-.cv-page .cv-body-text { font-size: 11.5px; line-height: 1.45; color: #222; }
+    .form-row {
+      display: flex;
+      gap: 20px;
+    }
 
-/* 01. Classic Chronological */
-.tmpl-01 { font-family: 'Georgia', serif; }
-.tmpl-01 .hdr { text-align: center; }
-.tmpl-01 .contact { justify-content: center; }
+    .col-6 {
+      flex: 1;
+    }
 
-/* 02. Sidebar Two-Column */
-.tmpl-02 {
-  font-family: 'Georgia', serif;
-  display: grid !important;
-  grid-template-columns: 0.32fr 1px 0.64fr !important;
-  gap: 20px !important;
-  padding: 30px !important;
-  flex-direction: row !important;
-}
-.tmpl-02 .col-left { display: flex; flex-direction: column; gap: 16px; }
-.tmpl-02 .col-right { display: flex; flex-direction: column; gap: 16px; }
-.tmpl-02 .divider { background: #dddddd; width: 1px; height: 100%; }
-.tmpl-02 .name { font-size: 20px; }
-.tmpl-02 .sec-title { font-size: 11px; }
+    label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
 
-/* 03. Compact Dense */
-.tmpl-03 {
-  font-family: 'Inter', sans-serif;
-  padding: 24px !important;
-  gap: 8px !important;
-}
-.tmpl-03 .hdr { text-align: center; }
-.tmpl-03 .contact { justify-content: center; font-size: 10px; }
-.tmpl-03 .name { font-size: 18px; }
-.tmpl-03 .sec-title { font-size: 11px; margin-top: 4px; }
-.tmpl-03 .cv-body-text { font-size: 10.5px; line-height: 1.35; }
+    .glass-input {
+      background: rgba(10, 15, 30, 0.5);
+      border: 1px solid rgba(0, 243, 255, 0.15);
+      border-radius: 6px;
+      padding: 12px;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
 
-/* 04. Skills-First Functional */
-.tmpl-04 { font-family: 'Georgia', serif; }
-.tmpl-04 .hdr { text-align: center; }
-.tmpl-04 .contact { justify-content: center; }
+    .glass-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
 
-/* 05. Timeline Style */
-.tmpl-05 { font-family: 'Bookman', serif; }
-.tmpl-05 .hdr { text-align: center; }
-.tmpl-05 .contact { justify-content: center; }
-.tmpl-05 .timeline-row { display: grid; grid-template-columns: 110px 1px 1fr; gap: 12px; margin-bottom: 8px; }
-.tmpl-05 .timeline-date { text-align: right; font-size: 11px; font-weight: bold; padding-right: 4px; color: #444; }
-.tmpl-05 .timeline-line { background: #cccccc; position: relative; }
-.tmpl-05 .timeline-line::after { content: ''; position: absolute; top: 6px; left: -3px; width: 7px; height: 7px; border-radius: 50%; background: #5b4fe8; }
-.tmpl-05 .timeline-body { font-size: 11px; line-height: 1.4; color: #222; }
+    textarea.glass-input {
+      resize: vertical;
+    }
 
-/* 06. Academic CV */
-.tmpl-06 { font-family: 'Georgia', serif; }
-.tmpl-06 .hdr { text-align: center; }
-.tmpl-06 .contact { justify-content: center; }
-.tmpl-06 .sec-title { text-align: center; border-bottom: none; }
-.tmpl-06 .sec-title::after { content: ''; display: block; width: 60px; height: 1px; background: #333333; margin: 4px auto 0 auto; }
+    .btn {
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
 
-/* 07. Executive Minimalist */
-.tmpl-07 { font-family: 'Inter', sans-serif; padding: 45px !important; }
-.tmpl-07 .name { font-size: 24px; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
-.tmpl-07 .sec-title { font-size: 11px; font-weight: 600; letter-spacing: 2px; border-bottom: 1px solid #e2e8f0; color: #64748b; }
+    .btn-primary {
+      background: var(--primary);
+      color: #020617;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+    }
 
-/* 08. Conservative Finance */
-.tmpl-08 { font-family: 'Times New Roman', Times, serif; }
-.tmpl-08 .hdr { text-align: center; }
-.tmpl-08 .name { font-size: 22px; font-variant: small-caps; }
-.tmpl-08 .contact { justify-content: center; font-variant: small-caps; }
-.tmpl-08 .sec-title { font-size: 12px; font-variant: small-caps; }
+    .btn-primary:hover {
+      background: #00d2e0;
+      box-shadow: 0 0 25px rgba(0, 243, 255, 0.5);
+      transform: translateY(-1px);
+    }
 
-/* 09. Modern Tech Sans */
-.tmpl-09 { font-family: 'Inter', sans-serif; }
-.tmpl-09 .sec-title { border-left: 3px solid #5b4fe8; padding-left: 8px; border-bottom: none; }
+    .btn-secondary {
+      background: rgba(0, 243, 255, 0.05);
+      border-color: var(--border-color);
+      color: var(--primary);
+    }
 
-/* 10. Grid Modular */
-.tmpl-10 {
-  font-family: 'Inter', sans-serif;
-  display: grid !important;
-  grid-template-columns: 0.65fr 0.3fr !important;
-  gap: 24px !important;
-  flex-direction: row !important;
-}
-.tmpl-10 .col-left { display: flex; flex-direction: column; gap: 16px; }
-.tmpl-10 .col-right { display: flex; flex-direction: column; gap: 16px; }
-</style>
+    .btn-secondary:hover {
+      background: rgba(0, 243, 255, 0.15);
+      border-color: var(--primary);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Experience & Education list styles */
+    .experience-item, .education-item {
+      border: 1px solid rgba(0, 243, 255, 0.1);
+      background: rgba(10, 15, 30, 0.3);
+      padding: 18px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      transition: all 0.3s ease;
+    }
+
+    .experience-item:hover, .education-item:hover {
+      border-color: rgba(0, 243, 255, 0.25);
+      background: rgba(10, 15, 30, 0.5);
+    }
+
+    /* Live Preview Pane */
+    .sticky-preview {
+      position: sticky;
+      top: 40px;
+      max-height: calc(100vh - 120px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-container {
+      overflow-y: auto;
+      flex: 1;
+      padding-right: 4px;
+      margin-top: 15px;
+    }
+
+    /* Custom Scrollbar for preview */
+    .preview-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    .preview-container::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.1);
+    }
+    .preview-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 243, 255, 0.2);
+      border-radius: 3px;
+    }
+    .preview-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 243, 255, 0.4);
+    }
+
+    .preview-sheet {
+      background: white;
+      color: #1e293b;
+      padding: 24px;
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      min-height: 600px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .preview-header {
+      border-bottom: 2px solid #00f3ff;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .preview-name {
+      margin: 0;
+      font-size: 1.8rem;
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    .preview-title {
+      margin: 4px 0 8px;
+      font-size: 1.1rem;
+      color: #00bcd4;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-contact {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .preview-section {
+      margin-bottom: 18px;
+    }
+
+    .preview-section-title {
+      font-size: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      color: #0f172a;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    .preview-date {
+      color: #64748b;
+      font-size: 0.8rem;
+    }
+
+    .preview-summary {
+      margin: 0 0 10px;
+      font-size: 0.85rem;
+      color: #334155;
+      line-height: 1.4;
+    }
+
+    .preview-skills {
+      font-size: 0.85rem;
+      color: #334155;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+    }
+
+    /* Sync Loading Overlay Styles */
+    .sync-loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 16, 32, 0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .sync-loading-card {
+      background: #0B1020;
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      border-radius: 16px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      max-width: 320px;
+      width: 100%;
+    }
+    .sync-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(0, 243, 255, 0.1);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      animation: sync-spin 1s linear infinite;
+    }
+    .sync-loading-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    @keyframes sync-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <nav class="nav" id="main-nav"></nav>
+  <div id="app-container">
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="header">
+        <h1 class="page-title">Resume Builder</h1>
+        <div class="preview-actions">
+          <button class="btn btn-secondary" onclick="exportJSON()">Export JSON</button>
+          <button class="btn btn-primary" onclick="exportPDF()">Export PDF</button>
+        </div>
+      </header>
 
-<nav class="nav" id="main-nav"></nav>
-
-<!-- Validation Modal -->
-<div id="validation-overlay" style="position: fixed; inset: 0; background: rgba(7, 10, 24, 0.85); backdrop-filter: blur(16px); z-index: 9999; display: none; align-items: center; justify-content: center;">
-  <div class="card" style="width: 420px; padding: 32px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); text-align: center; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-    <div style="font-size: 32px; margin-bottom: 12px;">📋</div>
-    <h3 style="font-family: var(--display); font-size: 22px; font-weight: 900; text-transform: uppercase; color: var(--white); margin-bottom: 10px; letter-spacing: 0.05em;">Profile Incomplete</h3>
-    <p style="font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 24px;">
-      To build and preview resumes, please complete your profile data first. We use this information to populate layouts automatically.
-    </p>
-    <div style="display: flex; gap: 12px;">
-      <button class="btn btn-primary" onclick="window.location.href='profile-setup.html'" style="flex: 1;">Proceed</button>
-      <button class="btn btn-secondary" onclick="window.location.href='dashboard.html'" style="flex: 1;">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Loading Overlay -->
-<div id="loading-overlay" style="position: fixed; inset: 0; background: #070a18; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.5s ease;">
-  <div style="width: 50px; height: 50px; border: 3px solid rgba(91,79,232,0.1); border-top-color: var(--orange); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-  <div id="loading-text" style="font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;">
-    Accessing secure sync vault...
-  </div>
-</div>
-
-<div class="pane-wrap">
-  <!-- Left Side: Controls -->
-  <div class="left-pane">
-    <div class="pane-title">LaTeX Layout Styles</div>
-    
-    <div class="control-group">
-      <label class="control-label" for="select-template">Format Style</label>
-      <select class="select-input" id="select-template">
-        <option value="01">Loading templates...</option>
-      </select>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="select-role">Target Role Override</label>
-      <select class="select-input" id="select-role">
-        <option value="default">Default / General</option>
-        <option value="sde">Software Development Engineer (SDE)</option>
-        <option value="backend">Backend Developer</option>
-        <option value="java">Java Developer</option>
-        <option value="marketing">Marketing Specialist</option>
-        <option value="sales">Sales Representative</option>
-        <option value="customer_care">Customer Care Operator</option>
-      </select>
-    </div>
-
-    <!-- Candidate level and sync display -->
-    <div style="display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:10px; color:var(--muted); background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border:1px solid var(--border); margin-bottom: 12px;">
-      <div>Classified Level: <span id="candidate-level" style="color:var(--green); font-weight:700;">-</span></div>
-      <div id="save-status" style="color:var(--green);">Synced</div>
-    </div>
-
-    <!-- Section Editors -->
-    <div class="pane-title">Section Editors</div>
-    
-    <div class="control-group">
-      <label class="control-label" for="edit-name">Full Name</label>
-      <input type="text" class="select-input" id="edit-name" style="cursor: text;">
-    </div>
-    
-    <div class="control-group">
-      <label class="control-label" for="edit-email">Email Address</label>
-      <input type="email" class="select-input" id="edit-email" style="cursor: text;">
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-phone">Phone Number</label>
-      <input type="text" class="select-input" id="edit-phone" style="cursor: text;">
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-summary">Professional Summary</label>
-      <textarea class="select-input" id="edit-summary" style="height: 100px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-education">Education Details</label>
-      <textarea class="select-input" id="edit-education" style="height: 120px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-experience">Experience Details</label>
-      <textarea class="select-input" id="edit-experience" style="height: 150px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-projects">Projects</label>
-      <textarea class="select-input" id="edit-projects" style="height: 100px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-skills">Skills</label>
-      <textarea class="select-input" id="edit-skills" style="height: 100px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-certifications">Certifications</label>
-      <textarea class="select-input" id="edit-certifications" style="height: 80px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-additional">Additional Information</label>
-      <textarea class="select-input" id="edit-additional" style="height: 60px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-
-    <div class="control-group">
-      <label class="control-label" for="edit-languages">Languages & Interests</label>
-      <textarea class="select-input" id="edit-languages" style="height: 60px; resize: vertical; cursor: text; font-family: var(--body);"></textarea>
-    </div>
-    
-    <div class="pane-title">ATS Real-time Feedback</div>
-    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-sizing: border-box;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-        <span style="font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase;">ATS Compatibility</span>
-        <span id="ats-score-badge" style="font-family: var(--display); font-size: 22px; font-weight: 900; color: var(--green);">0%</span>
-      </div>
-      <div style="height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; overflow: hidden; margin-bottom: 12px;">
-        <div id="ats-score-bar" style="width: 0%; height: 100%; background: var(--green); transition: width 0.3s;"></div>
-      </div>
-      <div id="ats-suggestions-container" style="font-family: var(--body); font-size: 11px; color: var(--muted); line-height: 1.45; display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; padding-right: 4px;">
-        Loading ATS metrics...
-      </div>
-    </div>
-    
-    <div class="pane-title">LaTeX Document Actions</div>
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-      <button class="btn btn-primary" id="btn-copy-latex" style="width: 100%; justify-content: center;">&rsaquo; Copy LaTeX Code</button>
-      <button class="btn btn-secondary" id="btn-download-latex" style="width: 100%; justify-content: center;">&rsaquo; Download .tex File</button>
-      <button class="btn btn-secondary" id="btn-save-profile" style="width: 100%; justify-content: center; background: rgba(47, 221, 196, 0.1); border-color: rgba(47, 221, 196, 0.4); color: var(--green);">&rsaquo; Save Profile Data Now</button>
-    </div>
-    
-    <div class="pane-title">PDF Operations</div>
-    <button class="btn btn-secondary" onclick="window.print()" style="width: 100%; justify-content: center; margin-bottom: 20px;">&rsaquo; Export PDF via Print</button>
-    
-    <div style="font-family:var(--mono); font-size:10px; color:var(--dim); line-height:1.6; margin-top: auto;">
-      Premium layout, perfectly formatted, only black text that fits in one or two pages.
-    </div>
-  </div>
-
-  <!-- Right Side: Preview (Strictly visual resume preview) -->
-  <div class="right-pane" style="padding-top: 24px;">
-    <!-- Tab 1: Visual -->
-    <div class="cv-page" id="cv-preview">
-      <!-- Layout loaded dynamically -->
-    </div>
-  </div>
-</div>
-
-<script>
-requireAuth();
-renderNav(document.getElementById('main-nav'), 'resume-builder.html');
-
-// State
-let activeProfile = {};
-let generatedLatex = "";
-let candidateLevel = "student"; // classified level: student, experienced, transition
-
-// Form inputs references
-const editors = {
-  name: document.getElementById('edit-name'),
-  email: document.getElementById('edit-email'),
-  phone: document.getElementById('edit-phone'),
-  summary: document.getElementById('edit-summary'),
-  education: document.getElementById('edit-education'),
-  experience: document.getElementById('edit-experience'),
-  projects: document.getElementById('edit-projects'),
-  skills: document.getElementById('edit-skills'),
-  certifications: document.getElementById('edit-certifications'),
-  additional: document.getElementById('edit-additional'),
-  languages: document.getElementById('edit-languages')
-};
-
-// LaTeX Escaper
-function escapeLatex(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/\\/g, '\\textbackslash{}')
-    .replace(/([&%$#_{}])/g, '\\$1')
-    .replace(/\^/g, '\\textasciicircum{}')
-    .replace(/~/g, '\\textasciitilde{}')
-    .replace(/\n/g, '\\\\ ');
-}
-
-// LaTeX bullet block formatter helper
-function formatBulletsToLatex(text) {
-  if (!text) return "";
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const items = [];
-  lines.forEach(l => {
-    if (l.startsWith('-') || l.startsWith('*') || l.startsWith('•')) {
-      items.push(`  \\item ${escapeLatex(l.substring(1).trim())}`);
-    } else {
-      items.push(`  \\item ${escapeLatex(l)}`);
-    }
-  });
-  if (items.length === 0) return "";
-  return `\\begin{itemize}\n${items.join('\n')}\n\\end{itemize}`;
-}
-
-// LaTeX experience tabular builder
-function formatExperienceToLatex(text) {
-  if (!text) return "";
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  let output = "";
-  let inBullets = false;
-  let bulletLines = [];
-
-  const closeBullets = () => {
-    if (inBullets && bulletLines.length > 0) {
-      output += `\\begin{itemize}[leftmargin=0.3in]\n${bulletLines.map(l => `  \\item ${l}`).join('\n')}\n\\end{itemize}\n`;
-      bulletLines = [];
-      inBullets = false;
-    }
-  };
-
-  lines.forEach(l => {
-    if (l.startsWith('-') || l.startsWith('*') || l.startsWith('•')) {
-      inBullets = true;
-      bulletLines.push(escapeLatex(l.substring(1).trim()));
-    } else {
-      closeBullets();
-      if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
-        let parts = l.split(/  +/);
-        if (parts.length < 2) parts = l.split('\t');
-        if (parts.length >= 2) {
-          const title = escapeLatex(parts[0].trim());
-          const date = escapeLatex(parts[parts.length - 1].trim());
-          output += `\\begin{tabularx}{\\linewidth}{X r}\n\\textbf{${title}} & ${date} \\\\\n\\end{tabularx}\n`;
-        } else {
-          output += `\\begin{tabularx}{\\linewidth}{X r}\n\\textbf{${escapeLatex(l)}} & \\\\\n\\end{tabularx}\n`;
-        }
-      } else {
-        output += `\\noindent ${escapeLatex(l)} \\\\[4pt]\n`;
-      }
-    }
-  });
-  closeBullets();
-  return output;
-}
-
-// LaTeX education tabular builder
-function formatEducationToLatex(text) {
-  if (!text) return "";
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  let output = "\\begin{tabularx}{\\linewidth}{X r}\n";
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (line.includes('--') || line.match(/(\d{4})/)) {
-      let parts = line.split(/  +/);
-      if (parts.length < 2) parts = line.split('\t');
-      if (parts.length >= 2) {
-        output += `\\textbf{${escapeLatex(parts[0].trim())}} & ${escapeLatex(parts[parts.length - 1].trim())} \\\\\n`;
-      } else {
-        output += `\\textbf{${escapeLatex(line)}} & \\\\\n`;
-      }
-    } else {
-      output += `${escapeLatex(line)} \\\\[6pt]\n`;
-    }
-  }
-  output += "\\end{tabularx}";
-  return output;
-}
-
-// Resume Parser from plaintext draft
-function parseResumeDraft(rawText) {
-  const sections = {
-    summary: "",
-    education: "",
-    experience: "",
-    projects: "",
-    skills: "",
-    certifications: "",
-    additional: "",
-    languages: ""
-  };
-  
-  if (!rawText) return sections;
-  
-  const headerRegex = /^(Summary|Education|Experience|Projects|Skills|Certifications|Additional Information|Languages \& Interests|Languages|Interests)/im;
-  const lines = rawText.split('\n');
-  let currentSection = null;
-  let sectionLines = [];
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    
-    const match = line.match(headerRegex);
-    if (match) {
-      if (currentSection) {
-        sections[currentSection] = sectionLines.join('\n');
-      }
-      const foundHeader = match[0].toLowerCase();
-      if (foundHeader.includes("summary")) currentSection = "summary";
-      else if (foundHeader.includes("education")) currentSection = "education";
-      else if (foundHeader.includes("experience")) currentSection = "experience";
-      else if (foundHeader.includes("projects")) currentSection = "projects";
-      else if (foundHeader.includes("skills")) currentSection = "skills";
-      else if (foundHeader.includes("certifications")) currentSection = "certifications";
-      else if (foundHeader.includes("additional")) currentSection = "additional";
-      else if (foundHeader.includes("language") || foundHeader.includes("interest")) currentSection = "languages";
-      
-      sectionLines = [];
-    } else {
-      if (currentSection) {
-        sectionLines.push(line);
-      }
-    }
-  }
-  if (currentSection) {
-    sections[currentSection] = sectionLines.join('\n');
-  }
-  
-  return sections;
-}
-
-// Classify Candidate Experience Level dynamically
-function classifyExperienceLevel(profile) {
-  const expText = (profile.experience || "").trim().toLowerCase();
-  const eduText = (profile.education || "").trim().toLowerCase();
-  
-  if (!expText || expText.length < 10) {
-    return "student";
-  }
-  
-  const expLines = expText.split('\n').filter(l => l.trim().length > 5);
-  
-  if (expText.includes("intern") && expLines.length <= 2) {
-    return "student";
-  }
-  
-  if (expLines.length >= 3 || expText.match(/(years|yrs|\b202[0-4]|\b201)/)) {
-    return "experienced";
-  }
-  
-  return "transition";
-}
-
-// 10 Target Roles x 4 summaries/skills Library (Student, Experienced, Transition, General)
-const ROLE_LIBRARY = {
-  software: {
-    student: {
-      summary: "Ambitious Software Engineering graduate with strong academic foundations in algorithm design, data structures, and full-stack development. Eager to contribute to software delivery teams and learn cutting-edge production frameworks.",
-      skills: "Technical Skills: Java, C, SQL/MySQL, Git, GitHub.\nDevelopment Core: Data structures, database systems design, code documentation.\nProcess Skills: Agile/Scrum methodologies, team collaboration."
-    },
-    experienced: {
-      summary: "Results-oriented Software Engineer with a proven track record of designing scalable web architectures, microservices API performance improvements, and leading agile sprint execution.",
-      skills: "Technical Skills: Java, C, Python, SQL/MySQL, Git, Docker, Kubernetes.\nSystem Design: Microservices, REST APIs, database clustering, system performance tuning.\nProcess Skills: Agile coordination, code reviews, SLA metrics tracking."
-    },
-    transition: {
-      summary: "Adaptable professional pivoting into Software Engineering. Combines analytical problem-solving skills from previous technical roles with self-taught expertise in modern programming stacks.",
-      skills: "Technical Skills: Java, C, SQL/MySQL, Git, HTML/CSS.\nSystems Core: Information verification, script validation, testing protocols.\nTransferable Skills: Technical documentation, SLA compliance, cross-team coordination."
-    },
-    general: {
-      summary: "Dedicated developer focused on writing clean, maintainable code, implementing robust database schemas, and building responsive client-side web applications.",
-      skills: "Technical Skills: Java, C, SQL/MySQL, Git.\nWeb Core: Frontend-backend integrations, systems deployment.\nProcess Skills: Documentation, quality checks."
-    }
-  },
-  qa: {
-    student: {
-      summary: "Detail-focused engineering graduate interested in manual and automated software testing. Experienced in mapping out user flows, drafting test plans, and logging system exceptions.",
-      skills: "Testing Core: Automated testing, unit tests, integration validation.\nTools: Selenium, JUnit, Google Sheets, Jira.\nAnalytical Skills: Test coverage checks, defect tracking."
-    },
-    experienced: {
-      summary: "QA Engineer with extensive experience in automated test suite authoring, CI/CD pipeline verification, regression analysis, and cross-browser responsiveness checks.",
-      skills: "Automated QA: Cypress, Selenium, Cucumber, Jest.\nCI/CD & Tools: Jenkins, Docker, Git, JIRA.\nQuality Ops: Regression testing, bug triage, SLA metrics compliance."
-    },
-    transition: {
-      summary: "Analytical investigator transitioning to Quality Assurance. Brings high attention to detail, process compliance experience, and troubleshooting capabilities from past administrative roles.",
-      skills: "QA Core: Test scenarios creation, bug logging, database integrity checks.\nTools: MySQL, Google Sheets, Notion.\nTransferable Skills: High-precision validation, stakeholder reporting."
-    },
-    general: {
-      summary: "Quality-driven analyst committed to verifying system reliability, drafting end-to-end user scenarios, and raising software stability thresholds.",
-      skills: "QA Skills: Automated scripting, manual testing matrix creation.\nTools: JIRA, Git, SQL/MySQL.\nProcess: Issue tracking, report compilation."
-    }
-  },
-  java: {
-    student: {
-      summary: "Graduate developer with solid foundations in Object-Oriented Programming, Java SE/EE, and SQL query creation. Comfortable building desktop applications and working with relational databases.",
-      skills: "Core Java: OOP principles, multithreading basics, JDBC connectors.\nDatabase & Tools: SQL/MySQL, Git, Eclipse IDE.\nDesign: Basic patterns mapping, documentation."
-    },
-    experienced: {
-      summary: "Senior Java Developer with expertise in Spring Boot microservices, multithreading optimizations, Hibernate ORM mappings, and secure enterprise application integrations.",
-      skills: "Java Tech: Spring Framework, Hibernate ORM, JUnit, Maven.\nDatabase & Cloud: MySQL, PostgreSQL, Docker, AWS.\nArchitecture: Microservices architecture, API gateway patterns."
-    },
-    transition: {
-      summary: "Skilled backend practitioner transitioning focus to enterprise Java stacks. Combines analytical systems design experience with deep hands-on training in object-oriented architectures.",
-      skills: "Backend Java: JVM internals, database integration patterns, Git.\nTools: IntelliJ IDEA, SQL, Google Sheets.\nProcess Skills: Document compliance, modular design, SLA compliance."
-    },
-    general: {
-      summary: "Java Engineer focused on writing robust, structured backend business logic, optimizing database query executions, and maintaining system integrations.",
-      skills: "Java Core: Spring Boot framework, unit testing, MySQL integration.\nTools: Git, Jenkins, Maven.\nProcess: API documentation, performance metrics check."
-    }
-  },
-  python: {
-    student: {
-      summary: "Data-driven graduate with practical knowledge of Python scripting, data visualization libraries, and mathematical modeling. Enthusiastic about analytics pipeline automation.",
-      skills: "Python Core: NumPy, Pandas, Matplotlib scripting.\nData & Querying: SQL/MySQL, Jupyter Notebook, Git.\nAnalytical Skills: Statistical charts compilation, information verification."
-    },
-    experienced: {
-      summary: "Experienced Data Specialist proficient in Python backend automation, ETL pipeline design, regression analysis modeling, and database warehousing tools.",
-      skills: "Python Stack: Django, Flask, Pandas, Scikit-Learn.\nDatabase & Big Data: PostgreSQL, Redshift, Spark, Docker.\nAnalytics: Machine learning modeling, statistical inference, dashboards mapping."
-    },
-    transition: {
-      summary: "Logical analyst transitioning to Python and Data Operations. Brings strong quantitative skills, system audits background, and automated scripting proficiency.",
-      skills: "Python Scripting: ETL processing, regex data cleaning, SQL integrations.\nTools: Google Sheets, Notion, Git.\nTransferable Skills: Data verification, operational report creation."
-    },
-    general: {
-      summary: "Technical practitioner focused on building clean Python automation scripts, optimizing database queries, and preparing structured analytics reports.",
-      skills: "Python Core: Script optimization, Pandas analysis frameworks.\nData: MySQL, PostgreSQL, CSV warehousing.\nProcess: Operational automation, report mapping."
-    }
-  },
-  marketing: {
-    student: {
-      summary: "Creative graduate trained in digital branding, social media metrics tracking, and content creation. Passionate about campaign analytics and scaling audience reach.",
-      skills: "Creative Skills: SEO optimization, copywriting, social media graphics.\nTools: Google Analytics, Canva, Trello.\nOperations: Brand voice uniformity checks, marketing database logs."
-    },
-    experienced: {
-      summary: "Strategic Growth Marketer with a track record of managing multi-channel digital acquisition funnels, optimizing SEO campaigns, and running A/B conversion tests.",
-      skills: "Growth Marketing: Customer acquisition, SEO/SEM management, PPC ads tracking.\nAnalytics: SQL, Google Analytics, HubSpot, Excel.\nLeadership: Campaign budget allocation, agency steering, SLA tracking."
-    },
-    transition: {
-      summary: "Communicative professional transitioning to Digital Marketing. Combines research, user communication skills, and creative writing background to build target audience campaigns.",
-      skills: "Marketing Skills: Copywriting, competitor catalog review, audience mapping.\nTools: Notion, Trello, Google Sheets.\nTransferable Skills: Interpersonal communications, project mapping."
-    },
-    general: {
-      summary: "Results-driven marketing professional focused on audience engagement, brand messaging uniformity, and data-backed channel optimization.",
-      skills: "Marketing Tech: Email marketing systems, content pipelines planning.\nAnalytics: Google Analytics, Excel spreadsheets.\nProcess: Competitor analysis, campaign tracking."
-    }
-  },
-  video: {
-    student: {
-      summary: "Creative graduate trained in video editing software, timeline formatting, sound design, and visual asset preparation. Eager to support media post-production pipelines.",
-      skills: "Video Editing: Premiere Pro, DaVinci Resolve basics.\nCreative Assets: Sound syncing, color correction, asset file formatting.\nProcess: File archiving schedules, storyboard mapping."
-    },
-    experienced: {
-      summary: "Experienced Video Producer and Editor with a history of delivering high-quality commercial assets, narrative edits, visual effects, and color grading projects.",
-      skills: "Post-Production: Premiere Pro, After Effects, DaVinci Resolve.\nCreative Direction: Storyboard direction, color grading, audio layout mastering.\nOperations: Media asset library management, project timeline schedules."
-    },
-    transition: {
-      summary: "Creative visualist pivoting to digital video production. Brings solid project management skills, storyboarding experience, and graphic assets handling capabilities.",
-      skills: "Visual Editing: Timeline editing, audio alignment, graphic asset layout.\nTools: Premiere Pro, Google Sheets, Trello.\nTransferable Skills: Customer collaboration, feedback loops management."
-    },
-    general: {
-      summary: "Visual editor dedicated to translating scripts into engaging video timelines, managing post-production assets, and ensuring premium sound designs.",
-      skills: "Video Ops: Timeline rendering, compression formatting.\nTools: Creative Cloud Suite, Notion.\nProcess: Media catalog management, project delivery trackers."
-    }
-  },
-  customer: {
-    student: {
-      summary: "Empathetic graduate with strong communication skills and a process-oriented mindset. Eager to resolve client inquiries, comply with SLAs, and coordinate issue escalations.",
-      skills: "Customer Support: Email formatting, chat support frameworks, queue monitoring.\nCRM & Tools: Salesforce basics, Google Sheets, MS Office.\nProcess: Incident validation, escalation protocols compliance."
-    },
-    experienced: {
-      summary: "Customer Service professional with extensive experience managing high-volume ticketing systems, improving SLA resolution times, and training support cohorts.",
-      skills: "Support Operations: Helpdesk team leading, CSAT metrics tracking, ticket routing.\nSystems: Zendesk, Salesforce, JIRA, Google Analytics.\nKPI Compliance: SLA speed-of-resolution, customer loyalty optimization."
-    },
-    transition: {
-      summary: "Customer-focused professional transitioning to support operations. Brings high patience, analytical problem-solving, and CRM management experience from previous hospitality roles.",
-      skills: "Support Skills: Ticketing workflows, query logging, user troubleshooting.\nTools: MS Office, Google Sheets, Slack.\nTransferable Skills: De-escalation tactics, customer empathy, details verify."
-    },
-    general: {
-      summary: "Dedicated support agent focused on query resolution, email/chat correspondence, and maintaining customer satisfaction index metrics.",
-      skills: "Customer Support: Ticketing management systems, email queues.\nTools: Salesforce, MS Office.\nProcess: Escalation compliance, record mapping updates."
-    }
-  },
-  sales: {
-    student: {
-      summary: "Goal-driven graduate eager to launch a career in sales operations. Strong communication skills, relationship-building abilities, and comfortable managing deals dashboards.",
-      skills: "Sales Core: Lead verification, pipeline logging, customer discovery call prep.\nTools: Salesforce, Google Sheets, MS PowerPoint.\nInterpersonal: Dynamic pitch presentations, active listening."
-    },
-    experienced: {
-      summary: "Sales Specialist with a history of qualifying enterprise leads, managing B2B account portfolios, and negotiating deal closings to exceed quotas.",
-      skills: "B2B Sales: Deal pipeline optimization, key accounts management.\nCRM & Analytics: Salesforce, HubSpot, SQL query tracking.\nNegotiation: Contract terms structuring, sales lifecycle speed checks."
-    },
-    transition: {
-      summary: "Relationship builder transitioning to enterprise account management. Brings deep product knowledge, target customer empathy, and contract negotiation experience.",
-      skills: "Sales Support: Account research, outreach templates drafting.\nTools: Trello, Google Sheets, Salesforce.\nTransferable Skills: Client relationships management, presentation creation."
-    },
-    general: {
-      summary: "Sales professional focused on managing candidate pipelines, customer relationship management tools, and closing deal structures.",
-      skills: "Sales Operations: CRM logging updates, target list generation.\nTools: Salesforce, Excel spreadsheets.\nProcess: Competitor analysis, deal pipeline tracking."
-    }
-  },
-  bd: {
-    student: {
-      summary: "Enthusiastic graduate with background research capabilities and partner relationship management skills. Eager to identify growth opportunities and qualify target leads.",
-      skills: "BD Core: Outbound email lead lists, competitor data check.\nTools: Google Sheets, LinkedIn Sales Navigator, Notion.\nCommunication: Partner introduction calls preparation."
-    },
-    experienced: {
-      summary: "BD Manager with proven record of scaling corporate partnerships, identifying market channels, and orchestrating outreach campaigns to secure pipeline deals.",
-      skills: "BD Strategy: Partnership development cycles, enterprise pricing checks.\nTools: Salesforce, HubSpot, LinkedIn Navigator.\nMetrics: Partner acquisition costs, deals pipeline volume."
-    },
-    transition: {
-      summary: "Strategic researcher pivoting to Business Development operations. Combines competitor analysis, account mapping, and negotiation capabilities from analytics roles.",
-      skills: "BD Operations: Partner profiling, channel qualification, deals log updates.\nTools: Google Sheets, Notion, Slack.\nTransferable: Data audit, presentation design."
-    },
-    general: {
-      summary: "Growth-oriented analyst focused on target market research, partner relations, and lead generation cycles.",
-      skills: "BD Ops: Partner acquisition lists, email pipeline campaigns.\nTools: CRM tools, Excel sheets.\nProcess: Competitor landscape monitoring."
-    }
-  },
-  mba: {
-    student: {
-      summary: "Business administration graduate with training in operational modeling, project planning spreadsheets, and presentation drafting. Ready to support business operations.",
-      skills: "Business Core: Financial metrics analysis, project milestones tracking.\nTools: MS Excel, Google Slides, Notion, Trello.\nProcess: Operation process flowcharts, meeting minutes management."
-    },
-    experienced: {
-      summary: "Operations Lead with experience managing cross-functional project sprints, optimizing supply chains, and driving organizational productivity metrics.",
-      skills: "Operations Management: Supply chain planning, Agile roadmap coordination.\nSystems: JIRA, SAP, SQL, Excel.\nMethodologies: Lean Six Sigma, workflow automation, SLA tracking."
-    },
-    transition: {
-      summary: "Organized leader transitioning to corporate management. Brings strong project coordination, resource allocation, and budget auditing skills.",
-      skills: "Management Support: Project timeline tracking, operational audits.\nTools: Trello, Notion, Slack.\nTransferable: Operational risk analysis, team lead protocols."
-    },
-    general: {
-      summary: "Management professional focused on process improvement checklists, team roadmap coordination, and corporate KPI audits.",
-      skills: "Business Operations: Sprint metrics tracking, resource planning.\nTools: MS Office, JIRA.\nProcess: Project management checklist validation."
-    }
-  }
-};
-
-// 10 Black-and-White Premium LaTeX Templates
-const LATEX_TEMPLATES = {};
-
-
-
-// State
-let activeProfile = {};
-let candidateLevel = "student"; // classified level: student, experienced, transition
-let autoSaveTimeout = null;
-
-// Form inputs references
-const editors = {
-  name: document.getElementById('edit-name'),
-  email: document.getElementById('edit-email'),
-  phone: document.getElementById('edit-phone'),
-  summary: document.getElementById('edit-summary'),
-  education: document.getElementById('edit-education'),
-  experience: document.getElementById('edit-experience'),
-  projects: document.getElementById('edit-projects'),
-  skills: document.getElementById('edit-skills'),
-  certifications: document.getElementById('edit-certifications'),
-  additional: document.getElementById('edit-additional'),
-  languages: document.getElementById('edit-languages')
-};
-
-// HTML Escaper
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-// HTML Experience Renderer
-function formatExperienceToHtml(text) {
-  if (!text) return "";
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  let html = "";
-  let inList = false;
-
-  const closeList = () => {
-    if (inList) {
-      html += "</ul>";
-      inList = false;
-    }
-  };
-
-  lines.forEach(l => {
-    if (l.startsWith("-") || l.startsWith("*") || l.startsWith("•")) {
-      if (!inList) {
-        html += `<ul style="margin: 4px 0 4px 16px; padding: 0; list-style-type: disc;">`;
-        inList = true;
-      }
-      const clean = l.substring(1).trim();
-      html += `<li style="margin-bottom: 2px;">${escapeHtml(clean)}</li>`;
-    } else {
-      closeList();
-      if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
-        let parts = l.split(/  +/);
-        if (parts.length < 2) parts = l.split('\t');
-        if (parts.length >= 2) {
-          const title = parts[0].trim();
-          const date = parts[parts.length - 1].trim();
-          html += `<div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 8px;">
-            <span>${escapeHtml(title)}</span>
-            <span>${escapeHtml(date)}</span>
-          </div>`;
-        } else {
-          html += `<div style="font-weight: bold; margin-top: 8px;">${escapeHtml(l)}</div>`;
-        }
-      } else {
-        html += `<div style="font-size: 11px; color: #555555; margin-top: 2px;">${escapeHtml(l)}</div>`;
-      }
-    }
-  });
-  closeList();
-  return html;
-}
-
-// HTML Timeline Experience Renderer (Template 05)
-function formatExperienceTimelineToHtml(text) {
-  if (!text) return "";
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  let html = "";
-  let currentRole = null;
-  let currentBullets = [];
-
-  const flushRole = () => {
-    if (currentRole) {
-      html += `
-        <div class="timeline-row">
-          <div class="timeline-date">${escapeHtml(currentRole.date)}</div>
-          <div class="timeline-line"></div>
-          <div class="timeline-body">
-            <div style="font-weight: bold;">${escapeHtml(currentRole.title)}</div>
-            ${currentRole.company ? `<div style="font-size:10.5px; color:#555; margin-bottom:4px;">${escapeHtml(currentRole.company)}</div>` : ''}
-            ${currentBullets.length > 0 ? `
-              <ul style="margin: 4px 0 0 16px; padding: 0; list-style-type: disc;">
-                ${currentBullets.map(b => `<li style="margin-bottom: 2px;">${escapeHtml(b)}</li>`).join("")}
-              </ul>
-            ` : ''}
+      <div id="resume-builder-app" class="builder-grid">
+        <!-- Editor Column -->
+        <div class="editor-col">
+          <!-- Personal Info -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3 class="card-title">01 // Personal Info</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-row">
+                <div class="form-group col-6">
+                  <label for="res-name">Name *</label>
+                  <input type="text" id="res-name" class="glass-input" placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group col-6">
+                  <label for="res-title">Target Job Title</label>
+                  <input type="text" id="res-title" class="glass-input" placeholder="e.g. Senior Software Engineer">
+                </div>
+              </div>
+              <div class="form-row" style="margin-top: 15px;">
+                <div class="form-group col-6">
+                  <label for="res-email">Email Address</label>
+                  <input type="email" id="res-email" class="glass-input" placeholder="e.g. john@example.com">
+                </div>
+                <div class="form-group col-6">
+                  <label for="res-phone">Phone Number</label>
+                  <input type="text" id="res-phone" class="glass-input" placeholder="e.g. +1 555-0199">
+                </div>
+              </div>
+              <div class="form-row" style="margin-top: 15px;">
+                <div class="form-group col-6">
+                  <label for="res-location">Location</label>
+                  <input type="text" id="res-location" class="glass-input" placeholder="e.g. San Francisco, CA">
+                </div>
+                <div class="form-group col-6">
+                  <label for="res-website">Website / Portfolio</label>
+                  <input type="text" id="res-website" class="glass-input" placeholder="e.g. github.com/johndoe">
+                </div>
+              </div>
+              <div class="form-group" style="margin-top: 15px;">
+                <label for="res-summary">Professional Summary</label>
+                <textarea id="res-summary" class="glass-input" rows="4" placeholder="Brief summary of your professional background..."></textarea>
+              </div>
+            </div>
           </div>
+
+          <!-- Skills -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3 class="card-title">02 // Skills</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="res-skills">Technical & Soft Skills (comma separated)</label>
+                <input type="text" id="res-skills" class="glass-input" placeholder="e.g. JavaScript, Python, React, Project Management">
+              </div>
+            </div>
+          </div>
+
+          <!-- Experience -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3 class="card-title">03 // Work Experience</h3>
+              <button class="btn btn-secondary btn-sm" onclick="addExperienceRow()">+ Add Position</button>
+            </div>
+            <div class="card-body" id="experience-list">
+              <!-- Dynamically added rows -->
+            </div>
+          </div>
+
+          <!-- Education -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3 class="card-title">04 // Education</h3>
+              <button class="btn btn-secondary btn-sm" onclick="addEducationRow()">+ Add Education</button>
+            </div>
+            <div class="card-body" id="education-list">
+              <!-- Dynamically added rows -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview Column -->
+        <div class="preview-col">
+          <div class="glass-card sticky-preview">
+            <div class="card-header">
+              <h3 class="card-title">Live Resume Preview</h3>
+            </div>
+            <div class="preview-container">
+              <div id="live-preview-sheet" class="preview-sheet">
+                <!-- Live Preview gets rendered here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="shared-shell.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Render navigation
+      const mainNav = document.getElementById('main-nav');
+      if (mainNav && typeof renderNav === "function") {
+        renderNav(mainNav, 'resume-builder.html');
+      }
+      
+      const container = document.getElementById("resume-builder-app");
+      if (!container) return;
+      
+      // Check loading overlay
+      const overlay = document.createElement("div");
+      overlay.className = "sync-loading-overlay";
+      overlay.innerHTML = `
+        <div class="sync-loading-card">
+          <div class="sync-spinner"></div>
+          <div class="sync-loading-text">Accessing Sync Vault...</div>
         </div>
       `;
-      currentRole = null;
-      currentBullets = [];
-    }
-  };
+      document.body.appendChild(overlay);
+      
+      // Load profile data (centralized sync)
+      try {
+        const state = await window.CareerBridgeSync.loadProfile();
+        populateFromProfile(state);
+      } catch (e) {
+        console.error("Failed to load profile:", e);
+      } finally {
+        overlay.remove();
+      }
 
-  lines.forEach(l => {
-    if (l.startsWith("-") || l.startsWith("*") || l.startsWith("•")) {
-      currentBullets.push(l.substring(1).trim());
-    } else {
-      flushRole();
-      if (l.includes('--') || l.includes(' - ') || l.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Present|\d{4})/i)) {
-        let parts = l.split(/  +/);
-        if (parts.length < 2) parts = l.split('\t');
-        if (parts.length >= 2) {
-          currentRole = { title: parts[0].trim(), date: parts[parts.length - 1].trim() };
-        } else {
-          currentRole = { title: l, date: "" };
-        }
-      } else {
-        if (currentRole) {
-          currentRole.company = l;
-        } else {
-          currentRole = { title: l, date: "" };
+      // Add input event listener to all editor inputs to update preview dynamically
+      document.addEventListener("input", updatePreview);
+    });
+
+    // Populate form with profile data
+    function populateFromProfile(state) {
+      if (!state) return;
+      const profile = state.profile || {};
+      
+      // Populate Basics
+      document.getElementById("res-name").value = profile.fullName || "";
+      document.getElementById("res-title").value = profile.headline || profile.targetRole || "";
+      document.getElementById("res-email").value = profile.email || "";
+      document.getElementById("res-phone").value = profile.phone || "";
+      document.getElementById("res-location").value = (profile.city && profile.country) ? `${profile.city}, ${profile.country}` : (profile.city || profile.country || "");
+      document.getElementById("res-website").value = profile.portfolio || "";
+      document.getElementById("res-summary").value = profile.summary || "";
+      
+      // Populate Skills
+      const skills = profile.skills || "";
+      document.getElementById("res-skills").value = typeof skills === "string" ? skills : (Array.isArray(skills) ? skills.join(", ") : "");
+      
+      // Populate Experience
+      const experience = profile.experience;
+      const expContainer = document.getElementById("experience-list");
+      if (expContainer) {
+        expContainer.innerHTML = "";
+        if (Array.isArray(experience)) {
+          experience.forEach(exp => {
+            addExperienceRow(exp);
+          });
+        } else if (typeof experience === "string" && experience.trim()) {
+          addExperienceRow({ summary: experience });
         }
       }
-    }
-  });
-  flushRole();
-  return html;
-}
-
-// HTML Education Renderer
-function formatEducationToHtml(text) {
-  if (!text) return "";
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  let html = "";
-  lines.forEach(line => {
-    if (line.includes('--') || line.match(/(\d{4})/)) {
-      let parts = line.split(/  +/);
-      if (parts.length < 2) parts = line.split('\t');
-      if (parts.length >= 2) {
-        html += `<div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 4px;">
-          <span>${escapeHtml(parts[0].trim())}</span>
-          <span>${escapeHtml(parts[parts.length - 1].trim())}</span>
-        </div>`;
-      } else {
-        html += `<div style="font-weight: bold; margin-top: 4px;">${escapeHtml(line)}</div>`;
+      
+      // Populate Education
+      const education = profile.education;
+      const eduContainer = document.getElementById("education-list");
+      if (eduContainer) {
+        eduContainer.innerHTML = "";
+        if (Array.isArray(education)) {
+          education.forEach(edu => {
+            addEducationRow(edu);
+          });
+        } else if (typeof education === "string" && education.trim()) {
+          addEducationRow({ area: education });
+        }
       }
-    } else {
-      html += `<div style="font-size: 11px; color: #444444;">${escapeHtml(line)}</div>`;
+
+      // Initial preview render
+      updatePreview();
     }
-  });
-  return html;
-}
 
-// HTML Bullet List Renderer
-function formatBulletsToHtml(text) {
-  if (!text) return "";
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-  if (lines.length === 0) return "";
-  return `<ul style="margin: 4px 0 0 16px; padding: 0; list-style-type: disc;">
-    ${lines.map(l => {
-      const clean = l.startsWith('-') || l.startsWith('*') || l.startsWith('•') ? l.substring(1).trim() : l;
-      return `<li style="margin-bottom: 3px;">${escapeHtml(clean)}</li>`;
-    }).join("")}
-  </ul>`;
-}
+    // Interactive functions for adding rows
+    function addExperienceRow(data = {}) {
+      const list = document.getElementById("experience-list");
+      if (!list) return;
+      
+      const row = document.createElement("div");
+      row.className = "experience-item";
+      row.innerHTML = `
+        <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
+          <input type="text" placeholder="Company Name" value="${data.company || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Job Title" value="${data.position || ''}" style="width: 50%;" class="glass-input">
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
+          <input type="text" placeholder="Start Date (e.g., Jun 2022)" value="${data.startDate || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="End Date (e.g., Present)" value="${data.endDate || ''}" style="width: 50%;" class="glass-input">
+        </div>
+        <textarea placeholder="Key accomplishments and duties..." rows="3" style="width: 100%; margin-bottom: 10px;" class="glass-input">${data.summary || ''}</textarea>
+        <button class="btn btn-secondary delete-btn btn-sm" onclick="this.parentElement.remove(); updatePreview();" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">Remove</button>
+      `;
+      list.appendChild(row);
+      updatePreview();
+    }
 
-// Workspace Render Engine (Live Preview)
-function renderResumeWorkspace() {
-  const tmplKey = document.getElementById("select-template").value;
-  const preview = document.getElementById("cv-preview");
-  preview.className = `cv-page tmpl-${tmplKey}`;
+    // Dynamic row addition for education
+    function addEducationRow(data = {}) {
+      const list = document.getElementById("education-list");
+      if (!list) return;
+      
+      const row = document.createElement("div");
+      row.className = "education-item";
+      row.innerHTML = `
+        <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
+          <input type="text" placeholder="Institution" value="${data.institution || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Degree / Area of Study" value="${data.area || ''}" style="width: 50%;" class="glass-input">
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
+          <input type="text" placeholder="Graduation Year" value="${data.year || ''}" style="width: 50%;" class="glass-input">
+        </div>
+        <button class="btn btn-secondary delete-btn btn-sm" onclick="this.parentElement.remove(); updatePreview();" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">Remove</button>
+      `;
+      list.appendChild(row);
+      updatePreview();
+    }
 
-  // Read current input values
-  const data = {
-    fullName: editors.name.value || "Your Name",
-    email: editors.email.value || "email@domain.com",
-    phone: editors.phone.value || "+91-0000000000",
-    targetRole: document.getElementById("select-role").value === "profile" ? (activeProfile.targetRole || "Software Engineer") : document.getElementById("select-role").value,
-    location: activeProfile.city && activeProfile.state ? `${activeProfile.city}, ${activeProfile.state}` : (activeProfile.address || ""),
-    linkedinDisplay: (activeProfile.linkedin || "linkedin.com/in/username").replace(/^https?:\/\/(www\.)?/, ""),
-    githubDisplay: (activeProfile.github || "github.com/username").replace(/^https?:\/\/(www\.)?/, ""),
-    portfolioDisplay: (activeProfile.portfolio || "").replace(/^https?:\/\/(www\.)?/, ""),
-    summary: editors.summary.value || "",
-    education: editors.education.value || "",
-    experience: editors.experience.value || "",
-    projects: editors.projects.value || "",
-    skills: editors.skills.value || "",
-    certifications: editors.certifications.value || "",
-    additional: editors.additional.value || ""
-  };
+    // Update the live preview sheet
+    function updatePreview() {
+      const name = document.getElementById("res-name")?.value || "Your Name";
+      const title = document.getElementById("res-title")?.value || "Target Job Title";
+      const email = document.getElementById("res-email")?.value || "";
+      const phone = document.getElementById("res-phone")?.value || "";
+      const location = document.getElementById("res-location")?.value || "";
+      const website = document.getElementById("res-website")?.value || "";
+      const summary = document.getElementById("res-summary")?.value || "";
+      
+      const skillsInput = document.getElementById("res-skills")?.value || "";
+      const skills = skillsInput.split(",").map(s => s.trim()).filter(Boolean);
 
-  const linksList = [];
-  if (data.linkedinDisplay) linksList.push(`LinkedIn: ${data.linkedinDisplay}`);
-  if (data.githubDisplay) linksList.push(`GitHub: ${data.githubDisplay}`);
-  if (data.portfolioDisplay) linksList.push(`Portfolio: ${data.portfolioDisplay}`);
-  const linksHtml = linksList.join(" | ");
+      let expHtml = "";
+      document.querySelectorAll(".experience-item").forEach(item => {
+        const inputs = item.querySelectorAll("input, textarea");
+        const company = inputs[0]?.value || "";
+        const position = inputs[1]?.value || "";
+        const startDate = inputs[2]?.value || "";
+        const endDate = inputs[3]?.value || "";
+        const expSummary = inputs[4]?.value || "";
+        if (company || position) {
+          expHtml += `
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
+                <span>${position} @ ${company}</span>
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${startDate} - ${endDate}</span>
+              </div>
+              <p style="font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; white-space: pre-line;">${expSummary}</p>
+            </div>
+          `;
+        }
+      });
 
-  const sectionsHtml = {
-    summary: data.summary ? `
-      <div class="cv-section" id="sec-summary">
-        <div class="sec-title">Summary</div>
-        <p class="cv-body-text">${escapeHtml(data.summary)}</p>
-      </div>
-    ` : "",
-    education: data.education ? `
-      <div class="cv-section" id="sec-education">
-        <div class="sec-title">Education</div>
-        <div class="cv-body-text">${formatEducationToHtml(data.education)}</div>
-      </div>
-    ` : "",
-    experience: data.experience ? `
-      <div class="cv-section" id="sec-experience">
-        <div class="sec-title">Experience</div>
-        <div class="cv-body-text">${tmplKey === "05" ? formatExperienceTimelineToHtml(data.experience) : formatExperienceToHtml(data.experience)}</div>
-      </div>
-    ` : "",
-    projects: data.projects ? `
-      <div class="cv-section" id="sec-projects">
-        <div class="sec-title">Projects</div>
-        <div class="cv-body-text">${formatBulletsToHtml(data.projects)}</div>
-      </div>
-    ` : "",
-    skills: data.skills ? `
-      <div class="cv-section" id="sec-skills">
-        <div class="sec-title">Skills</div>
-        <div class="cv-body-text">${formatBulletsToHtml(data.skills)}</div>
-      </div>
-    ` : "",
-    certifications: data.certifications ? `
-      <div class="cv-section" id="sec-certifications">
-        <div class="sec-title">Certifications</div>
-        <div class="cv-body-text">${formatBulletsToHtml(data.certifications)}</div>
-      </div>
-    ` : "",
-    additional: data.additional ? `
-      <div class="cv-section" id="sec-additional">
-        <div class="sec-title">Additional Information</div>
-        <div class="cv-body-text">${formatBulletsToHtml(data.additional)}</div>
-      </div>
-    ` : ""
-  };
+      let eduHtml = "";
+      document.querySelectorAll(".education-item").forEach(item => {
+        const inputs = item.querySelectorAll("input");
+        const inst = inputs[0]?.value || "";
+        const area = inputs[1]?.value || "";
+        const year = inputs[2]?.value || "";
+        if (inst || area) {
+          eduHtml += `
+            <div style="margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
+                <span>${area}</span>
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">Graduated: ${year}</span>
+              </div>
+              <div style="font-size: 0.85rem; color: #475569;">${inst}</div>
+            </div>
+          `;
+        }
+      });
 
-  // Render template-specific grid layouts
-  if (tmplKey === "02") {
-    // Sidebar Two Column
-    preview.innerHTML = `
-      <div class="col-left">
-        <div class="name" style="margin-bottom: 2px;">${escapeHtml(data.fullName)}</div>
-        <div style="font-size: 11px; text-transform: uppercase; color: #555555; margin-bottom: 12px;">${escapeHtml(data.targetRole)}</div>
+      const sheet = document.getElementById("live-preview-sheet");
+      if (!sheet) return;
+
+      sheet.innerHTML = `
+        <div class="preview-header">
+          <h1 class="preview-name">${name}</h1>
+          <h2 class="preview-title">${title}</h2>
+          <div class="preview-contact">
+            ${email ? `<span>✉ ${email}</span>` : ""}
+            ${phone ? `<span>📞 ${phone}</span>` : ""}
+            ${location ? `<span>📍 ${location}</span>` : ""}
+            ${website ? `<span>🌐 ${website}</span>` : ""}
+          </div>
+        </div>
         
-        <div class="cv-section">
-          <div class="sec-title">Contact</div>
-          <div style="font-size: 11px; display: flex; flex-direction: column; gap: 4px;">
-            <span>📧 ${escapeHtml(data.email)}</span>
-            <span>📞 ${escapeHtml(data.phone)}</span>
-            ${data.location ? `<span>📍 ${escapeHtml(data.location)}</span>` : ""}
-            ${data.linkedinDisplay ? `<span>💼 <span style="font-size:9px">${escapeHtml(data.linkedinDisplay)}</span></span>` : ""}
-            ${data.githubDisplay ? `<span>🐙 <span style="font-size:9px">${escapeHtml(data.githubDisplay)}</span></span>` : ""}
+        ${summary ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Professional Summary</h3>
+            <p style="font-size: 0.85rem; color: #334155; line-height: 1.4; white-space: pre-line;">${summary}</p>
           </div>
-        </div>
+        ` : ""}
 
-        ${sectionsHtml.skills}
-        ${sectionsHtml.certifications}
-        ${sectionsHtml.additional}
-      </div>
-      <div class="divider"></div>
-      <div class="col-right">
-        ${sectionsHtml.summary}
-        ${sectionsHtml.experience}
-        ${sectionsHtml.education}
-        ${sectionsHtml.projects}
-      </div>
-    `;
-  } else if (tmplKey === "10") {
-    // Grid Modular
-    preview.innerHTML = `
-      <div class="col-left">
-        <div style="margin-bottom: 12px;">
-          <div class="name" style="font-size: 24px; font-weight: bold;">${escapeHtml(data.fullName)}</div>
-          <div style="font-size: 12px; color: #555; text-transform: uppercase;">${escapeHtml(data.targetRole)}</div>
-          <div style="font-size: 10.5px; color: #666; margin-top: 4px;">
-            ${escapeHtml(data.email)} | ${escapeHtml(data.phone)} ${data.location ? `| ${escapeHtml(data.location)}` : ""}
+        ${skills.length > 0 ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Skills</h3>
+            <p class="preview-skills">${skills.join(" • ")}</p>
           </div>
-        </div>
-        ${sectionsHtml.summary}
-        ${sectionsHtml.experience}
-        ${sectionsHtml.projects}
-      </div>
-      <div class="col-right">
-        <div style="margin-bottom: 12px; font-size: 10.5px; color: #666; display: flex; flex-direction: column; gap: 4px;">
-          ${data.linkedinDisplay ? `<span>LinkedIn: ${escapeHtml(data.linkedinDisplay)}</span>` : ""}
-          ${data.githubDisplay ? `<span>GitHub: ${escapeHtml(data.githubDisplay)}</span>` : ""}
-        </div>
-        ${sectionsHtml.education}
-        ${sectionsHtml.skills}
-        ${sectionsHtml.certifications}
-        ${sectionsHtml.additional}
-      </div>
-    `;
-  } else if (tmplKey === "04") {
-    // Skills-First Functional (Skills at the top)
-    preview.innerHTML = `
-      <div class="hdr">
-        <h2 class="name">${escapeHtml(data.fullName)}</h2>
-        <div style="font-size: 11px; color: #555555; text-transform: uppercase; margin-bottom: 6px;">${escapeHtml(data.targetRole)}</div>
-        <div style="font-size: 11px; color: #444;">
-          ${escapeHtml(data.email)} | ${escapeHtml(data.phone)} ${data.location ? `| ${escapeHtml(data.location)}` : ""}
-        </div>
-        <div style="font-size: 10.5px; color: #666; margin-top: 2px;">${escapeHtml(linksHtml)}</div>
-      </div>
-      ${sectionsHtml.summary}
-      ${sectionsHtml.skills}
-      ${sectionsHtml.experience}
-      ${sectionsHtml.projects}
-      ${sectionsHtml.education}
-      ${sectionsHtml.certifications}
-      ${sectionsHtml.additional}
-    `;
-  } else {
-    // Standard and other single column layouts (01, 03, 05, 06, 07, 08, 09)
-    preview.innerHTML = `
-      <div class="hdr">
-        <h2 class="name">${escapeHtml(data.fullName)}</h2>
-        <div style="font-size: 11px; color: #555555; text-transform: uppercase; margin-bottom: 6px;">${escapeHtml(data.targetRole)}</div>
-        <div style="font-size: 11px; color: #444;">
-          ${escapeHtml(data.email)} | ${escapeHtml(data.phone)} ${data.location ? `| ${escapeHtml(data.location)}` : ""}
-        </div>
-        <div style="font-size: 10.5px; color: #666; margin-top: 2px;">${escapeHtml(linksHtml)}</div>
-      </div>
-      ${sectionsHtml.summary}
-      ${sectionsHtml.experience}
-      ${sectionsHtml.education}
-      ${sectionsHtml.projects}
-      ${sectionsHtml.skills}
-      ${sectionsHtml.certifications}
-      ${sectionsHtml.additional}
-    `;
-  }
-}
+        ` : ""}
 
-// Request LaTeX from Backend Generator
-async function getBackendGeneratedLatex() {
-  const tmplKey = document.getElementById("select-template").value;
-  const payload = {
-    templateId: tmplKey,
-    data: {
-      fullName: editors.name.value,
-      email: editors.email.value,
-      phone: editors.phone.value,
-      targetRole: document.getElementById("select-role").value === "profile" ? (activeProfile.targetRole || "") : document.getElementById("select-role").value,
-      location: activeProfile.city && activeProfile.state ? `${activeProfile.city}, ${activeProfile.state}` : (activeProfile.address || ""),
-      linkedinUrl: activeProfile.linkedin || "",
-      linkedinDisplay: (activeProfile.linkedin || "").replace(/^https?:\/\/(www\.)?/, ""),
-      githubUrl: activeProfile.github || "",
-      githubDisplay: (activeProfile.github || "").replace(/^https?:\/\/(www\.)?/, ""),
-      portfolioUrl: activeProfile.portfolio || "",
-      portfolioDisplay: (activeProfile.portfolio || "").replace(/^https?:\/\/(www\.)?/, ""),
-      summary: editors.summary.value,
-      education: editors.education.value,
-      experience: editors.experience.value,
-      projects: editors.projects.value,
-      skills: editors.skills.value,
-      certifications: editors.certifications.value,
-      additional: editors.additional.value
+        ${expHtml ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Professional Experience</h3>
+            ${expHtml}
+          </div>
+        ` : ""}
+
+        ${eduHtml ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Education</h3>
+            ${eduHtml}
+          </div>
+        ` : ""}
+      `;
     }
-  };
 
-  try {
-    const res = await fetch(`${SYNC_API}/resume/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (res.ok) {
-      return await res.text();
-    } else {
-      const err = await res.json();
-      throw new Error(err.error || "Generation failed");
+    // Export PDF or JSON functions
+    function exportPDF() {
+      // Print preview sheet
+      window.print();
     }
-  } catch (e) {
-    showToast("Generation failed: " + e.message, "error");
-    return "";
-  }
-}
 
-// Save Profile Database Updates
-async function saveResumeData() {
-  activeProfile.fullName = editors.name.value;
-  activeProfile.email = editors.email.value;
-  activeProfile.phone = editors.phone.value;
-  activeProfile.summary = editors.summary.value;
-  activeProfile.education = editors.education.value;
-  activeProfile.experience = editors.experience.value;
-  activeProfile.skills = editors.skills.value;
-  activeProfile.projects = editors.projects.value;
-  activeProfile.certifications = editors.certifications.value;
-  activeProfile.additional = editors.additional.value;
-  activeProfile.languages = editors.languages.value;
-
-  const saveStatus = document.getElementById("save-status");
-  saveStatus.textContent = "Saving changes...";
-  saveStatus.style.color = "var(--primary)";
-
-  const res = await saveProfile(activeProfile);
-  if (res && res.ok) {
-    saveStatus.textContent = "Synced";
-    saveStatus.style.color = "var(--green)";
-  } else {
-    saveStatus.textContent = "Sync failed";
-    saveStatus.style.color = "red";
-  }
-  
-  updateATSRealtimeFeedback();
-}
-
-// Debounced typing auto-save
-function triggerAutoSave() {
-  const saveStatus = document.getElementById("save-status");
-  saveStatus.textContent = "Typing...";
-  saveStatus.style.color = "var(--primary)";
-
-  if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
-  autoSaveTimeout = setTimeout(saveResumeData, 1500);
-}
-
-// Add input event listeners to all section editors for live updates
-Object.keys(editors).forEach(key => {
-  editors[key].addEventListener('input', () => {
-    renderResumeWorkspace();
-    triggerAutoSave();
-    updateATSRealtimeFeedback();
-  });
-});
-
-// Selector events
-document.getElementById("select-template").addEventListener("change", renderResumeWorkspace);
-document.getElementById("select-role").addEventListener("change", (e) => {
-  const roleKey = e.target.value;
-  let libKey = roleKey;
-  if (roleKey === "sde") libKey = "software";
-  if (roleKey === "backend") libKey = "software";
-  if (roleKey === "customer_care") libKey = "customer";
-  if (roleKey === "default") libKey = "software"; // fallback
-
-  if (ROLE_LIBRARY[libKey]) {
-    const levelKey = candidateLevel || "general";
-    const selected = ROLE_LIBRARY[libKey][levelKey] || ROLE_LIBRARY[libKey]["general"];
-    editors.summary.value = selected.summary;
-    editors.skills.value = selected.skills;
-  }
-  renderResumeWorkspace();
-  triggerAutoSave();
-  updateATSRealtimeFeedback();
-});
-
-// Copy LaTeX
-document.getElementById("btn-copy-latex").addEventListener("click", async () => {
-  const btn = document.getElementById("btn-copy-latex");
-  btn.disabled = true;
-  btn.textContent = "Generating LaTeX...";
-
-  const text = await getBackendGeneratedLatex();
-  if (text) {
-    navigator.clipboard.writeText(text).then(() => {
-      showToast("LaTeX code copied to clipboard!", "success");
-    }).catch(() => {
-      showToast("Failed to copy code.", "error");
-    });
-  }
-
-  btn.disabled = false;
-  btn.textContent = "Copy LaTeX Code";
-});
-
-// Download LaTeX File
-document.getElementById("btn-download-latex").addEventListener("click", async () => {
-  const btn = document.getElementById("btn-download-latex");
-  btn.disabled = true;
-  btn.textContent = "Generating file...";
-
-  const text = await getBackendGeneratedLatex();
-  if (text) {
-    const blob = new Blob([text], { type: "text/plain" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `resume_${(editors.name.value || "document").replace(/\s+/g, "_").toLowerCase()}.tex`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    showToast("LaTeX document downloaded!", "success");
-  }
-
-  btn.disabled = false;
-  btn.textContent = "Download .tex File";
-});
-
-// Save Profile Manual Button
-document.getElementById("btn-save-profile").addEventListener("click", async () => {
-  const btn = document.getElementById("btn-save-profile");
-  btn.disabled = true;
-  btn.textContent = "Saving to database...";
-  await saveResumeData();
-  btn.disabled = false;
-  btn.textContent = "Save Profile Data Now";
-});
-
-// Startup load
-(async () => {
-  const state = await loadProfile();
-  activeProfile = state?.profile || {};
-  
-  // Validation Check: if profile has no name, block and show validation modal
-  if (!activeProfile.fullName || !activeProfile.fullName.trim()) {
-    document.getElementById("loading-overlay").style.display = "none";
-    document.getElementById("validation-overlay").style.display = "flex";
-    return;
-  }
-  
-  // Classify candidate level dynamically
-  candidateLevel = classifyExperienceLevel(activeProfile);
-  document.getElementById("candidate-level").textContent = candidateLevel.toUpperCase();
-  
-  // Setup parsing loading overlay messages
-  const loadingText = document.getElementById("loading-text");
-  const loadingOverlay = document.getElementById("loading-overlay");
-  
-  const loadingSequence = [
-    { text: "Accessing secure sync vault...", delay: 0 },
-    { text: "Decrypting candidate profile...", delay: 400 },
-    { text: "Loading LaTeX layout templates...", delay: 800 },
-    { text: "Arranging and preparing your resume...", delay: 1200 },
-    { text: "Readying visual preview panels...", delay: 1600 }
-  ];
-  
-  loadingSequence.forEach(step => {
-    setTimeout(() => {
-      loadingText.textContent = step.text;
-    }, step.delay);
-  });
-
-  // Load actual template list from backend API
-  try {
-    const res = await fetch(`${SYNC_API}/resume/templates`);
-    if (res.ok) {
-      const templates = await res.json();
-      const select = document.getElementById("select-template");
-      select.innerHTML = "";
-      templates.forEach(t => {
-        const opt = document.createElement("option");
-        opt.value = t.id;
-        opt.textContent = `${t.id} // ${t.name} (${t.safety})`;
-        select.appendChild(opt);
-      });
+    // JSON export
+    function exportJSON() {
+      const data = {
+        basics: {
+          name: document.getElementById("res-name")?.value || "",
+          title: document.getElementById("res-title")?.value || "",
+          email: document.getElementById("res-email")?.value || "",
+          phone: document.getElementById("res-phone")?.value || "",
+          location: document.getElementById("res-location")?.value || "",
+          website: document.getElementById("res-website")?.value || "",
+          summary: document.getElementById("res-summary")?.value || "",
+        },
+        skills: (document.getElementById("res-skills")?.value || "").split(",").map(s => s.trim()).filter(Boolean),
+        experience: Array.from(document.querySelectorAll(".experience-item")).map(item => {
+          const inputs = item.querySelectorAll("input, textarea");
+          return {
+            company: inputs[0]?.value || "",
+            position: inputs[1]?.value || "",
+            startDate: inputs[2]?.value || "",
+            endDate: inputs[3]?.value || "",
+            summary: inputs[4]?.value || ""
+          };
+        }),
+        education: Array.from(document.querySelectorAll(".education-item")).map(item => {
+          const inputs = item.querySelectorAll("input");
+          return {
+            institution: inputs[0]?.value || "",
+            area: inputs[1]?.value || "",
+            year: inputs[2]?.value || ""
+          };
+        })
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "resume.json";
+      a.click();
     }
-  } catch (e) {
-    console.error("Failed to load templates list:", e);
-  }
-  
-  // Complete loading and reveal workspace
-  setTimeout(() => {
-    // Populate form inputs
-    const parsed = parseResumeDraft(activeProfile.resumeDraft || "");
-    editors.name.value = activeProfile.fullName || "";
-    editors.email.value = activeProfile.email || "";
-    editors.phone.value = activeProfile.phone || "";
-    
-    editors.summary.value = parsed.summary || activeProfile.summary || "";
-    editors.education.value = parsed.education || activeProfile.education || "";
-    editors.experience.value = parsed.experience || activeProfile.experience || "";
-    editors.projects.value = parsed.projects || "";
-    editors.skills.value = parsed.skills || activeProfile.skills || "";
-    editors.certifications.value = parsed.certifications || "";
-    editors.additional.value = parsed.additional || "";
-    editors.languages.value = parsed.languages || "";
-    
-    renderResumeWorkspace();
-    updateATSRealtimeFeedback();
-    
-    // Fade out loader
-    loadingOverlay.style.opacity = "0";
-    setTimeout(() => {
-      loadingOverlay.style.display = "none";
-    }, 500);
-  }, 2100);
-})();
-
-function updateATSRealtimeFeedback() {
-  activeProfile.fullName = editors.name.value;
-  activeProfile.email = editors.email.value;
-  activeProfile.phone = editors.phone.value;
-  activeProfile.summary = editors.summary.value;
-  activeProfile.education = editors.education.value;
-  activeProfile.experience = editors.experience.value;
-  activeProfile.skills = editors.skills.value;
-  activeProfile.projects = editors.projects.value;
-  activeProfile.certifications = editors.certifications.value;
-  activeProfile.additional = editors.additional.value;
-  activeProfile.languages = editors.languages.value;
-
-  const roleSelect = document.getElementById('select-role');
-  const roleValue = roleSelect ? roleSelect.value : 'default';
-
-  // Generated resume doesn't need layout parsing - score directly from profile
-  const result = scoreResumeData(activeProfile, roleValue, null, 'profile');
-
-  const badge = document.getElementById('ats-score-badge');
-  const bar = document.getElementById('ats-score-bar');
-  const suggestionsBox = document.getElementById('ats-suggestions-container');
-
-  if (badge && bar && suggestionsBox) {
-    badge.textContent = result.score + '%';
-
-    let color = 'var(--green)';
-    if (result.score < 50) {
-      color = '#f55a23';
-    } else if (result.score < 85) {
-      color = 'var(--alert)';
-    }
-    badge.style.color = color;
-    bar.style.backgroundColor = color;
-    bar.style.width = result.score + '%';
-
-    suggestionsBox.innerHTML = '';
-    if (result.suggestions.length === 0) {
-      suggestionsBox.innerHTML = '<div style="color:var(--green);">✓ ATS fully optimized. Great job!</div>';
-    } else {
-      result.suggestions.forEach(s => {
-        const cleaned = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        suggestionsBox.innerHTML += `<div style="border-left: 2px solid var(--border); padding-left: 6px; margin-bottom: 6px; font-size: 10px;">${cleaned}</div>`;
-      });
-    }
-  }
-}
-</script>
+  </script>
 </body>
 </html>

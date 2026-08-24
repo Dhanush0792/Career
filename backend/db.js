@@ -69,30 +69,31 @@ async function initializeDatabase(p) {
     )
   `);
 
-  // Seed default users if users table is empty
-  const userCountRes = await p.query("SELECT COUNT(*) FROM users");
-  const count = parseInt(userCountRes.rows[0].count, 10);
-  if (count === 0) {
-    console.log("[DB] Seeding default database users...");
-    await p.query(
-      "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-      ["u_0n89pch3tr59", "candidate@jobxapply.app", "John Candidate", "$2b$10$.e2vkzVHk2KP.yzsmc4QEuMZaNqW7gzu/gNNxCVbJfJrHEDPUj6aq", "user", "free", Date.now(), Date.now()]
-    );
-    await p.query(
-      "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3)",
-      ["u_0n89pch3tr59", null, JSON.stringify([])]
-    );
+  // Always ensure default users (admin & candidate) exist with correct credentials
+  console.log("[DB] Upserting default users (candidate & admin) to PostgreSQL...");
+  const candidateHash = "$2b$10$.e2vkzVHk2KP.yzsmc4QEuMZaNqW7gzu/gNNxCVbJfJrHEDPUj6aq";
+  const adminHash = "$2b$10$T8Z65cO6n/H.0CFp0jd6vewWcFD2sjmyznwxE7LFiEkLn9fKwP84O";
 
-    await p.query(
-      "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-      ["u_admin12345678", "admin@jobxapply.app", "Admin User", "$2b$10$T8Z65cO6n/H.0CFp0jd6vewWcFD2sjmyznwxE7LFiEkLn9fKwP84O", "admin", "free", Date.now(), Date.now()]
-    );
-    await p.query(
-      "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3)",
-      ["u_admin12345678", null, JSON.stringify([])]
-    );
-    console.log("[DB] Default users seeded successfully.");
-  }
+  // Upsert Candidate
+  await p.query(
+    "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, email = EXCLUDED.email",
+    ["u_0n89pch3tr59", "candidate@jobxapply.app", "John Candidate", candidateHash, "user", "free", Date.now(), Date.now()]
+  );
+  await p.query(
+    "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING",
+    ["u_0n89pch3tr59", null, JSON.stringify([])]
+  );
+
+  // Upsert Admin
+  await p.query(
+    "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, email = EXCLUDED.email",
+    ["u_admin12345678", "admin@jobxapply.app", "Admin User", adminHash, "admin", "free", Date.now(), Date.now()]
+  );
+  await p.query(
+    "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING",
+    ["u_admin12345678", null, JSON.stringify([])]
+  );
+  console.log("[DB] Default users ensured successfully.");
 }
 
 const DATABASE_URL = process.env.DATABASE_URL;

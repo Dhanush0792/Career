@@ -1,152 +1,126 @@
-import { buildAutofillPayload, getPortalRule } from "./shared.js";
+document.addEventListener("DOMContentLoaded", () => {
+  const panelRecognized = document.getElementById("panel-recognized");
+  const panelUniversal = document.getElementById("panel-universal");
+  const panelBlocked = document.getElementById("panel-blocked");
+  
+  const autofillToggle = document.getElementById("autofill-toggle");
+  const saveSettingsBtn = document.getElementById("save-settings");
+  
+  const btnStartScan = document.getElementById("btn-start-scan");
+  const btnConfirmFill = document.getElementById("btn-confirm-fill");
+  const btnCancelScan = document.getElementById("btn-cancel-scan");
+  
+  const universalSetup = document.getElementById("universal-setup");
+  const universalResults = document.getElementById("universal-results");
+  
+  const scanSummaryCard = document.getElementById("scan-summary-card");
+  const universalStatus = document.getElementById("universal-status");
+  const portalBadge = document.getElementById("portal-badge");
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function setStatus(msg, cls = "") {
-  const el = document.getElementById("status");
-  if (!el) return;
-  el.textContent = msg;
-  el.className = "status " + cls;
-}
+  let activeTabId = null;
+  let activeTabUrl = "";
 
-async function getActiveTab() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return tab;
-}
+  // Safety list containing payment processing, gateways, and checkout indicators
+  const UNSAFE_DOMAINS = [
+    "paypal", "stripe", "razorpay", "paytm", "hdfc", "sbi", 
+    "icici", "checkout", "billing", "payment", "bank", "card"
+  ];
 
-// ── Portal Detection ────────────────────────────────────────────────────────
-async function loadPortalInfo() {
-  const tab = await getActiveTab();
-  const rule = getPortalRule(tab?.url || "");
-  const nameEl = document.getElementById("portalName");
-  const tierEl = document.getElementById("portalTier");
-  const dotEl  = document.getElementById("portalDot");
-  if (nameEl) nameEl.textContent = rule.portal || "Unknown Site";
-  if (tierEl) tierEl.textContent = rule.notes ? `${rule.tier} · ${rule.notes}` : rule.tier || "";
-  if (dotEl) {
-    if (!rule.portal || rule.portal === "unknown") dotEl.classList.add("unknown");
-    else dotEl.classList.remove("unknown");
-  }
-  return { tab, rule };
-}
-
-// ── Profile Loading ─────────────────────────────────────────────────────────
-async function loadAndDisplayProfile() {
-  // First try local storage for fast load
-  const local = await new Promise((r) =>
-    chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], r)
-  );
-
-  let profile = local.jobxapplyProfile || {};
-  // If profiles map exists, pick active one
-  if (local.jobxapplyProfiles && local.jobxapplyActiveProfileId) {
-    profile = local.jobxapplyProfiles[local.jobxapplyActiveProfileId] || profile;
+  function showPanel(panel) {
+    [panelRecognized, panelUniversal, panelBlocked].forEach(p => p.classList.remove("active"));
+    panel.classList.add("active");
   }
 
-  const hasData = profile && (profile.fullName || profile.email || profile.phone);
+  // Query tab information
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (!tabs[0]) return;
+    const activeTab = tabs[0];
+    activeTabId = activeTab.id;
+    activeTabUrl = activeTab.url || "";
+    
+    let host = "";
+    try {
+      host = new URL(activeTabUrl).hostname.toLowerCase();
+    } catch(e) {}
 
-  const nameEl   = document.getElementById("profileName");
-  const emailEl  = document.getElementById("profileEmail");
-  const avatarEl = document.getElementById("profileAvatar");
-  const applyBtn = document.getElementById("apply");
-  const banner   = document.getElementById("setupBanner");
-
-  if (hasData) {
-    if (nameEl)  nameEl.textContent  = profile.fullName || profile.firstName + " " + (profile.lastName || "") || "Profile Loaded";
-    if (emailEl) emailEl.textContent = profile.email || profile.phone || "Ready to autofill";
-    if (avatarEl) avatarEl.textContent = (profile.fullName || profile.firstName || "?")[0].toUpperCase();
-    if (applyBtn) applyBtn.disabled = false;
-    if (banner)  banner.style.display = "none";
-    setStatus("Profile loaded — ready to autofill", "success");
-  } else {
-    if (nameEl)  nameEl.textContent  = "No profile loaded";
-    if (emailEl) emailEl.textContent = "Set up your profile first";
-    if (avatarEl) avatarEl.textContent = "?";
-    if (applyBtn) applyBtn.disabled = true;
-    if (banner)  banner.style.display = "block";
-    setStatus("Profile not set up — click Edit Profile", "warn");
-  }
-
-  return profile;
-}
-
-// ── Autofill ────────────────────────────────────────────────────────────────
-async function doAutofill() {
-  const { tab } = await loadPortalInfo();
-  if (!tab?.id) { setStatus("No active tab found", "error"); return; }
-
-  const profile = await loadAndDisplayProfile();
-  const hasData = profile && (profile.fullName || profile.email || profile.phone);
-  if (!hasData) {
-    setStatus("Profile is empty — fetch from cloud first!", "error");
-    return;
-  }
-
-  setStatus("Running autofill…");
-  const payload = buildAutofillPayload(profile, Object.keys(profile).filter(k => profile[k]));
-
-  chrome.tabs.sendMessage(tab.id, { type: "jobxapply:applyAutofill", profile: payload }, (res) => {
-    if (chrome.runtime.lastError) {
-      setStatus("Error: " + chrome.runtime.lastError.message, "error");
+    // 1. Safety domain patterns check
+    const isUnsafe = UNSAFE_DOMAINS.some(pattern => host.includes(pattern));
+    if (isUnsafe || activeTabUrl.startsWith("chrome://") || activeTabUrl.startsWith("edge://")) {
+      showPanel(panelBlocked);
       return;
     }
-    if (res?.filled > 0) {
-      setStatus(`✓ Filled ${res.filled} field(s)`, "success");
-    } else {
-      setStatus("No matching fields found on this page", "warn");
-    }
-  });
-}
 
-// ── Sync from Cloud ──────────────────────────────────────────────────────────
-async function syncFromCloud() {
-  const passcode = await new Promise((r) =>
-    chrome.storage.local.get(["jobxapplyPasscode"], (res) => r(res.jobxapplyPasscode || ""))
-  );
-
-  if (!passcode) {
-    // Ask for passcode inline
-    const entered = prompt("Enter your Sync Passcode to fetch profile from cloud:");
-    if (!entered) return;
-    await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: entered }, r));
-  }
-
-  setStatus("Syncing from cloud…");
-  chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
-    if (chrome.runtime.lastError) {
-      setStatus("Sync error: " + chrome.runtime.lastError.message, "error");
-      return;
-    }
-    if (res?.profile && (res.profile.fullName || res.profile.email)) {
-      setStatus("✓ Profile synced from cloud!", "success");
-      await loadAndDisplayProfile();
-    } else {
-      setStatus("No profile on server — enter profile manually", "warn");
-    }
-  });
-}
-
-// ── Init ────────────────────────────────────────────────────────────────────
-(async function init() {
-  await loadPortalInfo();
-  await loadAndDisplayProfile();
-
-  const toggle = document.getElementById("extensionToggle");
-  if (toggle) {
-    chrome.storage.local.get("extensionEnabled", (res) => {
-      toggle.checked = res.extensionEnabled !== false;
+    // 2. Message tab to check page eligibility
+    chrome.tabs.sendMessage(activeTabId, { action: "checkPageMode" }, (response) => {
+      if (chrome.runtime.lastError || !response || !response.isAllowed) {
+        showPanel(panelUniversal);
+      } else {
+        showPanel(panelRecognized);
+        if (response.govTier) {
+          portalBadge.textContent = `Gov Portal (Tier ${response.govTier})`;
+          portalBadge.className = "badge badge-warning";
+        } else {
+          portalBadge.textContent = "Recognized Portal";
+          portalBadge.className = "badge badge-info";
+        }
+        
+        // Load autofill state
+        chrome.storage.local.get(["autofillEnabled"], (result) => {
+          autofillToggle.checked = result.autofillEnabled !== false;
+        });
+      }
     });
-    toggle.addEventListener("change", (e) => {
-      chrome.storage.local.set({ extensionEnabled: e.target.checked });
-    });
-  }
-
-  document.getElementById("apply")?.addEventListener("click", doAutofill);
-
-  document.getElementById("editProfile")?.addEventListener("click", () => {
-    chrome.runtime.openOptionsPage
-      ? chrome.runtime.openOptionsPage()
-      : chrome.tabs.create({ url: chrome.runtime.getURL("profile.html") });
   });
 
-  document.getElementById("syncCloud")?.addEventListener("click", syncFromCloud);
-})();
+  // Save Settings for Recognized Portal Mode
+  saveSettingsBtn.addEventListener("click", () => {
+    const isEnabled = autofillToggle.checked;
+    chrome.storage.local.set({ autofillEnabled: isEnabled }, () => {
+      chrome.tabs.sendMessage(activeTabId, {
+        action: "toggleFloatingButton",
+        enabled: isEnabled
+      });
+      window.close();
+    });
+  });
+
+  // Universal Mode - Step 1: Scan fields
+  btnStartScan.addEventListener("click", () => {
+    universalStatus.textContent = "Scanning fields...";
+    chrome.tabs.sendMessage(activeTabId, { action: "scanForm" }, (response) => {
+      if (chrome.runtime.lastError || !response) {
+        universalStatus.textContent = "Error scanning. Try reloading the tab.";
+        return;
+      }
+      
+      const { detectedCount, fillableCount, reviewRequiredCount } = response;
+      scanSummaryCard.innerHTML = `
+        <strong>Scan Report:</strong><br>
+        • Fields detected: ${detectedCount}<br>
+        • Profile matches: ${fillableCount}<br>
+        • Manual check fields: ${reviewRequiredCount}<br><br>
+        <em>Note: Credentials and payment fields are strictly ignored.</em>
+      `;
+      
+      universalSetup.style.display = "none";
+      universalResults.style.display = "block";
+      universalStatus.textContent = "";
+    });
+  });
+
+  // Universal Mode - Step 2: Fill fields
+  btnConfirmFill.addEventListener("click", () => {
+    universalStatus.textContent = "Triggering fill...";
+    chrome.runtime.sendMessage({ action: "requestAutofillUniversal", tabId: activeTabId });
+    setTimeout(() => {
+      window.close();
+    }, 500);
+  });
+
+  // Cancel Universal scan
+  btnCancelScan.addEventListener("click", () => {
+    universalSetup.style.display = "block";
+    universalResults.style.display = "none";
+    universalStatus.textContent = "";
+  });
+});

@@ -72,7 +72,7 @@ body::after {
 .dropzone-desc { font-size: 10px; color: var(--muted); }
 
 /* Logs Terminal */
-.console-box { background: #000; border: 1px solid var(--glass-border); padding: 10px 14px; font-family: var(--mono); font-size: 10px; color: var(--muted); height: 75px; overflow-y: auto; border-radius: 8px; margin-bottom: 20px; line-height: 1.5; }
+.console-box { display: none !important; }
 .console-line.success { color: var(--success); }
 .console-line.warn { color: var(--alert); }
 
@@ -87,15 +87,10 @@ body::after {
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
-  <div class="page-header">
-    <div>
-      <div class="page-label">MANAGEMENT CONSOLE</div>
-      <h1 class="page-title">MASTER <em>PROFILE</em></h1>
-    </div>
-    <div style="text-align: right;">
-      <button class="btn btn-ghost" onclick="window.location.href='dashboard.html'" style="padding: 8px 16px; font-size: 10px;">&lsaquo; Dashboard</button>
-    </div>
-  </div>
+  <header class="header">
+    <h1 class="page-title">Master Profile</h1>
+  </header>
+  <button class="btn btn-ghost" onclick="window.location.href='dashboard.html'" style="padding: 8px 16px; font-size: 10px;">&lsaquo; Dashboard</button>
 
   <div class="profile-grid">
     <!-- Left Navigation -->
@@ -238,9 +233,9 @@ body::after {
         <!-- Shared Action Footer -->
         <div class="actions-footer">
           <div id="save-status" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Ready</div>
-          <div style="display:flex; gap:10px;">
-            <button type="button" class="btn btn-primary" id="btn-save-local" onclick="saveLocalProfile()">💾 Save Locally</button>
-            <button type="button" class="btn btn-success" id="btn-save-cloud" onclick="saveCloudProfile()">☁ Save to Cloud</button>
+          <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+            <button type="button" class="btn btn-secondary" onclick="saveLocalProfile()">Save Locally</button>
+            <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save to Cloud</button>
           </div>
         </div>
 
@@ -289,6 +284,17 @@ async function handleFile(file) {
   if (!file) return;
   addLog(`Selected: ${file.name}`);
   const reader = new FileReader();
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Render navigation
+    if (window.CareerBridgeSync && typeof window.CareerBridgeSync.renderNav === "function") {
+      window.CareerBridgeSync.renderNav();
+    }
+
+    // Check authentication
+    if (!window.CareerBridgeSync.requireAuth()) return;
+    
+    // Load and populate profile
+  });
   reader.onload = async (e) => {
     const arrayBuffer = e.target.result;
     try {
@@ -416,7 +422,44 @@ async function saveLocalProfile() {
     return;
   }
 
+  const activeId = localStorage.getItem('jxa_active_profile_id') || "default";
+  
+  let localProfilesRaw = localStorage.getItem('jxa_local_profiles');
+  let localProfiles = {};
+  try {
+    localProfiles = localProfilesRaw ? JSON.parse(localProfilesRaw) : {};
+  } catch(e) {}
+  
+  profile.id = activeId;
+  localProfiles[activeId] = profile;
+
+  const encryptedProfiles = {};
+  for (const key of Object.keys(localProfiles)) {
+    const p = localProfiles[key];
+    if (passcode) {
+      try {
+        encryptedProfiles[key] = await encryptProfileData(p, passcode);
+      } catch (e) {
+        console.error("Encryption failed for profile:", key, e);
+        encryptedProfiles[key] = p;
+      }
+    } else {
+      encryptedProfiles[key] = p;
+    }
+  }
+
+  const localState = {
+    profiles: encryptedProfiles,
+    activeProfileId: activeId,
+    version: 0,
+    updatedAt: Date.now(),
+    origin: 'local'
+  };
+
   localStorage.setItem('jxa_local_profile', JSON.stringify(profile));
+  localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
+  localStorage.setItem('jxa_local_state', JSON.stringify(localState));
+
   document.getElementById('save-status').textContent = 'Saved locally ✓';
   document.getElementById('save-status').style.color = 'var(--success)';
   showToast('Profile saved locally.');

@@ -48,7 +48,7 @@
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson@3"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2115,6 +2115,109 @@ footer {
 
 
 /* ─── 13. SMOOTH ANCHOR SCROLL ───────────────────────────────*/
+  <script>
+    window.addEventListener('load', () => {
+      const container = document.getElementById('globe-container');
+      if (!container) return;
+
+      let width = container.clientWidth;
+      let height = container.clientHeight;
+
+      // Fallback if dimensions are not computed yet
+      if (!width || !height || width < 100 || height < 100) {
+        const rect = container.getBoundingClientRect();
+        width = rect.width || window.innerWidth;
+        height = rect.height || window.innerHeight;
+      }
+
+      if (width < 100) width = 800;
+      if (height < 100) height = 600;
+
+      // Scene
+      const scene = new THREE.Scene();
+
+      // Camera
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      camera.position.z = 18;
+
+      // Renderer
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      // Globe Geometry
+      const geometry = new THREE.SphereGeometry(5, 64, 64);
+      
+      // Wireframe Material for a futuristic vector look
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x00f3ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35
+      });
+
+      const globe = new THREE.Mesh(geometry, material);
+      scene.add(globe);
+
+      // Outer atmosphere glow
+      const glowGeo = new THREE.SphereGeometry(5.2, 32, 32);
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: 0x00f3ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.08
+      });
+      const glow = new THREE.Mesh(glowGeo, glowMat);
+      scene.add(glow);
+
+      // Add floating data point indicators
+      const points = [];
+      const numPoints = 12;
+      for (let i = 0; i < numPoints; i++) {
+        const phi = Math.acos(-1 + (2 * i) / numPoints);
+        const theta = Math.sqrt(numPoints * Math.PI) * phi;
+        
+        const x = 5 * Math.sin(phi) * Math.cos(theta);
+        const y = 5 * Math.sin(phi) * Math.sin(theta);
+        const z = 5 * Math.cos(phi);
+        
+        const ptGeo = new THREE.SphereGeometry(0.12, 8, 8);
+        const ptMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
+        const pt = new THREE.Mesh(ptGeo, ptMat);
+        pt.position.set(x, y, z);
+        globe.add(pt);
+        points.push(pt);
+      }
+
+      // Animation Loop
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        globe.rotation.y += 0.002;
+        globe.rotation.x += 0.0005;
+        
+        // Pulse points
+        const time = Date.now() * 0.003;
+        points.forEach((pt, index) => {
+          const scale = 1 + 0.3 * Math.sin(time + index);
+          pt.scale.set(scale, scale, scale);
+        });
+        
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Resize Handler
+      window.addEventListener('resize', () => {
+        const w = container.clientWidth || window.innerWidth;
+        const h = container.clientHeight || window.innerHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      });
+    });
+  </script>
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     const id = a.getAttribute('href').slice(1);
@@ -2208,64 +2311,62 @@ window.addEventListener('load', () => {
   const path = d3.geoPath(projection, context);
   const graticule = d3.geoGraticule();
 
-  Promise.all([
-    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r => { if (!r.ok) throw new Error('World atlas load failed'); return r.json(); }),
-    fetch('india-boundary.json').then(r => { if (!r.ok) throw new Error('India boundary load failed'); return r.json(); })
-  ])
-  .then(([world, indiaBoundary]) => {
-    INDIA_SOI = indiaBoundary;
-    const land = topojson.feature(world, world.objects.countries);
+  function startWithGeometries(worldLand, indiaGeo) {
+    INDIA_SOI = indiaGeo;
+    let landFiltered = null;
+    
+    if (worldLand) {
+      try {
+        const land = topojson.feature(worldLand, worldLand.objects.countries);
+        const INDIA_ID = 356;
+        landFiltered = {
+          ...land,
+          features: land.features
+            .filter(f => Number(f.id) !== INDIA_ID)          // drop world-atlas India
+            .map(f => {
+              const id = Number(f.id);
+              // Pakistan: trim disputed J&K/PoK region (lon>73, lat>33.5)
+              if (id === 586 && f.geometry && f.geometry.type === 'Polygon') {
+                return {
+                  ...f,
+                  geometry: {
+                    ...f.geometry,
+                    coordinates: [f.geometry.coordinates[0].filter(pt => !(pt[0] > 73.0 && pt[1] > 33.5))]
+                  }
+                };
+              }
+              return f;
+            })
+        };
+      } catch (e) {
+        console.error("Topojson parse error:", e);
+      }
+    }
 
-      // Remove India (id=356) and trim Pakistan & China in disputed zones
-      // so our SOI overlay paints clean on top
-      const INDIA_ID = 356;
-      const landFiltered = {
-        ...land,
-        features: land.features
-          .filter(f => Number(f.id) !== INDIA_ID)          // drop world-atlas India
-          .map(f => {
-            const id = Number(f.id);
-            // Pakistan: trim disputed J&K/PoK region (lon>73, lat>33.5)
-            if (id === 586 && f.geometry && f.geometry.type === 'Polygon') {
-              return {
-                ...f,
-                geometry: {
-                  ...f.geometry,
-                  coordinates: [f.geometry.coordinates[0].filter(pt => !(pt[0] > 73.0 && pt[1] > 33.5))]
-                }
-              };
-            }
-            // China: trim Aksai Chin region claimed by India
-            if (id === 156 && f.geometry && f.geometry.type === 'MultiPolygon') {
-              return f; // leave MultiPolygon as-is (trimming complex)
-            }
-            return f;
-          })
-      };
+    draw = function() {
+      context.clearRect(0, 0, W, H);
 
-      draw = function() {
-        context.clearRect(0, 0, W, H);
+      // ── Globe ocean background ──────────────────────────────
+      context.beginPath();
+      context.arc(CX, CY, RADIUS, 0, 2 * Math.PI);
+      const grad = context.createRadialGradient(CX - 50, CY - 50, 20, CX, CY, RADIUS);
+      grad.addColorStop(0, 'rgba(12, 18, 44, 0.97)');
+      grad.addColorStop(1, 'rgba(4, 6, 16, 0.99)');
+      context.fillStyle = grad;
+      context.fill();
+      context.lineWidth = 1.5;
+      context.strokeStyle = 'rgba(91, 79, 232, 0.4)';
+      context.stroke();
 
-        // ── Globe ocean background ──────────────────────────────
-        context.beginPath();
-        context.arc(CX, CY, RADIUS, 0, 2 * Math.PI);
-        const grad = context.createRadialGradient(CX - 50, CY - 50, 20, CX, CY, RADIUS);
-        grad.addColorStop(0, 'rgba(12, 18, 44, 0.97)');
-        grad.addColorStop(1, 'rgba(4, 6, 16, 0.99)');
-        context.fillStyle = grad;
-        context.fill();
-        context.lineWidth = 1.5;
-        context.strokeStyle = 'rgba(91, 79, 232, 0.4)';
-        context.stroke();
+      // ── Graticule (lat/lon grid) ────────────────────────────
+      context.beginPath();
+      path(graticule());
+      context.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      context.lineWidth = 0.4;
+      context.stroke();
 
-        // ── Graticule (lat/lon grid) ────────────────────────────
-        context.beginPath();
-        path(graticule());
-        context.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-        context.lineWidth = 0.4;
-        context.stroke();
-
-        // ── World countries (India excluded from this layer) ────
+      // ── World countries (India excluded from this layer) ────
+      if (landFiltered) {
         landFiltered.features.forEach(d => {
           context.beginPath();
           path(d);
@@ -2275,184 +2376,203 @@ window.addEventListener('load', () => {
           context.lineWidth = 0.5;
           context.stroke();
         });
+      }
 
-        // ── INDIA — SOI Official Boundary overlay ───────────────
-        if (INDIA_SOI) {
-          context.beginPath();
-          path(INDIA_SOI);
-          context.fillStyle = 'rgba(47, 221, 196, 0.25)';
-          context.fill();
-          // Bright teal border
-          context.strokeStyle = 'rgba(47, 221, 196, 0.75)';
-          context.lineWidth = 1.4;
-          context.stroke();
-          // Inner glow pass
-          context.beginPath();
-          path(INDIA_SOI);
-          context.strokeStyle = 'rgba(47, 221, 196, 0.2)';
-          context.lineWidth = 4;
-          context.stroke();
-        }
-
-        // ── City markers & pulse rings ──────────────────────────
-        const visibleCities = [];
-        cities.forEach(city => {
-          const center = projection.invert([CX, CY]);
-          const dist = d3.geoDistance(center, city.coords);
-          if (dist < Math.PI / 2) {
-            const xy = projection(city.coords);
-            if (!xy) return;
-            visibleCities.push({ ...city, xy });
-
-            const t = Date.now() / 500;
-            const pulseR = 5 + Math.abs(Math.sin(t + city.coords[0])) * 5;
-
-            context.beginPath();
-            context.arc(xy[0], xy[1], pulseR + 5, 0, 2 * Math.PI);
-            context.strokeStyle = 'rgba(47, 221, 196, 0.10)';
-            context.lineWidth = 1;
-            context.stroke();
-
-            context.beginPath();
-            context.arc(xy[0], xy[1], pulseR, 0, 2 * Math.PI);
-            context.strokeStyle = 'rgba(47, 221, 196, 0.30)';
-            context.lineWidth = 1;
-            context.stroke();
-
-            context.beginPath();
-            context.arc(xy[0], xy[1], 3.5, 0, 2 * Math.PI);
-            context.fillStyle = '#2fddc4';
-            context.shadowColor = '#2fddc4';
-            context.shadowBlur = 6;
-            context.fill();
-            context.shadowBlur = 0;
-          }
-        });
-
-        // ── City connection arcs & moving signals ──────────────────
-        if (visibleCities.length > 1) {
-          for (let i = 0; i < visibleCities.length - 1; i++) {
-            // Draw connection line
-            context.beginPath();
-            path({ type: 'LineString', coordinates: [visibleCities[i].coords, visibleCities[i+1].coords] });
-            context.strokeStyle = 'rgba(91, 79, 232, 0.35)';
-            context.lineWidth = 0.8;
-            context.setLineDash([3, 5]);
-            context.stroke();
-            context.setLineDash([]);
-
-            // Moving signal packet with phase offset per line
-            const tSignal = ((Date.now() + i * 500) % 3000) / 3000;
-            const interpolator = d3.geoInterpolate(visibleCities[i].coords, visibleCities[i+1].coords);
-            const signalCoords = interpolator(tSignal);
-            
-            // Check if signal coords are on visible front hemisphere
-            const center = projection.invert([CX, CY]);
-            const dist = d3.geoDistance(center, signalCoords);
-            if (dist < Math.PI / 2) {
-              const xy = projection(signalCoords);
-              if (xy) {
-                // Glow core
-                context.beginPath();
-                context.arc(xy[0], xy[1], 4, 0, 2 * Math.PI);
-                context.fillStyle = '#2fddc4';
-                context.shadowColor = '#2fddc4';
-                context.shadowBlur = 12;
-                context.fill();
-                context.shadowBlur = 0; // reset shadow glow
-                
-                // Glow aura ring
-                context.beginPath();
-                context.arc(xy[0], xy[1], 8, 0, 2 * Math.PI);
-                context.fillStyle = 'rgba(47, 221, 196, 0.25)';
-                context.fill();
-              }
-            }
-          }
-        }
-
-        // ── Rim glow ────────────────────────────────────────────
-        const rimGrad = context.createRadialGradient(CX, CY, RADIUS - 10, CX, CY, RADIUS + 6);
-        rimGrad.addColorStop(0, 'rgba(91, 79, 232, 0)');
-        rimGrad.addColorStop(1, 'rgba(91, 79, 232, 0.2)');
+      // ── INDIA — SOI Official Boundary overlay ───────────────
+      if (INDIA_SOI) {
         context.beginPath();
-        context.arc(CX, CY, RADIUS, 0, 2 * Math.PI);
-        context.strokeStyle = rimGrad;
-        context.lineWidth = 10;
+        path(INDIA_SOI);
+        context.fillStyle = 'rgba(47, 221, 196, 0.25)';
+        context.fill();
+        // Bright teal border
+        context.strokeStyle = 'rgba(47, 221, 196, 0.75)';
+        context.lineWidth = 1.4;
+        context.stroke();
+        // Inner glow pass
+        context.beginPath();
+        path(INDIA_SOI);
+        context.strokeStyle = 'rgba(47, 221, 196, 0.2)';
+        context.lineWidth = 4;
         context.stroke();
       }
 
-      function animate() {
-        if (autoRotate) {
-          rotation[0] -= 0.10;
-          projection.rotate(rotation);
+      // ── City markers & pulse rings ──────────────────────────
+      const visibleCities = [];
+      cities.forEach(city => {
+        const center = projection.invert([CX, CY]);
+        const dist = d3.geoDistance(center, city.coords);
+        if (dist < Math.PI / 2) {
+          const xy = projection(city.coords);
+          if (!xy) return;
+          visibleCities.push({ ...city, xy });
+
+          const t = Date.now() / 500;
+          const pulseR = 5 + Math.abs(Math.sin(t + city.coords[0])) * 5;
+
+          context.beginPath();
+          context.arc(xy[0], xy[1], pulseR + 5, 0, 2 * Math.PI);
+          context.strokeStyle = 'rgba(47, 221, 196, 0.10)';
+          context.lineWidth = 1;
+          context.stroke();
+
+          context.beginPath();
+          context.arc(xy[0], xy[1], pulseR, 0, 2 * Math.PI);
+          context.strokeStyle = 'rgba(47, 221, 196, 0.30)';
+          context.lineWidth = 1;
+          context.stroke();
+
+          context.beginPath();
+          context.arc(xy[0], xy[1], 3.5, 0, 2 * Math.PI);
+          context.fillStyle = '#2fddc4';
+          context.shadowColor = '#2fddc4';
+          context.shadowBlur = 6;
+          context.fill();
+          context.shadowBlur = 0;
         }
-        draw();
-        requestAnimationFrame(animate);
+      });
+
+      // ── City connection arcs & moving signals ──────────────────
+      if (visibleCities.length > 1) {
+        for (let i = 0; i < visibleCities.length - 1; i++) {
+          // Draw connection line
+          context.beginPath();
+          path({ type: 'LineString', coordinates: [visibleCities[i].coords, visibleCities[i+1].coords] });
+          context.strokeStyle = 'rgba(91, 79, 232, 0.35)';
+          context.lineWidth = 0.8;
+          context.setLineDash([3, 5]);
+          context.stroke();
+          context.setLineDash([]);
+
+          // Moving signal packet with phase offset per line
+          const tSignal = ((Date.now() + i * 500) % 3000) / 3000;
+          const interpolator = d3.geoInterpolate(visibleCities[i].coords, visibleCities[i+1].coords);
+          const signalCoords = interpolator(tSignal);
+          
+          // Check if signal coords are on visible front hemisphere
+          const center = projection.invert([CX, CY]);
+          const dist = d3.geoDistance(center, signalCoords);
+          if (dist < Math.PI / 2) {
+            const xy = projection(signalCoords);
+            if (xy) {
+              // Glow core
+              context.beginPath();
+              context.arc(xy[0], xy[1], 4, 0, 2 * Math.PI);
+              context.fillStyle = '#2fddc4';
+              context.shadowColor = '#2fddc4';
+              context.shadowBlur = 12;
+              context.fill();
+              context.shadowBlur = 0; // reset shadow glow
+              
+              // Glow aura ring
+              context.beginPath();
+              context.arc(xy[0], xy[1], 8, 0, 2 * Math.PI);
+              context.fillStyle = 'rgba(47, 221, 196, 0.25)';
+              context.fill();
+            }
+          }
+        }
       }
 
-      // ── Mouse drag ──────────────────────────────────────────
-      canvas.addEventListener('mousedown', e => {
-        autoRotate = false;
-        if (inactivityTimer) clearTimeout(inactivityTimer);
-        dragStart = { x: e.clientX, y: e.clientY };
-        dragRotation = [...rotation];
-      });
-      window.addEventListener('mousemove', e => {
-        if (!dragStart) return;
-        rotation[0] = dragRotation[0] + (e.clientX - dragStart.x) * 0.4;
-        rotation[1] = Math.max(-80, Math.min(80, dragRotation[1] - (e.clientY - dragStart.y) * 0.4));
-        projection.rotate(rotation);
-        draw();
-      });
-      window.addEventListener('mouseup', () => {
-        if (!dragStart) return;
-        dragStart = null;
-        inactivityTimer = setTimeout(() => { autoRotate = true; }, 3000);
-      });
+      // ── Rim glow ────────────────────────────────────────────
+      const rimGrad = context.createRadialGradient(CX, CY, RADIUS - 10, CX, CY, RADIUS + 6);
+      rimGrad.addColorStop(0, 'rgba(91, 79, 232, 0)');
+      rimGrad.addColorStop(1, 'rgba(91, 79, 232, 0.2)');
+      context.beginPath();
+      context.arc(CX, CY, RADIUS, 0, 2 * Math.PI);
+      context.strokeStyle = rimGrad;
+      context.lineWidth = 10;
+      context.stroke();
+    };
 
-      // ── Touch drag ──────────────────────────────────────────
-      canvas.addEventListener('touchstart', e => {
-        autoRotate = false;
-        if (inactivityTimer) clearTimeout(inactivityTimer);
-        dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        dragRotation = [...rotation];
-        e.preventDefault();
-      }, { passive: false });
-      canvas.addEventListener('touchmove', e => {
-        if (!dragStart) return;
-        rotation[0] = dragRotation[0] + (e.touches[0].clientX - dragStart.x) * 0.4;
-        rotation[1] = Math.max(-80, Math.min(80, dragRotation[1] - (e.touches[0].clientY - dragStart.y) * 0.4));
+    function animate() {
+      if (autoRotate) {
+        rotation[0] -= 0.10;
         projection.rotate(rotation);
-        draw();
-        e.preventDefault();
-      }, { passive: false });
-      canvas.addEventListener('touchend', () => {
-        dragStart = null;
-        inactivityTimer = setTimeout(() => { autoRotate = true; }, 3000);
-      });
-
-      // ── Banner rotation ─────────────────────────────────────
-      let msgIndex = 0;
-      function rotateBanner() {
-        if (bannerStat) {
-          const city = cities[msgIndex];
-          bannerStat.textContent = `${city.name} — ${city.msg}`;
-        }
-        msgIndex = (msgIndex + 1) % cities.length;
       }
-      rotateBanner();
-      setInterval(rotateBanner, 3000);
+      draw();
+      requestAnimationFrame(animate);
+    }
 
-      // ── Start ────────────────────────────────────────────────
+    // ── Mouse drag ──────────────────────────────────────────
+    canvas.addEventListener('mousedown', e => {
+      autoRotate = false;
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      dragStart = { x: e.clientX, y: e.clientY };
+      dragRotation = [...rotation];
+    });
+    window.addEventListener('mousemove', e => {
+      if (!dragStart) return;
+      rotation[0] = dragRotation[0] + (e.clientX - dragStart.x) * 0.4;
+      rotation[1] = Math.max(-80, Math.min(80, dragRotation[1] - (e.clientY - dragStart.y) * 0.4));
       projection.rotate(rotation);
       draw();
-      animate();
-    })
-    .catch(err => {
-      console.error('Globe setup error:', err);
-      if (bannerStat) bannerStat.textContent = 'Global sync network active';
     });
+    window.addEventListener('mouseup', () => {
+      if (!dragStart) return;
+      dragStart = null;
+      inactivityTimer = setTimeout(() => { autoRotate = true; }, 3000);
+    });
+
+    // ── Touch drag ──────────────────────────────────────────
+    canvas.addEventListener('touchstart', e => {
+      autoRotate = false;
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      dragRotation = [...rotation];
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchmove', e => {
+      if (!dragStart) return;
+      rotation[0] = dragRotation[0] + (e.touches[0].clientX - dragStart.x) * 0.4;
+      rotation[1] = Math.max(-80, Math.min(80, dragRotation[1] - (e.touches[0].clientY - dragStart.y) * 0.4));
+      projection.rotate(rotation);
+      draw();
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener('touchend', () => {
+      dragStart = null;
+      inactivityTimer = setTimeout(() => { autoRotate = true; }, 3000);
+    });
+
+    // ── Start ────────────────────────────────────────────────
+    projection.rotate(rotation);
+    draw();
+    animate();
+  }
+
+  // ── Banner rotation ─────────────────────────────────────
+  let msgIndex = 0;
+  function rotateBanner() {
+    if (bannerStat) {
+      const city = cities[msgIndex];
+      bannerStat.textContent = `${city.name} — ${city.msg}`;
+    }
+    msgIndex = (msgIndex + 1) % cities.length;
+  }
+  rotateBanner();
+  setInterval(rotateBanner, 3000);
+
+  // ── Safe boundaries fetch with offline fallback ─────────
+  Promise.all([
+    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null),
+    fetch('india-boundary.json')
+      .then(r => r.ok ? r.json() : null)
+      .catch(() => null)
+  ])
+  .then(([world, indiaBoundary]) => {
+    startWithGeometries(world, indiaBoundary);
+    if (!world || !indiaBoundary) {
+      if (bannerStat) {
+        rotateBanner(); // Reset banner rotation status
+      }
+    }
+  })
+  .catch(err => {
+    console.error('Globe setup error:', err);
+    startWithGeometries(null, null);
+  });
 });
 </script>
 </body>
