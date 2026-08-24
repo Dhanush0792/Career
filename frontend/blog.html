@@ -96,7 +96,7 @@ a { color: inherit; text-decoration: none; }
       <p class="article-excerpt">In the hyper-competitive tech landscape, the content of your resume is only half the battle. If your submission speed and ATS compatibility aren't optimized, you are already behind. Learn how top candidates game the system.</p>
       <div class="article-meta">
         <div class="author-avatar"></div>
-        <span>Alex C.</span>
+        <span>Amit Sharma</span>
         <span>•</span>
         <span>6 min read</span>
       </div>
@@ -110,7 +110,7 @@ a { color: inherit; text-decoration: none; }
       <p class="article-excerpt">Understand exactly how Applicant Tracking Systems parse your data and why standard autofill fails you.</p>
       <div class="article-meta">
         <div class="author-avatar"></div>
-        <span>Sam T.</span>
+        <span>Priyanka Patel</span>
         <span>•</span>
         <span>5 min read</span>
       </div>
@@ -122,7 +122,7 @@ a { color: inherit; text-decoration: none; }
       <p class="article-excerpt">Workday forms are notoriously long. Discover how to streamline the 7-step process into a single click.</p>
       <div class="article-meta">
         <div class="author-avatar"></div>
-        <span>Jordan L.</span>
+        <span>Rohan Gupta</span>
         <span>•</span>
         <span>8 min read</span>
       </div>
@@ -134,7 +134,7 @@ a { color: inherit; text-decoration: none; }
       <p class="article-excerpt">Are you leaving mandatory recruiter questions blank? Here's how to pre-map them before you apply.</p>
       <div class="article-meta">
         <div class="author-avatar"></div>
-        <span>Mia R.</span>
+        <span>Ananya Rao</span>
         <span>•</span>
         <span>4 min read</span>
       </div>
@@ -146,7 +146,7 @@ a { color: inherit; text-decoration: none; }
       <p class="article-excerpt">Consolidate your career data once and inject it everywhere. The architecture of a perfect master profile.</p>
       <div class="article-meta">
         <div class="author-avatar"></div>
-        <span>Alex C.</span>
+        <span>Siddharth Nair</span>
         <span>•</span>
         <span>7 min read</span>
       </div>
@@ -158,7 +158,7 @@ a { color: inherit; text-decoration: none; }
       <p class="article-excerpt">Formatting errors, missing keywords, and broken parsing. Fix the technical foundation of your CV.</p>
       <div class="article-meta">
         <div class="author-avatar"></div>
-        <span>Chris P.</span>
+        <span>Divya Iyer</span>
         <span>•</span>
         <span>6 min read</span>
       </div>
@@ -170,12 +170,82 @@ a { color: inherit; text-decoration: none; }
       <p class="article-excerpt">A technical teardown of the top startup ATS platforms and how to optimize your application for each.</p>
       <div class="article-meta">
         <div class="author-avatar"></div>
-        <span>Taylor D.</span>
+        <span>Vikram Malhotra</span>
         <span>•</span>
         <span>9 min read</span>
       </div>
     </a>
   </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const filterBtns = document.querySelectorAll(".filter-btn");
+  const articles = document.querySelectorAll(".featured-card, .grid .card");
+
+  // Helper to convert label to hash slug
+  function getSlug(text) {
+    return text.toLowerCase().replace(/\s+/g, '-');
+  }
+
+  // Helper to get label from hash slug
+  function getLabel(slug) {
+    if (!slug || slug === 'all') return 'all';
+    return slug.replace(/-/g, ' ');
+  }
+
+  function applyFilter(filterLabel) {
+    // Update active button
+    filterBtns.forEach(btn => {
+      const btnText = btn.textContent.trim().toLowerCase();
+      if (btnText === filterLabel) {
+        btn.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+      }
+    });
+
+    // Filter cards
+    articles.forEach(article => {
+      const categoryElement = article.querySelector(".article-category");
+      if (!categoryElement) return;
+
+      const categoryText = categoryElement.textContent.trim().toLowerCase();
+
+      if (filterLabel === "all" || categoryText === filterLabel) {
+        // Restore default display
+        if (article.classList.contains("featured-card")) {
+          article.style.display = "flex";
+        } else {
+          article.style.display = "flex";
+        }
+      } else {
+        article.style.display = "none";
+      }
+    });
+  }
+
+  // Handle button clicks
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const btnText = btn.textContent.trim();
+      const slug = getSlug(btnText);
+      window.location.hash = slug;
+    });
+  });
+
+  // Handle hash change routing
+  window.addEventListener("hashchange", () => {
+    const hash = window.location.hash.substring(1);
+    const label = getLabel(hash);
+    applyFilter(label);
+  });
+
+  // Handle initial page load hash
+  const initialHash = window.location.hash.substring(1);
+  const initialLabel = getLabel(initialHash);
+  applyFilter(initialLabel);
+});
+</script>
 </body>
 </html>
