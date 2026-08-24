@@ -1,458 +1,809 @@
-let autofillButtonActive = false;
-let formAlreadyFilled = false;
-let activeIcon = null;
-let activeInput = null;
+// Enhanced content script: heuristic field matching and floating autofill button
 
-// List of allowed domains for Autofill
-const ALLOWED_DOMAINS = [
-  "greenhouse.io",
-  "lever.co",
-  "workday.com",
-  "icims.com",
-  "taleo.net",
-  "smartrecruiters.com",
-  "bamboohr.com",
-  "linkedin.com",
-  "naukri.com",
-  "indeed.com",
-  "localhost",
-  "careerbridge"
-];
-
-// List of blacklisted/sensitive domains
-const BLACKLISTED_DOMAINS = [
-  "chatgpt.com",
-  "openai.com",
-  "github.com",
-  "stripe.com",
-  "paypal.com",
-  "gmail.com",
-  "google.com",
-  "facebook.com",
-  "instagram.com",
-  "twitter.com",
-  "x.com"
-];
-
-// Government portals and their compliance tiers
-// Tier 1: Legally cleared
-// Tier 2: Unreviewed (default warning gate)
-// Tier 3: Restricted (disabled)
-const GOVERNMENT_PORTALS_TIERS = {
-  "upsc.gov.in": 2,
-  "upsconline.nic.in": 2,
-  "ssc.gov.in": 2,
-  "ssc.nic.in": 2,
-  "ibps.in": 2,
-  "ibpsonline.ibps.in": 2,
-  "restricted-gov-test.gov.in": 3
+const FIELD_ALIASES = {
+  fullname: ["fullname", "full name", "name"],
+  firstname: ["first", "firstname", "given name"],
+  lastname: ["last", "lastname", "surname", "family name"],
+  age: ["age"],
+  dob: ["dob", "date of birth", "birthdate", "birthday"],
+  fathername: ["father's name", "father name", "guardian name", "father"],
+  mothername: ["mother's name", "mother name", "mother"],
+  email: ["email", "email address", "e-mail"],
+  phone: ["phone", "phone number", "mobile", "mobile number", "telephone"],
+  address: ["address", "street", "address1"],
+  city: ["city", "town"],
+  state: ["state", "province", "region"],
+  country: ["country"],
+  zip: ["zip", "postal", "postal code", "zipcode"],
+  headline: ["headline", "title"],
+  summary: ["summary", "about", "about me", "bio", "description"],
+  education: ["education", "qualifications", "degree"],
+  college: ["college", "university", "institution"],
+  experience: ["experience", "work experience", "employment"],
+  skills: ["skills", "skillset"],
+  linkedin: ["linkedin", "linked in"],
+  github: ["github", "git hub"],
+  portfolio: ["portfolio", "website", "site"],
+  resume: ["resume", "cv"],
+  targetrole: ["role", "target role", "position", "designation"]
 };
 
-// Sensitive eligibility & reservation fields to skip on government portals
-const SENSITIVE_GOV_KEYS = [
-  "category", "reservation", "caste", "religion", "quota", 
-  "pwd", "disability", "disabled", "handicap", "challenged",
-  "relaxation", "age-relaxation", "ex-serviceman", "tribal",
-  "scheduled", "creamy", "minority"
+let extensionEnabled = true;
+chrome.storage.local.get("extensionEnabled", (res) => {
+  if (res.extensionEnabled !== undefined) {
+    extensionEnabled = res.extensionEnabled;
+  }
+});
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.extensionEnabled) {
+    extensionEnabled = changes.extensionEnabled.newValue;
+  }
+});
+
+const KNOWN_PORTALS = [
+  "naukri.com", "linkedin.com", "wellfound.com", "angel.co", "indeed.com",
+  "myworkdayjobs.com", "greenhouse.io", "lever.co", "icims.com", "smartrecruiters.com",
+  "internshala.com", "ashbyhq.com", "workday"
 ];
 
-// Credentials and payment keywords safety gates
-const CREDENTIALS_KEYS = ["password", "username", "passphrase", "login", "signin", "signup"];
-const PAYMENT_KEYS = ["card", "cvv", "cvc", "expiry", "expiration", "billing", "checkout", "payment"];
-
-function checkContext() {
-  try {
-    return !!chrome.runtime.getManifest();
-  } catch (e) {
+function isJobPage() {
+  const host = location.hostname.toLowerCase();
+  const path = location.pathname.toLowerCase();
+  const title = document.title ? document.title.toLowerCase() : "";
+  
+  const BLACKLISTED = [
+    "chatgpt.com", "openai.com", "google.com", "github.com", "gitlab.com",
+    "microsoft.com", "stripe.com", "paypal.com", "facebook.com", "instagram.com",
+    "twitter.com", "x.com", "youtube.com", "wikipedia.org", "netflix.com",
+    "amazon.com", "gmail.com", "outlook.com", "yahoo.com"
+  ];
+  
+  if (BLACKLISTED.some(d => host.includes(d))) {
     return false;
   }
-}
-
-function getDomain() {
-  const host = window.location.hostname.toLowerCase();
-  return host.replace(/^www\./, "");
-}
-
-function getGovPortalTier() {
-  const host = getDomain();
   
-  // Check explicit registry
-  for (const [domain, tier] of Object.entries(GOVERNMENT_PORTALS_TIERS)) {
-    if (host === domain || host.endsWith("." + domain)) {
-      return tier;
-    }
-  }
-
-  // General wildcard check for any government or NIC portal in India
-  if (host.endsWith(".gov.in") || host.endsWith(".nic.in") || host.endsWith(".ibps.in") || host === "ibps.in") {
-    return 2; // Default starting tier
-  }
-
-  return null;
-}
-
-function isAllowedDomain() {
-  const currentDomain = getDomain();
-  
-  // Check blacklist first
-  if (BLACKLISTED_DOMAINS.some(domain => currentDomain.includes(domain))) {
-    return false;
-  }
-
-  // Check if it's a government portal
-  if (getGovPortalTier() !== null) {
+  if (KNOWN_PORTALS.some(p => host.includes(p))) {
     return true;
   }
-
-  // Check whitelist/allowed list
-  return ALLOWED_DOMAINS.some(domain => currentDomain.includes(domain));
-}
-
-function isRecognizedPortal() {
-  const host = getDomain();
-  const isWhitelisted = ALLOWED_DOMAINS.some(domain => host.includes(domain));
-  if (isWhitelisted) return true;
-  if (getGovPortalTier() !== null) return true;
+  
+  const keywords = ["career", "job", "apply", "hiring", "recruit", "application", "candidate", "join-us", "opportunity"];
+  const urlMatches = keywords.some(kw => path.includes(kw) || host.includes(kw));
+  const titleMatches = keywords.some(kw => title.includes(kw));
+  
+  if (urlMatches || titleMatches) {
+    return true;
+  }
+  
   return false;
 }
 
-function isSensitiveGovField(input) {
-  const key = (input.name || input.id || input.placeholder || "").toLowerCase();
-  
-  // Check associated label texts
-  let labelText = "";
-  if (input.id) {
-    const labels = document.querySelectorAll(`label[for="${input.id}"]`);
-    labels.forEach(lbl => labelText += " " + lbl.textContent.toLowerCase());
-  }
-  
-  // Check container context text
-  const parent = input.parentElement;
-  if (parent) {
-    labelText += " " + parent.textContent.toLowerCase();
-  }
-
-  const fullText = (key + " " + labelText).toLowerCase();
-
-  return SENSITIVE_GOV_KEYS.some(sensitiveKey => fullText.includes(sensitiveKey));
+function normalize(s) {
+  return String(s || "").toLowerCase().trim();
 }
 
-// Load configurations
-chrome.storage.local.get(["autofillEnabled"], function(result) {
-  if (!checkContext()) return;
-  autofillButtonActive = result.autofillEnabled !== false;
-  if (autofillButtonActive && isAllowedDomain() && isRecognizedPortal()) {
-    initInputListeners();
+function scoreElementForKey(el, key) {
+  if (!el) return 0;
+  const checks = [];
+  const attrs = [el.getAttribute("aria-label"), el.getAttribute("name"), el.getAttribute("id"), el.getAttribute("placeholder"), el.getAttribute("type")];
+  for (const a of attrs) {
+    checks.push(normalize(a));
   }
-});
-
-// Listener for runtime messages
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (!checkContext()) return;
-  if (request.action === "toggleFloatingButton") {
-    autofillButtonActive = request.enabled;
-    if (autofillButtonActive && isAllowedDomain() && isRecognizedPortal()) {
-      initInputListeners();
-    } else {
-      removeInputListeners();
-      removeActiveIcon();
+  // associated label text
+  try {
+    const id = el.getAttribute("id");
+    if (id) {
+      const label = document.querySelector(`label[for='${id}']`);
+      if (label) checks.push(normalize(label.textContent));
     }
-  } else if (request.action === "autofillForm") {
-    const profile = request.profile;
-    fillForm(profile);
-  } else if (request.action === "checkPageMode") {
-    const govTier = getGovPortalTier();
-    const allowed = isAllowedDomain() && isRecognizedPortal();
-    sendResponse({ isAllowed: allowed, govTier });
-  } else if (request.action === "scanForm") {
-    const summary = scanPageInputs();
-    sendResponse(summary);
+  } catch (e) {}
+  let surrounding = "";
+  const closestLabel = el.closest("label");
+  if (closestLabel) {
+    surrounding = normalize(closestLabel.textContent);
+  } else {
+    const parent = el.parentElement;
+    if (parent) {
+      const fullText = normalize(parent.textContent || "");
+      if (fullText.length < 150) {
+        surrounding = fullText;
+      }
+    }
   }
-  return true; // Keep message channel open for async response
+  checks.push(surrounding);
+
+  let maxScore = 0;
+  const aliases = FIELD_ALIASES[key] || [];
+  for (const a of aliases) {
+    const needle = normalize(a);
+    for (const c of checks) {
+      if (!c) continue;
+      let score = 0;
+      if (c === needle) score = 10;
+      else if (c.includes(needle)) score = 8;
+      else if (needle.includes(c)) score = 6;
+      
+      if (score > maxScore) {
+        maxScore = score;
+      }
+    }
+  }
+  return maxScore;
+}
+
+function findBestElementForKey(key) {
+  const candidates = Array.from(document.querySelectorAll("input, textarea, select, [contenteditable='true']"));
+  let best = null;
+  let bestScore = 0;
+  for (const el of candidates) {
+    const score = scoreElementForKey(el, key);
+    if (score > bestScore) {
+      best = el;
+      bestScore = score;
+    }
+  }
+  const confidenceThreshold = 6; // Strict 60% minimum score threshold
+  return bestScore >= confidenceThreshold ? best : null;
+}
+
+function setValue(el, value) {
+  if (!el) return false;
+  if (el.isContentEditable) {
+    el.focus();
+    document.execCommand("selectAll", false, null);
+    document.execCommand("insertText", false, value);
+    return true;
+  }
+  // Removed el.focus() to avoid rapid page scrolling/jittering during autofill
+  const tag = el.tagName?.toLowerCase();
+  const type = normalize(el.getAttribute("type"));
+  if (tag === "select") {
+    // pick option that contains value
+    for (const opt of Array.from(el.options || [])) {
+      if (normalize(opt.text).includes(normalize(value)) || normalize(opt.value).includes(normalize(value))) {
+        el.value = opt.value;
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      }
+    }
+  }
+  if (type === "checkbox" || type === "radio") {
+    el.checked = Boolean(value);
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }
+  try {
+    el.value = value;
+  } catch (e) {
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value") || Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
+    descriptor?.set?.call(el, value);
+  }
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+}
+
+function buildAutofillPayload(profile, requestedFields) {
+  const fields = requestedFields && requestedFields.length ? requestedFields : Object.keys(profile || {});
+  const payload = {};
+  const profileLower = {};
+  for (const [k, v] of Object.entries(profile || {})) {
+    profileLower[k.toLowerCase()] = v;
+  }
+  for (const field of fields) {
+    const key = normalize(field).replace(/\s+/g, "");
+    if (key === "resume") {
+      payload[key] = profileLower["resumedraft"] || profileLower["resume"] || "";
+    } else if (profileLower[key] !== undefined) {
+      payload[key] = profileLower[key];
+    } else {
+      payload[key] = profile[field] || profile[key] || "";
+    }
+  }
+  return { createdAt: new Date().toISOString(), source: "jobxapply-profile", fields, payload };
+}
+
+// Floating autofill button shown near focused inputs
+let autofillButton = null;
+function createAutofillButton() {
+  if (autofillButton) return autofillButton;
+  autofillButton = document.createElement("button");
+  autofillButton.textContent = "Autofill";
+  autofillButton.style.position = "absolute";
+  autofillButton.style.zIndex = 2147483647;
+  autofillButton.style.padding = "6px 10px";
+  autofillButton.style.borderRadius = "8px";
+  autofillButton.style.background = "#5b4fe8";
+  autofillButton.style.color = "#fff";
+  autofillButton.style.border = "none";
+  autofillButton.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+  autofillButton.style.cursor = "pointer";
+  autofillButton.style.fontSize = "12px";
+  autofillButton.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const active = document.activeElement;
+    if (!active) return;
+    const key = guessKeyForElement(active);
+    const response = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => resolve(res));
+    });
+    const profile = response?.profile || {};
+    if (key) {
+      const val = profile[key] || profile[key.toLowerCase()] || "";
+      if (val) setValue(active, val);
+    }
+  });
+  document.body.appendChild(autofillButton);
+  return autofillButton;
+}
+
+function positionButtonNear(el) {
+  if (!el) return;
+  const btn = createAutofillButton();
+  const rect = el.getBoundingClientRect();
+  btn.style.top = `${window.scrollY + rect.top - 8}px`;
+  btn.style.left = `${window.scrollX + rect.right + 8}px`;
+  btn.style.display = "block";
+}
+
+function hideButton() {
+  if (autofillButton) autofillButton.style.display = "none";
+}
+
+function guessKeyForElement(el) {
+  // score each known alias and pick best
+  const scores = {};
+  for (const k of Object.keys(FIELD_ALIASES)) {
+    scores[k] = scoreElementForKey(el, k);
+  }
+  const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  if (entries.length && entries[0][1] > 0) return entries[0][0];
+  // fallback: use name/id
+  const name = normalize(el.getAttribute("name") || el.getAttribute("id") || "").replace(/[^a-z0-9]/g, "");
+  return name || null;
+}
+
+function cleanupOrphanedScript() {
+  try {
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("click", handleDocumentClick);
+    document.removeEventListener("submit", handleSubmit, true);
+    window.removeEventListener("jobxapply:shareAuth", handleShareAuth);
+  } catch (e) {}
+
+  if (autofillButton) {
+    try { autofillButton.remove(); } catch(err) {}
+    autofillButton = null;
+  }
+  
+  document.querySelectorAll(".jxa-knockout-tip, .jxa-mapper-hover, #jxa-mapper-banner, .jxa-mapper-mapped").forEach(el => {
+    try { el.remove(); } catch(err) {}
+  });
+}
+
+function checkContext() {
+  try {
+    if (chrome.runtime && chrome.runtime.id) {
+      return true;
+    }
+  } catch (e) {
+    // Context is invalidated
+  }
+  cleanupOrphanedScript();
+  return false;
+}
+
+function handleFocusIn(e) {
+  if (!checkContext()) return;
+  if (!extensionEnabled || !isJobPage()) {
+    hideButton();
+    return;
+  }
+  const target = e.target;
+  if (!target || !(target.matches && target.matches("input, textarea, [contenteditable='true'], select"))) {
+    hideButton();
+    return;
+  }
+  positionButtonNear(target);
+}
+
+function handleDocumentClick(e) {
+  if (!checkContext()) return;
+  if (!(e.target && e.target === autofillButton)) hideButton();
+}
+
+document.addEventListener("focusin", handleFocusIn);
+document.addEventListener("click", handleDocumentClick);
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "jobxapply:insertText") {
+    try {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.contentEditable === "true")) {
+        if (activeEl.contentEditable === "true") {
+          activeEl.textContent = message.text;
+        } else {
+          activeEl.value = message.text;
+        }
+        activeEl.dispatchEvent(new Event("input", { bubbles: true }));
+        activeEl.dispatchEvent(new Event("change", { bubbles: true }));
+        sendResponse({ ok: true });
+      } else {
+        sendResponse({ ok: false, error: "No focused field" });
+      }
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
+  if (message?.type === "jobxapply:getPageText") {
+    try {
+      const clone = document.body.cloneNode(true);
+      const removals = clone.querySelectorAll("script, style, head, iframe, noscript, svg, nav, footer, header");
+      removals.forEach(el => el.remove());
+      const cleanText = clone.innerText || clone.textContent || "";
+      sendResponse({ ok: true, text: cleanText });
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
+  if (message?.type === "jobxapply:toggleMappingMode") {
+    toggleMappingMode();
+    sendResponse({ ok: true });
+    return true;
+  }
+const QUESTION_BANK = {
+  knockout: [
+    "authorized to work", "legally authorized", "visa sponsorship", "require sponsorship", "willing to relocate", "relocate to", "working on-site", "on-site", "willing to work", "shift/weekend", "background check"
+  ],
+  compensation: [
+    "expected salary", "current salary", "salary expectations", "expected ctc", "current ctc", "salary range"
+  ],
+  logistics: [
+    "notice period", "available to start", "earliest start date", "willing to travel", "travel"
+  ],
+  eeo: [
+    "gender", "disability", "disabled", "veteran status", "veteran", "race", "ethnicity", "demographic"
+  ],
+  essay: [
+    "why do you want to work", "why should we hire you", "tell us about yourself", "describe your relevant experience", "looking for in your next role", "walk us through your background"
+  ]
+};
+
+function identifyQuestionCategory(label) {
+  const norm = normalize(label);
+  for (const [category, keywords] of Object.entries(QUESTION_BANK)) {
+    if (keywords.some(kw => norm.includes(kw))) {
+      return category;
+    }
+  }
+  return null;
+}
+
+function getElementLabelText(el) {
+  if (!el) return "";
+  const attrs = [
+    el.getAttribute("aria-label"),
+    el.getAttribute("placeholder"),
+    el.getAttribute("name"),
+    el.getAttribute("id")
+  ].filter(Boolean).join(" ");
+  
+  let labelText = attrs;
+  try {
+    const id = el.getAttribute("id");
+    if (id) {
+      const label = document.querySelector(`label[for='${id}']`);
+      if (label) labelText += " " + label.textContent;
+    }
+  } catch (e) {}
+  
+  const closestLabel = el.closest("label");
+  if (closestLabel) {
+    labelText += " " + closestLabel.textContent;
+  } else if (el.parentElement) {
+    labelText += " " + el.parentElement.textContent;
+  }
+  return labelText;
+}
+
+function showKnockoutSuggestion(el, value) {
+  const rect = el.getBoundingClientRect();
+  const tip = document.createElement("div");
+  tip.className = "jxa-knockout-tip";
+  tip.style.position = "absolute";
+  tip.style.zIndex = "2147483647";
+  tip.style.top = `${window.scrollY + rect.top - 32}px`;
+  tip.style.left = `${window.scrollX + rect.left}px`;
+  tip.style.background = "#fff";
+  tip.style.color = "#000";
+  tip.style.border = "1px solid #ff9800";
+  tip.style.padding = "4px 8px";
+  tip.style.borderRadius = "4px";
+  tip.style.fontSize = "11px";
+  tip.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+  tip.innerHTML = `Suggested: <strong>${value}</strong> <button style="background:#5b4fe8;color:#fff;border:none;padding:2px 6px;margin-left:6px;cursor:pointer;border-radius:2px;">Fill</button>`;
+  
+  tip.querySelector("button").addEventListener("click", () => {
+    setValue(el, value);
+    tip.remove();
+  });
+  document.body.appendChild(tip);
+  setTimeout(() => tip.remove(), 8000);
+}
+
+// Block auto submits if essay or knockout tips exist
+function handleSubmit(e) {
+  if (!checkContext()) return;
+  if (document.querySelector(".jxa-knockout-tip")) {
+    e.preventDefault();
+    alert("Please review the knockout question confirmations before submitting.");
+  }
+}
+document.addEventListener("submit", handleSubmit, true);
+
+  if (message?.type === "jobxapply:applyAutofill") {
+    const profile = message.profile || {};
+
+    // Guard: if no meaningful data, abort and report to popup
+    const hasData = Object.values(profile).some((v) => v && String(v).trim().length > 0);
+    if (!hasData) {
+      sendResponse({ ok: false, filled: 0, reason: "Profile is empty — set up your profile first" });
+      return true;
+    }
+
+    const payload = buildAutofillPayload(profile, message.fields || Object.keys(profile));
+    chrome.runtime.sendMessage({ type: "jobxapply:getPortalMap", url: location.href }, (resp) => {
+      const portalMap = resp?.map || {};
+      const results = [];
+      let filledCount = 0;
+      for (const [field, value] of Object.entries(payload.payload || {})) {
+        if (!value) continue; // skip empty values
+        const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
+        const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
+        
+        if (el) {
+          const labelText = getElementLabelText(el);
+          const category = identifyQuestionCategory(labelText);
+          
+          if (category === "knockout") {
+            showKnockoutSuggestion(el, value);
+            results.push({ field, status: "suggested", via: "knockout-rule" });
+          } else if (category === "compensation") {
+            const expected = profile.preferences?.expectedSalary || "";
+            if (expected) {
+              setValue(el, expected);
+              filledCount++;
+              results.push({ field, status: "filled", via: "compensation-rule" });
+            } else {
+              el.style.border = "1px solid #eb5757";
+              results.push({ field, status: "empty-flagged", via: "compensation-rule" });
+            }
+          } else if (category === "logistics") {
+            const empStatus = profile.preferences?.employmentStatus || "employed";
+            let logisticsVal = value;
+            if (empStatus === "student") {
+              logisticsVal = "Immediate / Date-based (Graduation)";
+            } else if (empStatus === "unemployed") {
+              logisticsVal = "Immediate";
+            } else if (profile.preferences?.noticePeriod) {
+              logisticsVal = profile.preferences.noticePeriod;
+            }
+            setValue(el, logisticsVal);
+            el.style.backgroundColor = "#ffffe0";
+            el.style.border = "1px solid #ffeb3b";
+            filledCount++;
+            results.push({ field, status: "filled-review", via: "logistics-rule" });
+          } else if (category === "eeo") {
+            results.push({ field, status: "skipped", via: "eeo-rule" });
+          } else if (category === "essay") {
+            const draft = `As a professional with experience in ${profile.skills ? String(profile.skills).split(',').slice(0, 3).join(', ') : 'product development'}, I am highly interested in this role. My background aligns with your core requirements, and I am excited about the opportunity to add value to your team.`;
+            setValue(el, draft);
+            el.style.outline = "2px solid #ffeb3b";
+            filledCount++;
+            results.push({ field, status: "drafted", via: "essay-rule" });
+          } else {
+            setValue(el, value);
+            filledCount++;
+            results.push({ field, status: "filled", via: "heuristic" });
+          }
+        } else {
+          results.push({ field, status: "not-found" });
+        }
+      }
+      sendResponse({ ok: true, filled: filledCount, payload, results });
+    });
+    return true;
+  }
 });
 
-// Input focus/blur management (only active on whitelisted portals)
-function initInputListeners() {
-  document.addEventListener("focusin", handleInputFocus);
-  document.addEventListener("focusout", handleInputBlur);
-}
-
-function removeInputListeners() {
-  document.removeEventListener("focusin", handleInputFocus);
-  document.removeEventListener("focusout", handleInputBlur);
-}
-
-function handleInputFocus(e) {
-  if (formAlreadyFilled) return;
-  const target = e.target;
-  
-  // Target visible text/email/tel inputs and textareas
-  if (
-    target.tagName === "INPUT" && 
-    ["text", "email", "tel", "url"].includes(target.type) && 
-    !target.disabled && 
-    !target.readOnly
-  ) {
-    activeInput = target;
-    showInputIcon(target);
-  } else if (target.tagName === "TEXTAREA" && !target.disabled && !target.readOnly) {
-    activeInput = target;
-    showInputIcon(target);
+function getBaseDomain(hostname) {
+  const parts = hostname.replace("www.", "").split(".");
+  if (parts.length > 2) {
+    const pen = parts[parts.length - 2];
+    if (["co", "com", "net", "org", "gov", "edu"].includes(pen) && parts.length > 2) {
+      return parts.slice(-3).join(".");
+    }
+    return parts.slice(-2).join(".");
   }
+  return parts.join(".");
 }
 
-let blurTimeout = null;
-function handleInputBlur(e) {
-  // Use a small timeout to let click events on the icon fire first
-  blurTimeout = setTimeout(() => {
-    removeActiveIcon();
-  }, 200);
-}
-
-function showInputIcon(input) {
-  removeActiveIcon();
-  if (blurTimeout) clearTimeout(blurTimeout);
-
-  const govTier = getGovPortalTier();
-  const icon = document.createElement("div");
-  icon.id = "jxa-input-icon";
-  
-  let iconBg = "#00f3ff";
-  let iconBorder = "none";
-  let cursor = "pointer";
-  let titleText = "Autofill form with JobXApply";
-
-  if (govTier === 3) {
-    iconBg = "#475569";
-    iconBorder = "1px solid #64748b";
-    cursor = "not-allowed";
-    titleText = "Autofill disabled (restricted)";
-  } else if (govTier === 2) {
-    iconBg = "#f59e0b"; // Warning amber
-    titleText = "Autofill (unreviewed government portal)";
-  }
-
-  icon.title = titleText;
-  icon.style.cssText = `
-    position: absolute;
-    z-index: 10000;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: ${iconBg};
-    border: ${iconBorder};
-    cursor: ${cursor};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    transition: transform 0.2s ease;
+let mapperStyles = null;
+function injectMapperStyles() {
+  if (mapperStyles) return;
+  mapperStyles = document.createElement("style");
+  mapperStyles.textContent = `
+    .jxa-mapper-hover {
+      outline: 2px solid #5b4fe8 !important;
+      outline-offset: 2px !important;
+      cursor: crosshair !important;
+      box-shadow: 0 0 12px rgba(91, 79, 232, 0.4) !important;
+    }
+    .jxa-mapper-mapped {
+      outline: 2px solid #2fddc4 !important;
+      outline-offset: 2px !important;
+      background-color: rgba(47, 221, 196, 0.04) !important;
+      box-shadow: 0 0 8px rgba(47, 221, 196, 0.2) !important;
+    }
   `;
+  document.head.appendChild(mapperStyles);
+}
 
-  icon.innerHTML = `
-    <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#020617" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-  `;
+function removeMapperStyles() {
+  if (mapperStyles) {
+    mapperStyles.remove();
+    mapperStyles = null;
+  }
+}
 
-  const updatePosition = () => {
-    const rect = input.getBoundingClientRect();
-    icon.style.top = `${rect.top + window.scrollY + (rect.height - 18) / 2}px`;
-    icon.style.left = `${rect.left + window.scrollX + rect.width - 24}px`;
-  };
-
-  updatePosition();
+function getUniqueSelector(el) {
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (el.name) return `${el.tagName.toLowerCase()}[name="${CSS.escape(el.name)}"]`;
   
-  window.addEventListener("resize", updatePosition);
-  window.addEventListener("scroll", updatePosition);
+  const path = [];
+  let current = el;
+  while (current && current.nodeType === Node.ELEMENT_NODE) {
+    let selector = current.tagName.toLowerCase();
+    if (current.id) {
+      selector += `#${CSS.escape(current.id)}`;
+      path.unshift(selector);
+      break;
+    } else {
+      let sibIndex = 0;
+      let sib = current.previousElementSibling;
+      while (sib) {
+        if (sib.tagName === current.tagName) sibIndex++;
+        sib = sib.previousElementSibling;
+      }
+      selector += `:nth-of-type(${sibIndex + 1})`;
+    }
+    path.unshift(selector);
+    current = current.parentElement;
+  }
+  return path.join(" > ");
+}
 
-  if (govTier !== 3) {
-    icon.addEventListener("mouseenter", () => {
-      icon.style.transform = "scale(1.2)";
+let mapperBanner = null;
+let mapperModal = null;
+let isMappingActive = false;
+
+function showMapperBanner() {
+  if (mapperBanner) return;
+  mapperBanner = document.createElement("div");
+  mapperBanner.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; height: 48px;
+    background: #0b1020; border-bottom: 2px solid #5b4fe8;
+    color: #fff; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; z-index: 2147483647; font-family: system-ui, -apple-system, sans-serif;
+    font-size: 13px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  `;
+  
+  const labelDiv = document.createElement("div");
+  labelDiv.innerHTML = `<span style="font-weight:700; color:#5b4fe8; margin-right:8px;">JobXApply</span> <span style="color: rgba(255,255,255,0.7)">// Visual Selector Mapper (Click fields to map them)</span>`;
+  
+  const exitBtn = document.createElement("button");
+  exitBtn.textContent = "Exit Mapper";
+  exitBtn.style.cssText = `
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; color: #fff; padding: 6px 12px; cursor: pointer; font-size: 11px;
+    font-weight: 600; font-family: inherit; transition: background 0.2s;
+  `;
+  exitBtn.addEventListener("mouseover", () => exitBtn.style.background = "rgba(255,255,255,0.15)");
+  exitBtn.addEventListener("mouseout", () => exitBtn.style.background = "rgba(255,255,255,0.08)");
+  exitBtn.addEventListener("click", () => toggleMappingMode(false));
+  
+  mapperBanner.appendChild(labelDiv);
+  mapperBanner.appendChild(exitBtn);
+  document.body.appendChild(mapperBanner);
+  document.body.style.paddingTop = "48px";
+}
+
+function hideMapperBanner() {
+  if (mapperBanner) {
+    mapperBanner.remove();
+    mapperBanner = null;
+    document.body.style.paddingTop = "";
+  }
+}
+
+const MAPPER_FIELDS = [
+  "fullName", "firstName", "lastName", "age", "dob", "email", "phone",
+  "address", "city", "state", "country", "zip", "headline", "summary",
+  "education", "college", "experience", "skills", "linkedin", "github", "portfolio", "resume", "targetRole"
+];
+
+function showMappingModal(el, selector) {
+  if (mapperModal) mapperModal.remove();
+  
+  mapperModal = document.createElement("div");
+  mapperModal.style.cssText = `
+    position: fixed; inset: 0; background: rgba(5,8,22,0.8);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2147483647; font-family: system-ui, -apple-system, sans-serif;
+    backdrop-filter: blur(8px);
+  `;
+  
+  const container = document.createElement("div");
+  container.style.cssText = `
+    background: #0b1020; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px; padding: 24px; width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    max-height: 80vh; display: flex; flex-direction: column;
+  `;
+  
+  const title = document.createElement("div");
+  title.textContent = "Map Input Field";
+  title.style.cssText = "font-size: 14px; font-weight:700; color:#fff; margin-bottom: 4px; text-transform:uppercase;";
+  
+  const preview = document.createElement("div");
+  preview.textContent = selector;
+  preview.style.cssText = "font-size: 11px; color:rgba(255,255,255,0.5); font-family: monospace; word-break:break-all; margin-bottom: 16px;";
+  
+  const list = document.createElement("div");
+  list.style.cssText = "overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px; padding-right:4px;";
+  
+  MAPPER_FIELDS.forEach(f => {
+    const btn = document.createElement("button");
+    btn.textContent = f;
+    btn.style.cssText = `
+      text-align: left; padding: 8px 12px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: rgba(255,255,255,0.8);
+      cursor: pointer; font-size: 12px; transition: background 0.15s, border-color 0.15s;
+    `;
+    btn.addEventListener("mouseover", () => {
+      btn.style.background = "rgba(91,79,232,0.12)";
+      btn.style.borderColor = "rgba(91,79,232,0.3)";
     });
-    icon.addEventListener("mouseleave", () => {
-      icon.style.transform = "scale(1.0)";
+    btn.addEventListener("mouseout", () => {
+      btn.style.background = "rgba(255,255,255,0.04)";
+      btn.style.borderColor = "rgba(255,255,255,0.08)";
+    });
+    btn.addEventListener("click", () => {
+      const domain = getBaseDomain(window.location.hostname);
+      chrome.runtime.sendMessage({
+        type: "jobxapply:saveCustomMap",
+        domain,
+        field: f,
+        selector
+      }, () => {
+        el.classList.add("jxa-mapper-mapped");
+        showToastNotification(`Mapped field: ${f}`);
+        mapperModal.remove();
+        mapperModal = null;
+      });
+    });
+    list.appendChild(btn);
+  });
+  
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.style.cssText = `
+    margin-top: 12px; background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px; color: #fff; padding: 8px; cursor: pointer; font-size: 12px;
+  `;
+  cancelBtn.addEventListener("click", () => {
+    mapperModal.remove();
+    mapperModal = null;
+  });
+  
+  container.appendChild(title);
+  container.appendChild(preview);
+  container.appendChild(list);
+  container.appendChild(cancelBtn);
+  mapperModal.appendChild(container);
+  document.body.appendChild(mapperModal);
+}
+
+function showToastNotification(text) {
+  const toast = document.createElement("div");
+  toast.textContent = text;
+  toast.style.cssText = `
+    position: fixed; bottom: 24px; right: 24px; background: #070a18;
+    border: 1px solid #2fddc4; border-radius: 12px; padding: 12px 20px;
+    color: #fff; font-family: sans-serif; font-size: 13px; z-index: 2147483647;
+    box-shadow: 0 8px 24px rgba(47, 221, 196, 0.2); transition: opacity 0.3s;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    setTimeout(() => toast.remove(), 300);
+  }, 2500);
+}
+
+function toggleMappingMode(forceState) {
+  isMappingActive = typeof forceState === "boolean" ? forceState : !isMappingActive;
+  
+  if (isMappingActive) {
+    injectMapperStyles();
+    showMapperBanner();
+    highlightExistingMappedFields();
+    
+    document.addEventListener("mouseover", handleMouseOver, true);
+    document.addEventListener("mouseout", handleMouseOut, true);
+    document.addEventListener("click", handleFieldClick, true);
+    showToastNotification("Visual Mapper Active. Click any field to map.");
+  } else {
+    hideMapperBanner();
+    removeMapperStyles();
+    if (mapperModal) {
+      mapperModal.remove();
+      mapperModal = null;
+    }
+    
+    document.removeEventListener("mouseover", handleMouseOver, true);
+    document.removeEventListener("mouseout", handleMouseOut, true);
+    document.removeEventListener("click", handleFieldClick, true);
+    
+    document.querySelectorAll(".jxa-mapper-hover, .jxa-mapper-mapped").forEach(el => {
+      el.classList.remove("jxa-mapper-hover", "jxa-mapper-mapped");
     });
   }
+}
 
-  icon.addEventListener("mousedown", (e) => {
+function handleMouseOver(e) {
+  const t = e.target;
+  if (t && t.matches && t.matches("input, select, textarea")) {
     e.preventDefault();
     e.stopPropagation();
-    if (blurTimeout) clearTimeout(blurTimeout);
-
-    if (govTier === 3) {
-      alert("Autofill is disabled on this portal because its Terms of Use explicitly prohibit automated form entry.");
-      return;
-    }
-
-    if (govTier === 2) {
-      const message = "WARNING: This government portal's Terms of Use have not been fully reviewed yet.\n\nAutomated form entry may violate portal terms. Do you want to proceed manually at your own risk?";
-      if (!confirm(message)) {
-        return;
-      }
-    }
-
-    chrome.runtime.sendMessage({ action: "requestAutofill" });
-  });
-
-  document.body.appendChild(icon);
-  activeIcon = icon;
-}
-
-function removeActiveIcon() {
-  if (activeIcon) {
-    activeIcon.remove();
-    activeIcon = null;
+    t.classList.add("jxa-mapper-hover");
   }
 }
 
-function scanPageInputs() {
-  const inputs = Array.from(document.querySelectorAll("input, textarea"));
-  let detectedCount = 0;
-  let fillableCount = 0;
-  let reviewRequiredCount = 0;
-
-  const mappings = [
-    "name", "first_name", "last_name", "email", "phone", 
-    "phone_number", "mobile", "headline", "summary", "github", "portfolio"
-  ];
-
-  inputs.forEach(input => {
-    if (input.type === "hidden" || input.style.display === "none" || input.disabled || input.readOnly) return;
-    
-    const key = (input.name || input.id || input.placeholder || "").toLowerCase();
-    
-    // Check associated label texts
-    let labelText = "";
-    if (input.id) {
-      const labels = document.querySelectorAll(`label[for="${input.id}"]`);
-      labels.forEach(lbl => labelText += " " + lbl.textContent.toLowerCase());
-    }
-    const parent = input.parentElement;
-    if (parent) {
-      labelText += " " + parent.textContent.toLowerCase();
-    }
-    const fullText = (key + " " + labelText).toLowerCase();
-
-    // 1. Exclude credential and payment fields
-    const isCredential = CREDENTIALS_KEYS.some(k => fullText.includes(k)) || input.type === "password";
-    const isPayment = PAYMENT_KEYS.some(k => fullText.includes(k));
-    if (isCredential || isPayment) {
-      return;
-    }
-
-    detectedCount++;
-
-    // 2. Check if reservation/eligibility
-    const isSensitive = SENSITIVE_GOV_KEYS.some(k => fullText.includes(k));
-    if (isSensitive) {
-      reviewRequiredCount++;
-      return;
-    }
-
-    // 3. Match mappings
-    const isMatch = mappings.some(mapVal => fullText.includes(mapVal));
-    if (isMatch) {
-      fillableCount++;
-    } else {
-      reviewRequiredCount++;
-    }
-  });
-
-  return { detectedCount, fillableCount, reviewRequiredCount };
-}
-
-async function fillForm(profile) {
-  const basics = profile.basics || {};
-  const prof = profile.professional || {};
-  
-  const mappings = {
-    "name": basics.name,
-    "first_name": basics.firstName || basics.name?.split(" ")[0],
-    "last_name": basics.lastName || basics.name?.split(" ").slice(1).join(" "),
-    "email": basics.email,
-    "phone": basics.phone,
-    "phone_number": basics.phone,
-    "mobile": basics.phone,
-    "headline": prof.headline,
-    "summary": prof.summary,
-    "github": prof.github,
-    "portfolio": prof.portfolio
-  };
-
-  const govTier = getGovPortalTier();
-  const isGov = govTier !== null;
-
-  // Find all inputs to fill
-  const inputs = Array.from(document.querySelectorAll("input, textarea"));
-  const fillTasks = [];
-
-  inputs.forEach(input => {
-    if (input.type === "hidden" || input.style.display === "none" || input.disabled || input.readOnly) return;
-    
-    const key = (input.name || input.id || input.placeholder || "").toLowerCase();
-    
-    // Check associated labels
-    let labelText = "";
-    if (input.id) {
-      const labels = document.querySelectorAll(`label[for="${input.id}"]`);
-      labels.forEach(lbl => labelText += " " + lbl.textContent.toLowerCase());
-    }
-    const parent = input.parentElement;
-    if (parent) {
-      labelText += " " + parent.textContent.toLowerCase();
-    }
-    const fullText = (key + " " + labelText).toLowerCase();
-
-    // Safety checks: Skip login credentials and payments
-    const isCredential = CREDENTIALS_KEYS.some(k => fullText.includes(k)) || input.type === "password";
-    const isPayment = PAYMENT_KEYS.some(k => fullText.includes(k));
-    if (isCredential || isPayment) {
-      return;
-    }
-
-    // Safety checks: Skip sensitive categories
-    const isSensitive = SENSITIVE_GOV_KEYS.some(k => fullText.includes(k));
-    if (isSensitive) {
-      if (isGov) {
-        input.style.border = "2px dashed #f59e0b";
-        input.title = "This sensitive field must be filled manually for compliance.";
-      }
-      return;
-    }
-
-    // Standard profile maps
-    for (const [mapVal, value] of Object.entries(mappings)) {
-      if (fullText.includes(mapVal) && value) {
-        fillTasks.push({ input, value });
-        break;
-      }
-    }
-  });
-
-  // Lock popup triggering
-  formAlreadyFilled = true;
-  removeActiveIcon();
-
-  // Execute fill tasks sequentially (with 100ms delay per field on Gov/Universal pages)
-  const isUniversal = !isRecognizedPortal();
-  const isPaced = isGov || isUniversal;
-
-  for (let i = 0; i < fillTasks.length; i++) {
-    const { input, value } = fillTasks[i];
-    
-    if (isPaced) {
-      input.focus();
-      await new Promise(resolve => setTimeout(resolve, 100)); // staggered human-like delay
-    }
-
-    input.value = value;
-    
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    
-    if (isPaced) {
-      input.blur();
-    }
+function handleMouseOut(e) {
+  const t = e.target;
+  if (t && t.matches && t.matches("input, select, textarea")) {
+    t.classList.remove("jxa-mapper-hover");
   }
 }
+
+function handleFieldClick(e) {
+  const t = e.target;
+  if (t && t.matches && t.matches("input, select, textarea")) {
+    e.preventDefault();
+    e.stopPropagation();
+    t.classList.remove("jxa-mapper-hover");
+    
+    const selector = getUniqueSelector(t);
+    showMappingModal(t, selector);
+  }
+}
+
+
+// Listen for pairing event from the JobXApply website
+function handleShareAuth(e) {
+  if (!checkContext()) return;
+  const { token, passcode, email } = e.detail || {};
+  if (token || passcode || email) {
+    chrome.runtime.sendMessage({
+      type: "jobxapply:saveAuth",
+      token: token || "",
+      passcode: passcode || "",
+      email: email || ""
+    }, () => {
+      // Catch context error silently if extension got disabled during message send
+      if (chrome.runtime.lastError) {}
+    });
+  }
+}
+window.addEventListener("jobxapply:shareAuth", handleShareAuth);
+

@@ -120,6 +120,15 @@ body::after {
 }
 .text-area:focus { border-color:var(--primary); }
 
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .form-col-12 {
+      grid-column: span 2;
+    }
+
 .form-row { display:flex; flex-direction:column; gap:4px; }
 .form-row label { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
 .form-row input, .form-row select { background:rgba(7,10,24,.6); border:1px solid var(--glass-border); padding:6px 10px; font-family:var(--mono); font-size:12.5px; color:var(--white); outline:none; border-radius:8px; }
@@ -299,110 +308,113 @@ body::after {
   <div class="grid">
     <!-- Left: Inputs -->
     <div class="card" id="editor-card">
-      <div class="card__title">01 // TARGET JOB DETAILS</div>
-
       <div id="profile-banner" style="display:none;" class="warn-banner">
         ⚠ Some profile fields are missing.
         <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Complete Profile →</a>
       </div>
 
-      <div class="form-row">
-        <label>Select Cover Letter Style</label>
-        <select id="template-select">
-          <option value="01">Classic Corporate (Palatino Serif)</option>
-          <option value="02">Modern Minimalist (Helvetica Sans)</option>
-          <option value="03">Narrative / Storyteller (Charter Serif)</option>
-          <option value="04">Executive Strategist (Times Serif)</option>
-          <option value="05">Technical / Developer (Monospace Headers)</option>
-          <option value="06">Bold & Impactful (Helvetica Bold)</option>
-          <option value="07">Academic Formal (Times Traditional)</option>
-          <option value="08">Startup Builder (Helvetica Compact)</option>
-          <option value="09">Career Pivot / Transition (Palatino Minimal)</option>
-          <option value="10">Referral-Based (Traditional Flush)</option>
-        </select>
+      <div class="card__title">01 // TARGET JOB DETAILS</div>
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label>Select Cover Letter Style</label>
+          <select id="template-select">
+            <option value="01">Classic Corporate (Palatino Serif)</option>
+            <option value="02">Modern Minimalist (Helvetica Sans)</option>
+            <option value="03">Narrative / Storyteller (Charter Serif)</option>
+            <option value="04">Executive Strategist (Times Serif)</option>
+            <option value="05">Technical / Developer (Monospace Headers)</option>
+            <option value="06">Bold & Impactful (Helvetica Bold)</option>
+            <option value="07">Academic Formal (Times Traditional)</option>
+            <option value="08">Startup Builder (Helvetica Compact)</option>
+            <option value="09">Career Pivot / Transition (Palatino Minimal)</option>
+            <option value="10">Referral-Based (Traditional Flush)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>Target Role Override</label>
+          <select id="select-role" onchange="onRoleOverrideChange()">
+            <option value="profile">Use Profile Target Role</option>
+            <option value="sde">Software Development Engineer (SDE)</option>
+            <option value="backend">Backend Developer</option>
+            <option value="java">Java Developer</option>
+            <option value="marketing">Marketing Specialist</option>
+            <option value="sales">Sales Representative</option>
+            <option value="customer_care">Customer Care Operator</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label>Company Name</label>
+          <input type="text" id="company-input" placeholder="e.g. Google India" maxlength="120">
+        </div>
+        
+        <div class="form-row">
+          <label>Target Role / Position</label>
+          <input type="text" id="role-input" placeholder="e.g. Senior Frontend Engineer" maxlength="120">
+        </div>
       </div>
 
-      <div class="form-row">
-        <label>Target Role Override</label>
-        <select id="select-role" onchange="onRoleOverrideChange()">
-          <option value="profile">Use Profile Target Role</option>
-          <option value="sde">Software Development Engineer (SDE)</option>
-          <option value="backend">Backend Developer</option>
-          <option value="java">Java Developer</option>
-          <option value="marketing">Marketing Specialist</option>
-          <option value="sales">Sales Representative</option>
-          <option value="customer_care">Customer Care Operator</option>
-        </select>
+      <div class="card__title" style="margin-top:8px;">02 // RECIPIENT DETAILS</div>
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label>Recipient Name</label>
+          <input type="text" id="recipient-name" placeholder="e.g. hiring manager, recruiter" value="Hiring Team">
+        </div>
+
+        <div class="form-row">
+          <label>Recipient Title</label>
+          <input type="text" id="recipient-title" placeholder="e.g. Director" value="Hiring Manager">
+        </div>
+
+        <div class="form-row form-col-12">
+          <label>Recipient Address / Location</label>
+          <input type="text" id="recipient-address" placeholder="e.g. Bangalore Office, Karnataka">
+        </div>
       </div>
 
-      <div class="form-row">
-        <label>Company Name</label>
-        <input type="text" id="company-input" placeholder="e.g. Google India" maxlength="120">
-      </div>
-      
-      <div class="form-row">
-        <label>Target Role / Position</label>
-        <input type="text" id="role-input" placeholder="e.g. Senior Frontend Engineer" maxlength="120">
-      </div>
+      <div class="card__title" style="margin-top:8px;">03 // FORMATTING & OPTIONS</div>
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label>Subject Line Template</label>
+          <input type="text" id="subject-input" placeholder="e.g. RE: Application" value="RE: Application for target role">
+        </div>
 
-      <div class="card__title" style="margin-top:8px; border-bottom:none; padding:0;">02 // RECIPIENT DETAILS</div>
+        <div class="form-row">
+          <label>Select Predefined Pitch Summary</label>
+          <select id="summary-select" onchange="applyPredefinedSummary()">
+            <option value="">-- Choose pre-defined summaries --</option>
+            <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
+            <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
+            <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
+            <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
+          </select>
+        </div>
 
-      <div class="form-row">
-        <label>Recipient Name</label>
-        <input type="text" id="recipient-name" placeholder="e.g. hiring manager, recruiter name" value="Hiring Team">
-      </div>
+        <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center; height:32px;">
+          <label for="opt-subject" style="margin:0;">Include Subject Line</label>
+          <input type="checkbox" id="opt-subject" checked style="width:auto; margin:0;">
+        </div>
 
-      <div class="form-row">
-        <label>Recipient Title</label>
-        <input type="text" id="recipient-title" placeholder="e.g. Director of Talent Acquisition" value="Hiring Manager">
-      </div>
+        <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center; height:32px;">
+          <label for="opt-enclosure" style="margin:0;">Include Enclosure line</label>
+          <input type="checkbox" id="opt-enclosure" style="width:auto; margin:0;">
+        </div>
 
-      <div class="form-row">
-        <label>Recipient Address / Location</label>
-        <input type="text" id="recipient-address" placeholder="e.g. Bangalore Office, Karnataka">
-      </div>
-
-      <div class="card__title" style="margin-top:8px; border-bottom:none; padding:0;">03 // FORMATTING & OPTIONS</div>
-
-      <div class="form-row">
-        <label>Subject Line Template</label>
-        <input type="text" id="subject-input" placeholder="e.g. RE: Application for role" value="RE: Application for target role">
-      </div>
-
-      <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center;">
-        <label for="opt-subject" style="margin:0;">Include Subject Line</label>
-        <input type="checkbox" id="opt-subject" checked style="width:auto; margin:0;">
+        <div class="form-row form-col-12" id="enclosure-text-row" style="display:none;">
+          <label>Enclosure Documents</label>
+          <input type="text" id="enclosure-input" placeholder="e.g. Resume, Portfolio" value="Resume, Portfolio">
+        </div>
       </div>
 
-      <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center;">
-        <label for="opt-enclosure" style="margin:0;">Include Enclosure line</label>
-        <input type="checkbox" id="opt-enclosure" style="width:auto; margin:0;">
-      </div>
-
-      <div class="form-row" id="enclosure-text-row" style="display:none;">
-        <label>Enclosure Documents</label>
-        <input type="text" id="enclosure-input" placeholder="e.g. Resume, Portfolio" value="Resume, Portfolio">
-      </div>
-
-      <div class="form-row">
-        <label>Select Predefined Pitch Summary</label>
-        <select id="summary-select" onchange="applyPredefinedSummary()">
-          <option value="">-- Choose pre-defined summaries --</option>
-          <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
-          <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
-          <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
-          <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
-        </select>
-      </div>
-
-      <div class="form-row">
+      <div class="form-row" style="margin-top:6px;">
         <label>Job Description Requirements (ATS tailer)</label>
-        <textarea class="text-area" id="jd-input" placeholder="Optional: Paste requirements from target job description to compute real-time ATS match rating..." oninput="updateAtsScore()"></textarea>
+        <textarea class="text-area" id="jd-input" style="height:48px;" placeholder="Optional: Paste requirements to compute real-time ATS match rating..." oninput="updateAtsScore()"></textarea>
       </div>
 
-      <button class="gen-btn" id="gen-btn">› TAILOR COVER LETTER</button>
+      <button class="gen-btn" id="gen-btn" style="margin-top:6px;">› TAILOR COVER LETTER</button>
 
-      <div class="console-box" id="console">
+      <div class="console-box" id="console" style="margin-top:6px;">
         <div class="console-line">[SYS_INIT] Cover Letter builder ready. Fill inputs and trigger tailor.</div>
       </div>
     </div>

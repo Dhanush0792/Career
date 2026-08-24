@@ -1,161 +1,184 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body {
-      width: 320px;
-      padding: 18px;
-      font-family: 'Courier New', Courier, monospace;
-      background: #0a0e17;
-      color: #f8fafc;
-      margin: 0;
-    }
-    h3 {
-      color: #00f3ff;
-      margin-top: 0;
-      border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-      padding-bottom: 8px;
-      font-size: 1.1rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      text-align: center;
-    }
-    .view-panel {
-      display: none;
-      margin-top: 15px;
-    }
-    .view-panel.active {
-      display: block;
-    }
-    .toggle-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 15px;
-      font-size: 0.85rem;
-    }
-    .btn {
-      background: #00f3ff;
-      color: #020617;
-      border: none;
-      padding: 10px 14px;
-      font-family: inherit;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 4px;
-      width: 100%;
-      margin-top: 15px;
-      text-transform: uppercase;
-      box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-      transition: all 0.2s ease;
-    }
-    .btn:hover {
-      background: #00d2e0;
-      box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
-    }
-    .btn-secondary {
-      background: #475569;
-      color: #cbd5e1;
-      border: none;
-      padding: 10px 14px;
-      font-family: inherit;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 4px;
-      width: 100%;
-      margin-top: 15px;
-      text-transform: uppercase;
-    }
-    .btn-secondary:hover {
-      background: #334155;
-    }
-    .badge {
-      font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-weight: bold;
-      text-transform: uppercase;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .badge-info {
-      background: rgba(0, 243, 255, 0.15);
-      border: 1px solid rgba(0, 243, 255, 0.3);
-      color: #00f3ff;
-    }
-    .badge-warning {
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      color: #f59e0b;
-    }
-    .badge-danger {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-    }
-    .card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 6px;
-      padding: 12px;
-      margin-top: 12px;
-      font-size: 0.8rem;
-      line-height: 1.5;
-    }
-    .status-text {
-      color: #94a3b8;
-      font-size: 0.8rem;
-      text-align: center;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
-  <h3>JobXApply Autofill</h3>
-  
-  <!-- View 1: Recognized Portal Mode -->
-  <div id="panel-recognized" class="view-panel active">
-    <div class="badge badge-info" id="portal-badge">Recognized Portal</div>
-    <div class="card">
-      Your extension is active on this portal. Input-level quick checkmark triggers are enabled inside textboxes.
-    </div>
-    <div class="toggle-container">
-      <span>Enable Autofill badges</span>
-      <input type="checkbox" id="autofill-toggle">
-    </div>
-    <button class="btn" id="save-settings">Save Settings</button>
-  </div>
-  
-  <!-- View 2: Universal Mode -->
-  <div id="panel-universal" class="view-panel">
-    <div class="badge badge-warning">Universal Mode</div>
-    <div class="card">
-      This portal is not currently whitelisted. You can trigger generic field matching manually.
-    </div>
-    
-    <div id="universal-setup">
-      <button class="btn" id="btn-start-scan">Start Autofill</button>
-    </div>
-    
-    <div id="universal-results" style="display: none;">
-      <div class="card" id="scan-summary-card" style="border-color: #f59e0b;">
-        <!-- Filled dynamically -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobXApply</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        width: 300px;
+        font-family: Inter, system-ui, sans-serif;
+        background: #0b1020;
+        color: #f4f7ff;
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .logo-img {
+        width: 28px; height: 28px;
+        border-radius: 6px;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+      .header-title { font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
+      .header-sub { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 1px; }
+      .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+      .portal-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 12px;
+        padding: 10px 14px;
+        display: flex; align-items: center; gap: 10px;
+      }
+      .portal-dot { width: 8px; height: 8px; border-radius: 50%; background: #2fddc4; flex-shrink: 0; }
+      .portal-dot.unknown { background: rgba(255,255,255,0.2); }
+      .portal-name { font-size: 13px; font-weight: 600; }
+      .portal-tier { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 2px; }
+
+      .profile-row {
+        display: flex; align-items: center; gap: 8px;
+        background: rgba(91,79,232,0.08);
+        border: 1px solid rgba(91,79,232,0.2);
+        border-radius: 10px; padding: 10px 12px;
+      }
+      .profile-avatar {
+        width: 30px; height: 30px; border-radius: 50%;
+        background: linear-gradient(135deg, #5b4fe8, #2fddc4);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700; flex-shrink: 0; color: white;
+      }
+      .profile-info { flex: 1; min-width: 0; }
+      .profile-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .profile-email { font-size: 10px; color: rgba(244,247,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+      .setup-banner {
+        background: rgba(255,152,0,0.08);
+        border: 1px solid rgba(255,152,0,0.3);
+        border-radius: 10px; padding: 10px 12px;
+        font-size: 11px; line-height: 1.5; color: #ff9800; display: none;
+      }
+      .setup-banner strong { display: block; margin-bottom: 3px; font-size: 12px; }
+
+      .btn-primary {
+        width: 100%; padding: 11px;
+        background: linear-gradient(135deg, #5b4fe8, #796df0);
+        border: none; border-radius: 10px; color: white;
+        font-size: 13px; font-weight: 700; cursor: pointer;
+        letter-spacing: 0.03em; transition: opacity 0.15s;
+      }
+      .btn-primary:hover { opacity: 0.85; }
+      .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      .btn-secondary {
+        flex: 1; padding: 9px;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 10px; color: rgba(244,247,255,0.8);
+        font-size: 12px; font-weight: 600; cursor: pointer;
+        transition: border-color 0.15s, color 0.15s;
+      }
+      .btn-secondary:hover { border-color: rgba(91,79,232,0.6); color: #f4f7ff; }
+
+      .btn-row { display: flex; gap: 8px; }
+      .status { font-size: 11px; color: rgba(244,247,255,0.55); text-align: center; min-height: 16px; line-height: 1.4; }
+      .status.success { color: #2fddc4; }
+      .status.error { color: #e8547b; }
+      .status.warn { color: #ff9800; }
+
+      /* Toggle Switch */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 38px;
+        height: 20px;
+      }
+      .switch input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: rgba(255,255,255,0.15);
+        transition: .2s;
+        border-radius: 20px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .2s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #5b4fe8;
+      }
+      input:checked + .slider:before {
+        transform: translateX(18px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img src="icon.png" class="logo-img" alt="Logo">
+      <div>
+        <div class="header-title">JobXApply</div>
+        <div class="header-sub">Autofill Engine</div>
       </div>
-      <button class="btn" id="btn-confirm-fill">Fill Fields</button>
-      <button class="btn btn-secondary" id="btn-cancel-scan" style="margin-top: 10px;">Cancel</button>
     </div>
-    <div class="status-text" id="universal-status"></div>
-  </div>
-  
-  <!-- View 3: Safety Block Mode -->
-  <div id="panel-blocked" class="view-panel">
-    <div class="badge badge-danger">Safety Blocked</div>
-    <div class="card" style="border-color: #ef4444; background: rgba(239,68,68,0.05);">
-      <strong>Access Restricted:</strong> Autofill operations are disabled on payment processors, checkouts, and banking domains for your data security.
+
+    <div class="body">
+      <div class="portal-card">
+        <div class="portal-dot" id="portalDot"></div>
+        <div>
+          <div class="portal-name" id="portalName">Detecting...</div>
+          <div class="portal-tier" id="portalTier"></div>
+        </div>
+      </div>
+
+      <div class="toggle-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); margin-bottom: 2px;">
+        <span style="font-size:12px; font-weight:600; color:rgba(244,247,255,0.85)">Autofill floating button</span>
+        <label class="switch">
+          <input type="checkbox" id="extensionToggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="profile-row">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div class="profile-info">
+          <div class="profile-name" id="profileName">No profile loaded</div>
+          <div class="profile-email" id="profileEmail">Set up your profile first</div>
+        </div>
+      </div>
+
+      <div class="setup-banner" id="setupBanner">
+        <strong>⚠ Profile not set up</strong>
+        Click <b>Edit Profile</b>, enter your Sync Passcode, then click <b>Fetch from Cloud</b> to load your details.
+      </div>
+
+      <button class="btn-primary" id="apply" disabled>⚡ Apply Autofill</button>
+
+      <div class="btn-row">
+        <button class="btn-secondary" id="editProfile">✏ Edit Profile</button>
+        <button class="btn-secondary" id="syncCloud">🔄 Sync</button>
+      </div>
+
+      <div class="status" id="status">Ready</div>
     </div>
-  </div>
-  
-  <script src="popup.js"></script>
-</body>
+
+    <script type="module" src="popup.js"></script>
+  </body>
 </html>
