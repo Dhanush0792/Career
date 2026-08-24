@@ -658,12 +658,16 @@ const NAV_ITEMS = [
 function renderNav(container, activePage) {
   const token = localStorage.getItem('jxa_token');
   const links = NAV_ITEMS.map(item => {
+    let href = item.href;
+    if (item.label === 'Extension') {
+      href = token ? 'extension-setup.html' : 'extension-landing.html';
+    }
     // If not logged in, only show ATS, Extension
-    const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html'].includes(item.href);
+    const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html', 'extension-setup.html'].includes(href);
     if (!token && isPrivate) return '';
 
-    const isActive = item.href === activePage;
-    return `<a href="${item.href}" class="nav__link${isActive ? ' nav__link--active' : ''}">${item.label}</a>`;
+    const isActive = href === activePage;
+    return `<a href="${href}" class="nav__link${isActive ? ' nav__link--active' : ''}">${item.label}</a>`;
   }).join('');
 
   const btnHtml = token
