@@ -10,6 +10,7 @@ const FIELD_ALIASES = {
   mothername: ["mother's name", "mother name", "mother"],
   email: ["email", "email address", "e-mail"],
   phone: ["phone", "phone number", "mobile", "mobile number", "telephone"],
+  phonecode: ["phone code", "country code", "country/region code", "dial code", "calling code", "phone prefix"],
   address: ["address", "street", "address1"],
   city: ["city", "town"],
   state: ["state", "province", "region"],
@@ -78,7 +79,11 @@ function isJobPage() {
 }
 
 function normalize(s) {
-  return String(s || "").toLowerCase().trim();
+  return String(s || "")
+    .toLowerCase()
+    .replace(/[*::]/g, "") // Strip colons and asterisks
+    .replace(/\s+/g, " ")   // Collapse extra whitespaces
+    .trim();
 }
 
 function scoreElementForKey(el, key) {
@@ -170,26 +175,69 @@ function setValue(el, value) {
     el.focus();
     document.execCommand("selectAll", false, null);
     document.execCommand("insertText", false, value);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+    el.blur();
     return true;
   }
-  // Removed el.focus() to avoid rapid page scrolling/jittering during autofill
   const tag = el.tagName?.toLowerCase();
   const type = normalize(el.getAttribute("type"));
   if (tag === "select") {
-    // pick option that contains value
-    for (const opt of Array.from(el.options || [])) {
-      if (normalize(opt.text).includes(normalize(value)) || normalize(opt.value).includes(normalize(value))) {
+    const normVal = normalize(value);
+    const options = Array.from(el.options || []);
+    
+    // 1. Try exact match first
+    for (const opt of options) {
+      const optText = normalize(opt.text);
+      const optVal = normalize(opt.value);
+      if (optText === normVal || optVal === normVal) {
+        el.focus();
         el.value = opt.value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
         el.dispatchEvent(new Event("change", { bubbles: true }));
+        el.blur();
         return true;
       }
     }
+    
+    // 2. Try exact match cleaned of non-alphanumeric chars
+    const cleanVal = normVal.replace(/[^a-z0-9]/g, "");
+    for (const opt of options) {
+      const cleanText = normalize(opt.text).replace(/[^a-z0-9]/g, "");
+      const cleanOptVal = normalize(opt.value).replace(/[^a-z0-9]/g, "");
+      if (cleanText === cleanVal || cleanOptVal === cleanVal) {
+        el.focus();
+        el.value = opt.value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        el.blur();
+        return true;
+      }
+    }
+
+    // 3. Fallback to partial match (only if prefix matches or options contain value)
+    for (const opt of options) {
+      const optText = normalize(opt.text);
+      if (optText.startsWith(normVal) || optText.includes(normVal) || normalize(opt.value).includes(normVal)) {
+        el.focus();
+        el.value = opt.value;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        el.blur();
+        return true;
+      }
+    }
+    return false;
   }
   if (type === "checkbox" || type === "radio") {
+    el.focus();
     el.checked = Boolean(value);
     el.dispatchEvent(new Event("change", { bubbles: true }));
+    el.blur();
     return true;
   }
+  // Standard text inputs
+  el.focus();
   try {
     el.value = value;
   } catch (e) {
@@ -198,6 +246,7 @@ function setValue(el, value) {
   }
   el.dispatchEvent(new Event("input", { bubbles: true }));
   el.dispatchEvent(new Event("change", { bubbles: true }));
+  el.blur();
   return true;
 }
 

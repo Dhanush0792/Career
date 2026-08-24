@@ -23,7 +23,8 @@ export const DEFAULT_PROFILE_FIELDS = [
   "github",
   "portfolio",
   "resumeDraft",
-  "targetRole"
+  "targetRole",
+  "phoneCode"
 ];
 
 export const FIELD_ALIASES = {
@@ -36,6 +37,7 @@ export const FIELD_ALIASES = {
   motherName: ["mother's name", "mother name", "mother"],
   email: ["email", "email address", "e-mail"],
   phone: ["phone", "phone number", "mobile", "mobile number", "telephone"],
+  phoneCode: ["phone code", "country code", "country/region code", "dial code", "calling code", "phone prefix"],
   address: ["address", "street", "address1"],
   city: ["city", "town"],
   state: ["state", "province", "region"],
@@ -169,6 +171,20 @@ export const PORTAL_MAPS = {
   }
 };
 
+export function getPhoneCode(profile) {
+  const phone = String(profile.phone || "");
+  if (phone.startsWith("+")) {
+    const match = phone.match(/^\+(\d+)/);
+    if (match) return match[1]; // e.g. "91"
+  }
+  const country = String(profile.country || "").toLowerCase();
+  const address = String(profile.address || "").toLowerCase();
+  if (country.includes("india") || address.includes("india")) return "91";
+  if (country.includes("united states") || country.includes("usa") || country.includes("us")) return "1";
+  if (country.includes("united kingdom") || country.includes("uk")) return "44";
+  return "";
+}
+
 export function buildAutofillPayload(profile, requestedFields) {
   const fields = requestedFields.length ? requestedFields : DEFAULT_PROFILE_FIELDS;
   const payload = {};
@@ -180,6 +196,8 @@ export function buildAutofillPayload(profile, requestedFields) {
     const key = field.toLowerCase();
     if (key === "resume") {
       payload[field] = profileLower["resumedraft"] || profileLower["resume"] || "";
+    } else if (key === "phonecode") {
+      payload[field] = getPhoneCode(profile);
     } else if (profileLower[key] !== undefined) {
       payload[field] = profileLower[key];
     } else {
