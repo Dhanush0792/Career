@@ -101,15 +101,34 @@ function scoreElementForKey(el, key) {
   if (closestLabel) {
     surrounding = normalize(closestLabel.textContent);
   } else {
-    const parent = el.parentElement;
-    if (parent) {
-      const fullText = normalize(parent.textContent || "");
-      if (fullText.length < 150) {
-        surrounding = fullText;
+    // Traverse up to 3 parent elements to find label text
+    let curr = el.parentElement;
+    let depth = 0;
+    while (curr && depth < 3) {
+      const text = normalize(curr.textContent || "");
+      if (text && text.length > 2 && text.length < 250) {
+        surrounding += " " + text;
       }
+      curr = curr.parentElement;
+      depth++;
     }
   }
   checks.push(surrounding);
+
+  // Sibling lookup (especially for table cells or adjacent div labels)
+  try {
+    let sib = el.previousElementSibling;
+    if (sib) checks.push(normalize(sib.textContent));
+    
+    let nextSib = el.nextElementSibling;
+    if (nextSib) checks.push(normalize(nextSib.textContent));
+
+    let parentSib = el.parentElement ? el.parentElement.previousElementSibling : null;
+    if (parentSib) checks.push(normalize(parentSib.textContent));
+    
+    let parentNextSib = el.parentElement ? el.parentElement.nextElementSibling : null;
+    if (parentNextSib) checks.push(normalize(parentNextSib.textContent));
+  } catch (e) {}
 
   let maxScore = 0;
   const aliases = FIELD_ALIASES[key] || [];
