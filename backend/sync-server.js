@@ -1301,7 +1301,8 @@ const server = http.createServer(async (req, res) => {
         // LaTeX Escaper
         const escapeLatex = (str) => {
           if (!str) return "";
-          return String(str)
+          const cleanStr = String(str).replace(/[\u2600-\u27BF]|[\u{1F300}-\u{1FAFF}]/gu, "");
+          return cleanStr
             .replace(/\\/g, "\\textbackslash{}")
             .replace(/([&%$#_{}])/g, "\\$1")
             .replace(/\^/g, "\\textasciicircum{}")
@@ -1529,7 +1530,8 @@ const server = http.createServer(async (req, res) => {
       // LaTeX Escaper
       const escapeLatex = (str) => {
         if (!str) return "";
-        return String(str)
+        const cleanStr = String(str).replace(/[\u2600-\u27BF]|[\u{1F300}-\u{1FAFF}]/gu, "");
+        return cleanStr
           .replace(/\\/g, "\\textbackslash{}")
           .replace(/([&%$#_{}])/g, "\\$1")
           .replace(/\^/g, "\\textasciicircum{}")
