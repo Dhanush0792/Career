@@ -135,6 +135,14 @@
       overflow-y: auto;
       padding-right: 12px;
     }
+
+    .preview-col {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
     .editor-col::-webkit-scrollbar {
       width: 6px;
     }
@@ -909,10 +917,10 @@
           <h1 class="preview-name">${name}</h1>
           <h2 class="preview-title">${title}</h2>
           <div class="preview-contact">
-            ${email ? `<span>✉ ${email}</span>` : ""}
-            ${phone ? `<span>📞 ${phone}</span>` : ""}
-            ${location ? `<span>📍 ${location}</span>` : ""}
-            ${website ? `<span>🌐 ${website}</span>` : ""}
+            ${email ? `<span>${email}</span>` : ""}
+            ${phone ? `<span>${phone}</span>` : ""}
+            ${location ? `<span>${location}</span>` : ""}
+            ${website ? `<span>${website}</span>` : ""}
           </div>
         </div>
         

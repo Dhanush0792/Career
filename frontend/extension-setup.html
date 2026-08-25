@@ -168,7 +168,12 @@ body::after {
 
   <!-- Browser Detection Hero -->
   <div class="detect-banner" id="detect-banner">
-    <div class="browser-icon" id="browser-icon">🌐</div>
+    <div class="browser-icon" id="browser-icon">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+        <path d="M12 2a10 10 0 0 0 0 20M12 2a10 10 0 0 1 0 20M2 12h20M12 2C9.5 5 8 8.5 8 12s1.5 7 4 10M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+      </svg>
+    </div>
     <div class="detect-info">
       <div class="detect-label">Detected Browser</div>
       <div class="detect-browser" id="browser-name">Detecting...</div>
