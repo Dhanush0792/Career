@@ -977,6 +977,7 @@ function renderRichPreview(data) {
 
   html += `</div>`;
   richPreview.innerHTML = (window.DOMPurify ? DOMPurify.sanitize(html) : html);
+  setTimeout(fitPreview, 10);
 }
 
 // Tabs Switcher
@@ -987,11 +988,38 @@ function switchTab(tab) {
   if (tab === 'rich') {
     document.querySelector('.tab-btn[onclick="switchTab(\'rich\')"]').classList.add('active');
     document.getElementById('tab-rich').classList.add('active');
+    setTimeout(fitPreview, 10);
   } else {
     document.querySelector('.tab-btn[onclick="switchTab(\'latex\')"]').classList.add('active');
     document.getElementById('tab-latex').classList.add('active');
   }
 }
+
+function fitPreview() {
+  const container = document.getElementById('tab-rich');
+  const sheet = document.getElementById('letter-preview-content');
+  if (!container || !sheet) return;
+  
+  sheet.style.transform = 'scale(1)';
+  sheet.style.marginBottom = '0px';
+  sheet.style.marginLeft = '0px';
+  sheet.style.marginRight = '0px';
+
+  const containerWidth = container.clientWidth - 20;
+  const containerHeight = container.clientHeight - 20;
+  
+  const scaleX = containerWidth / 794;
+  const scaleY = containerHeight / 1123;
+  const scale = Math.min(scaleX, scaleY);
+  
+  sheet.style.transform = `scale(${scale})`;
+  sheet.style.marginBottom = `${1123 * (scale - 1)}px`;
+  sheet.style.marginRight = `${(794 * (scale - 1)) / 2}px`;
+  sheet.style.marginLeft = `${(794 * (scale - 1)) / 2}px`;
+}
+
+window.addEventListener('resize', fitPreview);
+setTimeout(fitPreview, 100);
 
 // Copy LaTeX code
 function copyLatexCode() {
