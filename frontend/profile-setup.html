@@ -813,9 +813,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedPasscode = localStorage.getItem('jxa_passcode') || "";
   document.getElementById('f-passcode').value = savedPasscode;
 
-  const state = await loadProfile();
-  const p = state?.profile || {};
-  if (p && Object.keys(p).length) {
+  function populateFormFields(p) {
+    if (!p) return;
     FIELDS.forEach(f => {
       const el = document.getElementById('f-' + f);
       if (el && p[f] !== undefined) el.value = p[f];
@@ -833,6 +832,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll(".role-chip-cb").forEach(cb => {
       cb.checked = activeRoles.includes(cb.value);
     });
+  }
+
+  // 1. Load instantly from cache
+  const cachedState = getCachedProfileState();
+  if (cachedState && cachedState.profile) {
+    populateFormFields(cachedState.profile);
+  }
+
+  // 2. Fetch updates in background
+  let state;
+  try {
+    state = await loadProfile();
+    if (state && state.profile) {
+      populateFormFields(state.profile);
+    }
+  } catch (e) {
+    console.error("Background load failed:", e);
+    state = cachedState;
+  }
+  const p = state?.profile || {};
 
     toggleEmploymentFields();
   }

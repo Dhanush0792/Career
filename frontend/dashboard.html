@@ -541,6 +541,15 @@ document.addEventListener('jobxapply:offline', () => {
 });
 
 (async () => {
+  // 1. Instant optimistic UI render from cache (0ms delay)
+  const cachedState = getCachedProfileState();
+  if (cachedState) {
+    renderProfileState(cachedState);
+    renderTracker();
+    syncDot.classList.remove('offline');
+    syncLabel.textContent = 'Restored from cache...';
+  }
+
   // Telemetry page view hit
   fetch(`${SYNC_API}/telemetry/hit`, {
     method: 'POST',
@@ -548,17 +557,26 @@ document.addEventListener('jobxapply:offline', () => {
     body: JSON.stringify({ metric: 'pageViews' })
   }).catch(() => {});
 
-  const state = await loadProfile();
-  renderProfileState(state);
-  renderTracker();
+  // 2. Fetch fresh updates silently in the background
+  try {
+    const state = await loadProfile();
+    renderProfileState(state);
+    renderTracker();
 
-  if (state.origin !== 'none') {
-    syncDot.classList.remove('offline');
-    syncLabel.textContent = state.origin === 'local' ? 'Cached (server offline)' : 'Synced';
-    addLog('Profile loaded from ' + (state.origin === 'local' ? 'local cache' : 'sync server') + '.', 'info');
-  } else {
-    syncLabel.textContent = 'No profile yet';
-    addLog('No profile data found. Visit Profile to get started.', 'warn');
+    if (state.origin !== 'none') {
+      syncDot.classList.remove('offline');
+      syncLabel.textContent = state.origin === 'local' ? 'Cached (server offline)' : 'Synced';
+      if (!cachedState || cachedState.version !== state.version || cachedState.updatedAt !== state.updatedAt) {
+        addLog('Profile state synchronized with server.', 'success');
+      }
+    } else {
+      syncLabel.textContent = 'No profile yet';
+      addLog('No profile data found. Visit Profile to get started.', 'warn');
+    }
+  } catch (e) {
+    console.error("Background sync failed:", e);
+    syncDot.classList.add('offline');
+    syncLabel.textContent = 'Sync offline';
   }
 
   connectSSE();

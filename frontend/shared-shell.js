@@ -233,6 +233,29 @@ async function loadProfile() {
 }
 
 /**
+ * Synchronously retrieves the cached profile state from localStorage.
+ */
+function getCachedProfileState() {
+  try {
+    const localState = localStorage.getItem('jxa_local_state');
+    if (localState) {
+      const state = JSON.parse(localState);
+      const localProfiles = localStorage.getItem('jxa_local_profiles');
+      const activeId = localStorage.getItem('jxa_active_profile_id') || "default";
+      if (localProfiles) {
+        state.profiles = JSON.parse(localProfiles);
+        state.profile = state.profiles[activeId] || {};
+      }
+      state.origin = 'local';
+      return state;
+    }
+  } catch (e) {
+    console.error("Failed to load cached profile:", e);
+  }
+  return null;
+}
+
+/**
  * Save profile to sync server AND localStorage.
  * Returns { ok, state, errors }.
  */
@@ -1407,5 +1430,6 @@ window.CareerBridgeSync = {
   loadProfile,
   saveProfile,
   setActiveProfile,
+  getCachedProfileState,
   renderNav
 };

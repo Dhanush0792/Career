@@ -220,24 +220,35 @@ function showToast(msg, type='success') {
 
 async function loadSettings() {
   const token = localStorage.getItem('jxa_token');
+  
+  // 1. Instantly load from cache
+  const cachedState = getCachedProfileState();
+  if (cachedState) {
+    const prof = cachedState.profile || {};
+    const personal = prof.personal || {};
+    document.getElementById('update-name').value = personal.fullName || cachedState.user?.name || '';
+    document.getElementById('update-email').value = cachedState.user?.email || localStorage.getItem('jxa_user_email') || '';
+  } else {
+    document.getElementById('update-email').value = localStorage.getItem('jxa_user_email') || '';
+  }
+  
+  // 2. Fetch fresh updates in the background
   try {
     const res = await fetch(`${SYNC_API}/profile`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.ok) {
       const data = await res.json();
-      // Try to populate from user profile
       const prof = data.profile || {};
       const personal = prof.personal || {};
       document.getElementById('update-name').value = personal.fullName || data.user?.name || '';
       document.getElementById('update-email').value = data.user?.email || localStorage.getItem('jxa_user_email') || '';
-    } else {
-      document.getElementById('update-email').value = localStorage.getItem('jxa_user_email') || '';
     }
   } catch (e) {
-    document.getElementById('update-email').value = localStorage.getItem('jxa_user_email') || '';
+    console.error("Background settings load failed:", e);
   }
-  loadSmartAnswers();
+  
+  loadSmartAnswers(cachedState);
 }
 
 async function updateAccountDetails() {
@@ -279,13 +290,25 @@ async function updateAccountDetails() {
 
 let activeProfile = {};
 
-async function loadSmartAnswers() {
-  const state = await loadProfile();
-  activeProfile = state?.profile || {};
-  if (!Array.isArray(activeProfile.answers)) {
-    activeProfile.answers = [];
+async function loadSmartAnswers(cachedState = null) {
+  if (cachedState) {
+    activeProfile = cachedState.profile || {};
+    if (!Array.isArray(activeProfile.answers)) {
+      activeProfile.answers = [];
+    }
+    renderSmartAnswers();
   }
-  renderSmartAnswers();
+
+  try {
+    const state = await loadProfile();
+    activeProfile = state?.profile || {};
+    if (!Array.isArray(activeProfile.answers)) {
+      activeProfile.answers = [];
+    }
+    renderSmartAnswers();
+  } catch (e) {
+    console.error("Background smart answers load failed:", e);
+  }
 }
 
 function renderSmartAnswers() {
