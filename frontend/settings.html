@@ -90,32 +90,34 @@ body::after {
   </div>
 
   <div class="settings-section">
-    <h2 class="section-title">Update Credentials</h2>
+    <h2 class="section-title">Identity Profile</h2>
     <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
-      <label class="data-label">Full Name</label>
+      <label class="data-label">Display Name</label>
       <input type="text" class="form-input" id="update-name" style="max-width:100%;">
     </div>
     <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
-      <label class="data-label">Email Address</label>
-      <input type="email" class="form-input" id="update-email" style="max-width:100%;">
+      <label class="data-label">Google Account (Verified)</label>
+      <input type="email" class="form-input" id="update-email" style="max-width:100%; opacity:0.75;" readonly disabled>
     </div>
-    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px; margin-top:16px;">
-      <label class="data-label">New Password (optional)</label>
-      <input type="password" class="form-input" id="update-new-password" placeholder="Leave blank to keep current" style="max-width:100%;">
+    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
+      <label class="data-label">Sync Operative ID</label>
+      <input type="text" class="form-input" id="update-userid" style="max-width:100%; opacity:0.75; font-size:12px; font-family:var(--mono);" readonly disabled>
     </div>
-    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px; margin-top:16px; margin-bottom:16px;">
-      <label class="data-label" style="color:var(--alert); font-weight:600;">Current Password (Required to apply changes)</label>
-      <input type="password" class="form-input" id="update-current-password" placeholder="Confirm current password" style="max-width:100%;">
-    </div>
-    <button class="btn btn-primary" onclick="updateAccountDetails()">Update Account</button>
+    <button class="btn btn-primary" onclick="updateAccountDetails()">Save Changes</button>
   </div>
 
   <div class="settings-section">
     <h2 class="section-title">Sync Vault Passcode</h2>
-    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">Your vault passcode encrypts local profile data before syncing it. We cannot recover this if lost.</p>
+    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">
+      Your vault passcode encrypts local profile data before syncing it. Copy or change the passcode to pair new browser extension clients.
+    </p>
     <div class="data-row">
-      <span class="data-label">Current Status</span>
-      <span class="data-val" style="color:var(--success);">Configured (••••••••)</span>
+      <span class="data-label">Passcode Vault</span>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span class="data-val" id="disp-passcode" style="color:var(--success);">••••••••</span>
+        <button class="btn btn-ghost" onclick="togglePasscodeVisibility()" style="padding:4px 8px; font-size:10px;">Show</button>
+        <button class="btn btn-ghost" onclick="copyPasscodeToClipboard()" style="padding:4px 8px; font-size:10px;">Copy</button>
+      </div>
     </div>
     <div style="margin-top: 16px;">
       <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'block'">Change Passcode</button>
@@ -129,6 +131,21 @@ body::after {
       </div>
       <button class="btn btn-primary" onclick="savePasscode()">Save Passcode</button>
       <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'none'" style="border:none;">Cancel</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h2 class="section-title">Subscription Plan</h2>
+    <div class="data-row">
+      <span class="data-label">Current Tier</span>
+      <span class="data-val" id="disp-tier" style="text-transform: uppercase; font-weight:700; color:var(--success);">Free</span>
+    </div>
+    <div class="data-row">
+      <span class="data-label">Scoring & Writing Limit</span>
+      <span class="data-val" id="disp-limit">5 generations / hour</span>
+    </div>
+    <div style="margin-top: 16px;">
+      <button class="btn btn-primary" onclick="upgradePlaceholder()" style="background:var(--success); color:#070a18;">Upgrade to Premium</button>
     </div>
   </div>
 
@@ -228,6 +245,11 @@ async function loadSettings() {
     const personal = prof.personal || {};
     document.getElementById('update-name').value = personal.fullName || cachedState.user?.name || '';
     document.getElementById('update-email').value = cachedState.user?.email || localStorage.getItem('jxa_user_email') || '';
+    document.getElementById('update-userid').value = cachedState.user?.id || '';
+    
+    const tier = cachedState.tier || 'free';
+    document.getElementById('disp-tier').textContent = tier;
+    document.getElementById('disp-limit').textContent = tier === 'premium' ? '50 generations / hour' : '5 generations / hour';
   } else {
     document.getElementById('update-email').value = localStorage.getItem('jxa_user_email') || '';
   }
@@ -243,6 +265,11 @@ async function loadSettings() {
       const personal = prof.personal || {};
       document.getElementById('update-name').value = personal.fullName || data.user?.name || '';
       document.getElementById('update-email').value = data.user?.email || localStorage.getItem('jxa_user_email') || '';
+      document.getElementById('update-userid').value = data.user?.id || '';
+      
+      const tier = data.tier || 'free';
+      document.getElementById('disp-tier').textContent = tier;
+      document.getElementById('disp-limit').textContent = tier === 'premium' ? '50 generations / hour' : '5 generations / hour';
     }
   } catch (e) {
     console.error("Background settings load failed:", e);
@@ -253,12 +280,9 @@ async function loadSettings() {
 
 async function updateAccountDetails() {
   const name = document.getElementById('update-name').value.trim();
-  const email = document.getElementById('update-email').value.trim();
-  const newPassword = document.getElementById('update-new-password').value;
-  const currentPassword = document.getElementById('update-current-password').value;
 
-  if (!currentPassword) {
-    return showToast('Current password is required to save changes', 'error');
+  if (!name) {
+    return showToast('Display name cannot be empty', 'error');
   }
 
   showToast('Updating account details...');
@@ -270,19 +294,21 @@ async function updateAccountDetails() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ name, email, newPassword, currentPassword })
+      body: JSON.stringify({ name })
     });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.error || 'Failed to update account');
     }
     
-    if (data.token) localStorage.setItem('jxa_token', data.token);
-    if (data.user?.email) localStorage.setItem('jxa_user_email', data.user.email);
+    // Save updated name to local state cache
+    const cachedState = getCachedProfileState() || {};
+    if (data.user) {
+      cachedState.user = data.user;
+      localStorage.setItem('jxa_local_state', JSON.stringify(cachedState));
+    }
     
-    showToast('Account details updated successfully!');
-    document.getElementById('update-new-password').value = '';
-    document.getElementById('update-current-password').value = '';
+    showToast('Display name updated successfully!');
   } catch (err) {
     showToast(err.message, 'error');
   }
@@ -519,6 +545,36 @@ function factoryReset() {
     localStorage.clear();
     window.location.href = 'auth.html';
   }
+}
+
+function togglePasscodeVisibility() {
+  const el = document.getElementById('disp-passcode');
+  const btn = el.nextElementSibling;
+  const passcode = localStorage.getItem('jxa_passcode') || "";
+  if (el.textContent.includes('•')) {
+    el.textContent = passcode || "(Not set)";
+    btn.textContent = 'Hide';
+  } else {
+    el.textContent = '••••••••';
+    btn.textContent = 'Show';
+  }
+}
+
+function copyPasscodeToClipboard() {
+  const passcode = localStorage.getItem('jxa_passcode') || "";
+  if (!passcode) {
+    return showToast("No passcode configured yet.", "error");
+  }
+  navigator.clipboard.writeText(passcode).then(() => {
+    showToast("Passcode copied to clipboard!");
+  }).catch(err => {
+    console.error("Clipboard write failed:", err);
+    showToast("Failed to copy passcode.", "error");
+  });
+}
+
+function upgradePlaceholder() {
+  showToast("Plan upgrades are coming soon! Standard premium pricing is $9.99/mo.", "info");
 }
 
 document.addEventListener('DOMContentLoaded', loadSettings);
