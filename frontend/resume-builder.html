@@ -533,7 +533,18 @@
                 </div>
                 <div class="form-group col-6">
                   <label for="res-title">Target Job Title</label>
-                  <input type="text" id="res-title" class="glass-input" placeholder="e.g. Senior Software Engineer">
+                  <select id="res-title" class="glass-input" onchange="handleRoleSelection()">
+                    <option value="">Select Target Role</option>
+                    <option value="SDE">SDE</option>
+                    <option value="Junior Developer">Junior Developer</option>
+                    <option value="Java/Python/C/C++ Developer">Java/Python/C/C++ Developer</option>
+                    <option value="Content Manager">Content Manager</option>
+                    <option value="Video Editor">Video Editor</option>
+                    <option value="Senior Developer">Senior Developer</option>
+                    <option value="Marketing Specialist">Marketing Specialist</option>
+                    <option value="Customer Care Executive">Customer Care Executive</option>
+                    <option value="Business Executive">Business Executive</option>
+                  </select>
                 </div>
               </div>
               <div class="form-row" style="margin-top: 15px;">
@@ -662,14 +673,90 @@
       document.addEventListener("input", updatePreview);
     });
 
+    let activeUserProfile = {};
+
+    const ROLE_SUMMARIES = {
+      "SDE": {
+        "Student": "Computer Science student passionate about software engineering, algorithms, and clean code.",
+        "Fresher": "Graduate seeking an entry-level SDE role to design and build scalable codebases.",
+        "Experienced": "Experienced Software Engineer specializing in scalable microservices, backend systems, and architectural design."
+      },
+      "Junior Developer": {
+        "Student": "Student coder seeking to apply programming skills in web and mobile app development.",
+        "Fresher": "Passionate programmer looking to contribute to shipping features in a collaborative dev team.",
+        "Experienced": "Junior developer with hands-on experience in frontend/backend tech stacks and API integrations."
+      },
+      "Java/Python/C/C++ Developer": {
+        "Student": "Tech student focusing on systems programming, language design, and scripting automation.",
+        "Fresher": "Graduate proficient in object-oriented programming, data models, and database scripting.",
+        "Experienced": "Software Engineer specializing in enterprise application development, concurrency, and performance tuning."
+      },
+      "Content Manager": {
+        "Student": "Communications student focused on digital media, search engine optimization, and copy writing.",
+        "Fresher": "Creative graduate seeking to coordinate publishing, media campaigns, and brand storytelling.",
+        "Experienced": "Senior Content Manager with experience designing enterprise content workflows and driving digital engagement."
+      },
+      "Video Editor": {
+        "Student": "Film/media student skilled in Adobe Premiere, motion graphics, and video production.",
+        "Fresher": "Creative editor looking to produce high-impact short-form videos and marketing clips.",
+        "Experienced": "Experienced Video Editor with a portfolio of commercial ads, post-production pipelines, and color grading."
+      },
+      "Senior Developer": {
+        "Student": "Master's student skilled in system design, research prototyping, and infrastructure.",
+        "Fresher": "Talented developer seeking to lead development cycles and build high-performance products.",
+        "Experienced": "Senior Developer/Architect with history of managing software teams, cloud migrations, and system design."
+      },
+      "Marketing Specialist": {
+        "Student": "Business student specializing in market analytics, growth hacking, and social campaigns.",
+        "Fresher": "Marketing graduate eager to execute digital campaigns, email sequences, and lead generation.",
+        "Experienced": "Results-driven Marketer with a track record of driving conversions, search engine visibility, and brand growth."
+      },
+      "Customer Care Executive": {
+        "Student": "Student with strong active listening skills seeking to support customer service tasks.",
+        "Fresher": "Empathetic graduate eager to troubleshoot user inquiries, handle tickets, and build retention.",
+        "Experienced": "Support Lead experienced in customer success, escalations management, and CRM tool workflows."
+      },
+      "Business Executive": {
+        "Student": "Management student focused on corporate strategy, operational planning, and sales.",
+        "Fresher": "Energetic graduate looking to optimize business operations, sales pipelines, and key relationships.",
+        "Experienced": "Business Operations Lead skilled in cross-functional coordination, sales strategies, and revenue growth."
+      }
+    };
+
+    function handleRoleSelection() {
+      const role = document.getElementById("res-title").value;
+      if (!role) return;
+      
+      const status = activeUserProfile.employmentStatus || "Fresher";
+      const summaries = ROLE_SUMMARIES[role];
+      if (summaries) {
+        const summary = summaries[status] || summaries["Fresher"];
+        document.getElementById("res-summary").value = summary;
+        updatePreview();
+      }
+    }
+
     // Populate form with profile data
     function populateFromProfile(state) {
       if (!state) return;
-      const profile = state.profile || {};
+      activeUserProfile = state.profile || {};
+      const profile = activeUserProfile;
       
       // Populate Basics
       document.getElementById("res-name").value = profile.fullName || "";
-      document.getElementById("res-title").value = profile.headline || profile.targetRole || "";
+      const titleVal = profile.headline || profile.targetRole || "";
+      const titleEl = document.getElementById("res-title");
+      if (titleEl && titleVal) {
+        let exists = false;
+        for (const opt of titleEl.options) {
+          if (opt.value === titleVal) exists = true;
+        }
+        if (!exists && titleVal.trim()) {
+          const newOpt = new Option(titleVal, titleVal, true, true);
+          titleEl.add(newOpt);
+        }
+        titleEl.value = titleVal;
+      }
       document.getElementById("res-email").value = profile.email || "";
       document.getElementById("res-phone").value = profile.phone || "";
       document.getElementById("res-location").value = (profile.city && profile.country) ? `${profile.city}, ${profile.country}` : (profile.city || profile.country || "");

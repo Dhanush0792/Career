@@ -330,20 +330,6 @@ body::after {
             <option value="10">Referral-Based (Traditional Flush)</option>
           </select>
         </div>
-
-        <div class="form-row">
-          <label>Target Role Override</label>
-          <select id="select-role" onchange="onRoleOverrideChange()">
-            <option value="profile">Use Profile Target Role</option>
-            <option value="sde">Software Development Engineer (SDE)</option>
-            <option value="backend">Backend Developer</option>
-            <option value="java">Java Developer</option>
-            <option value="marketing">Marketing Specialist</option>
-            <option value="sales">Sales Representative</option>
-            <option value="customer_care">Customer Care Operator</option>
-          </select>
-        </div>
-
         <div class="form-row">
           <label>Company Name</label>
           <input type="text" id="company-input" placeholder="e.g. Google India" maxlength="120">
@@ -351,7 +337,18 @@ body::after {
         
         <div class="form-row">
           <label>Target Role / Position</label>
-          <input type="text" id="role-input" placeholder="e.g. Senior Frontend Engineer" maxlength="120">
+          <select id="role-input" onchange="handleCoverLetterRoleSelection()">
+            <option value="">Select Target Role</option>
+            <option value="SDE">SDE</option>
+            <option value="Junior Developer">Junior Developer</option>
+            <option value="Java/Python/C/C++ Developer">Java/Python/C/C++ Developer</option>
+            <option value="Content Manager">Content Manager</option>
+            <option value="Video Editor">Video Editor</option>
+            <option value="Senior Developer">Senior Developer</option>
+            <option value="Marketing Specialist">Marketing Specialist</option>
+            <option value="Customer Care Executive">Customer Care Executive</option>
+            <option value="Business Executive">Business Executive</option>
+          </select>
         </div>
       </div>
 
@@ -480,87 +477,103 @@ let autoSaveTimeout = null;
 
 // Role Library same as Resume Builder
 const ROLE_LIBRARY = {
-  software: {
+  sde: {
     student: {
-      summary: "Ambitious Software Engineering graduate with strong academic foundations in algorithm design, data structures, and full-stack development. Eager to contribute to software delivery teams and learn cutting-edge production frameworks."
+      summary: "Computer Science student passionate about software engineering, algorithms, and clean code."
+    },
+    fresher: {
+      summary: "Graduate seeking an entry-level SDE role to design and build scalable codebases."
     },
     experienced: {
-      summary: "Results-oriented Software Engineer with a proven track record of designing scalable web architectures, microservices API performance improvements, and leading agile sprint execution."
-    },
-    transition: {
-      summary: "Adaptable professional pivoting into Software Engineering. Combines analytical problem-solving skills from previous technical roles with self-taught expertise in modern programming stacks."
-    },
-    general: {
-      summary: "Dedicated developer focused on writing clean, maintainable code, implementing robust database schemas, and building responsive client-side web applications."
+      summary: "Experienced Software Engineer specializing in scalable microservices, backend systems, and architectural design."
     }
   },
-  qa: {
+  junior_developer: {
     student: {
-      summary: "Detail-focused engineering graduate interested in manual and automated software testing. Experienced in mapping out user flows, drafting test plans, and logging system exceptions."
+      summary: "Student coder seeking to apply programming skills in web and mobile app development."
+    },
+    fresher: {
+      summary: "Passionate programmer looking to contribute to shipping features in a collaborative dev team."
     },
     experienced: {
-      summary: "QA Engineer with extensive experience in automated test suite authoring, CI/CD pipeline verification, regression analysis, and cross-browser responsiveness checks."
-    },
-    transition: {
-      summary: "Analytical investigator transitioning to Quality Assurance. Brings high attention to detail, process compliance experience, and troubleshooting capabilities from past administrative roles."
-    },
-    general: {
-      summary: "Quality-driven analyst committed to verifying system reliability, drafting end-to-end user scenarios, and raising software stability thresholds."
+      summary: "Junior developer with hands-on experience in frontend/backend tech stacks and API integrations."
     }
   },
-  java: {
+  java_python_c_cpp: {
     student: {
-      summary: "Graduate developer with solid foundations in Object-Oriented Programming, Java SE/EE, and SQL query creation. Comfortable building desktop applications and working with relational databases."
+      summary: "Tech student focusing on systems programming, language design, and scripting automation."
+    },
+    fresher: {
+      summary: "Graduate proficient in object-oriented programming, data models, and database scripting."
     },
     experienced: {
-      summary: "Senior Java Developer with expertise in Spring Boot microservices, multithreading optimizations, Hibernate ORM mappings, and secure enterprise application integrations."
-    },
-    transition: {
-      summary: "Skilled backend practitioner transitioning focus to enterprise Java stacks. Combines analytical systems design experience with deep hands-on training in object-oriented architectures."
-    },
-    general: {
-      summary: "Java Engineer focused on writing robust, structured backend business logic, optimizing database query executions, and maintaining system integrations."
+      summary: "Software Engineer specializing in enterprise application development, concurrency, and performance tuning."
     }
   },
-  python: {
+  content_manager: {
     student: {
-      summary: "Data-driven graduate with practical knowledge of Python scripting, data visualization libraries, and mathematical modeling. Enthusiastic about analytics pipeline automation."
+      summary: "Communications student focused on digital media, search engine optimization, and copy writing."
+    },
+    fresher: {
+      summary: "Creative graduate seeking to coordinate publishing, media campaigns, and brand storytelling."
     },
     experienced: {
-      summary: "Experienced Data Specialist proficient in Python backend automation, ETL pipeline design, regression analysis modeling, and database warehousing tools."
+      summary: "Senior Content Manager with experience designing enterprise content workflows and driving digital engagement."
+    }
+  },
+  video_editor: {
+    student: {
+      summary: "Film/media student skilled in Adobe Premiere, motion graphics, and video production."
     },
-    transition: {
-      summary: "Logical analyst transitioning to Python and Data Operations. Brings strong quantitative skills, system audits background, and automated scripting proficiency."
+    fresher: {
+      summary: "Creative editor looking to produce high-impact short-form videos and marketing clips."
     },
-    general: {
-      summary: "Technical practitioner focused on building clean Python automation scripts, optimizing database queries, and preparing structured analytics reports."
+    experienced: {
+      summary: "Experienced Video Editor with a portfolio of commercial ads, post-production pipelines, and color grading."
+    }
+  },
+  senior_developer: {
+    student: {
+      summary: "Master's student skilled in system design, research prototyping, and infrastructure."
+    },
+    fresher: {
+      summary: "Talented developer seeking to lead development cycles and build high-performance products."
+    },
+    experienced: {
+      summary: "Senior Developer/Architect with history of managing software teams, cloud migrations, and system design."
     }
   },
   marketing: {
     student: {
-      summary: "Creative graduate trained in digital branding, social media metrics tracking, and content creation. Passionate about campaign analytics and scaling audience reach."
+      summary: "Business student specializing in market analytics, growth hacking, and social campaigns."
+    },
+    fresher: {
+      summary: "Marketing graduate eager to execute digital campaigns, email sequences, and lead generation."
     },
     experienced: {
-      summary: "Strategic Growth Marketer with a track record of managing multi-channel digital acquisition funnels, optimizing SEO campaigns, and running A/B conversion tests."
-    },
-    general: {
-      summary: "Marketing professional focused on creating engaging digital strategies, improving content visibility, and tracking lead generation metrics."
+      summary: "Results-driven Marketer with a track record of driving conversions, search engine visibility, and brand growth."
     }
   },
-  sales: {
+  customer_care: {
     student: {
-      summary: "Energetic graduate eager to build a career in business development and B2B sales. Possesses excellent communication skills, relationship-building abilities, and target alignment."
+      summary: "Student with strong active listening skills seeking to support customer service tasks."
+    },
+    fresher: {
+      summary: "Empathetic graduate eager to troubleshoot user inquiries, handle tickets, and build retention."
     },
     experienced: {
-      summary: "Results-driven Sales Manager with a strong record of exceeding revenue quotas, managing enterprise pipelines, negotiating contracts, and expanding market territories."
-    },
-    general: {
-      summary: "Sales representative dedicated to maintaining customer relationships, matching customer needs with product features, and driving sales growth."
+      summary: "Support Lead experienced in customer success, escalations management, and CRM tool workflows."
     }
   },
-  customer: {
-    general: {
-      summary: "Customer Support Specialist committed to resolving customer inquiries, documenting product feedback, maintaining high satisfaction scores, and managing escalations."
+  business_executive: {
+    student: {
+      summary: "Management student focused on corporate strategy, operational planning, and sales."
+    },
+    fresher: {
+      summary: "Energetic graduate looking to optimize business operations, sales pipelines, and key relationships."
+    },
+    experienced: {
+      summary: "Business Operations Lead skilled in cross-functional coordination, sales strategies, and revenue growth."
     }
   }
 };
@@ -607,8 +620,18 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     const cl = userProfile.coverLetter;
     if (cl.templateId) document.getElementById('template-select').value = cl.templateId;
     if (cl.companyName) document.getElementById('company-input').value = cl.companyName;
-    if (cl.role) document.getElementById('role-input').value = cl.role;
-    if (cl.selectRole) document.getElementById('select-role').value = cl.selectRole;
+    if (cl.role) {
+      const roleEl = document.getElementById('role-input');
+      let exists = false;
+      for (const opt of roleEl.options) {
+        if (opt.value === cl.role) exists = true;
+      }
+      if (!exists && cl.role.trim()) {
+        const newOpt = new Option(cl.role, cl.role, true, true);
+        roleEl.add(newOpt);
+      }
+      roleEl.value = cl.role;
+    }
     if (cl.recipientName) document.getElementById('recipient-name').value = cl.recipientName;
     if (cl.recipientTitle) document.getElementById('recipient-title').value = cl.recipientTitle;
     if (cl.recipientAddress) document.getElementById('recipient-address').value = cl.recipientAddress;
@@ -629,7 +652,7 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     // Rerender pre-defined summaries list if custom_role is populated
     if (cl.customRoleSummary) {
       PREDEFINED_SUMMARIES["custom_role"] = cl.customRoleSummary;
-      const displayRole = document.querySelector(`#select-role option[value="${cl.selectRole}"]`)?.text || "Preset";
+      const displayRole = cl.role || "Preset";
       document.getElementById('summary-select').innerHTML = `
         <option value="">-- Choose pre-defined summaries --</option>
         <option value="custom_role" ${cl.summarySelect === 'custom_role' ? 'selected' : ''}>${displayRole} Summary Preset</option>
@@ -644,14 +667,23 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     addLog('[SYS_LOAD] Saved cover letter parameters loaded.', 'success');
   } else {
     if (userProfile.targetRole) {
-      document.getElementById('role-input').value = userProfile.targetRole;
+      const roleEl = document.getElementById('role-input');
+      let exists = false;
+      for (const opt of roleEl.options) {
+        if (opt.value === userProfile.targetRole) exists = true;
+      }
+      if (!exists && userProfile.targetRole.trim()) {
+        const newOpt = new Option(userProfile.targetRole, userProfile.targetRole, true, true);
+        roleEl.add(newOpt);
+      }
+      roleEl.value = userProfile.targetRole;
       document.getElementById('subject-input').value = `RE: Application for ${userProfile.targetRole} role`;
     }
   }
 
   // Register real-time inputs auto-save handlers
   const syncInputs = [
-    'template-select', 'company-input', 'role-input', 'select-role',
+    'template-select', 'company-input', 'role-input',
     'recipient-name', 'recipient-title', 'recipient-address', 'subject-input',
     'opt-subject', 'opt-enclosure', 'enclosure-input', 'summary-select', 'jd-input'
   ];
@@ -682,7 +714,6 @@ function triggerAutoSave() {
       templateId: document.getElementById('template-select').value,
       companyName: document.getElementById('company-input').value.trim(),
       role: document.getElementById('role-input').value.trim(),
-      selectRole: document.getElementById('select-role').value,
       recipientName: document.getElementById('recipient-name').value.trim(),
       recipientTitle: document.getElementById('recipient-title').value.trim(),
       recipientAddress: document.getElementById('recipient-address').value.trim(),
@@ -713,6 +744,16 @@ function updateFieldsFromSync(cl) {
   const updateVal = (id, val) => {
     const el = document.getElementById(id);
     if (el && el !== focused && val !== undefined) {
+      if (id === 'role-input') {
+        let exists = false;
+        for (const opt of el.options) {
+          if (opt.value === val) exists = true;
+        }
+        if (!exists && val.trim()) {
+          const newOpt = new Option(val, val, true, true);
+          el.add(newOpt);
+        }
+      }
       el.value = val;
     }
   };
@@ -720,7 +761,6 @@ function updateFieldsFromSync(cl) {
   updateVal('template-select', cl.templateId);
   updateVal('company-input', cl.companyName);
   updateVal('role-input', cl.role);
-  updateVal('select-role', cl.selectRole);
   updateVal('recipient-name', cl.recipientName);
   updateVal('recipient-title', cl.recipientTitle);
   updateVal('recipient-address', cl.recipientAddress);
@@ -760,41 +800,43 @@ function onPreviewEdit() {
   triggerAutoSave();
 }
 
-// Role Override changes
-function onRoleOverrideChange() {
-  const roleKey = document.getElementById('select-role').value;
-  if (roleKey === 'profile') {
-    if (userProfile.targetRole) {
-      document.getElementById('role-input').value = userProfile.targetRole;
-      document.getElementById('subject-input').value = `RE: Application for ${userProfile.targetRole} role`;
-    }
-    triggerAutoSave();
-    return;
-  }
+// Role selection changes
+function handleCoverLetterRoleSelection() {
+  const role = document.getElementById("role-input").value;
+  if (!role) return;
   
-  let libKey = roleKey;
-  if (roleKey === "sde" || roleKey === "backend" || roleKey === "default") libKey = "software";
-  if (roleKey === "customer_care") libKey = "customer";
+  // Update subject line automatically
+  document.getElementById('subject-input').value = `RE: Application for ${role} role`;
   
+  // Look up library key
+  let libKey = "sde";
+  if (role === "SDE") libKey = "sde";
+  else if (role === "Junior Developer") libKey = "junior_developer";
+  else if (role === "Java/Python/C/C++ Developer") libKey = "java_python_c_cpp";
+  else if (role === "Content Manager") libKey = "content_manager";
+  else if (role === "Video Editor") libKey = "video_editor";
+  else if (role === "Senior Developer") libKey = "senior_developer";
+  else if (role === "Marketing Specialist") libKey = "marketing";
+  else if (role === "Customer Care Executive") libKey = "customer_care";
+  else if (role === "Business Executive") libKey = "business_executive";
+
   if (ROLE_LIBRARY[libKey]) {
-    const selected = ROLE_LIBRARY[libKey]["general"] || ROLE_LIBRARY[libKey]["experienced"] || {};
-    const displayRole = document.querySelector(`#select-role option[value="${roleKey}"]`).text;
-    document.getElementById('role-input').value = displayRole;
-    document.getElementById('subject-input').value = `RE: Application for ${displayRole}`;
+    const status = (userProfile.employmentStatus || "Fresher").toLowerCase();
+    const selected = ROLE_LIBRARY[libKey][status] || ROLE_LIBRARY[libKey]["fresher"] || {};
     
     // Inject custom preset summary
     PREDEFINED_SUMMARIES["custom_role"] = selected.summary || "";
     document.getElementById('summary-select').innerHTML = `
       <option value="">-- Choose pre-defined summaries --</option>
-      <option value="custom_role" selected>${displayRole} Summary Preset</option>
+      <option value="custom_role" selected>${role} Summary Preset</option>
       <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
       <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
       <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
       <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
     `;
     
-    addLog(`[ROLE_OVERRIDE] Loaded summary preset for: ${displayRole}`, 'info');
-    showToast(`Applied ${displayRole} summary preset.`);
+    addLog(`[ROLE_SELECTION] Loaded summary preset for: ${role}`, 'info');
+    showToast(`Applied ${role} summary preset.`);
     triggerAutoSave();
   }
 }
