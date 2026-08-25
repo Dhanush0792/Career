@@ -628,6 +628,11 @@
   </div>
 
   <script src="shared-shell.js"></script>
+  <script>
+    if (typeof requireAuth === "function") {
+      requireAuth();
+    }
+
     window.switchEditorTab = function(tabId, btn) {
       document.querySelectorAll(".editor-section").forEach(sec => sec.classList.remove("active"));
       const target = document.getElementById(tabId);
