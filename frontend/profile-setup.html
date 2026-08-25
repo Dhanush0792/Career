@@ -805,11 +805,6 @@ async function saveCloudProfile() {
 
 // Initial Loading
 document.addEventListener("DOMContentLoaded", async () => {
-  // Render navigation
-  if (window.CareerBridgeSync && typeof window.CareerBridgeSync.renderNav === "function") {
-    window.CareerBridgeSync.renderNav();
-  }
-
   // Check authentication
   if (!window.CareerBridgeSync.requireAuth()) return;
 
