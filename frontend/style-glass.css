@@ -6,6 +6,15 @@
    Radii: 20px (Cards), 12px (Buttons)
 ═══════════════════════════════════════════════════════════ */
 
+::selection {
+  background: rgba(91, 79, 232, 0.4) !important;
+  color: #ffffff !important;
+}
+::-moz-selection {
+  background: rgba(91, 79, 232, 0.4) !important;
+  color: #ffffff !important;
+}
+
 :root {
   --base:    #0B1020;
   --primary: #5B4FE8;
@@ -76,7 +85,7 @@ body {
 .logo__bracket { color: var(--primary); }
 .nav__links { display: flex; gap: 8px; }
 .nav__link {
-  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
   color: var(--muted); padding: 8px 16px;
   text-transform: uppercase;
   text-decoration: none;
@@ -92,7 +101,7 @@ body {
   justify-content: center;
   gap: 8px;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -133,10 +142,10 @@ body {
 }
 .form-group label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .08em;
-  color: var(--muted);
+  color: var(--white); /* High contrast white label */
   text-transform: uppercase;
 }
 .form-input {
@@ -145,7 +154,7 @@ body {
   border: 1px solid var(--glass-border);
   padding: 12px 16px;
   font-family: var(--body);
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--white);
   outline: none;
   border-radius: 8px;
@@ -169,7 +178,7 @@ body {
 .nav__logo-bracket { color: var(--primary); }
 .nav__link--active { color: var(--primary) !important; }
 .nav__logout {
-  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase;
   color: var(--dim); cursor: pointer;
   border: 1px solid var(--glass-border);
@@ -208,7 +217,7 @@ body {
 /* ─── Status Pills ───────────────────────────────────────────────────────── */
 .status-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px; font-family: var(--mono); font-size: 9px;
+  padding: 3px 10px; font-family: var(--mono); font-size: 11px;
   font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
   border: 1px solid; border-radius: 4px;
 }
@@ -223,15 +232,15 @@ body {
   gap: 12px; padding: 40px 20px;
   font-family: var(--mono); text-align: center;
 }
-.empty-state__label { font-size: 11px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
-.empty-state__hint  { font-size: 12px; color: var(--dim); max-width: 320px; line-height: 1.6; }
+.empty-state__label { font-size: 13px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.empty-state__hint  { font-size: 14px; color: var(--dim); max-width: 320px; line-height: 1.6; }
 
 /* ─── Warning Banner ─────────────────────────────────────────────────────── */
 .warn-banner {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 16px; border: 1px solid rgba(245,166,35,.35);
   background: rgba(245,166,35,.07); border-radius: 8px;
-  font-family: var(--mono); font-size: 11px; color: var(--alert);
+  font-family: var(--mono); font-size: 13px; color: var(--alert);
   line-height: 1.5;
 }
 
@@ -302,8 +311,20 @@ select option,
   background-color: #0b1020 !important;
   color: #f4f7ff !important;
   font-family: var(--mono) !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
   padding: 12px !important;
+}
+
+select option:checked,
+select option:hover,
+select option:focus {
+  background-color: var(--primary) !important;
+  color: var(--white) !important;
+}
+
+select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 10px var(--glass-focus) !important;
 }
 
 /* Ensure text box placeholders are easily legible */
