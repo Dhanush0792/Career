@@ -519,7 +519,25 @@ function handleFocusIn(e) {
     return;
   }
   const target = e.target;
-  if (!target || !(target.matches && target.matches("input, textarea, [contenteditable='true'], select"))) {
+  if (!target) {
+    hideButton();
+    return;
+  }
+  
+  const tagName = target.tagName ? target.tagName.toLowerCase() : "";
+  const type = target.getAttribute("type") ? target.getAttribute("type").toLowerCase() : "";
+  
+  let isAutofillable = false;
+  if (tagName === "textarea" || tagName === "select" || target.contentEditable === "true" || target.getAttribute("contenteditable") === "true") {
+    isAutofillable = true;
+  } else if (tagName === "input") {
+    const supportedTypes = ["text", "email", "tel", "url", "search", "number", "password", "date", ""];
+    if (supportedTypes.includes(type) || !target.hasAttribute("type")) {
+      isAutofillable = true;
+    }
+  }
+  
+  if (!isAutofillable) {
     hideButton();
     return;
   }
