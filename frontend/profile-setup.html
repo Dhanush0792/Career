@@ -6,7 +6,7 @@
 <title>JobXApply // Profile Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght=700;900&family=JetBrains+Mono:wght=400;500;700&family=Inter:wght=400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
@@ -60,6 +60,8 @@ body::after {
 .btn { padding: 12px 20px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; }
 .btn-primary { background: var(--primary); color: var(--white); border-color: var(--primary); }
 .btn-primary:hover { background: rgba(91, 79, 232, 0.85); transform: translateY(-1px); }
+.btn-secondary { background: rgba(255, 255, 255, 0.08); color: var(--white); border-color: var(--glass-border); }
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
 .btn-success { background: var(--success); color: #070a18; border-color: var(--success); font-weight: 900; }
 .btn-success:hover { background: #26bba6; transform: translateY(-1px); }
 .btn-ghost { background: transparent; color: var(--muted); border-color: var(--glass-border); }
@@ -88,18 +90,19 @@ body::after {
 
 <div class="container">
   <header class="header">
-    <h1 class="page-title">Master Profile</h1>
+    <h1 class="page-title">Master Profile Setup</h1>
   </header>
-
 
   <div class="profile-grid">
     <!-- Left Navigation -->
     <div class="tabs-nav">
       <button class="tab-btn active" onclick="switchTab('tab-basics', this)">01 // BASICS <span>➔</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-professional', this)">02 // PROFESSIONAL <span>➔</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-experience', this)">03 // EXPERIENCE <span>➔</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-import', this)">04 // RESUME IMPORT <span>➔</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-security', this)">05 // SYNC & KEY <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-academic', this)">02 // ACADEMIC <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-professional', this)">03 // PROFESSIONAL <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-experience', this)">04 // EXPERIENCE <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-documents', this)">05 // DOCUMENTS <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-additional', this)">06 // ADDITIONAL <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-security', this)">07 // SYNC & KEY <span>➔</span></button>
     </div>
 
     <!-- Right Content Card -->
@@ -131,8 +134,8 @@ body::after {
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="f-phone">Phone Number</label>
-              <input type="text" id="f-phone" placeholder="e.g. +91 98765 43210">
+              <label for="f-alternativeEmail">Alternative Email</label>
+              <input type="email" id="f-alternativeEmail" placeholder="alternative@email.com">
             </div>
             <div class="form-group">
               <label for="f-dob">Date of Birth</label>
@@ -141,32 +144,343 @@ body::after {
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label for="f-city">City / Location</label>
+              <label for="f-phoneCode">Country Calling Code</label>
+              <input type="text" id="f-phoneCode" placeholder="e.g. 91">
+            </div>
+            <div class="form-group">
+              <label for="f-phone">Phone Number</label>
+              <input type="text" id="f-phone" placeholder="e.g. 9876543210">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-city">City</label>
               <input type="text" id="f-city" placeholder="e.g. Bangalore">
             </div>
+            <div class="form-group">
+              <label for="f-state">State / Province</label>
+              <input type="text" id="f-state" placeholder="e.g. Karnataka">
+            </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label for="f-country">Country</label>
               <input type="text" id="f-country" placeholder="e.g. India">
             </div>
+            <div class="form-group">
+              <label for="f-pincode">Pincode / Postal Code</label>
+              <input type="text" id="f-pincode" placeholder="e.g. 560001">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="f-maritalStatus">Marital Status</label>
+              <select id="f-maritalStatus">
+                <option value="">Select Marital Status</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <!-- Tab 2: Professional -->
+        <!-- Tab 2: Academic Background -->
+        <div class="tab-pane" id="tab-academic">
+          <div class="section-title">02 / Academic History & Qualifications</div>
+          
+          <!-- 10th -->
+          <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">10th Standard / Matriculation</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-edu10_school">School Name</label>
+                <input type="text" id="f-edu10_school" placeholder="e.g. St. Xavier's High School">
+              </div>
+              <div class="form-group">
+                <label for="f-edu10_board">Board (e.g. CBSE, ICSE, State)</label>
+                <input type="text" id="f-edu10_board" placeholder="e.g. CBSE">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-edu10_year">Year of Passing</label>
+                <input type="text" id="f-edu10_year" placeholder="e.g. 2018">
+              </div>
+              <div class="form-group">
+                <label for="f-edu10_cgpa">Percentage / CGPA</label>
+                <input type="text" id="f-edu10_cgpa" placeholder="e.g. 92% or 9.5 CGPA">
+              </div>
+            </div>
+          </div>
+
+          <!-- 12th -->
+          <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">12th Standard / Higher Secondary / Intermediate</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-edu12_school">College/School Name</label>
+                <input type="text" id="f-edu12_school" placeholder="e.g. National Junior College">
+              </div>
+              <div class="form-group">
+                <label for="f-edu12_board">Board (e.g. CBSE, State, IB)</label>
+                <input type="text" id="f-edu12_board" placeholder="e.g. State Board">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-edu12_year">Year of Passing</label>
+                <input type="text" id="f-edu12_year" placeholder="e.g. 2020">
+              </div>
+              <div class="form-group">
+                <label for="f-edu12_cgpa">Percentage / CGPA</label>
+                <input type="text" id="f-edu12_cgpa" placeholder="e.g. 95% or 9.8 CGPA">
+              </div>
+            </div>
+          </div>
+
+          <!-- UG Degree -->
+          <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Undergraduate (UG) Degree</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduGrad_college">University / College</label>
+                <input type="text" id="f-eduGrad_college" placeholder="e.g. IIT Madras">
+              </div>
+              <div class="form-group">
+                <label for="f-eduGrad_degree">Degree (e.g. B.Tech, B.Sc, B.Com, MBBS)</label>
+                <input type="text" id="f-eduGrad_degree" placeholder="e.g. B.Tech">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduGrad_stream">Stream / Branch / Specialization</label>
+                <input type="text" id="f-eduGrad_stream" placeholder="e.g. Computer Science, Mechanical, Business, Medical">
+              </div>
+              <div class="form-group">
+                <label for="f-eduGrad_year">Year of Passing</label>
+                <input type="text" id="f-eduGrad_year" placeholder="e.g. 2024">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduGrad_cgpa">Percentage / CGPA</label>
+                <input type="text" id="f-eduGrad_cgpa" placeholder="e.g. 8.5 CGPA">
+              </div>
+              <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 20px;">
+                <input type="checkbox" id="f-eduGrad_pursuing" style="width: auto; margin: 0;">
+                <label for="f-eduGrad_pursuing" style="cursor: pointer; font-size: 11px;">Currently Pursuing UG</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- PG Degree -->
+          <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Postgraduate (PG) Degree (if applicable)</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduPG_college">University / College</label>
+                <input type="text" id="f-eduPG_college" placeholder="e.g. IIM Bangalore">
+              </div>
+              <div class="form-group">
+                <label for="f-eduPG_degree">Degree (e.g. M.Tech, M.Sc, MBA, MD)</label>
+                <input type="text" id="f-eduPG_degree" placeholder="e.g. MBA">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduPG_stream">Stream / Branch / Specialization</label>
+                <input type="text" id="f-eduPG_stream" placeholder="e.g. Finance, Marketing, Data Science">
+              </div>
+              <div class="form-group">
+                <label for="f-eduPG_year">Year of Passing</label>
+                <input type="text" id="f-eduPG_year" placeholder="e.g. 2026">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduPG_cgpa">Percentage / CGPA</label>
+                <input type="text" id="f-eduPG_cgpa" placeholder="e.g. 9.0 CGPA">
+              </div>
+              <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 20px;">
+                <input type="checkbox" id="f-eduPG_pursuing" style="width: auto; margin: 0;">
+                <label for="f-eduPG_pursuing" style="cursor: pointer; font-size: 11px;">Currently Pursuing PG</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Masters -->
+          <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Masters Degree (if separate/applicable)</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduMasters_college">University / College</label>
+                <input type="text" id="f-eduMasters_college" placeholder="e.g. Stanford University">
+              </div>
+              <div class="form-group">
+                <label for="f-eduMasters_degree">Degree (e.g. MS, MA)</label>
+                <input type="text" id="f-eduMasters_degree" placeholder="e.g. MS">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduMasters_stream">Stream / Branch</label>
+                <input type="text" id="f-eduMasters_stream" placeholder="e.g. Robotics">
+              </div>
+              <div class="form-group">
+                <label for="f-eduMasters_year">Year of Passing</label>
+                <input type="text" id="f-eduMasters_year" placeholder="e.g. 2025">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduMasters_cgpa">Percentage / CGPA</label>
+                <input type="text" id="f-eduMasters_cgpa" placeholder="e.g. 3.8/4.0 GPA">
+              </div>
+              <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 20px;">
+                <input type="checkbox" id="f-eduMasters_pursuing" style="width: auto; margin: 0;">
+                <label for="f-eduMasters_pursuing" style="cursor: pointer; font-size: 11px;">Currently Pursuing Masters</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- PhD -->
+          <div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">PhD / Doctorate</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduPhD_college">University / Research Institution</label>
+                <input type="text" id="f-eduPhD_college" placeholder="e.g. MIT">
+              </div>
+              <div class="form-group">
+                <label for="f-eduPhD_degree">Doctorate Details</label>
+                <input type="text" id="f-eduPhD_degree" placeholder="e.g. PhD in AI & Ethics">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduPhD_stream">Specialization Stream</label>
+                <input type="text" id="f-eduPhD_stream" placeholder="e.g. Machine Learning">
+              </div>
+              <div class="form-group">
+                <label for="f-eduPhD_year">Year of Passing / Defense</label>
+                <input type="text" id="f-eduPhD_year" placeholder="e.g. 2027">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-eduPhD_cgpa">CGPA / Grade</label>
+                <input type="text" id="f-eduPhD_cgpa" placeholder="e.g. Pass/Excellent">
+              </div>
+              <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 20px;">
+                <input type="checkbox" id="f-eduPhD_pursuing" style="width: auto; margin: 0;">
+                <label for="f-eduPhD_pursuing" style="cursor: pointer; font-size: 11px;">Currently Pursuing PhD</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Professional & Employment -->
         <div class="tab-pane" id="tab-professional">
-          <div class="section-title">02 / Job Target & Skills</div>
-          <div class="form-group full" style="margin-bottom: 16px;">
+          <div class="section-title">03 / Employment & Target Roles</div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-employmentStatus">Employment Status</label>
+              <select id="f-employmentStatus" onchange="toggleEmploymentFields()">
+                <option value="">Select Employment Status</option>
+                <option value="Fresher">Fresher (Looking for first job)</option>
+                <option value="Student">Student (Looking for internships/grad jobs)</option>
+                <option value="Experienced">Experienced Professional</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-expectedSalary">Expected Salary / CTC</label>
+              <input type="text" id="f-expectedSalary" placeholder="e.g. 10 LPA or $80,000 / Year">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" id="group-noticePeriod">
+              <label for="f-noticePeriod">Notice Period (Days)</label>
+              <select id="f-noticePeriod">
+                <option value="0">Immediate / 0 Days</option>
+                <option value="15">15 Days</option>
+                <option value="30">30 Days</option>
+                <option value="60">60 Days</option>
+                <option value="90">90 Days</option>
+              </select>
+            </div>
+            <div class="form-group" id="group-totalExperience">
+              <label for="f-totalExperience">Total Experience (Years)</label>
+              <input type="number" id="f-totalExperience" min="0" max="50" value="0">
+            </div>
+          </div>
+
+          <!-- Target Roles Multi-Select -->
+          <div class="form-group full" style="margin-top: 16px;">
+            <label>Target Roles (Select all that apply)</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;" id="target-roles-container">
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="SDE" style="width:auto; margin:0;" class="role-chip-cb"> SDE
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Java Developer" style="width:auto; margin:0;" class="role-chip-cb"> Java Developer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Backend Developer" style="width:auto; margin:0;" class="role-chip-cb"> Backend Developer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Frontend Developer" style="width:auto; margin:0;" class="role-chip-cb"> Frontend Developer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Full Stack Developer" style="width:auto; margin:0;" class="role-chip-cb"> Full Stack Developer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Junior Developer" style="width:auto; margin:0;" class="role-chip-cb"> Junior Developer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Senior Developer" style="width:auto; margin:0;" class="role-chip-cb"> Senior Developer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Business Executive" style="width:auto; margin:0;" class="role-chip-cb"> Business Executive
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Video Editor" style="width:auto; margin:0;" class="role-chip-cb"> Video Editor
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Content Creator" style="width:auto; margin:0;" class="role-chip-cb"> Content Creator
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Data Analyst" style="width:auto; margin:0;" class="role-chip-cb"> Data Analyst
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="Product Manager" style="width:auto; margin:0;" class="role-chip-cb"> Product Manager
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="QA Engineer" style="width:auto; margin:0;" class="role-chip-cb"> QA Engineer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="DevOps Engineer" style="width:auto; margin:0;" class="role-chip-cb"> DevOps Engineer
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+                <input type="checkbox" value="UI/UX Designer" style="width:auto; margin:0;" class="role-chip-cb"> UI/UX Designer
+              </label>
+            </div>
+            <input type="hidden" id="f-targetRoles">
+          </div>
+
+          <div class="form-group full" style="margin-top: 16px;">
             <label for="f-headline">Headline</label>
             <input type="text" id="f-headline" placeholder="e.g. Full Stack Developer | React & Node.js">
           </div>
-          <div class="form-group full" style="margin-bottom: 16px;">
-            <label for="f-targetRole">Target Role</label>
-            <input type="text" id="f-targetRole" placeholder="e.g. Software Engineer">
-          </div>
-          <div class="form-group full" style="margin-bottom: 16px;">
+          <div class="form-group full">
             <label for="f-skills">Skills (comma-separated)</label>
             <input type="text" id="f-skills" placeholder="e.g. JavaScript, Python, SQL, Git">
           </div>
-          <div class="form-group full" style="margin-bottom: 16px;">
+          <div class="form-group full">
             <label for="f-summary">Professional Summary</label>
             <textarea id="f-summary" placeholder="A brief intro detailing your technical expertises..."></textarea>
           </div>
@@ -186,38 +500,63 @@ body::after {
           </div>
         </div>
 
-        <!-- Tab 3: Experience & Education -->
+        <!-- Tab 4: Experience -->
         <div class="tab-pane" id="tab-experience">
-          <div class="section-title">03 / Work History & Academic Background</div>
+          <div class="section-title">04 / Work History & Projects</div>
           <div class="form-group full" style="margin-bottom: 16px;">
-            <label for="f-experience">Work Experience</label>
-            <textarea id="f-experience" placeholder="Format: Job Title @ Company (Start - End)&#10;- Bullet points detailing responsibilities..."></textarea>
-          </div>
-          <div class="form-group full">
-            <label for="f-education">Education History</label>
-            <textarea id="f-education" placeholder="Format: Degree @ Institution (Graduation Year)&#10;e.g. B.Tech Computer Science @ XYZ Institute (2024)"></textarea>
+            <label for="f-experience">Detailed Work Experience</label>
+            <textarea id="f-experience" style="min-height: 250px;" placeholder="Format: Job Title @ Company (Start - End)&#10;- Bullet points detailing responsibilities..."></textarea>
           </div>
         </div>
 
-        <!-- Tab 4: Resume Import -->
-        <div class="tab-pane" id="tab-import">
-          <div class="section-title">04 / Parse & Populate from File</div>
+        <!-- Tab 5: Documents -->
+        <div class="tab-pane" id="tab-documents">
+          <div class="section-title">05 / Resume, Cover Letter & Documents</div>
+          
           <div class="dropzone" id="resume-dropzone">
-            <div class="dropzone-title">📂 Drag & Drop Resume Here</div>
+            <div class="dropzone-title">📂 Drag & Drop Resume Here to Parse</div>
             <div class="dropzone-desc">Accepts PDF or DOCX file. Click to browse.</div>
             <input type="file" id="resume-input" accept="application/pdf,.docx" style="display:none;">
           </div>
           <div class="console-box" id="console-log">
             <div style="color:var(--primary)">[SYSTEM] Ready for file upload.</div>
           </div>
-          <p style="font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 16px;">
-            * Importing a file will extract details and overwrite existing fields. All fields will lock to let you review the extracted results before saving.
-          </p>
+          
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-resumeDraft">Resume Text / Draft (Markdown / Text)</label>
+            <textarea id="f-resumeDraft" style="min-height: 200px;" placeholder="Paste or parse your full resume content here..."></textarea>
+          </div>
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-coverLetterDraft">Cover Letter Text / Draft (Markdown / Text)</label>
+            <textarea id="f-coverLetterDraft" style="min-height: 200px;" placeholder="Paste or write your cover letter draft here..."></textarea>
+          </div>
+          <div class="form-group full">
+            <label for="f-otherDocuments">Other Documents / Certifications</label>
+            <textarea id="f-otherDocuments" style="min-height: 100px;" placeholder="List other certificates or drive links to documents..."></textarea>
+          </div>
         </div>
 
-        <!-- Tab 5: Security & Sync -->
+        <!-- Tab 6: Additional -->
+        <div class="tab-pane" id="tab-additional">
+          <div class="section-title">06 / Additional Personal & Medical History</div>
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="f-handicapped">Physically or Mentally Challenged / Handicapped?</label>
+              <select id="f-handicapped">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group full" style="margin-top: 16px;">
+            <label for="f-healthIssues">Declare any major health issues (that jobs might ask about)</label>
+            <textarea id="f-healthIssues" style="min-height: 150px;" placeholder="e.g. None, or specify any relevant medical declarations..."></textarea>
+          </div>
+        </div>
+
+        <!-- Tab 7: Security & Sync -->
         <div class="tab-pane" id="tab-security">
-          <div class="section-title">05 / Sync Vault & Encryption Keys</div>
+          <div class="section-title">07 / Sync Vault & Encryption Keys</div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
             Your profile data is encrypted client-side using a secure vault passcode. Without this passcode, the server cannot read your plaintext profile.
           </p>
@@ -234,8 +573,7 @@ body::after {
         <div class="actions-footer">
           <div id="save-status" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Ready</div>
           <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
-            <button type="button" class="btn btn-secondary" onclick="saveLocalProfile()">Save Locally</button>
-            <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save to Cloud</button>
+            <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save Profile</button>
           </div>
         </div>
 
@@ -284,17 +622,6 @@ async function handleFile(file) {
   if (!file) return;
   addLog(`Selected: ${file.name}`);
   const reader = new FileReader();
-  document.addEventListener("DOMContentLoaded", async () => {
-    // Render navigation
-    if (window.CareerBridgeSync && typeof window.CareerBridgeSync.renderNav === "function") {
-      window.CareerBridgeSync.renderNav();
-    }
-
-    // Check authentication
-    if (!window.CareerBridgeSync.requireAuth()) return;
-    
-    // Load and populate profile
-  });
   reader.onload = async (e) => {
     const arrayBuffer = e.target.result;
     try {
@@ -365,18 +692,19 @@ function parseResume(text) {
   
   const eduSection = text.match(/education[\s\S]{0,800}?(experience|skills|$)/i);
   if (eduSection) {
-    document.getElementById('f-education').value = eduSection[0].substring(0, 400).trim();
+    document.getElementById('f-resumeDraft').value = text.trim();
   }
 
   // Visual feedback: lock fields to allow review
-  const inputsToLock = ['f-fullName', 'f-email', 'f-phone', 'f-headline', 'f-skills', 'f-experience', 'f-education'];
+  const inputsToLock = ['f-fullName', 'f-email', 'f-phone', 'f-headline', 'f-skills', 'f-experience', 'f-resumeDraft'];
   inputsToLock.forEach(id => {
     const el = document.getElementById(id);
+    if (!el) return;
     const grp = el.closest('.form-group');
+    if (!grp) return;
     grp.classList.add('locked');
     el.disabled = true;
 
-    // Add unlock icon/button if not already present
     if (!grp.querySelector('.lock-badge')) {
       const lock = document.createElement('span');
       lock.className = 'lock-badge';
@@ -395,81 +723,41 @@ function parseResume(text) {
   switchTab('tab-basics', document.querySelector('.tabs-nav button'));
 }
 
-// Save & Load Functions
-const FIELDS = [
-  'fullName', 'firstName', 'lastName', 'email', 'phone', 'dob', 'city', 'country',
-  'headline', 'targetRole', 'skills', 'summary', 'linkedin', 'github', 'portfolio',
-  'experience', 'education'
-];
-
-async function saveLocalProfile() {
-  const passcode = document.getElementById('f-passcode').value.trim();
-  if (!passcode) {
-    alert('Please enter a Sync Passcode in the "SYNC & KEY" tab to save.');
-    switchTab('tab-security', document.querySelectorAll('.tabs-nav button')[4]);
-    return;
+// Employment Status UI behavior
+function toggleEmploymentFields() {
+  const status = document.getElementById("f-employmentStatus").value;
+  const grpNotice = document.getElementById("group-noticePeriod");
+  const grpExp = document.getElementById("group-totalExperience");
+  if (status === "Experienced") {
+    grpNotice.style.display = "flex";
+    grpExp.style.display = "flex";
+  } else {
+    grpNotice.style.display = "none";
+    grpExp.style.display = "none";
+    document.getElementById("f-noticePeriod").value = "0";
+    document.getElementById("f-totalExperience").value = "0";
   }
-
-  localStorage.setItem('jxa_passcode', passcode);
-
-  const profile = {};
-  FIELDS.forEach(f => {
-    profile[f] = document.getElementById('f-' + f).value.trim();
-  });
-
-  if (!profile.fullName || !profile.email) {
-    alert('Full Name and Email are required.');
-    return;
-  }
-
-  const activeId = localStorage.getItem('jxa_active_profile_id') || "default";
-  
-  let localProfilesRaw = localStorage.getItem('jxa_local_profiles');
-  let localProfiles = {};
-  try {
-    localProfiles = localProfilesRaw ? JSON.parse(localProfilesRaw) : {};
-  } catch(e) {}
-  
-  profile.id = activeId;
-  localProfiles[activeId] = profile;
-
-  const encryptedProfiles = {};
-  for (const key of Object.keys(localProfiles)) {
-    const p = localProfiles[key];
-    if (passcode) {
-      try {
-        encryptedProfiles[key] = await encryptProfileData(p, passcode);
-      } catch (e) {
-        console.error("Encryption failed for profile:", key, e);
-        encryptedProfiles[key] = p;
-      }
-    } else {
-      encryptedProfiles[key] = p;
-    }
-  }
-
-  const localState = {
-    profiles: encryptedProfiles,
-    activeProfileId: activeId,
-    version: 0,
-    updatedAt: Date.now(),
-    origin: 'local'
-  };
-
-  localStorage.setItem('jxa_local_profile', JSON.stringify(profile));
-  localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
-  localStorage.setItem('jxa_local_state', JSON.stringify(localState));
-
-  document.getElementById('save-status').textContent = 'Saved locally ✓';
-  document.getElementById('save-status').style.color = 'var(--success)';
-  showToast('Profile saved locally.');
 }
+
+// Fields List
+const FIELDS = [
+  'fullName', 'firstName', 'lastName', 'email', 'phoneCode', 'phone', 'dob', 'city', 'state', 'country',
+  'alternativeEmail', 'pincode', 'maritalStatus', 'employmentStatus', 'expectedSalary', 'noticePeriod',
+  'totalExperience', 'headline', 'skills', 'summary', 'linkedin', 'github', 'portfolio',
+  'experience', 'resumeDraft', 'coverLetterDraft', 'otherDocuments', 'handicapped', 'healthIssues',
+  'edu10_school', 'edu10_board', 'edu10_year', 'edu10_cgpa',
+  'edu12_school', 'edu12_board', 'edu12_year', 'edu12_cgpa',
+  'eduGrad_college', 'eduGrad_degree', 'eduGrad_stream', 'eduGrad_year', 'eduGrad_cgpa',
+  'eduPG_college', 'eduPG_degree', 'eduPG_stream', 'eduPG_year', 'eduPG_cgpa',
+  'eduMasters_college', 'eduMasters_degree', 'eduMasters_stream', 'eduMasters_year', 'eduMasters_cgpa',
+  'eduPhD_college', 'eduPhD_degree', 'eduPhD_stream', 'eduPhD_year', 'eduPhD_cgpa'
+];
 
 async function saveCloudProfile() {
   const passcode = document.getElementById('f-passcode').value.trim();
   if (!passcode) {
     alert('Please enter a Sync Passcode in the "SYNC & KEY" tab to sync.');
-    switchTab('tab-security', document.querySelectorAll('.tabs-nav button')[4]);
+    switchTab('tab-security', document.querySelectorAll('.tabs-nav button')[6]);
     return;
   }
 
@@ -477,13 +765,28 @@ async function saveCloudProfile() {
 
   const profile = {};
   FIELDS.forEach(f => {
-    profile[f] = document.getElementById('f-' + f).value.trim();
+    const el = document.getElementById('f-' + f);
+    if (el) profile[f] = el.value.trim();
   });
 
   if (!profile.fullName || !profile.email) {
     alert('Full Name and Email are required.');
+    switchTab('tab-basics', document.querySelectorAll('.tabs-nav button')[0]);
     return;
   }
+
+  // Handle checkboxes
+  profile.eduGrad_pursuing = document.getElementById('f-eduGrad_pursuing').checked;
+  profile.eduPG_pursuing = document.getElementById('f-eduPG_pursuing').checked;
+  profile.eduMasters_pursuing = document.getElementById('f-eduMasters_pursuing').checked;
+  profile.eduPhD_pursuing = document.getElementById('f-eduPhD_pursuing').checked;
+
+  // Handle target roles checkboxes
+  const activeRoles = [];
+  document.querySelectorAll(".role-chip-cb:checked").forEach(cb => {
+    activeRoles.push(cb.value);
+  });
+  profile.targetRoles = activeRoles.join(", ");
 
   document.getElementById('save-status').textContent = 'Syncing...';
   document.getElementById('save-status').style.color = 'var(--muted)';
@@ -494,15 +797,22 @@ async function saveCloudProfile() {
     document.getElementById('save-status').style.color = 'var(--success)';
     showToast('Profile synced successfully!');
   } else {
-    document.getElementById('save-status').textContent = 'Cloud sync failed, saved locally.';
+    document.getElementById('save-status').textContent = 'Cloud sync failed.';
     document.getElementById('save-status').style.color = 'var(--alert)';
-    showToast('Failed to sync to cloud.', 'error');
+    showToast(res.errors ? res.errors.join('; ') : 'Failed to sync to cloud.', 'error');
   }
 }
 
 // Initial Loading
-(async () => {
-  requireAuth();
+document.addEventListener("DOMContentLoaded", async () => {
+  // Render navigation
+  if (window.CareerBridgeSync && typeof window.CareerBridgeSync.renderNav === "function") {
+    window.CareerBridgeSync.renderNav();
+  }
+
+  // Check authentication
+  if (!window.CareerBridgeSync.requireAuth()) return;
+
   renderNav(document.getElementById('main-nav'), 'profile-setup.html');
   
   const savedPasscode = localStorage.getItem('jxa_passcode') || "";
@@ -515,8 +825,23 @@ async function saveCloudProfile() {
       const el = document.getElementById('f-' + f);
       if (el && p[f] !== undefined) el.value = p[f];
     });
+
+    // Checkboxes
+    document.getElementById('f-eduGrad_pursuing').checked = Boolean(p.eduGrad_pursuing);
+    document.getElementById('f-eduPG_pursuing').checked = Boolean(p.eduPG_pursuing);
+    document.getElementById('f-eduMasters_pursuing').checked = Boolean(p.eduMasters_pursuing);
+    document.getElementById('f-eduPhD_pursuing').checked = Boolean(p.eduPhD_pursuing);
+
+    // Target roles checkbox chips
+    const rolesStr = p.targetRoles || "";
+    const activeRoles = rolesStr.split(",").map(r => r.trim()).filter(Boolean);
+    document.querySelectorAll(".role-chip-cb").forEach(cb => {
+      cb.checked = activeRoles.includes(cb.value);
+    });
+
+    toggleEmploymentFields();
   }
-})();
+});
 </script>
 </body>
 </html>

@@ -38,7 +38,67 @@ const DEFAULT_PROFILE = {
   github: "",
   portfolio: "",
   resumeDraft: "",
-  targetRole: ""
+  targetRole: "",
+  
+  // Custom sync properties
+  alternativeEmail: "",
+  pincode: "",
+  maritalStatus: "",
+  employmentStatus: "",
+  expectedSalary: "",
+  handicapped: "",
+  healthIssues: "",
+  targetRoles: "",
+  coverLetterDraft: "",
+  otherDocuments: "",
+  
+  leetcode: "",
+  phoneCode: "",
+  availability: "",
+  noticePeriod: 0,
+  totalExperience: 0,
+  
+  edu10_school: "",
+  edu10_board: "",
+  edu10_year: "",
+  edu10_cgpa: "",
+  
+  edu12_school: "",
+  edu12_board: "",
+  edu12_year: "",
+  edu12_cgpa: "",
+  
+  eduGrad_college: "",
+  eduGrad_degree: "",
+  eduGrad_stream: "",
+  eduGrad_year: "",
+  eduGrad_cgpa: "",
+  eduGrad_pursuing: false,
+  
+  eduPG_college: "",
+  eduPG_degree: "",
+  eduPG_stream: "",
+  eduPG_year: "",
+  eduPG_cgpa: "",
+  eduPG_pursuing: false,
+  
+  eduMasters_college: "",
+  eduMasters_degree: "",
+  eduMasters_stream: "",
+  eduMasters_year: "",
+  eduMasters_cgpa: "",
+  eduMasters_pursuing: false,
+  
+  eduPhD_college: "",
+  eduPhD_degree: "",
+  eduPhD_stream: "",
+  eduPhD_year: "",
+  eduPhD_cgpa: "",
+  eduPhD_pursuing: false,
+  
+  experienceList: [],
+  projectsList: [],
+  certificationsList: []
 };
 
 function loadState() {
@@ -67,6 +127,10 @@ function normalizeProfile(profile = {}) {
       const val = profile[key];
       if (typeof DEFAULT_PROFILE[key] === "number") {
         normalized[key] = Number.isFinite(Number(val)) ? Number(val) : DEFAULT_PROFILE[key];
+      } else if (typeof DEFAULT_PROFILE[key] === "boolean") {
+        normalized[key] = typeof val === "boolean" ? val : Boolean(val);
+      } else if (Array.isArray(DEFAULT_PROFILE[key])) {
+        normalized[key] = Array.isArray(val) ? val : [];
       } else {
         normalized[key] = typeof val === "string" ? val.trim() : (val == null ? "" : String(val));
       }

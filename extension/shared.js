@@ -24,7 +24,17 @@ export const DEFAULT_PROFILE_FIELDS = [
   "portfolio",
   "resumeDraft",
   "targetRole",
-  "phoneCode"
+  "phoneCode",
+  "alternativeEmail",
+  "pincode",
+  "maritalStatus",
+  "employmentStatus",
+  "expectedSalary",
+  "handicapped",
+  "healthIssues",
+  "targetRoles",
+  "coverLetterDraft",
+  "otherDocuments"
 ];
 
 export const FIELD_ALIASES = {
@@ -53,7 +63,17 @@ export const FIELD_ALIASES = {
   github: ["github", "git hub"],
   portfolio: ["portfolio", "website", "site"],
   resumeDraft: ["resume", "cv"],
-  targetRole: ["role", "target role", "position", "designation"]
+  targetRole: ["role", "target role", "position", "designation"],
+  alternativeEmail: ["alternative email", "alt email", "alternate email", "secondary email"],
+  pincode: ["pincode", "pin code", "postal code", "zip", "zip code"],
+  maritalStatus: ["marital status", "marital", "marriage status", "single/married"],
+  employmentStatus: ["employment status", "employment", "job status", "current status"],
+  expectedSalary: ["expected salary", "expected package", "salary expectation", "expected ctq", "expected ctc"],
+  handicapped: ["handicapped", "physically handicapped", "disability", "disabled", "special ability"],
+  healthIssues: ["health issues", "medical history", "health status", "medical conditions"],
+  targetRoles: ["target roles", "preferred roles", "desired roles"],
+  coverLetterDraft: ["cover letter", "letter"],
+  otherDocuments: ["other documents", "supporting documents", "additional documents"]
 };
 
 export const PORTAL_RULES = [

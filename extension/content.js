@@ -27,7 +27,17 @@ const FIELD_ALIASES = {
   portfolio: ["portfolio", "website", "site"],
   resume: ["resume", "cv"],
   targetrole: ["role", "target role", "position", "designation"],
-  portalpassword: ["choose password", "password", "create password", "new password", "portal password"]
+  portalpassword: ["choose password", "password", "create password", "new password", "portal password"],
+  alternativeemail: ["alternative email", "alt email", "alternate email", "secondary email"],
+  pincode: ["pincode", "pin code", "postal code", "zip", "zip code"],
+  maritalstatus: ["marital status", "marital", "marriage status", "single/married"],
+  employmentstatus: ["employment status", "employment", "job status", "current status"],
+  expectedsalary: ["expected salary", "expected package", "salary expectation", "expected ctq", "expected ctc"],
+  handicapped: ["handicapped", "physically handicapped", "disability", "disabled", "special ability"],
+  healthissues: ["health issues", "medical history", "health status", "medical conditions"],
+  targetroles: ["target roles", "preferred roles", "desired roles"],
+  coverletterdraft: ["cover letter", "letter"],
+  otherdocuments: ["other documents", "supporting documents", "additional documents"]
 };
 
 let extensionEnabled = true;
@@ -381,6 +391,16 @@ function buildAutofillPayload(profile, requestedFields) {
   activeFields.add("state");
   activeFields.add("country");
   activeFields.add("phonecode");
+  activeFields.add("alternativeemail");
+  activeFields.add("pincode");
+  activeFields.add("maritalstatus");
+  activeFields.add("employmentstatus");
+  activeFields.add("expectedsalary");
+  activeFields.add("handicapped");
+  activeFields.add("healthissues");
+  activeFields.add("targetroles");
+  activeFields.add("coverletterdraft");
+  activeFields.add("otherdocuments");
 
   for (const key of activeFields) {
     if (key === "resume") {
