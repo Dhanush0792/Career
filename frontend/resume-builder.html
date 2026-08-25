@@ -94,7 +94,7 @@
 
     .main-content {
       flex: 1;
-      padding: 20px 40px;
+      padding: 10px 40px 15px;
       max-width: 100%;
       display: flex;
       flex-direction: column;
@@ -102,32 +102,31 @@
       overflow: hidden;
     }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 10px;
-    }
-
-    .page-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 2.2rem;
-      font-weight: 800;
-      letter-spacing: 2px;
-      color: var(--text-main);
-      text-transform: uppercase;
-    }
-
     .builder-grid {
       display: grid;
       grid-template-columns: 1.15fr 0.85fr;
       gap: 20px;
       flex: 1;
-      height: calc(100% - 60px);
+      height: 100%;
       min-height: 0;
       align-items: stretch;
+      margin-top: 5px;
+    }
+
+    /* Dropdown styles for actions menu */
+    .dropdown-item {
+      display: block;
+      padding: 10px 16px;
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: background 0.2s, color 0.2s;
+    }
+    .dropdown-item:hover {
+      background: rgba(0, 243, 255, 0.1);
+      color: var(--primary);
     }
 
     .editor-col {
@@ -509,13 +508,7 @@
   <div id="app-container">
     <!-- Main Content -->
     <main class="main-content">
-      <header class="header">
-        <h1 class="page-title">Resume Builder</h1>
-        <div class="preview-actions">
-          <button class="btn btn-secondary" onclick="exportJSON()">Export JSON</button>
-          <button class="btn btn-primary" onclick="exportPDF()">Export PDF</button>
-        </div>
-      </header>
+
 
       <div id="resume-builder-app" class="builder-grid">
         <!-- Editor Column -->
@@ -621,8 +614,15 @@
         <!-- Preview Column -->
         <div class="preview-col">
           <div class="glass-card sticky-preview">
-            <div class="card-header">
+            <div class="card-header" style="position: relative; display: flex; justify-content: space-between; align-items: center; width: 100%;">
               <h3 class="card-title">Live Resume Preview</h3>
+              <div class="menu-dropdown" style="position: relative;">
+                <button class="btn btn-secondary btn-sm" id="menu-trigger" onclick="toggleMenuDropdown(event)" style="padding: 4px 8px; border: none; background: transparent; color: var(--primary); font-size: 1.25rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; height: auto; width: auto; box-shadow: none;">⋮</button>
+                <div id="dropdown-content" style="display: none; position: absolute; right: 0; top: 32px; background: #0f172a; border: 1px solid var(--glass-border); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100; min-width: 150px; padding: 4px 0; overflow: hidden;">
+                  <a href="#" class="dropdown-item" onclick="exportJSON();">Export JSON</a>
+                  <a href="#" class="dropdown-item" onclick="exportPDF();" style="border-top: 1px solid rgba(255,255,255,0.05);">Export PDF</a>
+                </div>
+              </div>
             </div>
             <div class="preview-container">
               <div id="live-preview-sheet" class="preview-sheet">
@@ -1029,6 +1029,25 @@
       a.download = "resume.json";
       a.click();
     }
+
+    window.toggleMenuDropdown = function(e) {
+      e.stopPropagation();
+      const dropdown = document.getElementById('dropdown-content');
+      if (dropdown) {
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+      }
+    };
+
+    window.closeMenuDropdown = function() {
+      const dropdown = document.getElementById('dropdown-content');
+      if (dropdown) {
+        dropdown.style.display = 'none';
+      }
+    };
+
+    window.addEventListener('click', () => {
+      window.closeMenuDropdown();
+    });
   </script>
 </body>
 </html>
