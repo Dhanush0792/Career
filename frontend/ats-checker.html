@@ -13,41 +13,207 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
 <script src="shared-shell.js?v=2"></script>
 <style>
-body { padding-top: 80px; }
+body {
+  padding-top: 80px;
+  overflow: hidden; /* Lock page scrolling */
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 body::after {
   content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
-.container { max-width:1000px; margin:0 auto; padding:0 20px; position:relative; z-index:10; }
-.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
-.page-title { font-family:var(--display); font-size:36px; font-weight:900; text-transform:uppercase; color:var(--white); margin-bottom:0; }
-.page-title em { font-style:normal; color:var(--primary); }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:32px; }
-.card { border:1px solid var(--glass-border); background:rgba(255,255,255,.05); padding:24px; border-radius:14px; backdrop-filter:blur(16px); }
-.card__title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; margin-bottom:16px; }
-.text-area { width:100%; height:200px; background:rgba(7,10,24,.6); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:12px; outline:none; resize:vertical; border-radius:8px; }
-.text-area:focus { border-color:var(--primary); }
-.analyze-btn { grid-column:span 2; width:100%; height:48px; background:var(--primary); color:var(--white); font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; border:1px solid var(--primary); cursor:pointer; border-radius:12px; margin-top:4px; transition:all .2s; }
-.analyze-btn:hover { background:rgba(91,79,232,.85); }
-.analyze-btn:disabled { opacity:.45; cursor:not-allowed; }
-.results-panel { grid-column:span 2; display:none; flex-direction:column; gap:20px; }
-.score-badge { display:flex; align-items:center; gap:24px; border:1px solid var(--glass-border); padding:20px; background:rgba(255,255,255,.04); border-radius:12px; }
-.score-val { font-family:var(--display); font-size:52px; font-weight:900; line-height:1; transition:color .3s; }
-.score-desc { font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; }
-.scanned-keywords { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.kw-box { border:1px solid var(--glass-border); padding:16px; background:rgba(255,255,255,.03); border-radius:10px; }
-.kw-title { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.1em; margin-bottom:10px; text-transform:uppercase; }
-.kw-tag { display:inline-block; font-family:var(--mono); font-size:9px; padding:3px 8px; margin:2px; border:1px solid; border-radius:4px; }
-.kw-tag.match { color:var(--success); border-color:rgba(47,221,196,.3); background:rgba(47,221,196,.07); }
-.kw-tag.missing { color:var(--primary); border-color:rgba(91,79,232,.3); background:rgba(91,79,232,.06); }
-.console-box { display: none !important; }
-.console-line { margin-bottom:2px; }
-.blur-gate {
-  filter: blur(5px);
-  pointer-events: none;
-  user-select: none;
+.container {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 15px 40px;
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
 }
+.page-header {
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.page-label { font-family:var(--mono); font-size:11px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
+.page-title { font-family:var(--display); font-size:32px; font-weight:900; text-transform:uppercase; color:var(--white); margin: 0; }
+.page-title em { font-style:normal; color:var(--primary); }
+
+/* Widescreen 2-column layout */
+.grid {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 28px;
+  flex: 1;
+  height: calc(100% - 70px);
+  min-height: 0;
+  align-items: stretch;
+}
+@media (max-width: 900px) {
+  body { overflow: auto; height: auto; }
+  .container { height: auto; }
+  .grid { grid-template-columns: 1fr; height: auto; }
+}
+
+.left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+.right-col {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.right-col::-webkit-scrollbar {
+  width: 6px;
+}
+.right-col::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+}
+.right-col::-webkit-scrollbar-thumb {
+  background: rgba(0, 243, 255, 0.2);
+  border-radius: 3px;
+}
+
+.card {
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,.04);
+  padding: 20px;
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+}
+.card__title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+/* Enlarged input styling */
+.text-area {
+  width: 100%;
+  height: calc(100vh - 460px);
+  min-height: 120px;
+  background: rgba(7,10,24,.6);
+  border: 1px solid var(--glass-border);
+  color: var(--white);
+  font-family: var(--body);
+  font-size: 13px;
+  padding: 12px;
+  outline: none;
+  resize: none;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+.text-area:focus { border-color: var(--primary); }
+
+.select-input {
+  width: 100%;
+  height: 42px;
+  background: rgba(7,10,24,.6);
+  border: 1px solid var(--glass-border);
+  color: var(--white);
+  font-family: var(--body);
+  font-size: 13px;
+  padding: 0 10px;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+}
+.select-input:focus { border-color: var(--primary); }
+
+.analyze-btn {
+  width: 100%;
+  height: 52px;
+  background: var(--primary);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  border: 1px solid var(--primary);
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all .2s;
+}
+.analyze-btn:hover { background: rgba(91,79,232,.85); }
+.analyze-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Drag & Drop */
+.dropzone {
+  border: 2px dashed var(--glass-border);
+  border-radius: 10px;
+  padding: 24px 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: rgba(0,0,0,0.15);
+}
+.dropzone:hover { border-color: var(--primary); background: rgba(91,79,232,.03); }
+
+/* Results styles */
+.results-panel { display: none; flex-direction: column; gap: 20px; }
+.score-badge { display: flex; align-items: center; gap: 24px; border: 1px solid var(--glass-border); padding: 20px; background: rgba(255,255,255,.04); border-radius: 12px; }
+.score-val { font-family: var(--display); font-size: 58px; font-weight: 900; line-height: 1; }
+.score-desc { font-family: var(--body); font-size: 13px; color: var(--muted); line-height: 1.6; }
+.scanned-keywords { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.kw-box { border: 1px solid var(--glass-border); padding: 16px; background: rgba(255,255,255,.03); border-radius: 10px; }
+.kw-title { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; margin-bottom: 10px; text-transform: uppercase; }
+.kw-tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 4px 9px; margin: 3px; border: 1px solid; border-radius: 4px; }
+.kw-tag.match { color: var(--success); border-color: rgba(47,221,196,.3); background: rgba(47,221,196,.07); }
+.kw-tag.missing { color: var(--primary); border-color: rgba(91,79,232,.3); background: rgba(91,79,232,.06); }
+
+/* Suggestions scrollbox */
+.suggestions-box {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.suggestions-box::-webkit-scrollbar {
+  width: 4px;
+}
+.suggestions-box::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+/* Logging Terminal */
+.console-box {
+  border: 1px solid var(--glass-border);
+  background: rgba(7, 10, 24, 0.85);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 12px;
+  border-radius: 10px;
+  height: 90px;
+  overflow-y: auto;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.console-line { margin-bottom: 2px; }
+.console-line.info { color: var(--primary); }
+.console-line.success { color: var(--success); }
+.console-line.warn { color: var(--alert); }
+
+/* Gate Gate */
+.blur-gate { filter: blur(5px); pointer-events: none; user-select: none; }
 .gate-overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -58,194 +224,161 @@ body::after {
   background: rgba(11, 16, 32, 0.4);
   border-radius: 12px;
 }
-.console-line.info { color:var(--primary); }
-.console-line.success { color:var(--success); }
-.console-line.warn { color:var(--alert); }
-.profile-status-box { border:1px dashed var(--glass-border); padding:14px; background:rgba(7,10,24,.5); font-family:var(--mono); font-size:10px; color:var(--muted); border-radius:8px; line-height:1.6; }
-.dropzone { border:2px dashed var(--glass-border); border-radius:10px; padding:30px 20px; text-align:center; cursor:pointer; transition:all .2s; }
-.dropzone:hover { border-color:var(--primary); background:rgba(91,79,232,.03); }
-.tab-btn { flex:1; border:0; background:transparent; color:var(--muted); font-size:10px; font-family:var(--mono); font-weight:700; border-radius:6px; cursor:pointer; height:32px; transition: all 0.2s; }
-.tab-btn.active { background:var(--primary); color:#fff; }
-@media (max-width:680px) { .grid { grid-template-columns:1fr; } .analyze-btn, .results-panel, .console-box { grid-column:1; } .scanned-keywords { grid-template-columns:1fr; } }
 </style>
-
-  <link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
 
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
-  <div style="border-bottom:1px solid var(--glass-border); padding-bottom:20px; margin-bottom:4px;">
+  <header class="page-header">
     <div class="page-label">ATS SCORE ANALYSIS</div>
     <h1 class="page-title">RESUME COMPATIBILITY <em>TESTING</em></h1>
-  </div>
+  </header>
 
   <div class="grid">
-    <!-- Left: JD input -->
-    <div class="card">
-      <div class="card__title">01 // TARGET ROLE & JOB DESCRIPTION</div>
-      <div style="margin-bottom: 12px;">
-        <label style="display:block; font-family:var(--mono); font-size:9px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">Select Target Role</label>
-        <select class="select-input" id="select-role" style="width:100%; height:38px; background:rgba(7,10,24,.6); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:0 8px; border-radius:6px; outline:none; cursor: pointer; transition: border-color 0.2s;">
-          <option value="default">Default / General</option>
-          <option value="sde">Software Development Engineer (SDE)</option>
-          <option value="backend">Backend Developer</option>
-          <option value="java">Java Developer</option>
-          <option value="marketing">Marketing Specialist</option>
-          <option value="sales">Sales Representative</option>
-          <option value="customer_care">Customer Care Operator</option>
-        </select>
-      </div>
-      <textarea class="text-area" id="jd-input" placeholder="Paste the target job description here. The ATS scorer will extract parameters and match keywords, placement, and bullet density." style="height: 140px;"></textarea>
-    </div>
-
-    <!-- Right: Resume Source Selector Tabs -->
-    <div class="card">
-      <div class="card__title">02 // YOUR RESUME SOURCE</div>
-      
-      <div style="display: flex; gap: 8px; margin-bottom: 16px; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px; border: 1px solid var(--glass-border);">
-        <button id="tab-profile" class="tab-btn active">CLOUD PROFILE</button>
-        <button id="tab-pdf" class="tab-btn">UPLOAD PDF</button>
-        <button id="tab-docx" class="tab-btn">UPLOAD DOCX</button>
+    <!-- Left Column: Inputs -->
+    <div class="left-col">
+      <!-- Target Job details -->
+      <div class="card">
+        <div class="card__title">01 // TARGET ROLE & JOB DESCRIPTION</div>
+        <div style="margin-bottom: 12px;">
+          <label style="display:block; font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">Select Target Role</label>
+          <select class="select-input" id="select-role">
+            <option value="default">Default / General</option>
+            <option value="sde">Software Development Engineer (SDE)</option>
+            <option value="backend">Backend Developer</option>
+            <option value="java">Java Developer</option>
+            <option value="marketing">Marketing Specialist</option>
+            <option value="sales">Sales Representative</option>
+            <option value="customer_care">Customer Care Operator</option>
+          </select>
+        </div>
+        <textarea class="text-area" id="jd-input" placeholder="Paste the target job description here. The ATS scorer will extract parameters and match keywords, placement, and bullet density."></textarea>
       </div>
 
-      <!-- Tab Content 1: Profile -->
-      <div id="pane-profile" style="display: block;">
-        <div style="font-family:var(--mono); font-size:11px; color:var(--muted); line-height:1.6; margin-bottom:12px;">
-          Analyzing profile: <span id="res-name" style="color:var(--white)">Loading...</span>
+      <!-- Resume Uploader (Merged PDF/DOCX) -->
+      <div class="card">
+        <div class="card__title">02 // YOUR RESUME (PDF / DOCX)</div>
+        <div id="resume-dropzone" class="dropzone">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase;">📂 Drag & Drop PDF/DOCX or click to choose</span>
+          <input type="file" id="resume-file-input" accept="application/pdf,.docx" style="display: none;">
         </div>
-        <div class="profile-status-box">
-          SKILLS: <span id="res-skills" style="color:var(--white);">...</span>
-        </div>
-        <div id="skills-warn" style="display:none;" class="warn-banner" style="margin-top:12px;">
-          ⚠ No skills in your profile. <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Add skills →</a>
-        </div>
+        <div id="file-info" style="display: none; font-family: var(--mono); font-size: 11px; color: var(--success); margin-top: 12px; text-transform: uppercase; font-weight: bold;"></div>
       </div>
 
-      <!-- Tab Content 2: PDF Upload -->
-      <div id="pane-pdf" style="display: none;">
-        <div id="pdf-dropzone" class="dropzone">
-          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">DRAG & DROP PDF OR CLICK TO CHOOSE</span>
-          <input type="file" id="pdf-file-input" accept="application/pdf" style="display: none;">
-        </div>
-        <div id="pdf-file-info" style="display: none; font-family: var(--mono); font-size: 10px; color: var(--success); margin-top: 10px; text-transform: uppercase;"></div>
-      </div>
-
-      <!-- Tab Content 3: DOCX Upload -->
-      <div id="pane-docx" style="display: none;">
-        <div id="docx-dropzone" class="dropzone">
-          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted);">DRAG & DROP DOCX OR CLICK TO CHOOSE</span>
-          <input type="file" id="docx-file-input" accept=".docx" style="display: none;">
-        </div>
-        <div id="docx-file-info" style="display: none; font-family: var(--mono); font-size: 10px; color: var(--success); margin-top: 10px; text-transform: uppercase;"></div>
-        <div style="font-family: var(--mono); font-size: 9px; color: var(--alert); margin-top: 10px; line-height: 1.35;">
-          Note: DOCX layout parsing (columns & image flags) is PDF-only in this demo. DOCX text will be processed.
-        </div>
+      <!-- Action Button & Log console -->
+      <button class="analyze-btn" id="run-check-btn">› ANALYZE COMPATIBILITY</button>
+      <div class="console-box" id="console">
+        <div class="console-line info">[SYS_INIT] ATS Analyzer ready. Select role, upload resume, and click Analyze.</div>
       </div>
     </div>
 
-    <button class="analyze-btn" id="run-check-btn">› ANALYZE COMPATIBILITY</button>
+    <!-- Right Column: Results Dashboard -->
+    <div class="right-col">
+      <!-- Placeholder displayed before analysis -->
+      <div id="results-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; border: 1px dashed var(--glass-border); border-radius: 14px; background: rgba(255,255,255,0.01); color: var(--muted); text-align: center; padding: 40px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+        <div style="font-family: var(--mono); font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--white); margin-bottom: 8px;">Awaiting Analysis</div>
+        <div style="font-size: 13px; max-width: 320px; line-height: 1.6;">Paste a job description on the left, upload your resume, and click analyze to compute compatibility alignment.</div>
+      </div>
 
-    <div class="console-box" id="console">
-      <div class="console-line">[SYS_INIT] ATS analyzer loaded. Select role, select intake source, and click Analyze.</div>
+      <!-- Results panel -->
+      <div class="results-panel" id="results-panel">
+        <div class="score-badge">
+          <div class="score-val" id="score-number">—</div>
+          <div class="score-desc">
+            <span style="color:var(--white);font-weight:700;">ATS COMPATIBILITY SCORE</span><br>
+            Weighed keyword matching, section checks, and job alignment scoring.<br>
+            <span id="score-detail" style="color:var(--dim);">—</span>
+          </div>
+        </div>
+
+        <!-- Progress breakdown -->
+        <div style="margin-top: 10px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--muted);">
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                <span>Parseability & Formatting (20%)</span>
+                <span id="score-parseability" style="color:var(--white);">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                <div id="bar-parseability" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                <span>Job Title Alignment (10%)</span>
+                <span id="score-title" style="color:var(--white);">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                <div id="bar-title" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                <span>Keyword & Skill Coverage (30%)</span>
+                <span id="score-keyword" style="color:var(--white);">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                <div id="bar-keyword" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                <span>Placement & Density (10%)</span>
+                <span id="score-density" style="color:var(--white);">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                <div id="bar-density" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                <span>Achievement Quality (15%)</span>
+                <span id="score-achievement" style="color:var(--white);">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                <div id="bar-achievement" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                <span>Completeness & Hygiene (15%)</span>
+                <span id="score-completeness" style="color:var(--white);">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                <div id="bar-completeness" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keywords & suggestions (gated for guests) -->
+        <div id="gated-results" style="position: relative; display: flex; flex-direction: column; gap: 20px;">
+          <div class="scanned-keywords">
+            <div class="kw-box">
+              <div class="kw-title" style="color:var(--success);">MATCHED KEYWORDS</div>
+              <div id="matched-tags"></div>
+            </div>
+            <div class="kw-box">
+              <div class="kw-title" style="color:var(--primary);">MISSING / UNMATCHED</div>
+              <div id="missing-tags"></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card__title">03 // OPTIMIZATION SUGGESTIONS</div>
+            <div class="suggestions-box">
+              <ul id="suggestions-list" style="margin-left: 20px; font-family: var(--body); font-size: 13px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated dynamically -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- Results (shown after analysis) -->
-    <div class="results-panel" id="results-panel">
-      <div class="score-badge">
-        <div class="score-val" id="score-number">—</div>
-        <div class="score-desc">
-          <span style="color:var(--white);font-weight:700;">ATS COMPATIBILITY SCORE</span><br>
-          Weighed keyword matching, section checks, and job alignment scoring.<br>
-          <span id="score-detail" style="color:var(--dim);">—</span>
-        </div>
-      </div>
-
-      <!-- Subcategory progress bars -->
-      <div style="margin-top: 20px;">
-              <button class="btn btn-primary btn-block" onclick="checkATS()">Analyze Alignment</button>
-            </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--muted);">
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-              <span>Parseability & Formatting (20%)</span>
-              <span id="score-parseability" style="color:var(--white);">0%</span>
-            </div>
-            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-              <div id="bar-parseability" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-            </div>
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-              <span>Job Title Alignment (10%)</span>
-              <span id="score-title" style="color:var(--white);">0%</span>
-            </div>
-            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-              <div id="bar-title" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-            </div>
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-              <span>Keyword & Skill Coverage (30%)</span>
-              <span id="score-keyword" style="color:var(--white);">0%</span>
-            </div>
-            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-              <div id="bar-keyword" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-            </div>
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-              <span>Placement & Density (10%)</span>
-              <span id="score-density" style="color:var(--white);">0%</span>
-            </div>
-            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-              <div id="bar-density" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-            </div>
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-              <span>Achievement Quality (15%)</span>
-              <span id="score-achievement" style="color:var(--white);">0%</span>
-            </div>
-            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-              <div id="bar-achievement" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-            </div>
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-              <span>Completeness & Hygiene (15%)</span>
-              <span id="score-completeness" style="color:var(--white);">0%</span>
-            </div>
-            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-              <div id="bar-completeness" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Gated results container -->
-      <div id="gated-results" style="position: relative; display: flex; flex-direction: column; gap: 24px;">
-        <div class="scanned-keywords">
-          <div class="kw-box">
-            <div class="kw-title" style="color:var(--success);">MATCHED KEYWORDS</div>
-            <div id="matched-tags"></div>
-          </div>
-          <div class="kw-box">
-            <div class="kw-title" style="color:var(--primary);">MISSING / UNMATCHED</div>
-            <div id="missing-tags"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card__title">03 // OPTIMIZATION SUGGESTIONS</div>
-          <ul id="suggestions-list" style="margin-left: 20px; font-family: var(--body); font-size: 12px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
-            <!-- Populated dynamically -->
-          </ul>
-        </div>
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -259,101 +392,45 @@ renderNav(document.getElementById('main-nav'), 'ats-checker.html');
 const consoleBox = document.getElementById('console');
 const runBtn = document.getElementById('run-check-btn');
 const resultsPanel = document.getElementById('results-panel');
+const placeholderPanel = document.getElementById('results-placeholder');
 
-// Tab control elements
-const tabs = {
-  profile: document.getElementById('tab-profile'),
-  pdf: document.getElementById('tab-pdf'),
-  docx: document.getElementById('tab-docx')
-};
-const panes = {
-  profile: document.getElementById('pane-profile'),
-  pdf: document.getElementById('pane-pdf'),
-  docx: document.getElementById('pane-docx')
-};
+// File Upload elements
+const resumeDropzone = document.getElementById('resume-dropzone');
+const resumeFileInput = document.getElementById('resume-file-input');
+const fileInfo = document.getElementById('file-info');
 
-let currentTab = 'profile';
+let uploadedFileData = null;
+let uploadedFileName = "";
+let isDocx = false;
 
-function switchTab(target) {
-  currentTab = target;
-  Object.keys(tabs).forEach(k => {
-    if (k === target) {
-      tabs[k].classList.add('active');
-      panes[k].style.display = 'block';
-    } else {
-      tabs[k].classList.remove('active');
-      panes[k].style.display = 'none';
-    }
-  });
-  addLog(`[INTAKE] Switched resume source to ${target.toUpperCase()}`, 'info');
-}
-
-tabs.profile.addEventListener('click', () => switchTab('profile'));
-tabs.pdf.addEventListener('click', () => switchTab('pdf'));
-tabs.docx.addEventListener('click', () => switchTab('docx'));
-
-// Drag and drop for PDF
-const pdfDropzone = document.getElementById('pdf-dropzone');
-const pdfInput = document.getElementById('pdf-file-input');
-const pdfInfo = document.getElementById('pdf-file-info');
-let uploadedPdfData = null;
-let uploadedPdfName = "";
-
-pdfDropzone.addEventListener('click', () => pdfInput.click());
-pdfInput.addEventListener('change', (e) => handlePdfFile(e.target.files[0]));
-pdfDropzone.addEventListener('dragover', (e) => { e.preventDefault(); pdfDropzone.style.borderColor = 'var(--primary)'; });
-pdfDropzone.addEventListener('dragleave', () => { pdfDropzone.style.borderColor = 'var(--glass-border)'; });
-pdfDropzone.addEventListener('drop', (e) => {
+// Handle drag and drop
+resumeDropzone.addEventListener('click', () => resumeFileInput.click());
+resumeFileInput.addEventListener('change', (e) => handleResumeFile(e.target.files[0]));
+resumeDropzone.addEventListener('dragover', (e) => { e.preventDefault(); resumeDropzone.style.borderColor = 'var(--primary)'; });
+resumeDropzone.addEventListener('dragleave', () => { resumeDropzone.style.borderColor = 'var(--glass-border)'; });
+resumeDropzone.addEventListener('drop', (e) => {
   e.preventDefault();
-  pdfDropzone.style.borderColor = 'var(--glass-border)';
-  if (e.dataTransfer.files.length > 0) handlePdfFile(e.dataTransfer.files[0]);
+  resumeDropzone.style.borderColor = 'var(--glass-border)';
+  if (e.dataTransfer.files.length > 0) handleResumeFile(e.dataTransfer.files[0]);
 });
 
-function handlePdfFile(file) {
-  if (!file || file.type !== 'application/pdf') {
-    showToast('Please select a valid PDF file.', 'error');
+function handleResumeFile(file) {
+  if (!file) return;
+  const name = file.name.toLowerCase();
+  
+  if (!name.endsWith('.pdf') && !name.endsWith('.docx')) {
+    showToast('Please select a valid PDF or DOCX file.', 'error');
     return;
   }
+
+  isDocx = name.endsWith('.docx');
   const reader = new FileReader();
   reader.onload = function(e) {
-    uploadedPdfData = e.target.result;
-    uploadedPdfName = file.name;
-    pdfInfo.textContent = `✓ SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
-    pdfInfo.style.display = 'block';
-    addLog(`[UPLOAD] Loaded PDF: ${file.name}`, 'success');
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// Drag and drop for DOCX
-const docxDropzone = document.getElementById('docx-dropzone');
-const docxInput = document.getElementById('docx-file-input');
-const docxInfo = document.getElementById('docx-file-info');
-let uploadedDocxData = null;
-let uploadedDocxName = "";
-
-docxDropzone.addEventListener('click', () => docxInput.click());
-docxInput.addEventListener('change', (e) => handleDocxFile(e.target.files[0]));
-docxDropzone.addEventListener('dragover', (e) => { e.preventDefault(); docxDropzone.style.borderColor = 'var(--primary)'; });
-docxDropzone.addEventListener('dragleave', () => { docxDropzone.style.borderColor = 'var(--glass-border)'; });
-docxDropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  docxDropzone.style.borderColor = 'var(--glass-border)';
-  if (e.dataTransfer.files.length > 0) handleDocxFile(e.dataTransfer.files[0]);
-});
-
-function handleDocxFile(file) {
-  if (!file || (!file.name.endsWith('.docx') && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
-    showToast('Please select a valid DOCX file.', 'error');
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    uploadedDocxData = e.target.result;
-    uploadedDocxName = file.name;
-    docxInfo.textContent = `✓ SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
-    docxInfo.style.display = 'block';
-    addLog(`[UPLOAD] Loaded DOCX: ${file.name}`, 'success');
+    uploadedFileData = e.target.result;
+    uploadedFileName = file.name;
+    fileInfo.textContent = `✓ SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
+    fileInfo.style.display = 'block';
+    addLog(`[UPLOAD] Loaded ${isDocx ? 'DOCX' : 'PDF'}: ${file.name}`, 'success');
   };
   reader.readAsArrayBuffer(file);
 }
@@ -361,51 +438,20 @@ function handleDocxFile(file) {
 function addLog(text, cls = '') {
   const line = document.createElement('div');
   line.className = 'console-line ' + cls;
-  line.textContent = text;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
   consoleBox.appendChild(line);
   consoleBox.scrollTop = consoleBox.scrollHeight;
 }
 
-let profileSkills = [];
 let activeProfileData = {};
 
 (async () => {
-  const token = localStorage.getItem('jxa_token');
-  if (!token) {
-    document.getElementById('tab-profile').style.display = 'none';
-    document.getElementById('pane-profile').style.display = 'none';
-    switchTab('pdf');
-    addLog('[GUEST] Anonymous session active. Limit: 1 scan per day.', 'info');
-    return;
-  }
-
   try {
     const state = await loadProfile();
     activeProfileData = state?.profile || {};
-    const name = activeProfileData.fullName || '';
-    const skillsRaw = activeProfileData.skills || '';
-    profileSkills = skillsRaw.split(',').map(s => s.trim()).filter(Boolean);
-
-    const nameEl = document.getElementById('res-name');
-    const skillsEl = document.getElementById('res-skills');
-    const warnEl = document.getElementById('skills-warn');
-
-    if (!name) {
-      nameEl.innerHTML = '<a href="profile-setup.html" style="color:var(--alert);">[Name not set — Edit Profile]</a>';
-    } else {
-      nameEl.textContent = name.toUpperCase();
-    }
-
-    if (profileSkills.length === 0) {
-      skillsEl.innerHTML = '<span style="color:var(--muted);">None listed.</span>';
-      warnEl.style.display = 'flex';
-      addLog('[WARN] Cloud profile has no skills. Add them in settings to run profile matching.', 'warn');
-    } else {
-      skillsEl.textContent = skillsRaw;
-      addLog('[SYS_LOAD] Cloud profile loaded — ' + profileSkills.length + ' skill(s) ready.', 'info');
-    }
+    addLog('[SYS_LOAD] Sync Vault connected and loaded.', 'info');
   } catch (e) {
-    addLog('[WARN] Failed to load profile: ' + e.message, 'warn');
+    addLog('[WARN] Profile loading bypass active.', 'warn');
   }
 })();
 
@@ -474,17 +520,14 @@ runBtn.addEventListener('click', async () => {
   const role = document.getElementById('select-role').value;
   
   if (!jdText) {
+    showToast('Please paste a job description first.', 'error');
     addLog('[WARN] Paste a job description first.', 'warn');
     return;
   }
 
-  // Validate intakes
-  if (currentTab === 'pdf' && !uploadedPdfData) {
-    addLog('[WARN] Please choose or drop a PDF file first.', 'warn');
-    return;
-  }
-  if (currentTab === 'docx' && !uploadedDocxData) {
-    addLog('[WARN] Please choose or drop a DOCX file first.', 'warn');
+  if (!uploadedFileData) {
+    showToast('Please choose or drop a PDF/DOCX resume file first.', 'error');
+    addLog('[WARN] Please choose or drop a resume file first.', 'warn');
     return;
   }
 
@@ -514,6 +557,7 @@ runBtn.addEventListener('click', async () => {
   }
 
   runBtn.disabled = true;
+  placeholderPanel.style.display = 'none';
   resultsPanel.style.display = 'none';
   consoleBox.innerHTML = '';
   
@@ -522,30 +566,26 @@ runBtn.addEventListener('click', async () => {
   setTimeout(async () => {
     try {
       let extractedText = "";
-      let fileType = 'profile';
+      let fileType = 'pdf';
       let layoutData = {};
 
-      if (currentTab === 'profile') {
-        extractedText = null;
-        fileType = 'profile';
-        addLog('Checking file structure... [Known single-column profile structure. PASS]', 'success');
-      } else if (currentTab === 'pdf') {
+      if (isDocx) {
+        fileType = 'docx';
+        addLog('Checking file structure...', 'info');
+        extractedText = await parseDocxText(uploadedFileData);
+        addLog('[STRUCTURE] DOCX raw text extracted.', 'info');
+      } else {
         fileType = 'pdf';
         addLog('Checking file structure...', 'info');
-        const parsed = await parsePdfTextAndLayout(uploadedPdfData);
+        const parsed = await parsePdfTextAndLayout(uploadedFileData);
         extractedText = parsed.text;
         layoutData = parsed;
         
         if (parsed.isScanned) {
-          addLog('[STRUCTURE] CRITICAL WARNING: No select-selectable text extracted. Document is likely a scanned photo or image.', 'warn');
+          addLog('[STRUCTURE] CRITICAL WARNING: No selectable text extracted. Document is likely a scanned photo or image.', 'warn');
         } else {
           addLog(`[STRUCTURE] PDF details extracted: ${parsed.imageCount} image(s), multi-column layout signal: ${parsed.hasColumns ? 'DETECTED' : 'NONE'}.`, 'info');
         }
-      } else if (currentTab === 'docx') {
-        fileType = 'docx';
-        addLog('Checking file structure...', 'info');
-        extractedText = await parseDocxText(uploadedDocxData);
-        addLog('[STRUCTURE] DOCX raw text extracted. Layout signals bypassed (PDF-only).', 'info');
       }
 
       addLog(`Comparing against target role preset...`, 'info');
@@ -605,6 +645,7 @@ runBtn.addEventListener('click', async () => {
       }
 
       addLog(`[DONE] Compatibility score: ${score}%. Recommendations successfully generated.`, 'success');
+      placeholderPanel.style.display = 'none';
       resultsPanel.style.display = 'flex';
 
       if (!token) {
