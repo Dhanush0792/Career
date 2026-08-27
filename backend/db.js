@@ -69,31 +69,33 @@ async function initializeDatabase(p) {
     )
   `);
 
-  // Always ensure default users (admin & candidate) exist with correct credentials
-  console.log("[DB] Upserting default users (candidate & admin) to PostgreSQL...");
-  const candidateHash = "$2b$10$.e2vkzVHk2KP.yzsmc4QEuMZaNqW7gzu/gNNxCVbJfJrHEDPUj6aq";
-  const adminHash = "$2b$10$T8Z65cO6n/H.0CFp0jd6vewWcFD2sjmyznwxE7LFiEkLn9fKwP84O";
+  // Ensure default users exist only when explicitly enabled (e.g. initial setup / development)
+  if (process.env.SEED_DEFAULT_USERS === "true") {
+    console.log("[DB] Seeding default development users...");
+    const candidateHash = "$2b$10$.e2vkzVHk2KP.yzsmc4QEuMZaNqW7gzu/gNNxCVbJfJrHEDPUj6aq";
+    const adminHash = "$2b$10$T8Z65cO6n/H.0CFp0jd6vewWcFD2sjmyznwxE7LFiEkLn9fKwP84O";
 
-  // Upsert Candidate
-  await p.query(
-    "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, email = EXCLUDED.email",
-    ["u_0n89pch3tr59", "candidate@jobxapply.app", "John Candidate", candidateHash, "user", "free", Date.now(), Date.now()]
-  );
-  await p.query(
-    "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING",
-    ["u_0n89pch3tr59", null, JSON.stringify([])]
-  );
+    // Upsert Candidate
+    await p.query(
+      "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, email = EXCLUDED.email",
+      ["u_0n89pch3tr59", "candidate@jobxapply.app", "John Candidate", candidateHash, "user", "free", Date.now(), Date.now()]
+    );
+    await p.query(
+      "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING",
+      ["u_0n89pch3tr59", null, JSON.stringify([])]
+    );
 
-  // Upsert Admin
-  await p.query(
-    "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, email = EXCLUDED.email",
-    ["u_admin12345678", "admin@jobxapply.app", "Admin User", adminHash, "admin", "free", Date.now(), Date.now()]
-  );
-  await p.query(
-    "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING",
-    ["u_admin12345678", null, JSON.stringify([])]
-  );
-  console.log("[DB] Default users ensured successfully.");
+    // Upsert Admin
+    await p.query(
+      "INSERT INTO users (id, email, name, password_hash, role, tier, created_at, last_sync) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, email = EXCLUDED.email",
+      ["u_admin12345678", "admin@jobxapply.app", "Admin User", adminHash, "admin", "free", Date.now(), Date.now()]
+    );
+    await p.query(
+      "INSERT INTO userdata (user_id, profile, applications) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING",
+      ["u_admin12345678", null, JSON.stringify([])]
+    );
+    console.log("[DB] Default development users seeded.");
+  }
 }
 
 const DATABASE_URL = process.env.DATABASE_URL;

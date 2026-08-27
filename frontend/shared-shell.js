@@ -35,8 +35,23 @@ const SYNC_API = (window.location.hostname === 'localhost' ||
 
 // ─── Auth ─────────────────────────────────────────────────────────────────
 
+// Helper: Decode and validate JWT payload safely
+function parseJwtPayload(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
 /**
- * Redirect to auth.html if no session token exists.
+ * Redirect to auth.html if no session token exists or if token is expired.
  * Call this at the top of every inner page.
  */
 function requireAuth() {
@@ -57,7 +72,29 @@ function requireAuth() {
     return; // Allow access without authentication
   }
 
-  if (!localStorage.getItem('jxa_token')) {
+  const token = localStorage.getItem('jxa_token');
+  let isValidToken = false;
+  let tokenRole = 'user';
+
+  if (token) {
+    const payload = parseJwtPayload(token);
+    if (payload) {
+      // Check expiration
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem('jxa_token');
+        localStorage.removeItem('jxa_role');
+      } else {
+        isValidToken = true;
+        tokenRole = payload.role || payload.user_metadata?.role || localStorage.getItem('jxa_role') || 'user';
+      }
+    } else {
+      // Opaque token / fallback token
+      isValidToken = true;
+      tokenRole = localStorage.getItem('jxa_role') || 'user';
+    }
+  }
+
+  if (!isValidToken) {
     if (document.documentElement) {
       document.documentElement.style.display = 'none';
     }
@@ -73,8 +110,7 @@ function requireAuth() {
       window.location.href = prefix + 'auth.html';
     }
   } else {
-    const role = localStorage.getItem('jxa_role');
-    if (role === 'admin') {
+    if (tokenRole === 'admin') {
       if (!isInAdmin) {
         if (document.documentElement) {
           document.documentElement.style.display = 'none';

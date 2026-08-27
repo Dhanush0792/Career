@@ -286,6 +286,33 @@ const userRateLimits = new Map();
 const anonAtsScans = new Map(); // clientIp -> lastScanTimestamp
 const loginFailures = new Map(); // email -> { count, lockedUntil }
 
+// Periodic garbage collection for rate limiter maps to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  const ONE_HOUR = 60 * 60 * 1000;
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+
+  for (const [key, timestamps] of ipRateLimits.entries()) {
+    const valid = timestamps.filter(t => now - t < ONE_HOUR);
+    if (valid.length === 0) ipRateLimits.delete(key);
+    else ipRateLimits.set(key, valid);
+  }
+
+  for (const [key, timestamps] of userRateLimits.entries()) {
+    const valid = timestamps.filter(t => now - t < ONE_HOUR);
+    if (valid.length === 0) userRateLimits.delete(key);
+    else userRateLimits.set(key, valid);
+  }
+
+  for (const [ip, lastScan] of anonAtsScans.entries()) {
+    if (now - lastScan > ONE_DAY) anonAtsScans.delete(ip);
+  }
+
+  for (const [email, entry] of loginFailures.entries()) {
+    if (entry.lockedUntil && now > entry.lockedUntil) loginFailures.delete(email);
+  }
+}, 10 * 60 * 1000); // Sweep every 10 minutes
+
 const adminActivityLog = [];
 function logAdminActivity(msg, status = "SUCCESS") {
   const timeStr = new Date().toLocaleTimeString();
