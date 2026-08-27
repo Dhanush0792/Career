@@ -132,6 +132,7 @@
     .editor-col {
       height: 100%;
       overflow-y: auto;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -245,7 +246,7 @@
       background: rgba(0,0,0,0.2);
     }
 
-    /* Preview Right Panel — full height, no overflow */
+    /* Preview Right Panel â€” full height, no overflow */
     .preview-col {
       height: 100%;
       min-height: 0;
@@ -633,7 +634,7 @@
           <div class="accordion-section open" id="acc-basics">
             <div class="accordion-header" onclick="toggleAccordion('acc-basics')">
               <span class="accordion-title">01 // Basics</span>
-              <span class="accordion-chevron">▼</span>
+              <span class="accordion-chevron">[ - ]</span>
             </div>
             <div class="accordion-body">
               <div class="cf">
@@ -684,7 +685,7 @@
           <div class="accordion-section" id="acc-skills">
             <div class="accordion-header" onclick="toggleAccordion('acc-skills')">
               <span class="accordion-title">02 // Skills</span>
-              <span class="accordion-chevron">▼</span>
+              <span class="accordion-chevron">[ + ]</span>
             </div>
             <div class="accordion-body">
               <div class="fg">
@@ -698,7 +699,7 @@
           <div class="accordion-section" id="acc-experience">
             <div class="accordion-header" onclick="toggleAccordion('acc-experience')">
               <span class="accordion-title">03 // Experience</span>
-              <span class="accordion-chevron">▼</span>
+              <span class="accordion-chevron">[ + ]</span>
             </div>
             <div class="accordion-body">
               <div id="experience-list"></div>
@@ -710,7 +711,7 @@
           <div class="accordion-section" id="acc-education">
             <div class="accordion-header" onclick="toggleAccordion('acc-education')">
               <span class="accordion-title">04 // Education</span>
-              <span class="accordion-chevron">▼</span>
+              <span class="accordion-chevron">[ + ]</span>
             </div>
             <div class="accordion-body">
               <div id="education-list"></div>
@@ -726,7 +727,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px 8px; flex-shrink:0; border-bottom:1px solid var(--border-color); margin-bottom:6px;">
               <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;">Live Resume Preview</span>
               <div style="position:relative;">
-                <button onclick="toggleMenuDropdown(event)" style="background:transparent;border:none;color:var(--primary);font-size:18px;cursor:pointer;padding:2px 8px;line-height:1;">⋮</button>
+                <button onclick="toggleMenuDropdown(event)" style="background:transparent;border:none;color:var(--primary);font-size:13px;font-family:var(--mono);cursor:pointer;padding:2px 8px;font-weight:bold;">ACTIONS</button>
                 <div id="dropdown-content" style="display:none;position:absolute;right:0;top:28px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:100;min-width:140px;padding:4px 0;overflow:hidden;">
                   <a href="#" class="dropdown-item" onclick="exportJSON();return false;">Export JSON</a>
                   <a href="#" class="dropdown-item" onclick="exportPDF();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export PDF</a>
@@ -1044,7 +1045,7 @@
         ${skills.length > 0 ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Skills</h3>
-            <p class="preview-skills">${skills.join(" • ")}</p>
+            <p class="preview-skills">${skills.join(" â€¢ ")}</p>
           </div>
         ` : ""}
 
@@ -1072,31 +1073,31 @@
       setTimeout(fitPreview, 50);
     };
 
-    // Auto-scale live preview sheet to fit viewport HEIGHT — full A4 always visible
+    // Auto-scale live preview sheet to fit viewport HEIGHT â€” full A4 always visible
     function fitPreview() {
       const container = document.querySelector('.preview-container');
       const sheet = document.getElementById('live-preview-sheet');
       if (!container || !sheet) return;
 
-      // Reset first
-      sheet.style.transform = 'scale(1)';
-      sheet.style.marginTop = '0';
-      sheet.style.marginLeft = '0';
-      sheet.style.marginRight = '0';
-
       const availH = container.clientHeight;
       const availW = container.clientWidth;
+      if (!availH || !availW) return;
 
       const scaleH = availH / 1123;
       const scaleW = availW / 794;
       const scale = Math.min(scaleH, scaleW);
 
+      // Center horizontally by offsetting from left
+      const leftOffset = (availW - 794 * scale) / 2;
+
+      // Use top-left origin so we control both axes precisely
+      sheet.style.transformOrigin = 'top left';
       sheet.style.transform = `scale(${scale})`;
-      // Compensate collapsed footprint so sheet stays top-aligned
-      const scaledH = 1123 * scale;
-      const scaledW = 794 * scale;
-      sheet.style.marginTop  = `${(scaledH - 1123) / 2}px`;
-      sheet.style.marginLeft = `${(availW - scaledW) / 2}px`;
+      sheet.style.marginLeft = `${leftOffset}px`;
+      // Negative bottom margin collapses the layout footprint so container is not overflowed
+      sheet.style.marginBottom = `${1123 * (scale - 1)}px`;
+      sheet.style.marginTop = '0';
+      sheet.style.marginRight = '0';
     }
 
     window.addEventListener('resize', fitPreview);
@@ -1169,3 +1170,4 @@
   </script>
 </body>
 </html>
+

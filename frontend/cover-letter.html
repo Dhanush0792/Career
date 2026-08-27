@@ -67,6 +67,7 @@ body::after {
 #editor-card {
   height: 100%;
   overflow-y: hidden;
+  overflow-x: hidden;
 }
 
 #preview-card {
@@ -313,8 +314,8 @@ body::after {
     <!-- Left: Inputs -->
     <div class="card" id="editor-card">
       <div id="profile-banner" style="display:none;" class="warn-banner">
-        ⚠ Some profile fields are missing.
-        <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Complete Profile →</a>
+        [!] Some profile fields are missing.
+        <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Complete Profile -></a>
       </div>
 
       <div class="card__title">01 // TARGET JOB DETAILS</div>
@@ -413,7 +414,7 @@ body::after {
         <textarea class="text-area" id="jd-input" style="height:48px;" placeholder="Optional: Paste requirements to compute real-time ATS match rating..." oninput="updateAtsScore()"></textarea>
       </div>
 
-      <button class="gen-btn" id="gen-btn" style="margin-top:6px;">› TAILOR COVER LETTER</button>
+      <button class="gen-btn" id="gen-btn" style="margin-top:6px;">TAILOR COVER LETTER</button>
 
       <div class="console-box" id="console" style="margin-top:6px;">
         <div class="console-line">[SYS_INIT] Cover Letter builder ready. Fill inputs and trigger tailor.</div>
@@ -432,9 +433,9 @@ body::after {
           <!-- ATS Score badge inline -->
           <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">ATS:</span>
           <span id="ats-score-badge" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--primary);">0%</span>
-          <!-- Three-dot dropdown for exports -->
+          <!-- Dropdown for exports -->
           <div style="position:relative;">
-            <button onclick="toggleExportMenu(event)" style="background:transparent;border:none;color:var(--primary);font-size:18px;cursor:pointer;padding:0 6px;line-height:1;">⋮</button>
+            <button onclick="toggleExportMenu(event)" style="background:transparent;border:none;color:var(--primary);font-size:11px;font-family:var(--mono);font-weight:700;cursor:pointer;padding:2px 8px;">ACTIONS</button>
             <div id="cl-export-menu" style="display:none;position:absolute;right:0;top:26px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:200;min-width:150px;padding:4px 0;">
               <a href="#" class="dropdown-item" onclick="copyLatexCode();return false;">Copy LaTeX</a>
               <a href="#" class="dropdown-item" onclick="downloadLatexFile();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Download .tex</a>
@@ -1013,23 +1014,22 @@ function fitPreview() {
   const sheet = document.getElementById('letter-preview-content');
   if (!container || !sheet) return;
 
-  // Reset
-  sheet.style.transform = 'scale(1)';
-  sheet.style.marginTop = '0';
-  sheet.style.marginLeft = '0';
-
   const availH = container.clientHeight;
   const availW = container.clientWidth;
+  if (!availH || !availW) return;
 
   const scaleH = availH / 1123;
   const scaleW = availW / 794;
   const scale = Math.min(scaleH, scaleW);
 
+  const leftOffset = Math.max(0, (availW - 794 * scale) / 2);
+
+  sheet.style.transformOrigin = 'top left';
   sheet.style.transform = `scale(${scale})`;
-  const scaledH = 1123 * scale;
-  const scaledW = 794 * scale;
-  sheet.style.marginTop  = `${(scaledH - 1123) / 2}px`;
-  sheet.style.marginLeft = `${(availW - scaledW) / 2}px`;
+  sheet.style.marginLeft = `${leftOffset}px`;
+  sheet.style.marginBottom = `${1123 * (scale - 1)}px`;
+  sheet.style.marginTop = '0';
+  sheet.style.marginRight = '0';
 }
 
 window.toggleExportMenu = function(e) {
@@ -1138,13 +1138,13 @@ function updateAtsScore() {
   
   let html = '';
   checks.forEach(c => {
-    html += `<li style="color:var(--alert)">⚠ ${c}</li>`;
+    html += `<li style="color:var(--alert)">âš  ${c}</li>`;
   });
   
   if (missingKeywords.length > 0) {
-    html += `<li style="color:var(--muted)">💡 Incorporate keywords from job requirements: <strong>${missingKeywords.slice(0, 5).join(', ')}</strong></li>`;
+    html += `<li style="color:var(--muted)">ðŸ’¡ Incorporate keywords from job requirements: <strong>${missingKeywords.slice(0, 5).join(', ')}</strong></li>`;
   } else {
-    html += `<li style="color:var(--success)">✓ Matches all target requirements!</li>`;
+    html += `<li style="color:var(--success)">âœ“ Matches all target requirements!</li>`;
   }
   
   document.getElementById('ats-suggestions').innerHTML = html;
@@ -1152,3 +1152,4 @@ function updateAtsScore() {
 </script>
 </body>
 </html>
+
