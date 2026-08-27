@@ -58,6 +58,21 @@ chrome.runtime.onInstalled.addListener(() => {
       chrome.storage.local.set(migration);
     }
   });
+
+  // Inject content.js into all existing open tabs
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      if (!tab.url || tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("about:") || tab.url.startsWith("chrome-extension://")) {
+        continue;
+      }
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id, allFrames: true },
+        files: ["content.js"]
+      }).catch(err => {
+        console.warn(`Could not inject content script into tab ${tab.id} (${tab.url}):`, err);
+      });
+    }
+  });
 });
 
 // Legacy setup

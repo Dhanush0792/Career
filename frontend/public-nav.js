@@ -246,7 +246,6 @@
         <div class="ch-nav__dd-label">Account</div>
         <a href="auth.html"             class="ch-nav__dd-link ch-nav__dd-link--accent"><span class="ch-nav__dd-icon">→</span>Login</a>
         <a href="auth.html#signup"      class="ch-nav__dd-link"><span class="ch-nav__dd-icon">＋</span>Sign Up</a>
-        <a href="forgot-password.html"  class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⟳</span>Forgot Password</a>
       </div>
     </div>
 
@@ -287,7 +286,6 @@
     <div class="ch-nav__drawer-title">Account</div>
     <a href="auth.html"            class="ch-nav__drawer-link">→ Login</a>
     <a href="auth.html#signup"     class="ch-nav__drawer-link">＋ Sign Up</a>
-    <a href="forgot-password.html" class="ch-nav__drawer-link">⟳ Forgot Password</a>
   </div>
   <a href="auth.html" class="ch-nav__drawer-cta">GET STARTED →</a>
 </div>
