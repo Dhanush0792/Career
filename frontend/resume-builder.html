@@ -727,9 +727,11 @@
             <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px 8px; flex-shrink:0; border-bottom:1px solid var(--border-color); margin-bottom:6px;">
               <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;">Live Resume Preview</span>
               <div style="position:relative;">
-                <button onclick="toggleMenuDropdown(event)" style="background:transparent;border:none;color:var(--primary);font-size:13px;font-family:var(--mono);cursor:pointer;padding:2px 8px;font-weight:bold;">ACTIONS</button>
-                <div id="dropdown-content" style="display:none;position:absolute;right:0;top:28px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:100;min-width:140px;padding:4px 0;overflow:hidden;">
-                  <a href="#" class="dropdown-item" onclick="exportJSON();return false;">Export JSON</a>
+                <button onclick="toggleMenuDropdown(event)" style="background:transparent;border:none;color:var(--primary);font-size:11px;font-family:var(--mono);font-weight:700;cursor:pointer;padding:2px 8px;">ACTIONS</button>
+                <div id="dropdown-content" style="display:none;position:absolute;right:0;top:28px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:100;min-width:160px;padding:4px 0;overflow:hidden;">
+                  <a href="#" class="dropdown-item" onclick="copyLatexCode();return false;">Copy LaTeX</a>
+                  <a href="#" class="dropdown-item" onclick="downloadLatexFile();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Download .tex</a>
+                  <a href="#" class="dropdown-item" onclick="exportJSON();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export JSON</a>
                   <a href="#" class="dropdown-item" onclick="exportPDF();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export PDF</a>
                 </div>
               </div>
@@ -801,49 +803,49 @@
 
     const ROLE_SUMMARIES = {
       "SDE": {
-        "Student": "Computer Science student passionate about software engineering, algorithms, and clean code.",
-        "Fresher": "Graduate seeking an entry-level SDE role to design and build scalable codebases.",
-        "Experienced": "Experienced Software Engineer specializing in scalable microservices, backend systems, and architectural design."
+        "Student": "Proactive Computer Science student with strong fundamentals in data structures, algorithms, and full-stack software development. Proficient in designing responsive web applications and writing clean, scalable, object-oriented code. Seeking an entry-level Software Development Engineer role to build high-performance systems.",
+        "Fresher": "Goal-driven Computer Science graduate equipped with robust programming capabilities in modern frameworks and backend API design. Demonstrated competence through academic capstone projects, clean architecture practices, and unit testing. Seeking an entry-level SDE role to engineer resilient software solutions.",
+        "Experienced": "Results-oriented Software Development Engineer with extensive experience architecting distributed systems, scalable microservices, and high-throughput APIs. Proven track record of optimizing database performance, improving latency by 35%, and leading Agile engineering sprints to deliver mission-critical software."
       },
       "Junior Developer": {
-        "Student": "Student coder seeking to apply programming skills in web and mobile app development.",
-        "Fresher": "Passionate programmer looking to contribute to shipping features in a collaborative dev team.",
-        "Experienced": "Junior developer with hands-on experience in frontend/backend tech stacks and API integrations."
+        "Student": "Enthusiastic developer student skilled in modern web technologies including JavaScript, HTML5, CSS3, and Git version control. Experienced in collaborating on team coding projects, translating wireframes into functional interfaces, and debugging fullstack code. Eager to contribute to rapid development cycles.",
+        "Fresher": "Adaptable Junior Developer with foundational expertise in frontend and backend software development and relational databases. Quick learner adept at code reviews, continuous integration pipelines, and component-driven development. Dedicated to delivering clean, maintainable code within engineering teams.",
+        "Experienced": "Dynamic Junior Developer with demonstrated hands-on experience building production features, resolving critical bugs, and integrating third-party RESTful APIs. Adept at cross-functional teamwork, Agile development, and implementing responsive UI components with high test coverage."
       },
       "Java/Python/C/C++ Developer": {
-        "Student": "Tech student focusing on systems programming, language design, and scripting automation.",
-        "Fresher": "Graduate proficient in object-oriented programming, data models, and database scripting.",
-        "Experienced": "Software Engineer specializing in enterprise application development, concurrency, and performance tuning."
+        "Student": "Analytical engineering student focused on low-level systems programming, object-oriented software engineering, and multithreaded design. Highly proficient in Java, Python, and C/C++ with experience creating high-efficiency algorithms and data pipelines. Seeking a core software developer opportunity.",
+        "Fresher": "Motivated software engineering graduate with specialized proficiency in Java, Python, and C++ application design. Solid understanding of memory management, database connectivity, and backend system optimization. Eager to engineer high-reliability, enterprise-grade software products.",
+        "Experienced": "Senior backend developer specializing in core Java, Python microservices, and high-concurrency C/C++ systems engineering. Proven success in reducing memory footprints, architecting fault-tolerant backend infrastructure, and integrating cloud computing pipelines for enterprise scale."
       },
       "Content Manager": {
-        "Student": "Communications student focused on digital media, search engine optimization, and copy writing.",
-        "Fresher": "Creative graduate seeking to coordinate publishing, media campaigns, and brand storytelling.",
-        "Experienced": "Senior Content Manager with experience designing enterprise content workflows and driving digital engagement."
+        "Student": "Creative communications and marketing student skilled in content strategy, digital copy writing, and multi-channel publication. Experienced in leveraging analytics to refine brand voice, optimize user engagement, and produce compelling multimedia assets across social platforms.",
+        "Fresher": "Resourceful Content Manager graduate with strong expertise in editorial planning, SEO content optimization, and digital campaign execution. Proven ability to produce data-backed narratives, improve organic search reach, and maintain unified brand messaging across digital touchpoints.",
+        "Experienced": "Strategic Content Manager with extensive background orchestrating comprehensive editorial calendars, enterprise CMS workflows, and high-converting marketing campaigns. Track record of growing organic search traffic by 40% and aligning content outputs with company revenue targets."
       },
       "Video Editor": {
-        "Student": "Film/media student skilled in Adobe Premiere, motion graphics, and video production.",
-        "Fresher": "Creative editor looking to produce high-impact short-form videos and marketing clips.",
-        "Experienced": "Experienced Video Editor with a portfolio of commercial ads, post-production pipelines, and color grading."
+        "Student": "Visual storytelling student proficient in Adobe Premiere Pro, After Effects, DaVinci Resolve, and audio mastering. Skilled in creating dynamic short-form videos, pacing narratives, and applying color grading to maximize digital viewer retention across modern platforms.",
+        "Fresher": "Creative Video Editor and motion designer skilled in end-to-end post-production, sound design, and promotional video creation. Highly proficient in pacing, visual effects, and exporting multi-platform assets that drive high viewer engagement metrics.",
+        "Experienced": "Accomplished Video Editor with extensive experience delivering commercial-grade video campaigns, high-retention social content, and advanced motion graphics. Proven ability to lead post-production pipelines, manage visual asset libraries, and enhance brand identity through compelling visual media."
       },
       "Senior Developer": {
-        "Student": "Master's student skilled in system design, research prototyping, and infrastructure.",
-        "Fresher": "Talented developer seeking to lead development cycles and build high-performance products.",
-        "Experienced": "Senior Developer/Architect with history of managing software teams, cloud migrations, and system design."
+        "Student": "Advanced graduate researcher in computer systems and software architecture, skilled in distributed cloud computing and scalable algorithms. Experienced in leading open-source projects, mentoring junior developers, and designing fault-tolerant prototypes for complex engineering domains.",
+        "Fresher": "High-achieving computer science master's graduate with in-depth knowledge of distributed computing, cloud microservices, and system reliability engineering. Eager to take ownership of end-to-end feature delivery, architectural reviews, and high-impact technology implementations.",
+        "Experienced": "Strategic Senior Developer and Technical Architect with proven history of leading engineering squads, spearheading cloud migrations, and establishing scalable engineering standards. Expert in reducing cloud infrastructure costs, designing decoupled microservices, and mentoring engineering teams."
       },
       "Marketing Specialist": {
-        "Student": "Business student specializing in market analytics, growth hacking, and social campaigns.",
-        "Fresher": "Marketing graduate eager to execute digital campaigns, email sequences, and lead generation.",
-        "Experienced": "Results-driven Marketer with a track record of driving conversions, search engine visibility, and brand growth."
+        "Student": "Data-informed business marketing student skilled in digital advertising, social media analytics, and campaign funnel optimization. Experienced in conducting customer market research, A/B testing ad creatives, and crafting targeted email marketing sequences to boost conversion rates.",
+        "Fresher": "Proactive Marketing graduate with strong analytical skills in Google Analytics, paid search, SEO strategy, and inbound lead generation. Adept at building customer acquisition funnels, managing campaign budgets, and translating performance data into actionable growth strategies.",
+        "Experienced": "Performance Marketing Specialist with proven background driving multi-channel growth, customer acquisition, and ROI optimization. Track record of scaling digital marketing budgets, increasing customer lifetime value by 25%, and launching viral brand awareness campaigns."
       },
       "Customer Care Executive": {
-        "Student": "Student with strong active listening skills seeking to support customer service tasks.",
-        "Fresher": "Empathetic graduate eager to troubleshoot user inquiries, handle tickets, and build retention.",
-        "Experienced": "Support Lead experienced in customer success, escalations management, and CRM tool workflows."
+        "Student": "Empathetic student communicator with exceptional interpersonal skills, active listening capabilities, and conflict resolution techniques. Passionate about delivering memorable customer experiences, managing ticketing workflows, and solving user queries with high accuracy and speed.",
+        "Fresher": "Customer-first graduate equipped with strong verbal and written communication skills and CRM software proficiency. Skilled in handling complex customer inquiries, providing proactive troubleshooting, and maintaining top-tier customer satisfaction ratings.",
+        "Experienced": "Dedicated Customer Care Specialist and Team Lead with deep experience managing support operations, reducing ticket resolution time by 30%, and coaching support agents. Expert in escalation management, CRM workflows, and driving long-term customer retention."
       },
       "Business Executive": {
-        "Student": "Management student focused on corporate strategy, operational planning, and sales.",
-        "Fresher": "Energetic graduate looking to optimize business operations, sales pipelines, and key relationships.",
-        "Experienced": "Business Operations Lead skilled in cross-functional coordination, sales strategies, and revenue growth."
+        "Student": "Strategic management student focused on corporate finance, sales pipeline development, and market penetration models. Skilled in analyzing competitive landscapes, drafting client pitch decks, and identifying operational cost-saving opportunities.",
+        "Fresher": "Ambitious Business graduate with strong competencies in business analytics, B2B client communications, and strategic planning. Eager to drive revenue growth, cultivate strategic client relationships, and optimize daily operational execution.",
+        "Experienced": "Results-driven Business Operations Executive with background leading revenue strategy, corporate partnerships, and operational scaling. Proven track record of closing high-value client contracts, streamlining internal processes, and exceeding annual growth targets."
       }
     };
 
@@ -1149,24 +1151,143 @@
       a.click();
     }
 
-    window.toggleMenuDropdown = function(e) {
-      e.stopPropagation();
-      const dropdown = document.getElementById('dropdown-content');
-      if (dropdown) {
-        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-      }
-    };
+    // Generate High ATS LaTeX Code (Strict Single Color Black, Zero Emojis, Complete Profile Ingestion)
+    function generateLatexCode() {
+      const name = document.getElementById("res-name")?.value.trim() || "Candidate Name";
+      const title = document.getElementById("res-title")?.value.trim() || "";
+      const email = document.getElementById("res-email")?.value.trim() || "";
+      const phone = document.getElementById("res-phone")?.value.trim() || "";
+      const location = document.getElementById("res-location")?.value.trim() || "";
+      const website = document.getElementById("res-website")?.value.trim() || "";
+      const summary = document.getElementById("res-summary")?.value.trim() || "";
+      const skills = (document.getElementById("res-skills")?.value || "").split(",").map(s => s.trim()).filter(Boolean);
 
-    window.closeMenuDropdown = function() {
-      const dropdown = document.getElementById('dropdown-content');
-      if (dropdown) {
-        dropdown.style.display = 'none';
-      }
-    };
+      const escapeLatex = (str) => {
+        if (!str) return "";
+        return String(str)
+          .replace(/[\u2600-\u27BF]|[\u{1F300}-\u{1FAFF}]/gu, "")
+          .replace(/\\/g, "\\textbackslash{}")
+          .replace(/([&%$#_{}])/g, "\\$1")
+          .replace(/\^/g, "\\textasciicircum{}")
+          .replace(/~/g, "\\textasciitilde{}")
+          .replace(/</g, "\\textless{}")
+          .replace(/>/g, "\\textgreater{}")
+          .replace(/\n/g, " ");
+      };
 
-    window.addEventListener('click', () => {
-      window.closeMenuDropdown();
-    });
+      let contactItems = [];
+      if (email) contactItems.push(`\\href{mailto:${email}}{${escapeLatex(email)}}`);
+      if (phone) contactItems.push(escapeLatex(phone));
+      if (location) contactItems.push(escapeLatex(location));
+      if (website) contactItems.push(`\\href{https://${website.replace(/^https?:\/\//, '')}}{${escapeLatex(website)}}`);
+
+      let expTex = "";
+      document.querySelectorAll(".experience-item").forEach(item => {
+        const inputs = item.querySelectorAll("input, textarea");
+        const company = inputs[0]?.value.trim() || "";
+        const position = inputs[1]?.value.trim() || "";
+        const startDate = inputs[2]?.value.trim() || "";
+        const endDate = inputs[3]?.value.trim() || "";
+        const expSummary = inputs[4]?.value.trim() || "";
+
+        if (company || position) {
+          expTex += `\\noindent\\textbf{${escapeLatex(position)}} \\hfill ${escapeLatex(startDate)} -- ${escapeLatex(endDate)}\\\\\n`;
+          expTex += `\\textit{${escapeLatex(company)}}\n`;
+          if (expSummary) {
+            const bullets = expSummary.split('\n').map(b => b.trim()).filter(Boolean);
+            if (bullets.length > 0) {
+              expTex += `\\begin{itemize}[leftmargin=0.18in, topsep=2pt, itemsep=2pt]\n`;
+              bullets.forEach(b => {
+                const cleanB = b.replace(/^[-*•]\s*/, '');
+                expTex += `  \\item ${escapeLatex(cleanB)}\n`;
+              });
+              expTex += `\\end{itemize}\n`;
+            }
+          }
+          expTex += `\\vspace{4pt}\n\n`;
+        }
+      });
+
+      let eduTex = "";
+      document.querySelectorAll(".education-item").forEach(item => {
+        const inputs = item.querySelectorAll("input");
+        const inst = inputs[0]?.value.trim() || "";
+        const area = inputs[1]?.value.trim() || "";
+        const year = inputs[2]?.value.trim() || "";
+
+        if (inst || area) {
+          eduTex += `\\noindent\\textbf{${escapeLatex(area)}} \\hfill ${escapeLatex(year)}\\\\\n`;
+          eduTex += `\\textit{${escapeLatex(inst)}}\\\\[4pt]\n\n`;
+        }
+      });
+
+      const latex = `\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.6in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{titlesec}
+\\usepackage{enumitem}
+\\usepackage{hyperref}
+\\usepackage{tabularx}
+\\setlength{\\parindent}{0pt}
+\\pagestyle{empty}
+
+% ATS Clean Single-Color Strict Black Setup
+\\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=black,
+    urlcolor=black,
+    citecolor=black
+}
+
+\\titleformat{\\section}{\\large\\bfseries\\uppercase}{}{0em}{}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{8pt}{4pt}
+
+\\begin{document}
+
+\\begin{center}
+  {\\LARGE\\bfseries ${escapeLatex(name)}}\\\\[2pt]
+  ${title ? `{\\large\\bfseries ${escapeLatex(title)}}\\\\[3pt]` : ''}
+  {\\small ${contactItems.join(' \\,$\\cdot$\\, ')}}
+\\end{center}
+\\vspace{2pt}
+
+${summary ? `\\section*{Professional Summary}
+${escapeLatex(summary)}
+\\vspace{4pt}
+` : ''}
+${skills.length > 0 ? `\\section*{Technical \\& Core Skills}
+\\begin{itemize}[leftmargin=0.18in, topsep=2pt, itemsep=2pt]
+  \\item \\textbf{Key Competencies:} ${escapeLatex(skills.join(', '))}
+\\end{itemize}
+\\vspace{4pt}
+` : ''}
+${expTex ? `\\section*{Work Experience}
+${expTex}` : ''}
+${eduTex ? `\\section*{Education}
+${eduTex}` : ''}
+\\end{document}`;
+
+      return latex;
+    }
+
+    function copyLatexCode() {
+      const code = generateLatexCode();
+      navigator.clipboard.writeText(code).then(() => {
+        alert("Resume LaTeX source code copied to clipboard (100% ATS Single Black Color format).");
+      });
+    }
+
+    function downloadLatexFile() {
+      const code = generateLatexCode();
+      const blob = new Blob([code], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "resume.tex";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   </script>
 </body>
 </html>
