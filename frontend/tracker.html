@@ -60,9 +60,28 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
 /* Actions */
 .row-actions { display: flex; align-items: center; gap: 8px; }
 .row-actions select { background: rgba(7, 10, 24, 0.6); color: var(--white); border: 1px solid var(--glass-border); padding: 5px 10px; border-radius: 6px; font-family: var(--mono); font-size: 11px; outline: none; cursor: pointer; }
-.btn-icon { background: none; border: none; color: var(--muted); cursor: pointer; padding: 6px; font-size: 14px; transition: color 0.2s; }
-.btn-icon:hover { color: var(--white); }
-.btn-icon.del:hover { color: #ff7878; }
+.btn-icon {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.btn-icon:hover {
+  background: rgba(91,79,232,0.15);
+  border-color: var(--primary);
+  color: var(--white);
+}
+.btn-icon.del:hover {
+  background: rgba(235,87,87,0.15);
+  border-color: #ff7878;
+  color: #ff7878;
+}
 
 /* Empty state */
 .empty-state { text-align: center; padding: 60px 20px; display: none; }
@@ -301,9 +320,9 @@ function renderTable() {
           <td><span class="date-lbl">${app.followUp || '-'}</span></td>
           <td class="row-actions">
             ${statusSelect}
-            ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" title="View Proof">👁</button>` : ''}
-            <button class="btn-icon" onclick="editApp('${app.id}')" title="Edit">✎</button>
-            <button class="btn-icon del" onclick="deleteApp('${app.id}')" title="Delete">×</button>
+            ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" title="View Proof">View</button>` : ''}
+            <button class="btn-icon" onclick="editApp('${app.id}')" title="Edit">Edit</button>
+            <button class="btn-icon del" onclick="deleteApp('${app.id}')" title="Delete">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);

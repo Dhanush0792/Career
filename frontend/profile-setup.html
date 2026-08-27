@@ -514,7 +514,7 @@ body::after {
           <div class="section-title">05 / Resume, Cover Letter & Documents</div>
           
           <div class="dropzone" id="resume-dropzone">
-            <div class="dropzone-title">📂 Drag & Drop Resume Here to Parse</div>
+            <div class="dropzone-title">Drag & Drop Resume Here to Parse</div>
             <div class="dropzone-desc">Accepts PDF or DOCX file. Click to browse.</div>
             <input type="file" id="resume-input" accept="application/pdf,.docx" style="display:none;">
           </div>
@@ -564,7 +564,7 @@ body::after {
             <label for="f-passcode">Sync Passcode *</label>
             <input type="password" id="f-passcode" placeholder="Enter secure passcode to encrypt/decrypt data" required>
             <div style="font-size: 10px; color: var(--alert); margin-top: 6px;">
-              ⚠ WARNING: Keep this passcode safe. If lost, your remote profile cannot be recovered.
+              [!] WARNING: Keep this passcode safe. If lost, your remote profile cannot be recovered.
             </div>
           </div>
         </div>
@@ -712,7 +712,7 @@ function parseResume(text) {
     if (!grp.querySelector('.lock-badge')) {
       const lock = document.createElement('span');
       lock.className = 'lock-badge';
-      lock.innerHTML = '🔒 Locked (Click to Edit)';
+      lock.innerHTML = 'Locked (Click to Edit)';
       lock.onclick = () => {
         el.disabled = false;
         grp.classList.remove('locked');

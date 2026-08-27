@@ -822,10 +822,15 @@ const DEFAULT_PROFILE_FIELDS = [
   "summary", "education", "college", "experience", "skills", "linkedin", "github",
   "portfolio", "resumeDraft", "targetRole", "answers",
   "leetcode", "availability", "noticePeriod", "totalExperience",
+  "alternativeEmail", "pincode", "maritalStatus", "employmentStatus",
+  "expectedSalary", "handicapped", "healthIssues", "targetRoles",
+  "coverLetterDraft", "otherDocuments",
   "edu10_school", "edu10_board", "edu10_year", "edu10_cgpa",
   "edu12_school", "edu12_board", "edu12_year", "edu12_cgpa",
-  "eduGrad_college", "eduGrad_degree", "eduGrad_year", "eduGrad_cgpa", "eduGrad_pursuing",
-  "eduPG_college", "eduPG_degree", "eduPG_year", "eduPG_cgpa", "eduPG_pursuing",
+  "eduGrad_college", "eduGrad_degree", "eduGrad_stream", "eduGrad_year", "eduGrad_cgpa", "eduGrad_pursuing",
+  "eduPG_college", "eduPG_degree", "eduPG_stream", "eduPG_year", "eduPG_cgpa", "eduPG_pursuing",
+  "eduMasters_college", "eduMasters_degree", "eduMasters_stream", "eduMasters_year", "eduMasters_cgpa", "eduMasters_pursuing",
+  "eduPhD_college", "eduPhD_degree", "eduPhD_stream", "eduPhD_year", "eduPhD_cgpa", "eduPhD_pursuing",
   "experienceList", "projectsList", "certificationsList"
 ];
 

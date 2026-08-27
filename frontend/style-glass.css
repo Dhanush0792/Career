@@ -7,15 +7,16 @@
 ═══════════════════════════════════════════════════════════ */
 
 ::selection {
-  background: rgba(91, 79, 232, 0.4) !important;
+  background: rgba(47, 221, 196, 0.3) !important;
   color: #ffffff !important;
 }
 ::-moz-selection {
-  background: rgba(91, 79, 232, 0.4) !important;
+  background: rgba(47, 221, 196, 0.3) !important;
   color: #ffffff !important;
 }
 
 :root {
+  color-scheme: dark;
   --base:    #0B1020;
   --primary: #5B4FE8;
   --success: #2FDDC4;
@@ -304,6 +305,7 @@ body {
 /* ─── Typography & Form Element Visibility Overrides ───────────────────── */
 
 /* Make select dropdown options highly visible across all platforms */
+select,
 select option,
 .form-input option,
 .select-input option,
@@ -313,6 +315,11 @@ select option,
   font-family: var(--mono) !important;
   font-size: 15px !important;
   padding: 12px !important;
+  color-scheme: dark !important;
+}
+
+select {
+  color-scheme: dark !important;
 }
 
 select option:checked,

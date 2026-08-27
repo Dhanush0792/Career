@@ -277,7 +277,7 @@ function resizeAndCompress() {
       statusBadge.className = 'size-info success';
       downloadBtn.disabled = false;
     } else {
-      statusBadge.textContent = sizeKb < minSizeKb ? '⚠️ TOO SMALL (ADJUST SLIDER)' : '⚠️ TOO LARGE (ADJUST SLIDER)';
+      statusBadge.textContent = sizeKb < minSizeKb ? '[!] TOO SMALL (ADJUST SLIDER)' : '[!] TOO LARGE (ADJUST SLIDER)';
       statusBadge.className = 'size-info warn';
       downloadBtn.disabled = true;
     }

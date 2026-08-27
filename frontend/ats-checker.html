@@ -67,6 +67,21 @@ body::after {
   flex-direction: column;
   gap: 16px;
   height: 100%;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.left-col::-webkit-scrollbar,
+.right-col::-webkit-scrollbar {
+  width: 6px;
+}
+.left-col::-webkit-scrollbar-track,
+.right-col::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+}
+.left-col::-webkit-scrollbar-thumb,
+.right-col::-webkit-scrollbar-thumb {
+  background: rgba(0, 243, 255, 0.2);
+  border-radius: 3px;
 }
 .right-col {
   display: flex;
@@ -74,16 +89,6 @@ body::after {
   height: 100%;
   overflow-y: auto;
   padding-right: 8px;
-}
-.right-col::-webkit-scrollbar {
-  width: 6px;
-}
-.right-col::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.1);
-}
-.right-col::-webkit-scrollbar-thumb {
-  background: rgba(0, 243, 255, 0.2);
-  border-radius: 3px;
 }
 
 .card {
@@ -262,7 +267,7 @@ body::after {
       <div class="card">
         <div class="card__title">02 // YOUR RESUME (PDF / DOCX)</div>
         <div id="resume-dropzone" class="dropzone">
-          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase;">📂 Drag & Drop PDF/DOCX or click to choose</span>
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase;">Drag & Drop PDF/DOCX or click to choose</span>
           <input type="file" id="resume-file-input" accept="application/pdf,.docx" style="display: none;">
         </div>
         <div id="file-info" style="display: none; font-family: var(--mono); font-size: 11px; color: var(--success); margin-top: 12px; text-transform: uppercase; font-weight: bold;"></div>
@@ -279,7 +284,7 @@ body::after {
     <div class="right-col">
       <!-- Placeholder displayed before analysis -->
       <div id="results-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; border: 1px dashed var(--glass-border); border-radius: 14px; background: rgba(255,255,255,0.01); color: var(--muted); text-align: center; padding: 40px;">
-        <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+        <div style="font-family: var(--mono); font-size: 11px; color: var(--primary); border: 1px solid var(--primary); padding: 4px 10px; border-radius: 4px; text-transform: uppercase; margin-bottom: 16px;">System Ready</div>
         <div style="font-family: var(--mono); font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--white); margin-bottom: 8px;">Awaiting Analysis</div>
         <div style="font-size: 13px; max-width: 320px; line-height: 1.6;">Paste a job description on the left, upload your resume, and click analyze to compute compatibility alignment.</div>
       </div>
@@ -669,7 +674,7 @@ runBtn.addEventListener('click', async () => {
         overlay.innerHTML = `
           <div style="background: rgba(18,22,43,0.96); border: 1px solid var(--glass-border); padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); max-width: 380px; text-align: center; backdrop-filter: blur(10px); z-index: 101;">
             <div style="font-family: var(--display); font-size: 20px; font-weight: 900; color: var(--white); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px;">
-              🚀 Unlock suggestions & keywords
+              Unlock suggestions & keywords
             </div>
             <div style="font-family: var(--body); font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;">
               Create a free account to view missing keywords, detailed suggestions, and save unlimited scans to your dashboard.

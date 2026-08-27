@@ -244,8 +244,8 @@ body::before {
 
 /* ── Selection ──────────────────────────────────────────────── */
 ::selection {
-  background: rgba(192, 57, 43, 0.3);
-  color: var(--color-text);
+  background: rgba(47, 221, 196, 0.3) !important;
+  color: #ffffff !important;
 }
 
 /* ── Focus Visible ──────────────────────────────────────────── */

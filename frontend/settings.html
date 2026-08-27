@@ -86,33 +86,17 @@ body::after {
 
 <div class="container">
   <div class="page-header">
-    <h1 class="page-title">Account Settings</h1>
+    <h1 class="page-title">Settings</h1>
   </div>
 
+  <!-- Section 1: Sync Vault Key -->
   <div class="settings-section">
-    <h2 class="section-title">Identity Profile</h2>
-    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
-      <label class="data-label">Display Name</label>
-      <input type="text" class="form-input" id="update-name" style="max-width:100%;">
-    </div>
-    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
-      <label class="data-label">Google Account (Verified)</label>
-      <input type="email" class="form-input" id="update-email" style="max-width:100%; opacity:0.75;" readonly disabled>
-    </div>
-    <div class="form-group" style="display:flex; flex-direction:column; gap:4px; margin-bottom:12px;">
-      <label class="data-label">Sync Operative ID</label>
-      <input type="text" class="form-input" id="update-userid" style="max-width:100%; opacity:0.75; font-size:12px; font-family:var(--mono);" readonly disabled>
-    </div>
-    <button class="btn btn-primary" onclick="updateAccountDetails()">Save Changes</button>
-  </div>
-
-  <div class="settings-section">
-    <h2 class="section-title">Sync Vault Passcode</h2>
+    <h2 class="section-title">Sync Key (Passcode)</h2>
     <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">
-      Your vault passcode encrypts local profile data before syncing it. Copy or change the passcode to pair new browser extension clients.
+      Your Sync Key encrypts and protects your data. Use this key to link your browser extension so it can autofill job applications for you.
     </p>
     <div class="data-row">
-      <span class="data-label">Passcode Vault</span>
+      <span class="data-label">Current Key</span>
       <div style="display:flex; gap:8px; align-items:center;">
         <span class="data-val" id="disp-passcode" style="color:var(--success);">••••••••</span>
         <button class="btn btn-ghost" onclick="togglePasscodeVisibility()" style="padding:4px 8px; font-size:10px;">Show</button>
@@ -120,101 +104,72 @@ body::after {
       </div>
     </div>
     <div style="margin-top: 16px;">
-      <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'block'">Change Passcode</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'block'">Change Key</button>
     </div>
     <div class="passcode-form" id="passcode-form">
       <div class="form-group">
-        <input type="password" class="form-input" id="new-passcode" placeholder="New Passcode">
+        <input type="password" class="form-input" id="new-passcode" placeholder="New Key (Passcode)">
       </div>
       <div class="form-group">
-        <input type="password" class="form-input" id="confirm-passcode" placeholder="Confirm Passcode">
+        <input type="password" class="form-input" id="confirm-passcode" placeholder="Confirm Key">
       </div>
-      <button class="btn btn-primary" onclick="savePasscode()">Save Passcode</button>
+      <button class="btn btn-primary" onclick="savePasscode()">Save Key</button>
       <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'none'" style="border:none;">Cancel</button>
     </div>
   </div>
 
+  <!-- Section 2: Data Export -->
   <div class="settings-section">
-    <h2 class="section-title">Subscription Plan</h2>
-    <div class="data-row">
-      <span class="data-label">Current Tier</span>
-      <span class="data-val" id="disp-tier" style="text-transform: uppercase; font-weight:700; color:var(--success);">Free</span>
-    </div>
-    <div class="data-row">
-      <span class="data-label">Scoring & Writing Limit</span>
-      <span class="data-val" id="disp-limit">5 generations / hour</span>
-    </div>
-    <div style="margin-top: 16px;">
-      <button class="btn btn-primary" onclick="upgradePlaceholder()" style="background:var(--success); color:#070a18;">Upgrade to Premium</button>
-    </div>
-  </div>
-
-  <div class="settings-section">
-    <h2 class="section-title">Smart Answer Library</h2>
-    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:16px;">
-      Store answers to recurring essay questions. These are encrypted client-side and can be pasted directly into portal textareas from the extension popup.
+    <h2 class="section-title">Data Backup</h2>
+    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">
+      Download copies of your profile and tracked job applications anytime.
     </p>
-    
-    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:16px;">
-      <div class="form-group" style="display:grid; grid-template-columns:150px 1fr; gap:12px; margin-bottom:0;">
-        <input type="text" id="qna-tag" class="form-input" placeholder="Tag (e.g. salary)" style="max-width:100%;">
-        <input type="text" id="qna-question" class="form-input" placeholder="Question prompt (optional)" style="max-width:100%;">
-      </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <textarea id="qna-answer" class="form-input" placeholder="Your Answer text..." style="max-width:100%; height:80px; resize:vertical; font-family:var(--body);"></textarea>
-      </div>
-      <button class="btn btn-primary" onclick="addSmartAnswer()" style="align-self:flex-start;">Add to Library</button>
-    </div>
-
-    <div id="smart-answers-list" style="display:flex; flex-direction:column; gap:8px;">
-      <div style="font-size:11px; color:var(--dim); font-style:italic;">Loading library...</div>
-    </div>
-  </div>
-
-  <div class="settings-section">
-    <h2 class="section-title">Data Export</h2>
     <div class="data-row">
-      <span class="data-label">Export Profile Data (JSON)</span>
+      <span class="data-label">Backup Profile Data (JSON format)</span>
       <button class="btn btn-ghost" onclick="exportProfile()">Export JSON</button>
     </div>
     <div class="data-row">
-      <span class="data-label">Export Applications (CSV)</span>
+      <span class="data-label">Backup Tracked Jobs (CSV format)</span>
       <button class="btn btn-ghost" onclick="exportApps()">Export CSV</button>
     </div>
   </div>
 
+  <!-- Section 3: Sync Info -->
   <div class="settings-section">
-    <h2 class="section-title">Sync Status</h2>
+    <h2 class="section-title">Connection Status</h2>
     <div class="data-row">
-      <span class="data-label">Last Sync</span>
-      <span class="data-val" id="disp-sync">Just now</span>
+      <span class="data-label">Google Account</span>
+      <span class="data-val" id="disp-email" style="font-family:var(--body);color:var(--muted);">—</span>
     </div>
     <div class="data-row">
-      <span class="data-label">Server Version</span>
-      <span class="data-val">v2.4.1</span>
+      <span class="data-label">Sync Connection Status</span>
+      <span class="data-val" id="disp-sync">Connected</span>
     </div>
   </div>
 
+  <!-- Section 4: Danger Zone -->
   <div class="settings-section danger">
     <h2 class="section-title">Danger Zone</h2>
+    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">
+      Clear your local browser cache or permanently delete your account data.
+    </p>
     <div class="data-row">
-      <span class="data-label">Clear Applications Pipeline</span>
-      <button class="btn btn-danger" onclick="clearApps()">Clear Apps</button>
+      <span class="data-label">Clear Tracked Applications list</span>
+      <button class="btn btn-danger" onclick="clearApps()">Clear Jobs</button>
     </div>
     <div class="data-row">
-      <span class="data-label">Reset Local Profile Data</span>
+      <span class="data-label">Reset Local Profile cache</span>
       <button class="btn btn-danger" onclick="resetProfile()">Reset Profile</button>
     </div>
     <div class="data-row">
-      <span class="data-label">Clear All Local Data & Logout</span>
-      <button class="btn btn-danger" onclick="factoryReset()">Erase Everything</button>
+      <span class="data-label">Logout and Clear All Local Data</span>
+      <button class="btn btn-danger" onclick="factoryReset()">Erase Local Data & Logout</button>
     </div>
     <div class="data-row">
       <span class="data-label">Permanently Delete Cloud Account</span>
-      <button class="btn btn-danger" onclick="deleteAccountFromServer()">Purge Account</button>
+      <button class="btn btn-danger" onclick="deleteAccountFromServer()">Purge Server Account</button>
     </div>
   </div>
-
 </div>
 
 <div class="toast-container" id="toast-container"></div>
@@ -224,9 +179,6 @@ if(typeof requireAuth === 'function') requireAuth();
 if(typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'settings.html');
 
 function showToast(msg, type='success') {
-  if(typeof window.showToast === 'function' && false) {
-    // skip fallback if provided by shell, but let's just use local for safety
-  }
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = 'toast';
@@ -236,195 +188,21 @@ function showToast(msg, type='success') {
 }
 
 async function loadSettings() {
-  const token = localStorage.getItem('jxa_token');
+  const email = localStorage.getItem('jxa_user_email') || '';
+  document.getElementById('disp-email').textContent = email || 'Offline Mode';
   
-  // 1. Instantly load from cache
-  const cachedState = getCachedProfileState();
-  if (cachedState) {
-    const prof = cachedState.profile || {};
-    const personal = prof.personal || {};
-    document.getElementById('update-name').value = personal.fullName || cachedState.user?.name || '';
-    document.getElementById('update-email').value = cachedState.user?.email || localStorage.getItem('jxa_user_email') || '';
-    document.getElementById('update-userid').value = cachedState.user?.id || '';
-    
-    const tier = cachedState.tier || 'free';
-    document.getElementById('disp-tier').textContent = tier;
-    document.getElementById('disp-limit').textContent = tier === 'premium' ? '50 generations / hour' : '5 generations / hour';
-  } else {
-    document.getElementById('update-email').value = localStorage.getItem('jxa_user_email') || '';
-  }
-  
-  // 2. Fetch fresh updates in the background
-  try {
-    const res = await fetch(`${SYNC_API}/profile`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const prof = data.profile || {};
-      const personal = prof.personal || {};
-      document.getElementById('update-name').value = personal.fullName || data.user?.name || '';
-      document.getElementById('update-email').value = data.user?.email || localStorage.getItem('jxa_user_email') || '';
-      document.getElementById('update-userid').value = data.user?.id || '';
-      
-      const tier = data.tier || 'free';
-      document.getElementById('disp-tier').textContent = tier;
-      document.getElementById('disp-limit').textContent = tier === 'premium' ? '50 generations / hour' : '5 generations / hour';
-    }
-  } catch (e) {
-    console.error("Background settings load failed:", e);
-  }
-  
-  loadSmartAnswers(cachedState);
-}
-
-async function updateAccountDetails() {
-  const name = document.getElementById('update-name').value.trim();
-
-  if (!name) {
-    return showToast('Display name cannot be empty', 'error');
-  }
-
-  showToast('Updating account details...');
-  try {
-    const token = localStorage.getItem('jxa_token');
-    const res = await fetch(`${SYNC_API}/auth/update`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ name })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to update account');
-    }
-    
-    // Save updated name to local state cache
-    const cachedState = getCachedProfileState() || {};
-    if (data.user) {
-      cachedState.user = data.user;
-      localStorage.setItem('jxa_local_state', JSON.stringify(cachedState));
-    }
-    
-    showToast('Display name updated successfully!');
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-}
-
-let activeProfile = {};
-
-async function loadSmartAnswers(cachedState = null) {
-  if (cachedState) {
-    activeProfile = cachedState.profile || {};
-    if (!Array.isArray(activeProfile.answers)) {
-      activeProfile.answers = [];
-    }
-    renderSmartAnswers();
-  }
-
-  try {
-    const state = await loadProfile();
-    activeProfile = state?.profile || {};
-    if (!Array.isArray(activeProfile.answers)) {
-      activeProfile.answers = [];
-    }
-    renderSmartAnswers();
-  } catch (e) {
-    console.error("Background smart answers load failed:", e);
-  }
-}
-
-function renderSmartAnswers() {
-  const container = document.getElementById('smart-answers-list');
-  container.innerHTML = '';
-  
-  if (activeProfile.answers.length === 0) {
-    container.innerHTML = '<div style="font-size:11px; color:var(--dim); font-style:italic;">No answers saved yet.</div>';
-    return;
-  }
-  
-  activeProfile.answers.forEach((item, index) => {
-    const div = document.createElement('div');
-    div.className = 'data-row';
-    div.style.alignItems = 'flex-start';
-    div.style.flexDirection = 'column';
-    div.style.gap = '6px';
-    div.style.padding = '12px 0';
-    
-    div.innerHTML = `
-      <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
-        <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:var(--success);">#${item.tag}</span>
-        <button class="btn btn-danger" onclick="deleteSmartAnswer(${index})" style="height:24px; padding:2px 8px; font-size:9px;">Delete</button>
-      </div>
-      ${item.question ? `<div style="font-size:11px; color:var(--muted); font-style:italic;">Q: ${item.question}</div>` : ''}
-      <div style="font-size:12px; color:var(--white); white-space:pre-wrap; background:rgba(0,0,0,0.15); width:100%; padding:8px; border-radius:4px; border:1px solid rgba(255,255,255,0.03);">${item.answer}</div>
-    `;
-    container.appendChild(div);
-  });
-}
-
-async function addSmartAnswer() {
-  const tagInput = document.getElementById('qna-tag');
-  const questionInput = document.getElementById('qna-question');
-  const answerInput = document.getElementById('qna-answer');
-  
-  const tag = tagInput.value.trim().replace(/[^a-zA-Z0-9_-]/g, '');
-  const question = questionInput.value.trim();
-  const answer = answerInput.value.trim();
-  
-  if (!tag) return showToast('Please enter a valid tag (alphanumeric, dashes, underscores)', 'error');
-  if (!answer) return showToast('Answer text cannot be empty', 'error');
-  
-  if (activeProfile.answers.some(item => item.tag.toLowerCase() === tag.toLowerCase())) {
-    return showToast(`Tag "#${tag}" already exists`, 'error');
-  }
-  
-  activeProfile.answers.push({
-    id: 'ans_' + Math.random().toString(36).substr(2, 9),
-    tag: tag,
-    question: question,
-    answer: answer
-  });
-  
-  showToast('Saving to secure sync vault...');
-  const res = await saveProfile(activeProfile);
-  if (res?.ok) {
-    showToast('Smart Answer added successfully!');
-    tagInput.value = '';
-    questionInput.value = '';
-    answerInput.value = '';
-    renderSmartAnswers();
-  } else {
-    showToast('Failed to save: ' + (res?.error || 'unknown'), 'error');
-  }
-}
-
-async function deleteSmartAnswer(index) {
-  if (confirm('Delete this answer from your secure vault?')) {
-    activeProfile.answers.splice(index, 1);
-    showToast('Saving changes...');
-    const res = await saveProfile(activeProfile);
-    if (res?.ok) {
-      showToast('Smart Answer deleted');
-      renderSmartAnswers();
-    } else {
-      showToast('Failed to save changes', 'error');
-    }
-  }
+  const passcode = localStorage.getItem('jxa_passcode') || "";
+  document.getElementById('disp-passcode').textContent = '••••••••';
 }
 
 async function savePasscode() {
   const p1 = document.getElementById('new-passcode').value;
   const p2 = document.getElementById('confirm-passcode').value;
-  if(!p1) return showToast('Passcode cannot be empty', 'error');
-  if(p1 !== p2) return showToast('Passcodes do not match', 'error');
+  if(!p1) return showToast('Key cannot be empty', 'error');
+  if(p1 !== p2) return showToast('Keys do not match', 'error');
   
-  showToast('Updating passcode & re-encrypting vault...');
+  showToast('Updating Sync Key & re-encrypting data...');
   
-  // Update local storage first so saveProfile uses the new passcode
   localStorage.setItem('jxa_passcode', p1);
   
   try {
@@ -432,7 +210,7 @@ async function savePasscode() {
     const activeProfile = state?.profile || {};
     const res = await saveProfile(activeProfile);
     if (res?.ok) {
-      showToast('Passcode updated and synced successfully');
+      showToast('Sync Key updated and synced successfully');
       
       // Dispatch pairing event so the extension updates immediately
       window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
@@ -443,11 +221,11 @@ async function savePasscode() {
         }
       }));
     } else {
-      showToast('Failed to sync new passcode to cloud. Saved locally.', 'warn');
+      showToast('Failed to sync new key to cloud. Saved locally.', 'warn');
     }
   } catch (err) {
     console.error(err);
-    showToast('Error syncing passcode: ' + err.message, 'error');
+    showToast('Error syncing key: ' + err.message, 'error');
   }
   
   document.getElementById('passcode-form').style.display = 'none';
@@ -456,22 +234,23 @@ async function savePasscode() {
 }
 
 async function exportProfile() {
-  showToast('Exporting data from cloud...');
+  showToast('Exporting data...');
   try {
-    const headers = { 'Authorization': 'Bearer ' + localStorage.getItem('jxa_token') };
+    const token = localStorage.getItem('jxa_token') || '';
+    if (!token) throw new Error('Not logged in');
+    const headers = { 'Authorization': 'Bearer ' + token };
     const res = await fetch(`${SYNC_API}/profile/export`, { headers });
-    if (!res.ok) throw new Error('Cloud export failed: ' + res.statusText);
+    if (!res.ok) throw new Error('Cloud export failed');
     const data = await res.blob();
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'jobxapply_data_export.json';
+    a.download = 'jobxapply_backup.json';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Data exported successfully');
+    showToast('Backup saved successfully');
   } catch (err) {
-    console.error(err);
-    showToast('Cloud export failed, exporting local copy instead', 'warn');
+    console.warn(err);
     const local = localStorage.getItem('jxa_local_profile') || '{}';
     const blob = new Blob([local], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -480,37 +259,14 @@ async function exportProfile() {
     a.download = 'jobxapply_profile_local.json';
     a.click();
     URL.revokeObjectURL(url);
-  }
-}
-
-async function deleteAccountFromServer() {
-  if (confirm('WARNING: This will permanently delete your account, synced profile, and application tracking history from our cloud servers. This action is irreversible. Proceed?')) {
-    if (confirm('Are you absolutely sure you want to purge your account?')) {
-      showToast('Deleting account...');
-      try {
-        const headers = { 'Authorization': 'Bearer ' + localStorage.getItem('jxa_token') };
-        const res = await fetch(`${SYNC_API}/profile`, {
-          method: 'DELETE',
-          headers
-        });
-        if (!res.ok) throw new Error('Server deletion failed');
-        showToast('Account purged. Erasing local data...');
-        localStorage.clear();
-        setTimeout(() => {
-          window.location.href = 'auth.html';
-        }, 1200);
-      } catch (err) {
-        console.error(err);
-        showToast('Purge failed: ' + err.message, 'error');
-      }
-    }
+    showToast('Local backup saved');
   }
 }
 
 function exportApps() {
   const data = localStorage.getItem('jxa_applications') || '[]';
   const apps = JSON.parse(data);
-  if(apps.length === 0) return showToast('No applications to export', 'error');
+  if(apps.length === 0) return showToast('No tracked applications to export', 'error');
   
   const headers = ['Company', 'Role', 'Status', 'Date Applied'];
   const rows = apps.map(a => `"${a.company}","${a.role}","${a.status}","${a.dateApplied}"`);
@@ -520,30 +276,55 @@ function exportApps() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'jobxapply_apps.csv';
+  a.download = 'jobxapply_tracker.csv';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('Applications exported');
+  showToast('Jobs CSV saved');
 }
 
 function clearApps() {
-  if(confirm('Delete all tracked applications? This cannot be undone.')) {
+  if(confirm('Clear all tracked applications? This cannot be undone.')) {
     localStorage.removeItem('jxa_applications');
-    showToast('Applications cleared');
+    showToast('Job list cleared');
   }
 }
 
 function resetProfile() {
-  if(confirm('Reset local profile data? You will lose any unsynced changes.')) {
+  if(confirm('Clear local profile cache? You will lose any unsaved changes.')) {
     localStorage.removeItem('jxa_local_profile');
-    showToast('Profile data reset');
+    showToast('Profile cache cleared');
   }
 }
 
 function factoryReset() {
-  if(confirm('Are you absolutely sure? This will delete all local data and log you out.')) {
+  if(confirm('Are you sure? This will delete all local data and log you out.')) {
     localStorage.clear();
     window.location.href = 'auth.html';
+  }
+}
+
+async function deleteAccountFromServer() {
+  if (confirm('WARNING: This will permanently delete your account and all profiles from the cloud. This cannot be undone. Proceed?')) {
+    if (confirm('Are you absolutely sure you want to delete your account?')) {
+      showToast('Deleting cloud account...');
+      try {
+        const token = localStorage.getItem('jxa_token') || '';
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const res = await fetch(`${SYNC_API}/profile`, {
+          method: 'DELETE',
+          headers
+        });
+        if (!res.ok) throw new Error('Deletion failed');
+        showToast('Account deleted. Clearing local data...');
+        localStorage.clear();
+        setTimeout(() => {
+          window.location.href = 'auth.html';
+        }, 1200);
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to delete account: ' + err.message, 'error');
+      }
+    }
   }
 }
 
@@ -562,19 +343,12 @@ function togglePasscodeVisibility() {
 
 function copyPasscodeToClipboard() {
   const passcode = localStorage.getItem('jxa_passcode') || "";
-  if (!passcode) {
-    return showToast("No passcode configured yet.", "error");
-  }
+  if (!passcode) return showToast("No Sync Key set yet.", "error");
   navigator.clipboard.writeText(passcode).then(() => {
-    showToast("Passcode copied to clipboard!");
+    showToast("Sync Key copied to clipboard!");
   }).catch(err => {
-    console.error("Clipboard write failed:", err);
-    showToast("Failed to copy passcode.", "error");
+    showToast("Failed to copy key.", "error");
   });
-}
-
-function upgradePlaceholder() {
-  showToast("Plan upgrades are coming soon! Standard premium pricing is $9.99/mo.", "info");
 }
 
 document.addEventListener('DOMContentLoaded', loadSettings);

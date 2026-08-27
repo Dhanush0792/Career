@@ -37,7 +37,47 @@ const FIELD_ALIASES = {
   healthissues: ["health issues", "medical history", "health status", "medical conditions"],
   targetroles: ["target roles", "preferred roles", "desired roles"],
   coverletterdraft: ["cover letter", "letter"],
-  otherdocuments: ["other documents", "supporting documents", "additional documents"]
+  otherdocuments: ["other documents", "supporting documents", "additional documents"],
+  noticeperiod: ["notice period", "notice", "days to join", "joining time"],
+  totalexperience: ["total experience", "years of experience", "work experience", "experience in years", "experience (years)"],
+  
+  edu10_school: ["10th school", "10th board school", "ssc school", "matriculation school", "school name (10", "class x school", "class 10 school", "secondary school name", "high school name"],
+  edu10_board: ["10th board", "ssc board", "matriculation board", "class x board", "class 10 board", "secondary board", "secondary school board"],
+  edu10_year: ["10th passing year", "10th year", "ssc passing year", "matric_year", "matric year", "matriculation passing year", "class x passing year", "class 10 passing year", "year of passing (10", "year of completion (10", "secondary passing year"],
+  edu10_cgpa: ["10th cgpa", "10th percentage", "10th marks", "ssc cgpa", "ssc percentage", "ssc marks", "matriculation marks", "class x marks", "class x cgpa", "class 10 cgpa", "class 10 percentage"],
+  
+  edu12_school: ["12th school", "12th board school", "hsc school", "intermediate school", "school name (12", "class xii school", "class 12 school", "higher secondary school name", "senior secondary school name"],
+  edu12_board: ["12th board", "hsc board", "intermediate board", "class xii board", "class 12 board", "higher secondary board", "senior secondary board"],
+  edu12_year: ["12th passing year", "12th year", "hsc passing year", "intermediate passing year", "class xii passing year", "class 12 passing year", "year of passing (12", "year of completion (12", "higher secondary passing year"],
+  edu12_cgpa: ["12th cgpa", "12th percentage", "12th marks", "hsc cgpa", "hsc percentage", "hsc marks", "intermediate marks", "intermediate cgpa", "class xii marks", "class xii cgpa", "class 12 cgpa", "class 12 percentage"],
+  
+  edugrad_college: ["graduation college", "graduation university", "undergraduate college", "undergraduate university", "degree college", "bachelor college", "bachelor university", "college name", "university name"],
+  edugrad_degree: ["graduation degree", "undergraduate degree", "bachelor degree", "degree name", "bachelors degree"],
+  edugrad_stream: ["graduation stream", "graduation branch", "graduation discipline", "graduation major", "undergraduate major", "undergraduate stream", "undergraduate branch", "degree major", "degree stream", "degree branch", "branch/discipline", "specialization"],
+  edugrad_year: ["graduation passing year", "graduation year", "undergraduate passing year", "undergraduate year", "degree passing year", "degree year", "year of passing", "passing year", "completion year", "graduation date"],
+  edugrad_cgpa: ["graduation cgpa", "graduation percentage", "graduation marks", "undergraduate cgpa", "undergraduate percentage", "degree cgpa", "degree percentage", "gpa", "cgpa", "aggregate marks", "percentage of marks"],
+  edugrad_pursuing: ["graduation pursuing", "currently studying", "current student"],
+  
+  edupg_college: ["pg college", "pg university", "post graduate college", "post graduate university", "post-graduate college", "postgraduate university"],
+  edupg_degree: ["pg degree", "post graduate degree", "post-graduate degree", "postgraduate degree"],
+  edupg_stream: ["pg stream", "pg branch", "pg discipline", "pg major", "post graduate major", "post graduate stream", "post graduate branch"],
+  edupg_year: ["pg passing year", "pg year", "post graduate passing year", "post graduate year"],
+  edupg_cgpa: ["pg cgpa", "pg percentage", "pg marks", "post graduate cgpa", "post graduate percentage"],
+  edupg_pursuing: ["pg pursuing"],
+  
+  edumasters_college: ["masters college", "masters university", "master college", "master university"],
+  edumasters_degree: ["masters degree", "master degree", "master of"],
+  edumasters_stream: ["masters stream", "masters branch", "masters discipline", "masters major"],
+  edumasters_year: ["masters passing year", "masters year", "master passing year"],
+  edumasters_cgpa: ["masters cgpa", "masters percentage", "masters marks", "master cgpa"],
+  edumasters_pursuing: ["masters pursuing"],
+  
+  eduphd_college: ["phd college", "phd university", "doctorate college", "doctorate university"],
+  eduphd_degree: ["phd degree", "doctorate degree"],
+  eduphd_stream: ["phd stream", "phd branch", "phd discipline", "phd major", "doctorate major"],
+  eduphd_year: ["phd passing year", "phd year", "doctorate passing year"],
+  eduphd_cgpa: ["phd cgpa", "phd percentage", "phd marks", "doctorate cgpa"],
+  eduphd_pursuing: ["phd pursuing"]
 };
 
 let extensionEnabled = true;
@@ -53,40 +93,28 @@ chrome.storage.onChanged.addListener((changes) => {
 });
 
 const KNOWN_PORTALS = [
-  "naukri.com", "linkedin.com", "wellfound.com", "angel.co", "indeed.com",
-  "myworkdayjobs.com", "greenhouse.io", "lever.co", "icims.com", "smartrecruiters.com",
-  "internshala.com", "ashbyhq.com", "workday"
+  "naukri", "linkedin", "wellfound", "angel.co", "indeed",
+  "myworkdayjobs", "greenhouse", "lever", "icims", "smartrecruiters",
+  "internshala", "ashbyhq", "workday", "taleo", "freshteam", "glassdoor",
+  "monster", "rippling", "bamboohr"
 ];
 
 function isJobPage() {
   const host = location.hostname.toLowerCase();
-  const path = location.pathname.toLowerCase();
-  const title = document.title ? document.title.toLowerCase() : "";
   
   const BLACKLISTED = [
     "chatgpt.com", "openai.com", "google.com", "github.com", "gitlab.com",
     "microsoft.com", "stripe.com", "paypal.com", "facebook.com", "instagram.com",
     "twitter.com", "x.com", "youtube.com", "wikipedia.org", "netflix.com",
-    "amazon.com", "gmail.com", "outlook.com", "yahoo.com"
+    "amazon.com", "gmail.com", "outlook.com", "yahoo.com",
+    "localhost", "127.0.0.1", "onrender.com", "jobxapply", "careerbridge"
   ];
   
   if (BLACKLISTED.some(d => host.includes(d))) {
     return false;
   }
   
-  if (KNOWN_PORTALS.some(p => host.includes(p))) {
-    return true;
-  }
-  
-  const keywords = ["career", "job", "apply", "hiring", "recruit", "application", "candidate", "join-us", "opportunity"];
-  const urlMatches = keywords.some(kw => path.includes(kw) || host.includes(kw));
-  const titleMatches = keywords.some(kw => title.includes(kw));
-  
-  if (urlMatches || titleMatches) {
-    return true;
-  }
-  
-  return false;
+  return KNOWN_PORTALS.some(p => host.includes(p));
 }
 
 function normalize(s) {
@@ -709,7 +737,7 @@ document.addEventListener("submit", handleSubmit, true);
           showKnockoutSuggestion(el, value);
           results.push({ field, status: "suggested", via: "knockout-rule" });
         } else if (category === "compensation") {
-          const expected = rawProfile.preferences?.expectedSalary || "";
+          const expected = rawProfile.expectedSalary || rawProfile.preferences?.expectedSalary || "";
           if (expected) {
             setValue(el, expected);
             filledCount++;
@@ -719,14 +747,17 @@ document.addEventListener("submit", handleSubmit, true);
             results.push({ field, status: "empty-flagged", via: "compensation-rule" });
           }
         } else if (category === "logistics") {
-          const empStatus = rawProfile.preferences?.employmentStatus || "employed";
+          const empStatus = rawProfile.employmentStatus || rawProfile.preferences?.employmentStatus || "employed";
           let logisticsVal = value;
           if (empStatus === "student") {
             logisticsVal = "Immediate / Date-based (Graduation)";
           } else if (empStatus === "unemployed") {
             logisticsVal = "Immediate";
-          } else if (rawProfile.preferences?.noticePeriod) {
-            logisticsVal = rawProfile.preferences.noticePeriod;
+          } else {
+            const noticeVal = rawProfile.noticePeriod || rawProfile.preferences?.noticePeriod || "";
+            if (noticeVal) {
+              logisticsVal = noticeVal;
+            }
           }
           setValue(el, logisticsVal);
           el.style.backgroundColor = "#ffffe0";

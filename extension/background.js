@@ -138,6 +138,58 @@ async function decryptAllProfiles(profilesMap, passcode) {
   return decryptedMap;
 }
 
+async function syncProfileFromServer(passcode, callback = () => {}) {
+  try {
+    const res = await authenticatedFetch(`${SYNC_API}/profile`);
+    if (!res.ok) {
+      callback({ ok: false, error: `Server returned status ${res.status}` });
+      return { ok: false, error: `Server returned status ${res.status}` };
+    }
+    const state = await res.json();
+    
+    let profiles = state.profiles || {};
+    let activeProfileId = state.activeProfileId || "default";
+
+    if (state.profiles && passcode) {
+      profiles = await decryptAllProfiles(profiles, passcode);
+    } else if (state.profile) {
+      let decryptedProfile = state.profile;
+      if (state.profile.encryptedBlob && passcode) {
+        try {
+          decryptedProfile = await decryptProfileData(state.profile, passcode);
+        } catch (e) {
+          console.error("Failed to decrypt legacy get:", e);
+        }
+      }
+      profiles = { "default": decryptedProfile };
+      activeProfileId = "default";
+    }
+
+    const activeProfile = profiles[activeProfileId] || {};
+    const decryptedState = { ...state, profiles };
+    
+    return new Promise((resolve) => {
+      chrome.storage.local.set({
+        jobxapplyState: decryptedState,
+        jobxapplyProfiles: profiles,
+        jobxapplyActiveProfileId: activeProfileId,
+        jobxapplyProfile: activeProfile
+      }, () => {
+        // Notify other parts of extension if they are listening
+        chrome.runtime.sendMessage({ type: "jobxapply:profileUpdated" }).catch(() => {});
+        const result = { ok: true, profile: activeProfile, profiles, activeProfileId, state: decryptedState };
+        callback(result);
+        resolve(result);
+      });
+    });
+  } catch (err) {
+    console.error("Error syncing profile from server:", err);
+    const result = { ok: false, error: err.message };
+    callback(result);
+    return result;
+  }
+}
+
 function getBaseDomain(hostname) {
   const parts = hostname.replace("www.", "").split(".");
   if (parts.length > 2) {
@@ -161,8 +213,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.set({
       jobxapplyToken: token || "",
       jobxapplyPasscode: passcode || "",
-      jobxapplyEmail: email || ""
+      jobxapplyEmail: email || "",
+      jobxapplyProfile: {},
+      jobxapplyProfiles: {},
+      jobxapplyState: null
     }, () => {
+      // Trigger profile sync immediately
+      syncProfileFromServer(passcode || "").catch((err) => {
+        console.error("Auto-sync profile failed after saveAuth:", err);
+      });
       sendResponse({ ok: true });
     });
     return true;
@@ -290,43 +349,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.get(["jobxapplyState", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyProfile", "jobxapplyPasscode"], (result) => {
       const passcode = result.jobxapplyPasscode || "";
       
-      const processProfileState = async (state) => {
-        let profiles = state.profiles || {};
-        let activeProfileId = state.activeProfileId || "default";
-
-        if (state.profiles && passcode) {
-          profiles = await decryptAllProfiles(state.profiles, passcode);
-        } else if (state.profile) {
-          let decryptedProfile = state.profile;
-          if (state.profile.encryptedBlob && passcode) {
-            try {
-              decryptedProfile = await decryptProfileData(state.profile, passcode);
-            } catch (e) {
-              console.error("Failed to decrypt legacy get:", e);
-            }
-          }
-          profiles = { "default": decryptedProfile };
-          activeProfileId = "default";
-        }
-        return { profiles, activeProfileId };
-      };
-
+      // If we already have cached profiles, return them immediately for fast UI response, and sync in background
       if (result.jobxapplyProfiles && Object.keys(result.jobxapplyProfiles).length) {
-        authenticatedFetch(`${SYNC_API}/profile`)
-          .then((res) => res.json())
-          .then(async (state) => {
-            const { profiles, activeProfileId } = await processProfileState(state);
-            const activeProfile = profiles[activeProfileId] || {};
-            const decryptedState = { ...state, profiles };
-            chrome.storage.local.set({
-              jobxapplyState: decryptedState,
-              jobxapplyProfiles: profiles,
-              jobxapplyActiveProfileId: activeProfileId,
-              jobxapplyProfile: activeProfile
-            });
-          })
-          .catch(() => {});
-
         const activeProfile = result.jobxapplyProfiles[result.jobxapplyActiveProfileId] || result.jobxapplyProfile || {};
         sendResponse({ 
           profile: activeProfile, 
@@ -334,32 +358,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           activeProfileId: result.jobxapplyActiveProfileId,
           state: result.jobxapplyState || null 
         });
+        
+        syncProfileFromServer(passcode).catch(() => {});
         return;
       }
 
-      authenticatedFetch(`${SYNC_API}/profile`)
-        .then((res) => res.json())
-        .then(async (state) => {
-          const { profiles, activeProfileId } = await processProfileState(state);
-          const activeProfile = profiles[activeProfileId] || {};
-          const decryptedState = { ...state, profiles };
-          chrome.storage.local.set({
-            jobxapplyState: decryptedState,
-            jobxapplyProfiles: profiles,
-            jobxapplyActiveProfileId: activeProfileId,
-            jobxapplyProfile: activeProfile
-          }, () => {
-            sendResponse({ 
-              profile: activeProfile, 
-              profiles,
-              activeProfileId,
-              state: decryptedState 
-            });
+      // No cache, sync from server and respond
+      syncProfileFromServer(passcode, (syncRes) => {
+        if (syncRes.ok) {
+          sendResponse({
+            profile: syncRes.profile,
+            profiles: syncRes.profiles,
+            activeProfileId: syncRes.activeProfileId,
+            state: syncRes.state
           });
-        })
-        .catch(() => {
-          sendResponse({ profile: {} });
-        });
+        } else {
+          sendResponse({ profile: {}, error: syncRes.error });
+        }
+      }).catch(() => {
+        sendResponse({ profile: {} });
+      });
     });
     return true;
   }

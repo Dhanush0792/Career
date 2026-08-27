@@ -160,6 +160,12 @@ async function syncFromCloud() {
 
 // ── Init ────────────────────────────────────────────────────────────────────
 (async function init() {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type === "jobxapply:profileUpdated") {
+      loadAndDisplayProfile();
+    }
+  });
+
   await loadPortalInfo();
   await loadAndDisplayProfile();
 

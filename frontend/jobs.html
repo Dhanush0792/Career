@@ -489,8 +489,8 @@ function renderJobCard(job, isRecommended) {
       </div>
       <h3 class="job-title">${escapeHtml(job.title)}</h3>
       <div class="job-meta">
-        <span>📍 ${escapeHtml(job.location)}</span>
-        <span>🕒 ${escapeHtml(job.postedAt)}</span>
+        <span>${escapeHtml(job.location)}</span>
+        <span>${escapeHtml(job.postedAt)}</span>
       </div>
       <p class="job-desc">${escapeHtml(job.description)}</p>
       

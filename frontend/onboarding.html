@@ -112,12 +112,12 @@ body::after {
       
       <div class="choices-container">
         <div class="choice-card" onclick="selectMethod('resume')">
-          <div class="choice-icon">📄</div>
+          <div class="choice-icon" style="font-family:var(--mono);font-size:16px;">FILE</div>
           <div class="choice-title">Auto-fill via Resume</div>
           <div class="choice-desc">Upload a PDF/DOCX resume. All fields will lock to let you review and edit the parsed details.</div>
         </div>
         <div class="choice-card" onclick="selectMethod('manual')">
-          <div class="choice-icon">✍</div>
+          <div class="choice-icon" style="font-family:var(--mono);font-size:16px;">FORM</div>
           <div class="choice-title">Enter Manually</div>
           <div class="choice-desc">Skip the file upload and type your details step-by-step with fully unlocked fields.</div>
         </div>
@@ -134,7 +134,7 @@ body::after {
       </p>
 
       <div class="dropzone" id="resume-dropzone">
-        <div class="dropzone-title">📄 Drag & Drop Resume here</div>
+        <div class="dropzone-title">Drag & Drop Resume here</div>
         <div class="dropzone-desc">PDF or DOCX · Click to select</div>
         <input type="file" id="resume-input" accept="application/pdf,.docx" style="display:none;">
       </div>
@@ -403,7 +403,7 @@ function parseAndExtractText(text) {
       if (!grp.querySelector('.lock-badge')) {
         const lock = document.createElement('span');
         lock.className = 'lock-badge';
-        lock.innerHTML = '🔒 Locked (Click to Edit)';
+        lock.innerHTML = 'Locked (Click to Edit)';
         lock.onclick = () => {
           el.disabled = false;
           grp.classList.remove('locked');
@@ -454,7 +454,7 @@ async function commitProfile() {
 
   const passcode = document.getElementById('f-passcode').value.trim();
   if (!passcode) {
-    statusEl.textContent = '⚠ Passcode is required to sync profile.';
+    statusEl.textContent = '[!] Passcode is required to sync profile.';
     statusEl.style.color = 'var(--alert)';
     commitBtn.disabled = false;
     return;
@@ -469,7 +469,7 @@ async function commitProfile() {
   });
 
   if (!profile.fullName || !profile.email) {
-    statusEl.textContent = '⚠ Full Name and Email are required.';
+    statusEl.textContent = '[!] Full Name and Email are required.';
     statusEl.style.color = 'var(--alert)';
     commitBtn.disabled = false;
     return;

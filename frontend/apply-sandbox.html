@@ -346,7 +346,7 @@ async function loadData() {
   // Bind Job details
   document.getElementById('job-company').textContent = targetJob.company;
   document.getElementById('job-title').textContent = targetJob.title;
-  document.getElementById('job-location').textContent = `📍 ${targetJob.location}`;
+  document.getElementById('job-location').textContent = targetJob.location;
   document.getElementById('job-salary').textContent = targetJob.salary;
   document.getElementById('job-desc').textContent = targetJob.description;
   document.getElementById('portal-badge').textContent = `${targetJob.portal.toUpperCase()} ATS FORM`;
