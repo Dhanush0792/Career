@@ -719,6 +719,56 @@
             </div>
           </div>
 
+          <!-- 05 Projects -->
+          <div class="accordion-section" id="acc-projects">
+            <div class="accordion-header" onclick="toggleAccordion('acc-projects')">
+              <span class="accordion-title">05 // Projects</span>
+              <span class="accordion-chevron">[ + ]</span>
+            </div>
+            <div class="accordion-body">
+              <div id="projects-list"></div>
+              <button class="acc-add-btn" onclick="addProjectRow()">+ Add Project</button>
+            </div>
+          </div>
+
+          <!-- 06 Certifications -->
+          <div class="accordion-section" id="acc-certs">
+            <div class="accordion-header" onclick="toggleAccordion('acc-certs')">
+              <span class="accordion-title">06 // Certifications</span>
+              <span class="accordion-chevron">[ + ]</span>
+            </div>
+            <div class="accordion-body">
+              <div class="fg">
+                <label>Certifications (one per line or comma separated)</label>
+                <textarea id="res-certs" placeholder="AWS Certified Solutions Architect&#10;Meta Frontend Developer Certificate"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 07 Additional Information -->
+          <div class="accordion-section" id="acc-additional">
+            <div class="accordion-header" onclick="toggleAccordion('acc-additional')">
+              <span class="accordion-title">07 // Additional Information</span>
+              <span class="accordion-chevron">[ + ]</span>
+            </div>
+            <div class="accordion-body">
+              <div class="cf">
+                <div class="fg">
+                  <label>Languages Known</label>
+                  <input type="text" id="res-languages" placeholder="English (Fluent), Hindi, German">
+                </div>
+                <div class="fg">
+                  <label>Relocation / Availability</label>
+                  <input type="text" id="res-relocation" placeholder="Open to Relocate, Immediate Joiner">
+                </div>
+                <div class="fg cf-full">
+                  <label>Honors, Awards or Interests</label>
+                  <input type="text" id="res-interests" placeholder="Hackathon Winner 2024, Open Source Contributor">
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- Right: Full-height A4 Preview -->
@@ -921,6 +971,29 @@
         }
       }
 
+      // Populate Projects
+      const projects = profile.projects;
+      const projContainer = document.getElementById("projects-list");
+      if (projContainer) {
+        projContainer.innerHTML = "";
+        if (Array.isArray(projects)) {
+          projects.forEach(p => addProjectRow(p));
+        } else if (typeof projects === "string" && projects.trim()) {
+          addProjectRow({ name: "Project", summary: projects });
+        }
+      }
+
+      // Populate Certifications & Additional
+      if (document.getElementById("res-certs")) {
+        document.getElementById("res-certs").value = profile.otherDocuments || profile.certifications || "";
+      }
+      if (document.getElementById("res-languages")) {
+        document.getElementById("res-languages").value = profile.languages || "English (Fluent)";
+      }
+      if (document.getElementById("res-relocation")) {
+        document.getElementById("res-relocation").value = profile.relocation || "Open to Relocate, Immediate Joiner";
+      }
+
       // Initial preview render
       updatePreview();
     }
@@ -969,7 +1042,27 @@
       updatePreview();
     }
 
-    // Update the live preview sheet
+    // Dynamic row addition for projects
+    function addProjectRow(data = {}) {
+      const list = document.getElementById("projects-list");
+      if (!list) return;
+
+      const row = document.createElement("div");
+      row.className = "project-item";
+      row.innerHTML = `
+        <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
+          <input type="text" placeholder="Project Name" value="${data.name || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Technologies (e.g. React, Node, AWS)" value="${data.tech || ''}" style="width: 50%;" class="glass-input">
+        </div>
+        <textarea placeholder="Key features, metrics, or GitHub link..." rows="2" style="width: 100%; margin-bottom: 10px;" class="glass-input">${data.summary || ''}</textarea>
+        <button class="btn btn-secondary delete-btn btn-sm" onclick="this.parentElement.remove(); updatePreview();" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">Remove</button>
+      `;
+      list.appendChild(row);
+      updatePreview();
+    }
+
+    // Update the live preview sheet in FAANG-preferred order:
+    // 1. Header -> 2. Summary -> 3. Education -> 4. Experience -> 5. Skills -> 6. Projects -> 7. Certifications -> 8. Additional
     function updatePreview() {
       const name = document.getElementById("res-name")?.value || "Your Name";
       const title = document.getElementById("res-title")?.value || "Target Job Title";
@@ -981,6 +1074,25 @@
       
       const skillsInput = document.getElementById("res-skills")?.value || "";
       const skills = skillsInput.split(",").map(s => s.trim()).filter(Boolean);
+
+      let eduHtml = "";
+      document.querySelectorAll(".education-item").forEach(item => {
+        const inputs = item.querySelectorAll("input");
+        const inst = inputs[0]?.value || "";
+        const area = inputs[1]?.value || "";
+        const year = inputs[2]?.value || "";
+        if (inst || area) {
+          eduHtml += `
+            <div style="margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
+                <span>${area}</span>
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${year}</span>
+              </div>
+              <div style="font-size: 0.85rem; color: #475569;">${inst}</div>
+            </div>
+          `;
+        }
+      });
 
       let expHtml = "";
       document.querySelectorAll(".experience-item").forEach(item => {
@@ -1003,24 +1115,36 @@
         }
       });
 
-      let eduHtml = "";
-      document.querySelectorAll(".education-item").forEach(item => {
-        const inputs = item.querySelectorAll("input");
-        const inst = inputs[0]?.value || "";
-        const area = inputs[1]?.value || "";
-        const year = inputs[2]?.value || "";
-        if (inst || area) {
-          eduHtml += `
+      let projHtml = "";
+      document.querySelectorAll(".project-item").forEach(item => {
+        const inputs = item.querySelectorAll("input, textarea");
+        const pName = inputs[0]?.value || "";
+        const pTech = inputs[1]?.value || "";
+        const pSum = inputs[2]?.value || "";
+        if (pName) {
+          projHtml += `
             <div style="margin-bottom: 8px;">
               <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${area}</span>
-                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">Graduated: ${year}</span>
+                <span>${pName}</span>
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${pTech}</span>
               </div>
-              <div style="font-size: 0.85rem; color: #475569;">${inst}</div>
+              <p style="font-size: 0.85rem; color: #334155; margin-top: 2px; line-height: 1.4; white-space: pre-line;">${pSum}</p>
             </div>
           `;
         }
       });
+
+      const certsVal = document.getElementById("res-certs")?.value.trim() || "";
+      const certs = certsVal.split("\n").map(c => c.trim()).filter(Boolean);
+
+      const langVal = document.getElementById("res-languages")?.value.trim() || "";
+      const relocVal = document.getElementById("res-relocation")?.value.trim() || "";
+      const interestVal = document.getElementById("res-interests")?.value.trim() || "";
+
+      let addItems = [];
+      if (langVal) addItems.push(`<strong>Languages:</strong> ${langVal}`);
+      if (relocVal) addItems.push(`<strong>Availability:</strong> ${relocVal}`);
+      if (interestVal) addItems.push(`<strong>Key Highlights:</strong> ${interestVal}`);
 
       const sheet = document.getElementById("live-preview-sheet");
       if (!sheet) return;
@@ -1039,22 +1163,8 @@
         
         ${summary ? `
           <div class="preview-section">
-            <h3 class="preview-section-title">Professional Summary</h3>
+            <h3 class="preview-section-title">Summary</h3>
             <p style="font-size: 0.85rem; color: #334155; line-height: 1.4; white-space: pre-line;">${summary}</p>
-          </div>
-        ` : ""}
-
-        ${skills.length > 0 ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Skills</h3>
-            <p class="preview-skills">${skills.join(" â€¢ ")}</p>
-          </div>
-        ` : ""}
-
-        ${expHtml ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Professional Experience</h3>
-            ${expHtml}
           </div>
         ` : ""}
 
@@ -1062,6 +1172,41 @@
           <div class="preview-section">
             <h3 class="preview-section-title">Education</h3>
             ${eduHtml}
+          </div>
+        ` : ""}
+
+        ${expHtml ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Experience</h3>
+            ${expHtml}
+          </div>
+        ` : ""}
+
+        ${skills.length > 0 ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Skills</h3>
+            <p class="preview-skills">${skills.join(" • ")}</p>
+          </div>
+        ` : ""}
+
+        ${projHtml ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Projects</h3>
+            ${projHtml}
+          </div>
+        ` : ""}
+
+        ${certs.length > 0 ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Certifications</h3>
+            <p class="preview-skills">${certs.join(" • ")}</p>
+          </div>
+        ` : ""}
+
+        ${addItems.length > 0 ? `
+          <div class="preview-section">
+            <h3 class="preview-section-title">Additional Information</h3>
+            <p style="font-size: 0.85rem; color: #334155; line-height: 1.5;">${addItems.join("<br>")}</p>
           </div>
         ` : ""}
       `;
@@ -1151,7 +1296,8 @@
       a.click();
     }
 
-    // Generate High ATS LaTeX Code (Strict Single Color Black, Zero Emojis, Complete Profile Ingestion)
+    // Generate High ATS FAANG-Standard LaTeX Code
+    // Format Order: 1. Header -> 2. Summary -> 3. Education -> 4. Experience -> 5. Skills -> 6. Projects -> 7. Certifications -> 8. Additional Information
     function generateLatexCode() {
       const name = document.getElementById("res-name")?.value.trim() || "Candidate Name";
       const title = document.getElementById("res-title")?.value.trim() || "";
@@ -1181,6 +1327,21 @@
       if (location) contactItems.push(escapeLatex(location));
       if (website) contactItems.push(`\\href{https://${website.replace(/^https?:\/\//, '')}}{${escapeLatex(website)}}`);
 
+      // 2. Education
+      let eduTex = "";
+      document.querySelectorAll(".education-item").forEach(item => {
+        const inputs = item.querySelectorAll("input");
+        const inst = inputs[0]?.value.trim() || "";
+        const area = inputs[1]?.value.trim() || "";
+        const year = inputs[2]?.value.trim() || "";
+
+        if (inst || area) {
+          eduTex += `\\noindent\\textbf{${escapeLatex(area)}} \\hfill ${escapeLatex(year)}\\\\\n`;
+          eduTex += `\\textit{${escapeLatex(inst)}}\\\\[4pt]\n\n`;
+        }
+      });
+
+      // 3. Experience
       let expTex = "";
       document.querySelectorAll(".experience-item").forEach(item => {
         const inputs = item.querySelectorAll("input, textarea");
@@ -1208,18 +1369,68 @@
         }
       });
 
-      let eduTex = "";
-      document.querySelectorAll(".education-item").forEach(item => {
-        const inputs = item.querySelectorAll("input");
-        const inst = inputs[0]?.value.trim() || "";
-        const area = inputs[1]?.value.trim() || "";
-        const year = inputs[2]?.value.trim() || "";
+      // 4. Skills
+      let skillsTex = "";
+      if (skills.length > 0) {
+        skillsTex = `\\begin{itemize}[leftmargin=0.18in, topsep=2pt, itemsep=2pt]\n  \\item \\textbf{Core Competencies:} ${escapeLatex(skills.join(', '))}\n\\end{itemize}\n\\vspace{4pt}\n`;
+      }
 
-        if (inst || area) {
-          eduTex += `\\noindent\\textbf{${escapeLatex(area)}} \\hfill ${escapeLatex(year)}\\\\\n`;
-          eduTex += `\\textit{${escapeLatex(inst)}}\\\\[4pt]\n\n`;
+      // 5. Projects
+      let projTex = "";
+      document.querySelectorAll(".project-item").forEach(item => {
+        const inputs = item.querySelectorAll("input, textarea");
+        const pName = inputs[0]?.value.trim() || "";
+        const pTech = inputs[1]?.value.trim() || "";
+        const pSum = inputs[2]?.value.trim() || "";
+
+        if (pName) {
+          projTex += `\\noindent\\textbf{${escapeLatex(pName)}} ${pTech ? `\\textit{| ${escapeLatex(pTech)}}` : ''}\\\\\n`;
+          if (pSum) {
+            const bullets = pSum.split('\n').map(b => b.trim()).filter(Boolean);
+            if (bullets.length > 0) {
+              projTex += `\\begin{itemize}[leftmargin=0.18in, topsep=2pt, itemsep=2pt]\n`;
+              bullets.forEach(b => {
+                const cleanB = b.replace(/^[-*•]\s*/, '');
+                projTex += `  \\item ${escapeLatex(cleanB)}\n`;
+              });
+              projTex += `\\end{itemize}\n`;
+            }
+          }
+          projTex += `\\vspace{4pt}\n\n`;
         }
       });
+
+      // 6. Certifications
+      const certsVal = document.getElementById("res-certs")?.value.trim() || "";
+      let certsTex = "";
+      if (certsVal) {
+        const certList = certsVal.split('\n').map(c => c.trim()).filter(Boolean);
+        if (certList.length > 0) {
+          certsTex += `\\begin{itemize}[leftmargin=0.18in, topsep=2pt, itemsep=2pt]\n`;
+          certList.forEach(c => {
+            certsTex += `  \\item ${escapeLatex(c.replace(/^[-*•]\s*/, ''))}\n`;
+          });
+          certsTex += `\\end{itemize}\n\\vspace{4pt}\n`;
+        }
+      }
+
+      // 7. Additional Information
+      const langVal = document.getElementById("res-languages")?.value.trim() || "";
+      const relocVal = document.getElementById("res-relocation")?.value.trim() || "";
+      const interestVal = document.getElementById("res-interests")?.value.trim() || "";
+      let addTex = "";
+      let addItems = [];
+      if (langVal) addItems.push(`\\textbf{Languages:} ${escapeLatex(langVal)}`);
+      if (relocVal) addItems.push(`\\textbf{Availability \\& Location Preference:} ${escapeLatex(relocVal)}`);
+      if (interestVal) addItems.push(`\\textbf{Key Highlights:} ${escapeLatex(interestVal)}`);
+
+      if (addItems.length > 0) {
+        addTex = `\\begin{itemize}[leftmargin=0.18in, topsep=2pt, itemsep=2pt]\n`;
+        addItems.forEach(ai => {
+          addTex += `  \\item ${ai}\n`;
+        });
+        addTex += `\\end{itemize}\n\\vspace{4pt}\n`;
+      }
 
       const latex = `\\documentclass[a4paper,10pt]{article}
 \\usepackage[a4paper,margin=0.6in]{geometry}
@@ -1231,7 +1442,7 @@
 \\setlength{\\parindent}{0pt}
 \\pagestyle{empty}
 
-% ATS Clean Single-Color Strict Black Setup
+% High ATS FAANG Standard - Strict Single Black Color, Zero Emojis
 \\hypersetup{
     colorlinks=true,
     linkcolor=black,
@@ -1252,20 +1463,22 @@
 \\end{center}
 \\vspace{2pt}
 
-${summary ? `\\section*{Professional Summary}
+${summary ? `\\section*{Summary}
 ${escapeLatex(summary)}
 \\vspace{4pt}
 ` : ''}
-${skills.length > 0 ? `\\section*{Technical \\& Core Skills}
-\\begin{itemize}[leftmargin=0.18in, topsep=2pt, itemsep=2pt]
-  \\item \\textbf{Key Competencies:} ${escapeLatex(skills.join(', '))}
-\\end{itemize}
-\\vspace{4pt}
-` : ''}
-${expTex ? `\\section*{Work Experience}
-${expTex}` : ''}
 ${eduTex ? `\\section*{Education}
 ${eduTex}` : ''}
+${expTex ? `\\section*{Experience}
+${expTex}` : ''}
+${skillsTex ? `\\section*{Skills}
+${skillsTex}` : ''}
+${projTex ? `\\section*{Projects}
+${projTex}` : ''}
+${certsTex ? `\\section*{Certifications}
+${certsTex}` : ''}
+${addTex ? `\\section*{Additional Information}
+${addTex}` : ''}
 \\end{document}`;
 
       return latex;
@@ -1274,7 +1487,7 @@ ${eduTex}` : ''}
     function copyLatexCode() {
       const code = generateLatexCode();
       navigator.clipboard.writeText(code).then(() => {
-        alert("Resume LaTeX source code copied to clipboard (100% ATS Single Black Color format).");
+        alert("FAANG-Standard Resume LaTeX source code copied to clipboard (100% ATS Single Black Color format).");
       });
     }
 
