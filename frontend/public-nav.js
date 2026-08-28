@@ -180,8 +180,9 @@
 <nav class="ch-nav" id="ch-pub-nav" role="navigation" aria-label="Main">
   <div class="ch-nav__inner">
 
-    <a href="index.html" class="ch-nav__logo" aria-label="JobXApply Home">
-      <span class="ch-nav__logo-bracket">[</span>&nbsp;JXA&nbsp;<span class="ch-nav__logo-bracket">]</span>
+    <a href="index.html" class="ch-nav__logo" aria-label="JobXApply Home" style="display:flex;align-items:center;gap:8px;">
+      <img src="assets/app-logo.png?v=4" alt="Logo" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">
+      <span><span class="ch-nav__logo-bracket">[</span>&nbsp;JXA&nbsp;<span class="ch-nav__logo-bracket">]</span></span>
     </a>
 
     <div class="ch-nav__groups">

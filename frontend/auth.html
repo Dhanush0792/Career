@@ -152,12 +152,15 @@ body::after {
 }
 .back-link:hover { color: var(--primary); }
 </style>
-<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
 </head>
 <body>
 
 <div class="auth-container">
   <div class="auth-body">
+    <div style="display:flex; justify-content:center; margin-bottom:16px;">
+      <img src="assets/app-logo.png?v=4" alt="JobXApply Logo" style="width: 48px; height: 48px; border-radius: 12px; object-fit: contain;">
+    </div>
     <h2 class="auth-title" style="text-align: center;">OPERATIVE <em>GATEWAY</em></h2>
     <p style="color: var(--dim); font-family: var(--mono); font-size: 11px; text-align: center; margin-bottom: 24px; line-height: 1.5;">
       Access your account or register a new one securely using Google integration.
@@ -203,11 +206,98 @@ function addLog(text, className = '') {
   terminal.scrollTop = terminal.scrollHeight;
 }
 
+function parseJwtEmail(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const parsed = JSON.parse(jsonPayload);
+    return parsed.email || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+let isProcessingOAuth = false;
+async function processOAuthSession(token, userEmail = '') {
+  if (isProcessingOAuth || !token) return;
+  isProcessingOAuth = true;
+
+  const email = userEmail || parseJwtEmail(token);
+  addLog('OAuth credentials verified. Connecting to vault...', 'success');
+  localStorage.setItem('jxa_token', token);
+  if (email) localStorage.setItem('jxa_user_email', email);
+
+  try {
+    const res = await fetch(`${SYNC_API}/profile`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      cache: 'no-store'
+    });
+
+    if (res.ok) {
+      const stateData = await res.json();
+      localStorage.setItem('jxa_role', stateData.role || 'user');
+      if (stateData.user?.email) {
+        localStorage.setItem('jxa_user_email', stateData.user.email);
+      }
+
+      const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
+      if (hasProfile) {
+        localStorage.setItem('jxa_local_profile', JSON.stringify(stateData.profile));
+        localStorage.setItem('jxa_local_state', JSON.stringify(stateData));
+        addLog('Profile synchronized. Redirecting to dashboard...', 'success');
+        setTimeout(() => {
+          if (stateData.role === 'admin') {
+            window.location.href = 'admin/index.html';
+          } else {
+            window.location.href = 'dashboard.html';
+          }
+        }, 500);
+      } else {
+        addLog('Launching onboarding wizard...', 'info');
+        setTimeout(() => window.location.href = 'onboarding.html', 500);
+      }
+    } else {
+      addLog('Login complete. Redirecting...', 'success');
+      setTimeout(() => window.location.href = 'dashboard.html', 500);
+    }
+  } catch (err) {
+    addLog('Redirecting to dashboard...', 'info');
+    setTimeout(() => window.location.href = 'dashboard.html', 500);
+  }
+}
+
+// Check for incoming hash token in URL (e.g. #access_token=...)
+if (window.location.hash && window.location.hash.includes('access_token')) {
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const hashToken = hashParams.get('access_token');
+  if (hashToken) {
+    processOAuthSession(hashToken);
+  }
+}
+
 // Init Supabase if configured
-if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+if (SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase !== 'undefined') {
   try {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     addLog('Supabase OAuth link is available.', 'info');
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (session?.access_token) {
+        processOAuthSession(session.access_token, session.user?.email);
+      }
+    });
+
+    supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
+      if (session?.access_token) {
+        processOAuthSession(session.access_token, session.user?.email);
+      }
+    });
   } catch(e) {
     addLog('Supabase init failed: ' + e.message, 'error');
   }
@@ -219,7 +309,7 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
 async function handleGoogleLogin() {
   if (!supabaseClient) {
     addLog('Google OAuth is only available in cloud deployment mode.', 'error');
-    alert('Google login requires Supabase credentials to be configured. Please use Email/Password login for local dev.');
+    alert('Google login requires Supabase credentials to be configured. Please check your Supabase connection.');
     return;
   }
   
@@ -239,7 +329,7 @@ async function handleGoogleLogin() {
 }
 
 // Redirect if already logged in
-if (localStorage.getItem('jxa_token')) {
+if (localStorage.getItem('jxa_token') && !window.location.hash.includes('access_token')) {
   addLog('Active session detected. Auto-redirecting...', 'success');
   setTimeout(() => {
     if (localStorage.getItem('jxa_role') === 'admin') {

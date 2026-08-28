@@ -878,8 +878,9 @@ function renderNav(container, activePage) {
 
   container.innerHTML = `
     <div class="nav__inner">
-      <a href="${token ? 'dashboard.html' : 'index.html'}" class="nav__logo">
-        <span class="nav__logo-bracket">[</span>&nbsp;JobXApply&nbsp;<span class="nav__logo-bracket">]</span>
+      <a href="${token ? 'dashboard.html' : 'index.html'}" class="nav__logo" style="display:flex;align-items:center;gap:8px;">
+        <img src="assets/app-logo.png?v=4" alt="Logo" style="width:24px;height:24px;border-radius:6px;object-fit:contain;">
+        <span><span class="nav__logo-bracket">[</span>&nbsp;JobXApply&nbsp;<span class="nav__logo-bracket">]</span></span>
       </a>
       <div class="nav__links">${links}</div>
       ${btnHtml}

@@ -61,28 +61,47 @@ const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5c
 
 const statusText = document.getElementById("callback-status");
 
-async function handleCallback() {
+function getHashParams() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return {};
+  const params = new URLSearchParams(hash);
+  return {
+    access_token: params.get("access_token"),
+    refresh_token: params.get("refresh_token"),
+    expires_in: params.get("expires_in"),
+    token_type: params.get("token_type")
+  };
+}
+
+function parseJwtEmail(token) {
   try {
-    if (SUPABASE_URL === "https://your-project.supabase.co" || !SUPABASE_URL) {
-      throw new Error("Supabase is not configured yet. Set SUPABASE_URL and SUPABASE_ANON_KEY in auth-callback.html.");
-    }
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // Allow Supabase to parse hash fragments
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
-    if (error) throw error;
-    if (!session) {
-      throw new Error("No active session found. Redirecting to login...");
-    }
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    const parsed = JSON.parse(jsonPayload);
+    return parsed.email || "";
+  } catch (e) {
+    return "";
+  }
+}
 
-    const token = session.access_token;
-    const email = session.user.email;
+let isProcessing = false;
+async function processSession(token, userEmail = "") {
+  if (isProcessing || !token) return;
+  isProcessing = true;
 
+  try {
+    const email = userEmail || parseJwtEmail(token);
     statusText.textContent = "Session verified. Checking profile metadata...";
     
     // Save authentication details in local storage
     localStorage.setItem("jxa_token", token);
-    localStorage.setItem("jxa_user_email", email);
+    if (email) localStorage.setItem("jxa_user_email", email);
 
     // Call profile endpoint to fetch or auto-create the user profile row on the backend
     const profileRes = await fetch(`${SYNC_API}/profile`, {
@@ -93,6 +112,9 @@ async function handleCallback() {
     if (profileRes.ok) {
       const stateData = await profileRes.json();
       localStorage.setItem("jxa_role", stateData.role || "user");
+      if (stateData.user?.email) {
+        localStorage.setItem("jxa_user_email", stateData.user.email);
+      }
       
       const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
       if (hasProfile) {
@@ -105,25 +127,61 @@ async function handleCallback() {
           } else {
             window.location.replace("dashboard.html");
           }
-        }, 800);
+        }, 500);
       } else {
         statusText.textContent = "Launching onboarding wizard...";
-        setTimeout(() => window.location.replace("onboarding.html"), 800);
+        setTimeout(() => window.location.replace("onboarding.html"), 500);
       }
     } else {
-      // Fallback
-      statusText.textContent = "Failed to sync details. Launching onboarding...";
-      setTimeout(() => window.location.replace("onboarding.html"), 1200);
+      statusText.textContent = "Redirecting to dashboard...";
+      setTimeout(() => window.location.replace("dashboard.html"), 500);
     }
   } catch (err) {
-    statusText.style.color = "#ff6b6b";
-    statusText.textContent = err.message;
-    console.error("Callback error:", err);
-    setTimeout(() => window.location.replace("auth.html"), 3000);
+    console.error("Callback sync error:", err);
+    statusText.textContent = "Redirecting to dashboard...";
+    setTimeout(() => window.location.replace("dashboard.html"), 600);
   }
 }
 
-// Run immediately
+async function handleCallback() {
+  // 1. Direct Hash Check (Instant)
+  const hashParams = getHashParams();
+  if (hashParams.access_token) {
+    await processSession(hashParams.access_token);
+    return;
+  }
+
+  // 2. Supabase Client Verification
+  try {
+    if (SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase !== "undefined") {
+      const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (session?.access_token) {
+          processSession(session.access_token, session.user?.email);
+        }
+      });
+
+      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      if (session?.access_token) {
+        await processSession(session.access_token, session.user?.email);
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("Supabase getSession check:", err);
+  }
+
+  // Fallback after 2.5 seconds if no token was captured
+  setTimeout(() => {
+    if (!isProcessing) {
+      statusText.style.color = "#ff6b6b";
+      statusText.textContent = "No session found. Redirecting to login...";
+      setTimeout(() => window.location.replace("auth.html"), 1500);
+    }
+  }, 2500);
+}
+
 handleCallback();
 </script>
 </body>
