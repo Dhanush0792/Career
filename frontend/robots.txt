@@ -1,6 +1,7 @@
-# robots.txt for JobXApply
+﻿# robots.txt for JobXApply
 User-agent: *
 Allow: /
+Disallow: /admin/
 
 # Explicitly ensure AI crawlers are unblocked for AEO/GEO indexing
 User-agent: GPTBot
@@ -17,3 +18,5 @@ Allow: /
 
 User-agent: Google-Extended
 Allow: /
+
+Sitemap: https://jobxapply.netlify.app/sitemap.xml

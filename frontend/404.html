@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // 404 Not Found</title>
+<meta name="description" content="Page not found on JobXApply.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style-glass.css">
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --success: #2FDDC4;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --dim: rgba(244,247,255,0.4);
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.12);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+* { box-sizing: border-box; margin:0; padding:0; }
+body {
+  font-family: var(--body);
+  background-color: var(--base);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  background-image: radial-gradient(circle at 50% 30%, rgba(91,79,232,0.15) 0%, transparent 60%);
+}
+.error-container {
+  max-width: 540px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 48px 36px;
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.error-code {
+  font-family: var(--mono);
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -2px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.error-title {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--white);
+  margin-bottom: 14px;
+}
+.error-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.btn-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+  border: 1px solid var(--primary);
+}
+.btn-primary:hover {
+  background: #6c61f0;
+  transform: translateY(-2px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--glass-border);
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-2px);
+}
+</style>
+</head>
+<body>
+  <div class="error-container">
+    <div class="error-code">404</div>
+    <div class="error-title">Target Vector Not Found</div>
+    <p class="error-desc">The requested resource or page does not exist or has been relocated to another endpoint.</p>
+    <div class="btn-group">
+      <a href="/dashboard.html" class="btn btn-primary">Go To Dashboard</a>
+      <a href="/tools.html" class="btn btn-ghost">View Tools</a>
+    </div>
+  </div>
+</body>
+</html>
