@@ -203,6 +203,12 @@ function getBaseDomain(hostname) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Security: reject messages from any context other than our own extension
+  // (content scripts, popup, options page all share the same extension ID)
+  if (sender.id && sender.id !== chrome.runtime.id) {
+    console.warn("[JobXApply] Rejected message from foreign extension:", sender.id);
+    return false;
+  }
   if (message?.type === "jobxapply:getPortalRule") {
     const rule = getPortalRule(message.url || sender?.url || "");
     sendResponse({ rule });

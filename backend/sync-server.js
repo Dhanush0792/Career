@@ -116,8 +116,13 @@ function loadState() {
   }
 }
 
+// Write queue for state file — serialises concurrent writes to prevent truncation
+let _stateWriteQueue = Promise.resolve();
 function saveState(nextState) {
-  fs.writeFileSync(STATE_FILE, JSON.stringify(nextState, null, 2), "utf8");
+  const json = JSON.stringify(nextState, null, 2);
+  _stateWriteQueue = _stateWriteQueue
+    .then(() => fs.promises.writeFile(STATE_FILE, json, "utf8"))
+    .catch(e => console.error("[State] Failed to write state file:", e));
 }
 
 function normalizeProfile(profile = {}) {
@@ -285,6 +290,7 @@ const ipRateLimits = new Map();
 const userRateLimits = new Map();
 const anonAtsScans = new Map(); // clientIp -> lastScanTimestamp
 const loginFailures = new Map(); // email -> { count, lockedUntil }
+const sseTickets = new Map();   // ticket -> { userId, expiresAt } — one-time 30s SSE auth tickets
 
 // Periodic garbage collection for rate limiter maps to prevent memory leaks
 setInterval(() => {
@@ -310,6 +316,10 @@ setInterval(() => {
 
   for (const [email, entry] of loginFailures.entries()) {
     if (entry.lockedUntil && now > entry.lockedUntil) loginFailures.delete(email);
+  }
+
+  for (const [ticket, entry] of sseTickets.entries()) {
+    if (now > entry.expiresAt) sseTickets.delete(ticket);
   }
 }, 10 * 60 * 1000); // Sweep every 10 minutes
 
@@ -947,20 +957,39 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // SSE Stream Events
+  // SSE Stream Events — uses short-lived one-time tickets (not JWT in URL)
+  // Step 1: Client POSTs to /api/events/ticket to get a 30-second use-once ticket
+  if (req.method === "POST" && urlObj.pathname === "/api/events/ticket") {
+    if (!activeUser) {
+      sendJson(res, 401, { ok: false, error: "Authentication required" });
+      return;
+    }
+    const ticket = require("crypto").randomBytes(32).toString("hex");
+    sseTickets.set(ticket, { userId: activeUser.id, expiresAt: Date.now() + 30000 });
+    // Clean up ticket after 35s regardless
+    setTimeout(() => sseTickets.delete(ticket), 35000);
+    sendJson(res, 200, { ok: true, ticket });
+    return;
+  }
+
+  // Step 2: Client opens EventSource with /api/events?ticket=<one-time-ticket>
   if (req.method === "GET" && urlObj.pathname === "/api/events") {
-    const token = urlObj.searchParams.get("token");
+    const ticket = urlObj.searchParams.get("ticket");
     let sseUser = null;
-    if (token) {
-      // Decode JWT
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        sseUser = await db.getUserById(decoded.userId);
-      } catch (_) {
-        // Fallback to passcode hash
-        sseUser = await db.getUserByPasscodeHash(token);
+
+    if (ticket) {
+      const entry = sseTickets.get(ticket);
+      if (entry && Date.now() < entry.expiresAt) {
+        sseTickets.delete(ticket); // consume immediately — one-time use
+        sseUser = await db.getUserById(entry.userId);
       }
     }
+
+    // Backward-compat: also accept Authorization header (for server-side clients)
+    if (!sseUser && req.headers.authorization) {
+      sseUser = await getRequestUser(req);
+    }
+
     if (!sseUser) {
       sendJson(res, 401, { ok: false, error: "Unauthorized SSE subscription" });
       return;
@@ -979,7 +1008,7 @@ const server = http.createServer(async (req, res) => {
     const clientWrapper = { userId: sseUser.id, res };
     clients.add(clientWrapper);
 
-    // LOW-6: Send heartbeat every 25s to prevent proxy timeout
+    // Send heartbeat every 25s to prevent proxy timeout
     const heartbeatTimer = setInterval(() => {
       try {
         res.write(": keepalive\n\n");

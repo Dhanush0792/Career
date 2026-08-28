@@ -126,7 +126,21 @@ if (DATABASE_URL) {
   }
 }
 
-// ─── Local Filesystem Utilities ──────────────────────────────────────────
+// ─── Async Write Queue — prevents race conditions on concurrent file writes ──
+// Each file path gets its own Promise chain. Concurrent writes to the same
+// file are serialised; concurrent writes to different files run in parallel.
+const _writeQueues = new Map();
+
+function safeWriteFile(filePath, data) {
+  const json = JSON.stringify(data, null, 2);
+  const prev = _writeQueues.get(filePath) || Promise.resolve();
+  const next = prev.then(() => fs.promises.writeFile(filePath, json, "utf8")).catch(e => {
+    console.error(`[DB] Write failed for ${filePath}:`, e);
+  });
+  _writeQueues.set(filePath, next);
+  return next;
+}
+
 function loadRegistry() {
   try {
     if (fs.existsSync(USER_INDEX_FILE)) {
@@ -139,11 +153,7 @@ function loadRegistry() {
 }
 
 function saveRegistry(registry) {
-  try {
-    fs.writeFileSync(USER_INDEX_FILE, JSON.stringify(registry, null, 2), "utf8");
-  } catch (e) {
-    console.error("Error saving user registry:", e);
-  }
+  safeWriteFile(USER_INDEX_FILE, registry);
 }
 
 function loadReports() {
@@ -158,11 +168,7 @@ function loadReports() {
 }
 
 function saveReports(reports) {
-  try {
-    fs.writeFileSync(REPORTS_FILE, JSON.stringify(reports, null, 2), "utf8");
-  } catch (e) {
-    console.error("Error saving reports:", e);
-  }
+  safeWriteFile(REPORTS_FILE, reports);
 }
 
 function loadTelemetry() {
@@ -177,11 +183,7 @@ function loadTelemetry() {
 }
 
 function saveTelemetry(data) {
-  try {
-    fs.writeFileSync(TELEMETRY_FILE, JSON.stringify(data, null, 2), "utf8");
-  } catch (e) {
-    console.warn("Failed to save telemetry registry:", e);
-  }
+  safeWriteFile(TELEMETRY_FILE, data);
 }
 
 function getUserFilePath(userId) {
@@ -201,12 +203,7 @@ function loadUserData(userId) {
 }
 
 function saveUserData(userId, data) {
-  const file = getUserFilePath(userId);
-  try {
-    fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
-  } catch (e) {
-    console.error(`Error saving user data for ${userId}:`, e);
-  }
+  safeWriteFile(getUserFilePath(userId), data);
 }
 
 // ─── DB Interface Exports ──────────────────────────────────────────────────

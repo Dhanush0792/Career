@@ -1,18 +1,21 @@
-// ─── Auto-pair Extension ───────────────────────────────────────────────────
+// ─── Auto-pair Extension (Secure) ─────────────────────────────────────────
+// SECURITY: Never dispatch raw credentials on window — any page script can listen.
+// Instead, post only a signal to the extension via chrome.runtime.sendMessage.
+// The extension fetches its own token from chrome.storage.local directly.
 (function() {
   const token = localStorage.getItem('jxa_token') || "";
-  const passcode = localStorage.getItem('jxa_passcode') || "";
   const email = localStorage.getItem('jxa_user_email') || "";
-  if (token || passcode || email) {
-    const dispatch = () => {
-      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
-        detail: { token, passcode, email }
-      }));
-    };
-    setTimeout(dispatch, 100);
-    setTimeout(dispatch, 500);
-    setTimeout(dispatch, 1500); // multiple retries for delayed content scripts
-  }
+  if (!token) return; // Nothing to pair
+
+  // Signal-only dispatch: no credentials in the event payload
+  const signal = () => {
+    window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
+      detail: { paired: true, email }  // No token, no passcode
+    }));
+  };
+  setTimeout(signal, 100);
+  setTimeout(signal, 500);
+  setTimeout(signal, 1500);
 })();
 
 // ─── Local Storage Migration ───────────────────────────────────────────────
@@ -507,13 +510,9 @@ async function saveProfile(profileData) {
       };
       localStorage.setItem('jxa_local_state', JSON.stringify(decryptedServerState));
 
-      // Propagate updated credentials and passcode to extension instantly
-      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
-        detail: {
-          token: localStorage.getItem('jxa_token') || "",
-          passcode: passcode || "",
-          email: localStorage.getItem('jxa_user_email') || ""
-        }
+      // Notify extension: auth is available — extension reads from chrome.storage.local, not this event
+      window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
+        detail: { paired: true, email: localStorage.getItem('jxa_user_email') || "" }
       }));
       
       return { ok: true, state: decryptedServerState };
@@ -705,9 +704,25 @@ async function connectSSE() {
   try {
     const token = localStorage.getItem('jxa_token') || "";
     const passcode = localStorage.getItem('jxa_passcode') || "";
-    const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
-    const queryToken = token || passcodeHash;
-    const url = `${SYNC_API}/events` + (queryToken ? `?token=${encodeURIComponent(queryToken)}` : "");
+    if (!token && !passcode) return null;
+
+    // Step 1: Obtain a short-lived one-time SSE ticket via authenticated POST
+    // This ensures the JWT or passcode hash never appears in the URL / access logs
+    const ticketRes = await fetch(`${SYNC_API}/events/ticket`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": token
+          ? `Bearer ${token}`
+          : `Passcode ${await generatePasscodeHash(passcode)}`
+      }
+    });
+    if (!ticketRes.ok) return null;
+    const { ticket } = await ticketRes.json();
+    if (!ticket) return null;
+
+    // Step 2: Open SSE connection with the one-time ticket (safe in URL — 30s expiry, single-use)
+    const url = `${SYNC_API}/events?ticket=${encodeURIComponent(ticket)}`;
     const source = new EventSource(url);
     source.addEventListener('profile', async (ev) => {
       try {

@@ -4,7 +4,16 @@ const db = require("./db");
 const crypto = require("crypto");
 
 require("dotenv").config();
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString("hex");
+const _jwtSecretFromEnv = process.env.JWT_SECRET;
+if (!_jwtSecretFromEnv) {
+  console.warn(
+    "[AUTH] WARNING: JWT_SECRET environment variable is not set. " +
+    "A random secret has been generated for this session. " +
+    "All existing user sessions will be INVALIDATED on every server restart. " +
+    "Set JWT_SECRET in your .env file or environment for persistent sessions."
+  );
+}
+const JWT_SECRET = _jwtSecretFromEnv || require("crypto").randomBytes(64).toString("hex");
 
 // ── Validators ─────────────────────────────────────────────────────────────
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
