@@ -7,33 +7,42 @@
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        width: 300px;
-        font-family: Inter, system-ui, sans-serif;
+        width: 320px;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
         background: #0b1020;
         color: #f4f7ff;
       }
       .header {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 14px 16px 10px;
+        justify-content: space-between;
+        padding: 12px 16px;
         border-bottom: 1px solid rgba(255,255,255,0.08);
       }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
       .logo-img {
-        width: 28px; height: 28px;
+        width: 26px; height: 26px;
         border-radius: 6px;
         object-fit: contain;
         flex-shrink: 0;
       }
       .header-title { font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
       .header-sub { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 1px; }
-      .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+      .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+      /* Cards & Containers */
+      .card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
 
       .portal-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 12px;
-        padding: 10px 14px;
         display: flex; align-items: center; gap: 10px;
       }
       .portal-dot { width: 8px; height: 8px; border-radius: 50%; background: #2fddc4; flex-shrink: 0; }
@@ -41,142 +50,172 @@
       .portal-name { font-size: 13px; font-weight: 600; }
       .portal-tier { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 2px; }
 
-      .profile-row {
-        display: flex; align-items: center; gap: 8px;
+      /* Profile connected card */
+      .profile-card {
+        display: flex; align-items: center; gap: 10px;
         background: rgba(91,79,232,0.08);
-        border: 1px solid rgba(91,79,232,0.2);
-        border-radius: 10px; padding: 10px 12px;
+        border: 1px solid rgba(91,79,232,0.25);
       }
       .profile-avatar {
-        width: 30px; height: 30px; border-radius: 50%;
+        width: 34px; height: 34px; border-radius: 50%;
         background: linear-gradient(135deg, #5b4fe8, #2fddc4);
         display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 700; flex-shrink: 0; color: white;
+        font-size: 13px; font-weight: 700; flex-shrink: 0; color: white;
       }
       .profile-info { flex: 1; min-width: 0; }
-      .profile-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .profile-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f4f7ff; }
       .profile-email { font-size: 10px; color: rgba(244,247,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-      .setup-banner {
-        background: rgba(255,152,0,0.08);
-        border: 1px solid rgba(255,152,0,0.3);
-        border-radius: 10px; padding: 10px 12px;
-        font-size: 11px; line-height: 1.5; color: #ff9800; display: none;
+      /* Form inputs */
+      .input-group { display: flex; flex-direction: column; gap: 5px; }
+      .input-label { font-size: 11px; font-weight: 600; color: rgba(244,247,255,0.7); text-transform: uppercase; letter-spacing: 0.04em; }
+      .input-field {
+        width: 100%;
+        background: rgba(7,10,24,0.7);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 12px;
+        color: #fff;
+        outline: none;
+        transition: border-color 0.2s;
       }
-      .setup-banner strong { display: block; margin-bottom: 3px; font-size: 12px; }
+      .input-field:focus { border-color: #5b4fe8; }
+      .input-field::placeholder { color: rgba(244,247,255,0.3); }
 
+      /* Buttons */
       .btn-primary {
         width: 100%; padding: 11px;
         background: linear-gradient(135deg, #5b4fe8, #796df0);
         border: none; border-radius: 10px; color: white;
         font-size: 13px; font-weight: 700; cursor: pointer;
-        letter-spacing: 0.03em; transition: opacity 0.15s;
+        letter-spacing: 0.02em; transition: opacity 0.15s;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
       }
-      .btn-primary:hover { opacity: 0.85; }
+      .btn-primary:hover { opacity: 0.9; }
       .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-      .btn-secondary {
-        flex: 1; padding: 9px;
-        background: transparent;
+      .btn-google {
+        width: 100%; padding: 10px;
+        background: rgba(255,255,255,0.06);
         border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 10px; color: rgba(244,247,255,0.8);
+        border-radius: 10px; color: #f4f7ff;
         font-size: 12px; font-weight: 600; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .btn-google:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.3);
+      }
+
+      .btn-secondary {
+        flex: 1; padding: 8px;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px; color: rgba(244,247,255,0.8);
+        font-size: 11px; font-weight: 600; cursor: pointer;
         transition: border-color 0.15s, color 0.15s;
+        text-align: center;
       }
       .btn-secondary:hover { border-color: rgba(91,79,232,0.6); color: #f4f7ff; }
 
+      .btn-danger-link {
+        background: none; border: none; color: rgba(235,87,87,0.8);
+        font-size: 11px; cursor: pointer; text-decoration: underline;
+        padding: 4px 0; text-align: center; display: block; margin: 0 auto;
+      }
+      .btn-danger-link:hover { color: #ff7878; }
+
       .btn-row { display: flex; gap: 8px; }
-      .status { font-size: 11px; color: rgba(244,247,255,0.55); text-align: center; min-height: 16px; line-height: 1.4; }
+      .status { font-size: 11px; color: rgba(244,247,255,0.55); text-align: center; min-height: 16px; line-height: 1.4; word-break: break-word; }
       .status.success { color: #2fddc4; }
       .status.error { color: #e8547b; }
       .status.warn { color: #ff9800; }
 
-      /* Toggle Switch */
-      .switch {
-        position: relative;
-        display: inline-block;
-        width: 38px;
-        height: 20px;
+      .divider {
+        display: flex; align-items: center; text-align: center;
+        color: rgba(244,247,255,0.3); font-size: 10px; text-transform: uppercase;
+        margin: 2px 0;
       }
-      .switch input { 
-        opacity: 0;
-        width: 0;
-        height: 0;
+      .divider::before, .divider::after {
+        content: ''; flex: 1; border-bottom: 1px solid rgba(255,255,255,0.08);
       }
-      .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-color: rgba(255,255,255,0.15);
-        transition: .2s;
-        border-radius: 20px;
-      }
-      .slider:before {
-        position: absolute;
-        content: "";
-        height: 14px;
-        width: 14px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: .2s;
-        border-radius: 50%;
-      }
-      input:checked + .slider {
-        background-color: #5b4fe8;
-      }
-      input:checked + .slider:before {
-        transform: translateX(18px);
-      }
+      .divider:not(:empty)::before { margin-right: 8px; }
+      .divider:not(:empty)::after { margin-left: 8px; }
     </style>
   </head>
   <body>
     <div class="header">
-      <img src="icon.png" class="logo-img" alt="Logo">
-      <div>
-        <div class="header-title">JobXApply</div>
-        <div class="header-sub">Autofill Engine</div>
+      <div class="header-left">
+        <img src="icon.png" class="logo-img" alt="Logo">
+        <div>
+          <div class="header-title">JobXApply</div>
+          <div class="header-sub">Autofill Engine</div>
+        </div>
       </div>
     </div>
 
     <div class="body">
-      <div class="portal-card">
-        <div class="portal-dot" id="portalDot"></div>
-        <div>
-          <div class="portal-name" id="portalName">Detecting...</div>
-          <div class="portal-tier" id="portalTier"></div>
+      <!-- VIEW 1: AUTHENTICATION / LOGIN VIEW -->
+      <div id="loginView" style="display:none; flex-direction:column; gap:12px;">
+        <div style="text-align:center; padding: 4px 0;">
+          <div style="font-size:13px; font-weight:700; color:#f4f7ff;">Sign in to JobXApply</div>
+          <div style="font-size:11px; color:rgba(244,247,255,0.5); margin-top:2px;">Sync your decrypted profile for 1-click autofill</div>
         </div>
-      </div>
 
-      <div class="toggle-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); margin-bottom: 2px;">
-        <span style="font-size:12px; font-weight:600; color:rgba(244,247,255,0.85)">Autofill floating button</span>
-        <label class="switch">
-          <input type="checkbox" id="extensionToggle" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
+        <button class="btn-google" id="loginGoogleBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          Continue with Google
+        </button>
 
-      <div class="profile-row">
-        <div class="profile-avatar" id="profileAvatar">?</div>
-        <div class="profile-info">
-          <div class="profile-name" id="profileName">No profile loaded</div>
-          <div class="profile-email" id="profileEmail">Set up your profile first</div>
+        <div class="divider">OR USE SYNC KEY</div>
+
+        <div class="card" style="display:flex; flex-direction:column; gap:10px; background:rgba(255,255,255,0.03);">
+          <div class="input-group">
+            <label class="input-label" for="loginPasscodeInput">Sync Key (Passcode)</label>
+            <input type="password" id="loginPasscodeInput" class="input-field" placeholder="Enter your Vault Sync Key">
+          </div>
+          <button class="btn-primary" id="loginPasscodeBtn">Login & Sync Profile</button>
         </div>
+
+        <div class="status" id="loginStatus">Enter your Sync Key or sign in via Google</div>
       </div>
 
-      <div class="setup-banner" id="setupBanner">
-        <strong>⚠ Profile not set up</strong>
-        Click <b>Edit Profile</b>, enter your Sync Passcode, then click <b>Fetch from Cloud</b> to load your details.
+      <!-- VIEW 2: AUTHENTICATED / AUTOFILL VIEW -->
+      <div id="autofillView" style="display:none; flex-direction:column; gap:12px;">
+        <div class="card portal-card">
+          <div class="portal-dot" id="portalDot"></div>
+          <div>
+            <div class="portal-name" id="portalName">Detecting...</div>
+            <div class="portal-tier" id="portalTier"></div>
+          </div>
+        </div>
+
+        <div class="card profile-card">
+          <div class="profile-avatar" id="profileAvatar">?</div>
+          <div class="profile-info">
+            <div class="profile-name" id="profileName">Loading profile...</div>
+            <div class="profile-email" id="profileEmail">Syncing...</div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="apply">⚡ Apply Autofill</button>
+
+        <div class="btn-row">
+          <button class="btn-secondary" id="editProfile">Edit Profile</button>
+          <button class="btn-secondary" id="syncCloud">Sync Now</button>
+        </div>
+
+        <button class="btn-danger-link" id="disconnectBtn">Disconnect / Log Out</button>
+
+        <div class="status" id="status">Ready</div>
       </div>
-
-      <button class="btn-primary" id="apply" disabled>⚡ Apply Autofill</button>
-
-      <div class="btn-row">
-        <button class="btn-secondary" id="editProfile">✏ Edit Profile</button>
-        <button class="btn-secondary" id="syncCloud">🔄 Sync</button>
-      </div>
-
-      <div class="status" id="status">Ready</div>
     </div>
 
     <script type="module" src="popup.js"></script>

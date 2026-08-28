@@ -225,10 +225,11 @@ async function handleGoogleLogin() {
   
   addLog('Redirecting to Google OAuth gateway...', 'info');
   try {
+    const callbackUrl = new URL('auth-callback.html', window.location.href).href;
     const { error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/auth-callback.html'
+        redirectTo: callbackUrl
       }
     });
     if (error) throw error;

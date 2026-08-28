@@ -448,81 +448,12 @@ function buildAutofillPayload(profile, requestedFields) {
   return { createdAt: new Date().toISOString(), source: "jobxapply-profile", fields: Array.from(activeFields), payload };
 }
 
-// Floating autofill button shown near focused inputs
-let autofillButton = null;
-let activeInput = null;
-function createAutofillButton() {
-  if (autofillButton) return autofillButton;
-  autofillButton = document.createElement("button");
-  autofillButton.textContent = "Autofill";
-  autofillButton.style.position = "absolute";
-  autofillButton.style.zIndex = 2147483647;
-  autofillButton.style.padding = "6px 10px";
-  autofillButton.style.borderRadius = "8px";
-  autofillButton.style.background = "#5b4fe8";
-  autofillButton.style.color = "#fff";
-  autofillButton.style.border = "none";
-  autofillButton.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
-  autofillButton.style.cursor = "pointer";
-  autofillButton.style.fontSize = "12px";
-  autofillButton.addEventListener("click", async (e) => {
-    e.stopPropagation();
-    const active = document.activeElement;
-    if (!active) return;
-    const key = guessKeyForElement(active);
-    const response = await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => resolve(res));
-    });
-    const profile = response?.profile || {};
-    if (key) {
-      const val = profile[key] || profile[key.toLowerCase()] || "";
-      if (val) setValue(active, val);
-    }
-  });
-  document.body.appendChild(autofillButton);
-  return autofillButton;
-}
-
-function positionButtonNear(el) {
-  if (!el) return;
-  activeInput = el;
-  const btn = createAutofillButton();
-  const rect = el.getBoundingClientRect();
-  btn.style.top = `${window.scrollY + rect.top - 8}px`;
-  btn.style.left = `${window.scrollX + rect.right + 8}px`;
-  btn.style.display = "block";
-}
-
-function hideButton() {
-  if (autofillButton) autofillButton.style.display = "none";
-}
-
-function guessKeyForElement(el) {
-  // score each known alias and pick best
-  const scores = {};
-  for (const k of Object.keys(FIELD_ALIASES)) {
-    scores[k] = scoreElementForKey(el, k);
-  }
-  const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-  if (entries.length && entries[0][1] > 0) return entries[0][0];
-  // fallback: use name/id
-  const name = normalize(el.getAttribute("name") || el.getAttribute("id") || "").replace(/[^a-z0-9]/g, "");
-  return name || null;
-}
-
 function cleanupOrphanedScript() {
   try {
-    document.removeEventListener("focusin", handleFocusIn);
-    document.removeEventListener("click", handleDocumentClick);
     document.removeEventListener("submit", handleSubmit, true);
     window.removeEventListener("jobxapply:shareAuth", handleShareAuth);
   } catch (e) {}
 
-  if (autofillButton) {
-    try { autofillButton.remove(); } catch(err) {}
-    autofillButton = null;
-  }
-  
   document.querySelectorAll(".jxa-knockout-tip, .jxa-mapper-hover, #jxa-mapper-banner, .jxa-mapper-mapped").forEach(el => {
     try { el.remove(); } catch(err) {}
   });
@@ -539,46 +470,6 @@ function checkContext() {
   cleanupOrphanedScript();
   return false;
 }
-
-function handleFocusIn(e) {
-  if (!checkContext()) return;
-  if (!extensionEnabled || !isJobPage()) {
-    hideButton();
-    return;
-  }
-  const target = e.target;
-  if (!target) {
-    hideButton();
-    return;
-  }
-  
-  const tagName = target.tagName ? target.tagName.toLowerCase() : "";
-  const type = target.getAttribute("type") ? target.getAttribute("type").toLowerCase() : "";
-  
-  let isAutofillable = false;
-  if (tagName === "textarea" || tagName === "select" || target.contentEditable === "true" || target.getAttribute("contenteditable") === "true") {
-    isAutofillable = true;
-  } else if (tagName === "input") {
-    const supportedTypes = ["text", "email", "tel", "url", "search", "number", "password", "date", ""];
-    if (supportedTypes.includes(type) || !target.hasAttribute("type")) {
-      isAutofillable = true;
-    }
-  }
-  
-  if (!isAutofillable) {
-    hideButton();
-    return;
-  }
-  positionButtonNear(target);
-}
-
-function handleDocumentClick(e) {
-  if (!checkContext()) return;
-  if (!(e.target && (e.target === autofillButton || e.target === activeInput))) hideButton();
-}
-
-document.addEventListener("focusin", handleFocusIn);
-document.addEventListener("click", handleDocumentClick);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "jobxapply:insertText") {

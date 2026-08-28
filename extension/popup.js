@@ -1,8 +1,15 @@
 import { buildAutofillPayload, getPortalRule, PORTAL_MAPS } from "./shared.js";
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Status Helpers ──────────────────────────────────────────────────────────
 function setStatus(msg, cls = "") {
   const el = document.getElementById("status");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = "status " + cls;
+}
+
+function setLoginStatus(msg, cls = "") {
+  const el = document.getElementById("loginStatus");
   if (!el) return;
   el.textContent = msg;
   el.className = "status " + cls;
@@ -29,44 +36,119 @@ async function loadPortalInfo() {
   return { tab, rule };
 }
 
-// ── Profile Loading ─────────────────────────────────────────────────────────
-async function loadAndDisplayProfile() {
-  // First try local storage for fast load
+// ── Auth & Profile State ────────────────────────────────────────────────────
+async function checkAuthState() {
   const local = await new Promise((r) =>
-    chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], r)
+    chrome.storage.local.get(
+      ["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyPasscode", "jobxapplyToken", "jobxapplyEmail"],
+      r
+    )
   );
 
   let profile = local.jobxapplyProfile || {};
-  // If profiles map exists, pick active one
   if (local.jobxapplyProfiles && local.jobxapplyActiveProfileId) {
     profile = local.jobxapplyProfiles[local.jobxapplyActiveProfileId] || profile;
   }
 
-  const hasData = profile && (profile.fullName || profile.email || profile.phone);
+  const hasCredentials = !!(local.jobxapplyPasscode || local.jobxapplyToken);
+  const hasData = profile && !!(profile.fullName || profile.email || profile.phone);
+
+  const loginView = document.getElementById("loginView");
+  const autofillView = document.getElementById("autofillView");
+
+  if (hasCredentials || hasData) {
+    if (loginView) loginView.style.display = "none";
+    if (autofillView) autofillView.style.display = "flex";
+    await loadAndDisplayProfile(profile, local.jobxapplyEmail);
+  } else {
+    if (autofillView) autofillView.style.display = "none";
+    if (loginView) loginView.style.display = "flex";
+  }
+}
+
+async function loadAndDisplayProfile(cachedProfile = null, cachedEmail = "") {
+  let profile = cachedProfile;
+  if (!profile) {
+    const local = await new Promise((r) =>
+      chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyEmail"], r)
+    );
+    profile = local.jobxapplyProfile || {};
+    if (local.jobxapplyProfiles && local.jobxapplyActiveProfileId) {
+      profile = local.jobxapplyProfiles[local.jobxapplyActiveProfileId] || profile;
+    }
+    cachedEmail = local.jobxapplyEmail || "";
+  }
 
   const nameEl   = document.getElementById("profileName");
   const emailEl  = document.getElementById("profileEmail");
   const avatarEl = document.getElementById("profileAvatar");
   const applyBtn = document.getElementById("apply");
-  const banner   = document.getElementById("setupBanner");
 
-  if (hasData) {
-    if (nameEl)  nameEl.textContent  = profile.fullName || profile.firstName + " " + (profile.lastName || "") || "Profile Loaded";
-    if (emailEl) emailEl.textContent = profile.email || profile.phone || "Ready to autofill";
-    if (avatarEl) avatarEl.textContent = (profile.fullName || profile.firstName || "?")[0].toUpperCase();
-    if (applyBtn) applyBtn.disabled = false;
-    if (banner)  banner.style.display = "none";
-    setStatus("Profile loaded — ready to autofill", "success");
-  } else {
-    if (nameEl)  nameEl.textContent  = "No profile loaded";
-    if (emailEl) emailEl.textContent = "Set up your profile first";
-    if (avatarEl) avatarEl.textContent = "?";
-    if (applyBtn) applyBtn.disabled = true;
-    if (banner)  banner.style.display = "block";
-    setStatus("Profile not set up — click Edit Profile", "warn");
-  }
+  const displayName = profile.fullName || (profile.firstName ? `${profile.firstName} ${profile.lastName || ""}`.trim() : "") || "Connected User";
+  const displayEmail = profile.email || cachedEmail || "Profile ready";
+
+  if (nameEl) nameEl.textContent = displayName;
+  if (emailEl) emailEl.textContent = displayEmail;
+  if (avatarEl) avatarEl.textContent = (displayName[0] || "U").toUpperCase();
+  if (applyBtn) applyBtn.disabled = false;
+  setStatus("Profile connected — ready to autofill", "success");
 
   return profile;
+}
+
+// ── Direct Login with Sync Key ───────────────────────────────────────────────
+async function handleDirectLogin() {
+  const input = document.getElementById("loginPasscodeInput");
+  const passcode = input?.value?.trim() || "";
+  if (!passcode) {
+    setLoginStatus("Please enter your Sync Key (Passcode)", "warn");
+    return;
+  }
+
+  setLoginStatus("Connecting and decrypting profile...", "warn");
+  await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
+
+  chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
+    if (chrome.runtime.lastError) {
+      setLoginStatus("Sync error: " + chrome.runtime.lastError.message, "error");
+      return;
+    }
+
+    if (res?.profile && (res.profile.fullName || res.profile.email)) {
+      setLoginStatus("✓ Authenticated & synced!", "success");
+      await checkAuthState();
+    } else if (res?.ok) {
+      setLoginStatus("✓ Authenticated! Loading profile...", "success");
+      await checkAuthState();
+    } else {
+      setLoginStatus(res?.error || "Could not decrypt profile with that key.", "error");
+    }
+  });
+}
+
+// ── Google Web Login ────────────────────────────────────────────────────────
+function handleGoogleWebLogin() {
+  const webAuthUrl = "https://jobxapply-backend.onrender.com/auth.html";
+  chrome.tabs.create({ url: webAuthUrl });
+  setLoginStatus("Sign in with Google on the opened tab to sync.", "warn");
+}
+
+// ── Logout / Disconnect ─────────────────────────────────────────────────────
+async function handleDisconnect() {
+  if (!confirm("Log out from the extension and remove cached profile data?")) return;
+
+  await new Promise((r) =>
+    chrome.storage.local.remove(
+      ["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyPasscode", "jobxapplyToken", "jobxapplyEmail"],
+      r
+    )
+  );
+
+  setLoginStatus("Disconnected from JobXApply.", "warn");
+  const input = document.getElementById("loginPasscodeInput");
+  if (input) input.value = "";
+
+  await checkAuthState();
 }
 
 function getBaseDomain(hostname) {
@@ -86,10 +168,17 @@ async function doAutofill() {
   const { tab, rule } = await loadPortalInfo();
   if (!tab?.id) { setStatus("No active tab found", "error"); return; }
 
-  const profile = await loadAndDisplayProfile();
+  const local = await new Promise((r) =>
+    chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], r)
+  );
+  let profile = local.jobxapplyProfile || {};
+  if (local.jobxapplyProfiles && local.jobxapplyActiveProfileId) {
+    profile = local.jobxapplyProfiles[local.jobxapplyActiveProfileId] || profile;
+  }
+
   const hasData = profile && (profile.fullName || profile.email || profile.phone);
   if (!hasData) {
-    setStatus("Profile is empty — fetch from cloud first!", "error");
+    setStatus("Profile is empty — sync your profile first!", "error");
     return;
   }
 
@@ -97,8 +186,8 @@ async function doAutofill() {
   const payload = buildAutofillPayload(profile, Object.keys(profile).filter(k => profile[k]));
 
   // Resolve portal map in popup synchronously
-  const local = await new Promise((r) => chrome.storage.local.get(["jobxapplyMaps", "jobxapplyCustomMaps"], r));
-  const cached = local.jobxapplyMaps || null;
+  const mapData = await new Promise((r) => chrome.storage.local.get(["jobxapplyMaps", "jobxapplyCustomMaps"], r));
+  const cached = mapData.jobxapplyMaps || null;
   let map = {};
   if (cached && cached.maps && cached.maps[rule.portal]) {
     map = { ...cached.maps[rule.portal] };
@@ -108,7 +197,7 @@ async function doAutofill() {
     map = { ...(PORTAL_MAPS[rule.portal] || {}) };
   }
   
-  const customMaps = local.jobxapplyCustomMaps || {};
+  const customMaps = mapData.jobxapplyCustomMaps || {};
   try {
     const hostname = new URL(tab.url).hostname;
     const domain = getBaseDomain(hostname);
@@ -132,17 +221,6 @@ async function doAutofill() {
 
 // ── Sync from Cloud ──────────────────────────────────────────────────────────
 async function syncFromCloud() {
-  const passcode = await new Promise((r) =>
-    chrome.storage.local.get(["jobxapplyPasscode"], (res) => r(res.jobxapplyPasscode || ""))
-  );
-
-  if (!passcode) {
-    // Ask for passcode inline
-    const entered = prompt("Enter your Sync Passcode to fetch profile from cloud:");
-    if (!entered) return;
-    await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: entered }, r));
-  }
-
   setStatus("Syncing from cloud…");
   chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
     if (chrome.runtime.lastError) {
@@ -151,9 +229,9 @@ async function syncFromCloud() {
     }
     if (res?.profile && (res.profile.fullName || res.profile.email)) {
       setStatus("✓ Profile synced from cloud!", "success");
-      await loadAndDisplayProfile();
+      await checkAuthState();
     } else {
-      setStatus("No profile on server — enter profile manually", "warn");
+      setStatus("No profile found on server.", "warn");
     }
   });
 }
@@ -162,25 +240,20 @@ async function syncFromCloud() {
 (async function init() {
   chrome.runtime.onMessage.addListener((message) => {
     if (message?.type === "jobxapply:profileUpdated") {
-      loadAndDisplayProfile();
+      checkAuthState();
     }
   });
 
   await loadPortalInfo();
-  await loadAndDisplayProfile();
+  await checkAuthState();
 
-  const toggle = document.getElementById("extensionToggle");
-  if (toggle) {
-    chrome.storage.local.get("extensionEnabled", (res) => {
-      toggle.checked = res.extensionEnabled !== false;
-    });
-    toggle.addEventListener("change", (e) => {
-      chrome.storage.local.set({ extensionEnabled: e.target.checked });
-    });
-  }
+  document.getElementById("loginPasscodeBtn")?.addEventListener("click", handleDirectLogin);
+  document.getElementById("loginPasscodeInput")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") handleDirectLogin();
+  });
+  document.getElementById("loginGoogleBtn")?.addEventListener("click", handleGoogleWebLogin);
 
   document.getElementById("apply")?.addEventListener("click", doAutofill);
-
   document.getElementById("editProfile")?.addEventListener("click", () => {
     chrome.runtime.openOptionsPage
       ? chrome.runtime.openOptionsPage()
@@ -188,4 +261,5 @@ async function syncFromCloud() {
   });
 
   document.getElementById("syncCloud")?.addEventListener("click", syncFromCloud);
+  document.getElementById("disconnectBtn")?.addEventListener("click", handleDisconnect);
 })();
