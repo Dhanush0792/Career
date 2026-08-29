@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../style-glass.css">
 <script src="../shared-shell.js?v=2"></script>
+<script src="admin-shell.js"></script>
 <style>
   :root {
     --base: #0B1020;
@@ -328,20 +329,7 @@
 <body>
 
 <!-- Admin Nav -->
-<nav style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.9);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;">
-  <div style="max-width:1400px;margin:0 auto;padding:0 20px;width:100%;display:flex;align-items:center;gap:24px;">
-    <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#F5A623;text-decoration:none;">[CH ADMIN]</a>
-    <div style="display:flex;gap:4px;flex:1;">
-      <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Overview</a>
-      <a href="users.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Users</a>
-      <a href="portal-maps.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F5A623;padding:8px 14px;text-decoration:none;text-transform:uppercase;background:rgba(245,166,35,0.1);border-radius:6px;">Portal Maps</a>
-      <a href="reports.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Reports</a>
-      <a href="analytics.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Analytics</a>
-    </div>
-    <a href="../dashboard.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);text-decoration:none;text-transform:uppercase;padding:8px 14px;">← Back to App</a>
-    <button onclick="logout()" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,247,255,0.45);border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:8px;background:transparent;cursor:pointer;transition:all 0.2s;">LOGOUT</button>
-  </div>
-</nav>
+<nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.9);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
 
 <div class="layout">
   <aside class="sidebar">
@@ -383,6 +371,7 @@
         return;
       }
       localStorage.setItem('jxa_role', 'admin');
+      if (typeof renderAdminNav === 'function') renderAdminNav('content.html');
       loadMaps();
     } catch (e) { window.location.href = '../dashboard.html'; }
   })();

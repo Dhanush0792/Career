@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply Admin // Issue Monitor</title>
+<title>JobXApply Admin // Access & Audit Logs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -99,19 +99,8 @@
     font-weight: 700;
     text-transform: uppercase;
   }
-  .badge-pending { background: rgba(245,166,35,0.15); color: var(--alert); border: 1px solid rgba(245,166,35,0.3); }
-  .badge-resolved { background: rgba(47,221,196,0.1); color: var(--success); border: 1px solid rgba(47,221,196,0.3); }
-
-  .btn-action {
-    background: rgba(47,221,196,0.1);
-    border: 1px solid var(--success);
-    color: var(--success);
-    font-family: var(--mono);
-    font-size: 10px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-  }
+  .badge-admin { background: rgba(245,166,35,0.15); color: var(--alert); border: 1px solid rgba(245,166,35,0.3); }
+  .badge-action { background: rgba(91,79,232,0.15); color: var(--primary); border: 1px solid rgba(91,79,232,0.3); }
 </style>
 </head>
 <body>
@@ -119,86 +108,65 @@
 <nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
 
 <div class="container">
-  <h1>ISSUE &amp; FIELD REPORT MONITOR</h1>
+  <h1>ACCESS GOVERNANCE &amp; AUDIT LOGS</h1>
 
-  <!-- Field Reports Queue -->
+  <!-- Access Audit Log -->
   <div class="card">
     <div class="card-header">
-      <span>Portal Field Reports</span>
-      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Extension autofill failure alerts</span>
+      <span>Access &amp; Role Change Audit Log</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">Immutable chronological log</span>
     </div>
     <table>
       <thead>
         <tr>
-          <th>Portal</th>
-          <th>Target Field</th>
-          <th>Selector Tried</th>
-          <th>Submitted</th>
-          <th>Status</th>
+          <th>Timestamp</th>
           <th>Action</th>
+          <th>Target User ID</th>
+          <th>Actioned By</th>
         </tr>
       </thead>
-      <tbody id="reports-tbody">
-        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;font-family:var(--mono);">Loading field reports...</td></tr>
+      <tbody id="audit-tbody">
+        <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:30px;font-family:var(--mono);">Loading audit logs...</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
 <script>
-  renderAdminNav('reports.html');
-  verifyAdminAccess(loadReports);
+  renderAdminNav('access.html');
+  verifyAdminAccess(loadAuditLogs);
 
-  async function loadReports() {
+  async function loadAuditLogs() {
     try {
-      const res = await adminFetch('/reports');
+      const res = await adminFetch('/admin/access-log');
       if (res.ok) {
         const data = await res.json();
-        renderTable(data.reports || []);
+        renderAuditTable(data.log || []);
       }
     } catch(e) {
-      showToast('Error loading reports', 'error');
+      showToast('Error loading audit log', 'error');
     }
   }
 
-  function renderTable(reports) {
-    const tbody = document.getElementById('reports-tbody');
+  function renderAuditTable(logs) {
+    const tbody = document.getElementById('audit-tbody');
     tbody.innerHTML = '';
 
-    if (reports.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px;font-family:var(--mono);">No field reports in queue.</td></tr>';
+    if (logs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:30px;font-family:var(--mono);">No access actions recorded yet.</td></tr>';
       return;
     }
 
-    reports.forEach(r => {
+    logs.forEach(l => {
       const tr = document.createElement('tr');
-      const isResolved = r.status === 'resolved';
       tr.innerHTML = `
-        <td style="font-weight:600;color:var(--white);">${escHtml(r.portal)}</td>
-        <td class="td-mono">${escHtml(r.field)}</td>
-        <td class="td-mono" style="color:var(--white);"><code>${escHtml(r.selectorTried || 'N/A')}</code></td>
-        <td class="td-mono">${timeSince(r.submittedAt || r.submitted_at)}</td>
-        <td><span class="badge ${isResolved ? 'badge-resolved' : 'badge-pending'}">${isResolved ? 'Resolved' : 'Pending'}</span></td>
-        <td>
-          ${!isResolved ? `<button class="btn-action" onclick="resolveReport('${escHtml(r.id)}')">Mark Resolved</button>` : '<span class="td-mono">Done</span>'}
-        </td>
+        <td class="td-mono">${new Date(l.timestamp).toLocaleString()}</td>
+        <td><span class="badge badge-action">${escHtml(l.action)}</span></td>
+        <td class="td-mono" style="color:var(--white);">${escHtml(l.targetUserId)}</td>
+        <td class="td-mono">${escHtml(l.adminId)}</td>
       `;
       tbody.appendChild(tr);
     });
-  }
-
-  async function resolveReport(id) {
-    try {
-      const res = await adminFetch(`/admin/issues/${id}/resolve`, { method: 'POST' });
-      if (res.ok) {
-        showToast('Report marked resolved', 'success');
-        loadReports();
-      } else {
-        showToast('Failed to resolve report', 'error');
-      }
-    } catch(e) {
-      showToast('Network error', 'error');
-    }
   }
 </script>
 </body>

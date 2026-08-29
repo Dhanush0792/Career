@@ -509,6 +509,66 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ ok: true });
     return true;
   }
+  if (message?.type === "jobxapply:getJobMetadata") {
+    try {
+      const meta = extractJobMetadata();
+      sendResponse({ ok: true, metadata: meta });
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
+
+function extractJobMetadata() {
+  let title = "";
+  let company = "";
+  const host = window.location.hostname.toLowerCase();
+  const url = window.location.href;
+
+  if (host.includes("greenhouse.io") || host.includes("boards.greenhouse.io")) {
+    title = document.querySelector(".app-title, .job-title, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".company-name, .logo-wrapper img")?.alt ||
+              document.querySelector(".company-name")?.textContent?.trim() || "";
+    if (!company) {
+      const match = window.location.pathname.match(/\/([^/]+)\/jobs/);
+      if (match) company = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+    }
+  } else if (host.includes("lever.co")) {
+    title = document.querySelector(".posting-headline h2, .posting-headline h1")?.textContent?.trim() || "";
+    company = document.querySelector(".main-header-logo img")?.alt || "";
+    if (!company) {
+      const match = window.location.pathname.match(/\/([^/]+)\/[a-f0-9-]+/);
+      if (match) company = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+    }
+  } else if (host.includes("linkedin.com")) {
+    title = document.querySelector(".job-details-jobs-unified-top-card__job-title, .top-card-layout__title, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".job-details-jobs-unified-top-card__company-name, .topcard__org-name-link, .top-card-layout__first-subline a")?.textContent?.trim() || "";
+  } else if (host.includes("myworkdayjobs.com") || host.includes("workday.com")) {
+    title = document.querySelector("h2[data-automation-id='jobPostingHeader'], h1")?.textContent?.trim() || "";
+    company = document.querySelector("img[data-automation-id='clientLogo']")?.alt || host.split(".")[0];
+  } else if (host.includes("indeed.com")) {
+    title = document.querySelector(".jobsearch-JobInfoHeader-title, h1")?.textContent?.trim() || "";
+    company = document.querySelector("[data-company-name='true'], .jobsearch-InlineCompanyRating-companyHeader")?.textContent?.trim() || "";
+  }
+
+  if (!title) {
+    title = document.querySelector("meta[property='og:title']")?.content ||
+            document.querySelector("h1")?.textContent?.trim() ||
+            document.title.split(/[-|–—:]/)[0].trim();
+  }
+  if (!company) {
+    company = document.querySelector("meta[property='og:site_name']")?.content || "";
+    if (!company) {
+      const parts = host.replace("www.", "").split(".");
+      if (parts.length >= 2) company = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    }
+  }
+
+  title = title.replace(/\s+/g, " ").trim();
+  company = company.replace(/\s+/g, " ").trim();
+
+  return { title: title || "Job Application", company: company || "Company", url, host };
+}
 const QUESTION_BANK = {
   knockout: [
     "authorized to work", "legally authorized", "visa sponsorship", "require sponsorship", "willing to relocate", "relocate to", "working on-site", "on-site", "willing to work", "shift/weekend", "background check"

@@ -1,0 +1,231 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply Admin // Tool Usage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style-glass.css">
+<script src="../shared-shell.js?v=2"></script>
+<script src="admin-shell.js"></script>
+<link rel="icon" type="image/png" href="../assets/app-logo.png?v=4">
+<style>
+  :root {
+    --base: #0B1020;
+    --primary: #5B4FE8;
+    --success: #2FDDC4;
+    --alert: #F5A623;
+    --danger: #F55A23;
+    --white: #ffffff;
+    --text: #f4f7ff;
+    --muted: rgba(244,247,255,0.65);
+    --dim: rgba(244,247,255,0.4);
+    --glass-bg: rgba(255,255,255,0.05);
+    --glass-border: rgba(255,255,255,0.12);
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  body {
+    padding-top: 70px;
+    background-color: var(--base);
+    color: var(--text);
+    font-family: var(--body);
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.1) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
+    min-height: 100vh;
+    margin: 0;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 10; }
+  
+  h1 {
+    font-family: var(--display);
+    font-size: 36px;
+    color: var(--alert);
+    text-transform: uppercase;
+    margin: 0 0 20px 0;
+    letter-spacing: 0.02em;
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    backdrop-filter: blur(16px);
+    padding: 20px;
+  }
+
+  .tool-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .tool-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .tool-name {
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--white);
+    text-transform: uppercase;
+  }
+  .tool-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(47,221,196,0.1);
+    color: var(--success);
+    border: 1px solid rgba(47,221,196,0.3);
+  }
+
+  .tool-stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-mini {
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    padding: 10px;
+  }
+  .stat-mini-lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .stat-mini-val {
+    font-family: var(--display);
+    font-size: 26px;
+    color: var(--white);
+  }
+
+  .progress-bar-bg {
+    background: rgba(255,255,255,0.06);
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--alert);
+    border-radius: 3px;
+  }
+
+  @media (max-width: 1024px) {
+    .tools-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
+
+<div class="container">
+  <h1>TOOL USAGE &amp; EVENT METRICS</h1>
+
+  <div class="tools-grid" id="tools-container">
+    <!-- Generated dynamically -->
+  </div>
+</div>
+
+<script>
+  renderAdminNav('tools.html');
+  verifyAdminAccess(loadToolMetrics);
+
+  const toolMeta = {
+    autofill:      { name: 'Autofill Engine', desc: 'Form field mapping and auto-fill runs across jobs portals.' },
+    resumeBuilder: { name: 'Resume Builder', desc: 'LaTeX compile and PDF export events for candidate resumes.' },
+    coverLetter:   { name: 'Cover Letter', desc: 'Custom letter drafting and LaTeX compilation events.' },
+    atsChecker:    { name: 'ATS Scanner', desc: 'Resume-to-JD keyword overlap and section completeness scans.' },
+    profileSync:   { name: 'Profile Cloud Sync', desc: 'Encrypted blob backup & multi-device profile sync runs.' },
+    trackerSync:   { name: 'Pipeline Tracker', desc: 'Application pipeline additions, edits, and status transitions.' }
+  };
+
+  async function loadToolMetrics() {
+    try {
+      const res = await adminFetch('/admin/tool-usage');
+      if (res.ok) {
+        const data = await res.json();
+        renderTools(data.tools || {});
+      }
+    } catch(e) {
+      showToast('Error loading tool metrics', 'error');
+    }
+  }
+
+  function renderTools(tools) {
+    const container = document.getElementById('tools-container');
+    container.innerHTML = '';
+
+    Object.keys(toolMeta).forEach(k => {
+      const meta = toolMeta[k];
+      const t = tools[k] || { today: 0, week: 0, total: 0, errors: 0 };
+      const errRate = t.total > 0 ? Math.round((t.errors / t.total) * 100) : 0;
+
+      const card = document.createElement('div');
+      card.className = 'card tool-card';
+      card.innerHTML = `
+        <div>
+          <div class="tool-header">
+            <span class="tool-name">${meta.name}</span>
+            <span class="tool-tag">OPERATIONAL</span>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin:0 0 16px 0;line-height:1.4;">${meta.desc}</p>
+          
+          <div class="tool-stat-row">
+            <div class="stat-mini">
+              <div class="stat-mini-lbl">Today</div>
+              <div class="stat-mini-val" style="color:var(--alert)">${t.today}</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-lbl">This Week</div>
+              <div class="stat-mini-val">${t.week}</div>
+            </div>
+          </div>
+
+          <div class="tool-stat-row">
+            <div class="stat-mini">
+              <div class="stat-mini-lbl">All-Time Total</div>
+              <div class="stat-mini-val">${t.total}</div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-mini-lbl">Error Rate</div>
+              <div class="stat-mini-val" style="color:${errRate > 5 ? 'var(--danger)' : 'var(--success)'}">${errRate}%</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);">
+            <span>Usage Reliability</span>
+            <span>${100 - errRate}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${100 - errRate}%; background: ${errRate > 5 ? 'var(--danger)' : 'var(--success)'};"></div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+</script>
+</body>
+</html>

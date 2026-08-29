@@ -7,7 +7,7 @@
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        width: 320px;
+        width: 330px;
         font-family: Inter, system-ui, -apple-system, sans-serif;
         background: #0b1020;
         color: #f4f7ff;
@@ -25,42 +25,70 @@
         gap: 10px;
       }
       .logo-img {
-        width: 26px; height: 26px;
+        width: 24px; height: 24px;
         border-radius: 6px;
         object-fit: contain;
         flex-shrink: 0;
       }
-      .header-title { font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
-      .header-sub { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 1px; }
+      .header-title { font-weight: 700; font-size: 13px; letter-spacing: 0.02em; }
+      .header-sub { font-size: 10px; color: rgba(244,247,255,0.45); }
+
+      /* Tab Navigation */
+      .nav-tabs {
+        display: flex;
+        background: rgba(255,255,255,0.03);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: 4px 12px 0;
+        gap: 4px;
+      }
+      .nav-tab {
+        flex: 1;
+        padding: 8px 4px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: rgba(244,247,255,0.55);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.15s ease;
+      }
+      .nav-tab:hover { color: #f4f7ff; }
+      .nav-tab.active {
+        color: #5b4fe8;
+        border-bottom-color: #5b4fe8;
+      }
+
       .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 
       /* Cards & Containers */
       .card {
         background: rgba(255,255,255,0.04);
         border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
-        padding: 12px 14px;
+        border-radius: 10px;
+        padding: 10px 12px;
       }
 
       .portal-card {
         display: flex; align-items: center; gap: 10px;
       }
       .portal-dot { width: 8px; height: 8px; border-radius: 50%; background: #2fddc4; flex-shrink: 0; }
-      .portal-dot.unknown { background: rgba(255,255,255,0.2); }
-      .portal-name { font-size: 13px; font-weight: 600; }
-      .portal-tier { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 2px; }
+      .portal-dot.unknown { background: rgba(255,255,255,0.25); }
+      .portal-name { font-size: 12px; font-weight: 600; }
+      .portal-tier { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 1px; }
 
       /* Profile connected card */
       .profile-card {
         display: flex; align-items: center; gap: 10px;
         background: rgba(91,79,232,0.08);
-        border: 1px solid rgba(91,79,232,0.25);
+        border: 1px solid rgba(91,79,232,0.22);
       }
       .profile-avatar {
-        width: 34px; height: 34px; border-radius: 50%;
+        width: 32px; height: 32px; border-radius: 50%;
         background: linear-gradient(135deg, #5b4fe8, #2fddc4);
         display: flex; align-items: center; justify-content: center;
-        font-size: 13px; font-weight: 700; flex-shrink: 0; color: white;
+        font-size: 12px; font-weight: 700; flex-shrink: 0; color: white;
       }
       .profile-info { flex: 1; min-width: 0; }
       .profile-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f4f7ff; }
@@ -68,13 +96,13 @@
 
       /* Form inputs */
       .input-group { display: flex; flex-direction: column; gap: 5px; }
-      .input-label { font-size: 11px; font-weight: 600; color: rgba(244,247,255,0.7); text-transform: uppercase; letter-spacing: 0.04em; }
+      .input-label { font-size: 10px; font-weight: 700; color: rgba(244,247,255,0.65); text-transform: uppercase; letter-spacing: 0.05em; }
       .input-field {
         width: 100%;
-        background: rgba(7,10,24,0.7);
+        background: rgba(7,10,24,0.75);
         border: 1px solid rgba(255,255,255,0.12);
         border-radius: 8px;
-        padding: 9px 12px;
+        padding: 8px 10px;
         font-size: 12px;
         color: #fff;
         outline: none;
@@ -85,21 +113,32 @@
 
       /* Buttons */
       .btn-primary {
-        width: 100%; padding: 11px;
-        background: linear-gradient(135deg, #5b4fe8, #796df0);
-        border: none; border-radius: 10px; color: white;
-        font-size: 13px; font-weight: 700; cursor: pointer;
-        letter-spacing: 0.02em; transition: opacity 0.15s;
+        width: 100%; padding: 10px;
+        background: #5b4fe8;
+        border: none; border-radius: 8px; color: white;
+        font-size: 12px; font-weight: 700; cursor: pointer;
+        letter-spacing: 0.02em; transition: background 0.15s, opacity 0.15s;
         display: flex; align-items: center; justify-content: center; gap: 6px;
       }
-      .btn-primary:hover { opacity: 0.9; }
+      .btn-primary:hover { background: #6c61ee; }
       .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+      .btn-success {
+        width: 100%; padding: 9px;
+        background: rgba(47,221,196,0.12);
+        border: 1px solid rgba(47,221,196,0.35);
+        border-radius: 8px; color: #2fddc4;
+        font-size: 11px; font-weight: 700; cursor: pointer;
+        transition: background 0.15s;
+        text-align: center;
+      }
+      .btn-success:hover { background: rgba(47,221,196,0.22); }
 
       .btn-google {
         width: 100%; padding: 10px;
         background: rgba(255,255,255,0.06);
         border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 10px; color: #f4f7ff;
+        border-radius: 8px; color: #f4f7ff;
         font-size: 12px; font-weight: 600; cursor: pointer;
         display: flex; align-items: center; justify-content: center; gap: 8px;
         transition: background 0.15s, border-color 0.15s;
@@ -110,7 +149,7 @@
       }
 
       .btn-secondary {
-        flex: 1; padding: 8px;
+        flex: 1; padding: 7px;
         background: transparent;
         border: 1px solid rgba(255,255,255,0.12);
         border-radius: 8px; color: rgba(244,247,255,0.8);
@@ -121,8 +160,8 @@
       .btn-secondary:hover { border-color: rgba(91,79,232,0.6); color: #f4f7ff; }
 
       .btn-danger-link {
-        background: none; border: none; color: rgba(235,87,87,0.8);
-        font-size: 11px; cursor: pointer; text-decoration: underline;
+        background: none; border: none; color: rgba(235,87,87,0.75);
+        font-size: 10px; cursor: pointer; text-decoration: underline;
         padding: 4px 0; text-align: center; display: block; margin: 0 auto;
       }
       .btn-danger-link:hover { color: #ff7878; }
@@ -143,6 +182,39 @@
       }
       .divider:not(:empty)::before { margin-right: 8px; }
       .divider:not(:empty)::after { margin-left: 8px; }
+
+      /* Snippets items list */
+      .snippet-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
+      .snippet-item {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .snippet-item:hover {
+        background: rgba(91,79,232,0.1);
+        border-color: rgba(91,79,232,0.3);
+      }
+      .snippet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .snippet-title { font-size: 11px; font-weight: 600; color: #f4f7ff; }
+      .snippet-action { font-size: 9px; color: rgba(244,247,255,0.4); text-transform: uppercase; }
+      .snippet-val {
+        font-size: 10px;
+        color: rgba(244,247,255,0.55);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-family: monospace;
+      }
     </style>
   </head>
   <body>
@@ -151,9 +223,16 @@
         <img src="icon.png" class="logo-img" alt="Logo">
         <div>
           <div class="header-title">JobXApply</div>
-          <div class="header-sub">Autofill Engine</div>
+          <div class="header-sub">Career Productivity Engine</div>
         </div>
       </div>
+    </div>
+
+    <!-- TAB NAVIGATION (Visible when logged in) -->
+    <div class="nav-tabs" id="navTabs" style="display:none;">
+      <button class="nav-tab active" data-tab="autofillTab">Autofill</button>
+      <button class="nav-tab" data-tab="snippetsTab">Snippets</button>
+      <button class="nav-tab" data-tab="trackerTab">Tracker</button>
     </div>
 
     <div class="body">
@@ -181,39 +260,83 @@
             <label class="input-label" for="loginPasscodeInput">Sync Key (Passcode)</label>
             <input type="password" id="loginPasscodeInput" class="input-field" placeholder="Enter your Vault Sync Key">
           </div>
-          <button class="btn-primary" id="loginPasscodeBtn">Login & Sync Profile</button>
+          <button class="btn-primary" id="loginPasscodeBtn">Login &amp; Sync Profile</button>
         </div>
 
         <div class="status" id="loginStatus">Enter your Sync Key or sign in via Google</div>
       </div>
 
-      <!-- VIEW 2: AUTHENTICATED / AUTOFILL VIEW -->
+      <!-- VIEW 2: AUTHENTICATED TABS VIEW -->
       <div id="autofillView" style="display:none; flex-direction:column; gap:12px;">
-        <div class="card portal-card">
-          <div class="portal-dot" id="portalDot"></div>
-          <div>
-            <div class="portal-name" id="portalName">Detecting...</div>
-            <div class="portal-tier" id="portalTier"></div>
+        
+        <!-- TAB CONTENT 1: AUTOFILL TAB -->
+        <div id="autofillTab" class="tab-pane" style="display:flex; flex-direction:column; gap:10px;">
+          <!-- Persona Selector -->
+          <div class="input-group" id="personaGroup" style="display:none;">
+            <label class="input-label" for="personaSelect">Active Role Persona</label>
+            <select id="personaSelect" class="input-field" style="background:#0e1328; cursor:pointer; font-weight:600;"></select>
+          </div>
+
+          <div class="card portal-card">
+            <div class="portal-dot" id="portalDot"></div>
+            <div>
+              <div class="portal-name" id="portalName">Detecting portal...</div>
+              <div class="portal-tier" id="portalTier"></div>
+            </div>
+          </div>
+
+          <div class="card profile-card">
+            <div class="profile-avatar" id="profileAvatar">U</div>
+            <div class="profile-info">
+              <div class="profile-name" id="profileName">Loading profile...</div>
+              <div class="profile-email" id="profileEmail">Syncing...</div>
+            </div>
+          </div>
+
+          <button class="btn-primary" id="apply">Apply Autofill</button>
+          
+          <button class="btn-success" id="quickLogBtn">Log Application to Tracker</button>
+
+          <div class="btn-row">
+            <button class="btn-secondary" id="editProfile">Edit Profile</button>
+            <button class="btn-secondary" id="syncCloud">Sync Now</button>
           </div>
         </div>
 
-        <div class="card profile-card">
-          <div class="profile-avatar" id="profileAvatar">?</div>
-          <div class="profile-info">
-            <div class="profile-name" id="profileName">Loading profile...</div>
-            <div class="profile-email" id="profileEmail">Syncing...</div>
+        <!-- TAB CONTENT 2: SNIPPETS TAB -->
+        <div id="snippetsTab" class="tab-pane" style="display:none; flex-direction:column; gap:10px;">
+          <div style="font-size:11px; color:rgba(244,247,255,0.6);">Click any item to copy and paste into focused field:</div>
+          <div class="snippet-list" id="snippetList">
+            <!-- Dynamically populated from active profile -->
           </div>
         </div>
 
-        <button class="btn-primary" id="apply">⚡ Apply Autofill</button>
-
-        <div class="btn-row">
-          <button class="btn-secondary" id="editProfile">Edit Profile</button>
-          <button class="btn-secondary" id="syncCloud">Sync Now</button>
+        <!-- TAB CONTENT 3: TRACKER QUICK-LOG TAB -->
+        <div id="trackerTab" class="tab-pane" style="display:none; flex-direction:column; gap:10px;">
+          <div class="card" style="display:flex; flex-direction:column; gap:8px;">
+            <div class="input-group">
+              <label class="input-label" for="trackerCompanyInput">Company Name</label>
+              <input type="text" id="trackerCompanyInput" class="input-field" placeholder="e.g. Stripe">
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="trackerRoleInput">Job Title</label>
+              <input type="text" id="trackerRoleInput" class="input-field" placeholder="e.g. Frontend Engineer">
+            </div>
+            <div class="input-group">
+              <label class="input-label" for="trackerStatusSelect">Application Status</label>
+              <select id="trackerStatusSelect" class="input-field" style="background:#0e1328; cursor:pointer;">
+                <option value="Applied">Applied</option>
+                <option value="Screening">Screening</option>
+                <option value="Interview">Interview</option>
+                <option value="Offer">Offer</option>
+              </select>
+            </div>
+            <button class="btn-primary" id="manualLogBtn">Save Application</button>
+          </div>
+          <button class="btn-secondary" id="openTrackerBtn" style="width:100%;">Open Application Dashboard</button>
         </div>
 
         <button class="btn-danger-link" id="disconnectBtn">Disconnect / Log Out</button>
-
         <div class="status" id="status">Ready</div>
       </div>
     </div>

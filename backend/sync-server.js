@@ -332,6 +332,59 @@ function logAdminActivity(msg, status = "SUCCESS") {
   }
 }
 
+// ── Platform Admin State (in-memory, soft metrics) ──────────────────────────
+const toolUsageCounters = {
+  autofill:      { today: 0, week: 0, total: 0, errors: 0 },
+  resumeBuilder: { today: 0, week: 0, total: 0, errors: 0 },
+  coverLetter:   { today: 0, week: 0, total: 0, errors: 0 },
+  atsChecker:    { today: 0, week: 0, total: 0, errors: 0 },
+  profileSync:   { today: 0, week: 0, total: 0, errors: 0 },
+  trackerSync:   { today: 0, week: 0, total: 0, errors: 0 }
+};
+
+const platformConfig = {
+  banner: { active: false, text: "", severity: "info", setAt: null },
+  featureFlags: {
+    autofill: true,
+    resumeBuilder: true,
+    coverLetter: true,
+    atsChecker: true,
+    tracker: true
+  }
+};
+
+const accessAuditLog = [];
+const apiErrorLog = [];
+
+function recordToolUsage(tool, isError) {
+  if (!toolUsageCounters[tool]) return;
+  toolUsageCounters[tool].total++;
+  toolUsageCounters[tool].today++;
+  toolUsageCounters[tool].week++;
+  if (isError) toolUsageCounters[tool].errors++;
+}
+
+function logAccessAudit(action, targetUserId, adminId) {
+  accessAuditLog.unshift({ action, targetUserId, adminId, timestamp: new Date().toISOString() });
+  if (accessAuditLog.length > 200) accessAuditLog.pop();
+}
+
+function logApiError(route, status, message) {
+  apiErrorLog.unshift({ route, status, message, timestamp: new Date().toISOString() });
+  if (apiErrorLog.length > 200) apiErrorLog.pop();
+}
+
+// Reset today counter at midnight; week on Sunday
+setInterval(() => {
+  const now = new Date();
+  if (now.getHours() === 0 && now.getMinutes() < 1) {
+    Object.values(toolUsageCounters).forEach(c => { c.today = 0; });
+    if (now.getDay() === 0) {
+      Object.values(toolUsageCounters).forEach(c => { c.week = 0; });
+    }
+  }
+}, 60000);
+
 // ── Constants ──────────────────────────────────────────────────────────────
 const MAX_BODY_BYTES = 256 * 1024; // 256 KB — reject bodies larger than this
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -553,6 +606,18 @@ const server = http.createServer(async (req, res) => {
   // Parse URL
   const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
+
+  // GET /api/admin/banner -- public, read by user dashboard to display announcements
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/banner") {
+    sendJson(res, 200, { ok: true, banner: platformConfig.banner });
+    return;
+  }
+
+  // GET /api/admin/features -- public, read by frontend to show/hide tools
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/features") {
+    sendJson(res, 200, { ok: true, features: platformConfig.featureFlags });
+    return;
+  }
 
   // POST Telemetry Hit
   if (req.method === "POST" && urlObj.pathname === "/api/telemetry/hit") {
@@ -904,6 +969,7 @@ const server = http.createServer(async (req, res) => {
 
       await db.saveProfile(activeUser.id, stateData);
       logAdminActivity(`Profile synced for ${activeUser.email}`);
+      recordToolUsage("profileSync");
 
       const responsePayload = {
         profiles: stateData.profiles,
@@ -949,6 +1015,7 @@ const server = http.createServer(async (req, res) => {
       }
       await db.saveApplications(activeUser.id, payload.applications);
       logAdminActivity(`Tracker synced (${payload.applications.length} apps) for ${activeUser.email}`);
+      recordToolUsage("trackerSync");
       broadcast(activeUser.id, payload.applications, "tracker");
       sendJson(res, 200, { ok: true, syncedCount: payload.applications.length });
     } catch (e) {
@@ -1107,6 +1174,139 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && urlObj.pathname === "/api/reports") {
     const reports = await db.getReports();
     sendJson(res, 200, { ok: true, reports });
+    return;
+  }
+
+  // GET /api/admin/tool-usage
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/tool-usage") {
+    sendJson(res, 200, { ok: true, tools: toolUsageCounters });
+    return;
+  }
+
+  // POST /api/admin/banner
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/banner") {
+    let body;
+    try { body = await readBody(req, 4096); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      platformConfig.banner.active = Boolean(incoming.active);
+      platformConfig.banner.text = typeof incoming.text === "string" ? incoming.text.slice(0, 500).trim() : "";
+      platformConfig.banner.severity = ["info","warning","critical"].includes(incoming.severity) ? incoming.severity : "info";
+      platformConfig.banner.setAt = new Date().toISOString();
+      logAdminActivity(`Banner ${platformConfig.banner.active ? "activated" : "cleared"}`);
+      sendJson(res, 200, { ok: true, banner: platformConfig.banner });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: "Invalid payload" });
+    }
+    return;
+  }
+
+  // POST /api/admin/features
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/features") {
+    let body;
+    try { body = await readBody(req, 4096); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      const feature = incoming.feature;
+      if (!feature || !Object.prototype.hasOwnProperty.call(platformConfig.featureFlags, feature)) {
+        return sendJson(res, 400, { ok: false, error: "Invalid feature name" });
+      }
+      platformConfig.featureFlags[feature] = Boolean(incoming.enabled);
+      logAdminActivity(`Feature '${feature}' set to ${platformConfig.featureFlags[feature]}`);
+      sendJson(res, 200, { ok: true, features: platformConfig.featureFlags });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: "Invalid payload" });
+    }
+    return;
+  }
+
+  // POST /api/admin/users/:id/suspend
+  if (req.method === "POST" && /^\/api\/admin\/users\/[^/]+\/suspend$/.test(urlObj.pathname)) {
+    const userId = urlObj.pathname.split("/")[4];
+    if (!userId) return sendJson(res, 400, { ok: false, error: "User ID required" });
+    const success = await db.updateUserStatus(userId, "suspended");
+    if (success) {
+      logAccessAudit("suspend", userId, activeUser.id);
+      logAdminActivity(`User ${userId.slice(0, 8)} suspended`);
+      sendJson(res, 200, { ok: true });
+    } else {
+      sendJson(res, 404, { ok: false, error: "User not found" });
+    }
+    return;
+  }
+
+  // POST /api/admin/users/:id/reinstate
+  if (req.method === "POST" && /^\/api\/admin\/users\/[^/]+\/reinstate$/.test(urlObj.pathname)) {
+    const userId = urlObj.pathname.split("/")[4];
+    if (!userId) return sendJson(res, 400, { ok: false, error: "User ID required" });
+    const success = await db.updateUserStatus(userId, "active");
+    if (success) {
+      logAccessAudit("reinstate", userId, activeUser.id);
+      logAdminActivity(`User ${userId.slice(0, 8)} reinstated`);
+      sendJson(res, 200, { ok: true });
+    } else {
+      sendJson(res, 404, { ok: false, error: "User not found" });
+    }
+    return;
+  }
+
+  // POST /api/admin/users/:id/role
+  if (req.method === "POST" && /^\/api\/admin\/users\/[^/]+\/role$/.test(urlObj.pathname)) {
+    const userId = urlObj.pathname.split("/")[4];
+    if (!userId) return sendJson(res, 400, { ok: false, error: "User ID required" });
+    let body;
+    try { body = await readBody(req, 4096); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    const incoming = JSON.parse(body || "{}");
+    const newRole = ["user","admin"].includes(incoming.role) ? incoming.role : null;
+    if (!newRole) return sendJson(res, 400, { ok: false, error: "Role must be user or admin" });
+    const success = await db.updateUserRole(userId, newRole);
+    if (success) {
+      logAccessAudit(`set_role_${newRole}`, userId, activeUser.id);
+      logAdminActivity(`User ${userId.slice(0, 8)} role set to ${newRole}`);
+      sendJson(res, 200, { ok: true });
+    } else {
+      sendJson(res, 404, { ok: false, error: "User not found" });
+    }
+    return;
+  }
+
+  // GET /api/admin/access-log
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/access-log") {
+    sendJson(res, 200, { ok: true, log: accessAuditLog });
+    return;
+  }
+
+  // GET /api/admin/issues -- field reports + API error log combined
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/issues") {
+    const reports = await db.getReports();
+    sendJson(res, 200, { ok: true, fieldReports: reports, apiErrors: apiErrorLog });
+    return;
+  }
+
+  // POST /api/admin/issues/:id/resolve
+  if (req.method === "POST" && /^\/api\/admin\/issues\/[^/]+\/resolve$/.test(urlObj.pathname)) {
+    const reportId = urlObj.pathname.split("/")[4];
+    if (!reportId) return sendJson(res, 400, { ok: false, error: "Report ID required" });
+    const success = await db.resolveReport(reportId);
+    sendJson(res, success ? 200 : 404, { ok: success });
+    return;
+  }
+
+  // GET /api/admin/analytics -- time-series and aggregate data for analytics page
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/analytics") {
+    const stats = await db.getStats();
+    sendJson(res, 200, {
+      ok: true,
+      stats,
+      toolSummary: toolUsageCounters,
+      accessLog: accessAuditLog.slice(0, 20)
+    });
     return;
   }
 
@@ -1270,6 +1470,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         logAdminActivity(`ATS analysis run (${role}) for ${activeUser ? activeUser.email : "anonymous"} - Score: ${finalScore}%`);
+        recordToolUsage("atsChecker");
         sendJson(res, 200, {
           ok: true,
           score: finalScore,
@@ -1523,6 +1724,7 @@ const server = http.createServer(async (req, res) => {
           .replace(/\{\{ADDITIONAL_BLOCK\}\}/g, addContent);
 
         logAdminActivity(`Resume PDF generated (template ${templateId}) for ${activeUser ? activeUser.email : "anonymous"}`);
+        recordToolUsage("resumeBuilder");
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end(content);
       } catch (err) {
@@ -1619,6 +1821,7 @@ const server = http.createServer(async (req, res) => {
         .replace(/\{\{ENCLOSURE_LINE\}\}/g, data.enclosureLine ? `Enclosures: ${escapeLatex(data.enclosureLine)}` : "");
 
       logAdminActivity(`Cover letter generated (template ${templateId}) for ${activeUser ? activeUser.email : "anonymous"}`);
+      recordToolUsage("coverLetter");
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true, latex: content }));
     } catch (err) {

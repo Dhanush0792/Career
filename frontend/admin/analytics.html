@@ -1,44 +1,41 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CareerHub Admin // Analytics</title>
-<meta name="description" content="Usage Analytics">
+<title>JobXApply Admin // Analytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../style-glass.css">
 <script src="../shared-shell.js?v=2"></script>
+<script src="admin-shell.js"></script>
+<link rel="icon" type="image/png" href="../assets/app-logo.png?v=4">
 <style>
   :root {
     --base: #0B1020;
     --primary: #5B4FE8;
     --success: #2FDDC4;
     --alert: #F5A623;
+    --danger: #F55A23;
     --white: #ffffff;
     --text: #f4f7ff;
     --muted: rgba(244,247,255,0.65);
     --dim: rgba(244,247,255,0.4);
     --glass-bg: rgba(255,255,255,0.05);
-    --glass-border: rgba(255,255,255,0.15);
+    --glass-border: rgba(255,255,255,0.12);
     --mono: 'JetBrains Mono', monospace;
     --display: 'Barlow Condensed', sans-serif;
     --body: 'Inter', sans-serif;
   }
-  body { 
-    padding-top: 70px; 
+  body {
+    padding-top: 70px;
     background-color: var(--base);
     color: var(--text);
     font-family: var(--body);
-    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.1) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
     min-height: 100vh;
     margin: 0;
-  }
-  body::after {
-    content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 160px 160px;
   }
   .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 10; }
   
@@ -47,322 +44,140 @@
     font-size: 36px;
     color: var(--alert);
     text-transform: uppercase;
-    margin: 0 0 24px 0;
+    margin: 0 0 20px 0;
     letter-spacing: 0.02em;
   }
-  
-  .warn-banner {
-    background: rgba(91,79,232,0.1);
-    border: 1px solid rgba(91,79,232,0.3);
-    color: var(--white);
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-family: var(--mono);
-    font-size: 13px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
+
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 24px;
   }
-  
   .card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 14px;
+    border-radius: 12px;
     backdrop-filter: blur(16px);
-    padding: 24px;
+    padding: 20px;
   }
-  
-  .stat-card {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .stat-label { font-family: var(--mono); font-size: 12px; color: var(--muted); text-transform: uppercase; }
-  .stat-value { font-family: var(--display); font-size: 42px; color: var(--white); line-height: 1; }
-  
+  .stat-label { font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase; }
+  .stat-value { font-family: var(--display); font-size: 38px; color: var(--white); line-height: 1.1; margin-top: 4px; }
+
   .charts-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     margin-bottom: 24px;
   }
-  
-  .chart-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 14px;
-    backdrop-filter: blur(16px);
-    padding: 24px;
-  }
-  
-  .chart-header {
+  .card-header {
     font-family: var(--display);
-    font-size: 20px;
+    font-size: 18px;
     color: var(--alert);
     text-transform: uppercase;
-    margin: 0 0 24px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding-bottom: 12px;
+    margin: 0 0 16px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--glass-border);
   }
 
-  .chart-container {
-    width: 100%;
-    height: 300px;
-    position: relative;
+  .tool-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.08);
+    font-family: var(--mono);
+    font-size: 12px;
   }
-  
-  .svg-chart {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-  
-  .bar { fill: rgba(91,79,232,0.8); transition: fill 0.2s; }
-  .bar:hover { fill: var(--primary); }
-  .bar-text { font-family: var(--mono); font-size: 10px; fill: var(--white); text-anchor: middle; }
-  .bar-label { font-family: var(--mono); font-size: 11px; fill: var(--muted); text-anchor: end; }
-  
-  .hz-bar { fill: rgba(47,221,196,0.8); transition: fill 0.2s; }
-  .hz-bar:hover { fill: var(--success); }
-  .hz-label { font-family: var(--mono); font-size: 12px; fill: var(--white); }
-  .hz-val { font-family: var(--mono); font-size: 12px; fill: var(--muted); text-anchor: end; }
-  
-  .line-path { fill: none; stroke: var(--alert); stroke-width: 3; }
-  .line-dot { fill: var(--base); stroke: var(--alert); stroke-width: 2; }
-  
+  .tool-row:last-child { border-bottom: none; }
+
   @media (max-width: 1024px) {
-    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
   }
 </style>
-
-  <link rel="icon" type="image/png" href="../assets/app-logo.png?v=4">
 </head>
 <body>
 
-<!-- Admin Nav -->
-<nav style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.9);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;">
-  <div style="max-width:1400px;margin:0 auto;padding:0 20px;width:100%;display:flex;align-items:center;gap:24px;">
-    <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#F5A623;text-decoration:none;">[CH ADMIN]</a>
-    <div style="display:flex;gap:4px;flex:1;">
-      <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Overview</a>
-      <a href="users.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Users</a>
-      <a href="portal-maps.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Portal Maps</a>
-      <a href="reports.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);padding:8px 14px;text-decoration:none;text-transform:uppercase;">Reports</a>
-      <a href="analytics.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#F5A623;padding:8px 14px;text-decoration:none;text-transform:uppercase;background:rgba(245,166,35,0.1);border-radius:6px;">Analytics</a>
-    </div>
-    <a href="../dashboard.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(244,247,255,0.65);text-decoration:none;text-transform:uppercase;padding:8px 14px;">← Back to App</a>
-    <button onclick="logout()" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,247,255,0.45);border:1px solid rgba(255,255,255,0.15);padding:6px 14px;border-radius:8px;background:transparent;cursor:pointer;transition:all 0.2s;">LOGOUT</button>
-  </div>
-</nav>
+<nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
 
 <div class="container">
-  <h1>USAGE ANALYTICS</h1>
-  
-  <div class="warn-banner">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-    Analytics shown here are simulated. Production builds will collect real anonymised usage data via a telemetry service.
-  </div>
-  
+  <h1>PLATFORM ANALYTICS &amp; AGGREGATES</h1>
+
   <div class="stats-grid">
-    <div class="card stat-card">
-      <span class="stat-label">Total Users</span>
-      <span class="stat-value" id="stat-total-users">--</span>
+    <div class="card">
+      <div class="stat-label">Registered Accounts</div>
+      <div class="stat-value" id="an-users">--</div>
     </div>
-    <div class="card stat-card">
-      <span class="stat-label">Free vs. Paid Tiers</span>
-      <span class="stat-value" id="stat-tier-ratio" style="font-size:24px;line-height:42px;">--</span>
+    <div class="card">
+      <div class="stat-label">Free vs Paid Ratio</div>
+      <div class="stat-value" id="an-ratio" style="font-size:24px;line-height:38px;">--</div>
     </div>
-    <div class="card stat-card">
-      <span class="stat-label">Total Page Views</span>
-      <span class="stat-value" id="stat-page-views">--</span>
+    <div class="card">
+      <div class="stat-label">Page Views</div>
+      <div class="stat-value" id="an-views" style="color:var(--alert)">--</div>
     </div>
-    <div class="card stat-card">
-      <span class="stat-label">API Requests Traffic</span>
-      <span class="stat-value" id="stat-api-requests">--</span>
+    <div class="card">
+      <div class="stat-label">API Requests</div>
+      <div class="stat-value" id="an-requests">--</div>
     </div>
   </div>
 
   <div class="charts-grid">
-    <div class="chart-card">
-      <h2 class="chart-header">Top 8 Portals (Autofills)</h2>
-      <div class="chart-container">
-        <!-- SVG Bar Chart -->
-        <svg class="svg-chart" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid meet">
-          <!-- Axes -->
-          <line x1="100" y1="280" x2="800" y2="280" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-          
-          <!-- Bars -->
-          <g transform="translate(140, 0)">
-            <rect class="bar" x="0" y="25" width="40" height="255" rx="4"/>
-            <text class="bar-text" x="20" y="15">340</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">LinkedIn</text>
-          </g>
-          
-          <g transform="translate(220, 0)">
-            <rect class="bar" x="0" y="70" width="40" height="210" rx="4"/>
-            <text class="bar-text" x="20" y="60">280</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Naukri</text>
-          </g>
-
-          <g transform="translate(300, 0)">
-            <rect class="bar" x="0" y="145" width="40" height="135" rx="4"/>
-            <text class="bar-text" x="20" y="135">180</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Greenhouse</text>
-          </g>
-          
-          <g transform="translate(380, 0)">
-            <rect class="bar" x="0" y="167.5" width="40" height="112.5" rx="4"/>
-            <text class="bar-text" x="20" y="157.5">150</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Workday</text>
-          </g>
-
-          <g transform="translate(460, 0)">
-            <rect class="bar" x="0" y="212.5" width="40" height="67.5" rx="4"/>
-            <text class="bar-text" x="20" y="202.5">90</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Indeed</text>
-          </g>
-
-          <g transform="translate(540, 0)">
-            <rect class="bar" x="0" y="225" width="40" height="55" rx="4"/>
-            <text class="bar-text" x="20" y="215">74</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">Lever</text>
-          </g>
-
-          <g transform="translate(620, 0)">
-            <rect class="bar" x="0" y="247.5" width="40" height="32.5" rx="4"/>
-            <text class="bar-text" x="20" y="237.5">43</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">AngelList</text>
-          </g>
-
-          <g transform="translate(700, 0)">
-            <rect class="bar" x="0" y="262.5" width="40" height="17.5" rx="4"/>
-            <text class="bar-text" x="20" y="252.5">23</text>
-            <text class="bar-label" x="-10" y="20" transform="rotate(-45, -10, 20)">SmartRecruiters</text>
-          </g>
-        </svg>
+    <div class="card">
+      <div class="card-header">Tool Activity Distribution</div>
+      <div id="tool-distribution">
+        <div class="tool-row"><span>Autofill Engine</span><span id="ad-af">0 runs</span></div>
+        <div class="tool-row"><span>Resume Builder</span><span id="ad-rb">0 runs</span></div>
+        <div class="tool-row"><span>Cover Letter</span><span id="ad-cl">0 runs</span></div>
+        <div class="tool-row"><span>ATS Scanner</span><span id="ad-ats">0 runs</span></div>
+        <div class="tool-row"><span>Profile Sync</span><span id="ad-ps">0 runs</span></div>
+        <div class="tool-row"><span>Pipeline Tracker</span><span id="ad-ts">0 runs</span></div>
       </div>
     </div>
-    
-    <div class="chart-card">
-      <h2 class="chart-header">Application Status</h2>
-      <div class="chart-container" style="height: 300px;">
-        <svg class="svg-chart" viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet">
-          <!-- Applied 45% -->
-          <text class="hz-label" x="10" y="40">Applied</text>
-          <rect class="hz-bar" x="10" y="50" width="135" height="20" rx="4"/>
-          <text class="hz-val" x="290" y="65">45%</text>
-          
-          <!-- Interview 28% -->
-          <text class="hz-label" x="10" y="110">Interview</text>
-          <rect class="hz-bar" x="10" y="120" width="84" height="20" rx="4" style="fill:rgba(91,79,232,0.8)"/>
-          <text class="hz-val" x="290" y="135">28%</text>
 
-          <!-- Offer 8% -->
-          <text class="hz-label" x="10" y="180">Offer</text>
-          <rect class="hz-bar" x="10" y="190" width="24" height="20" rx="4" style="fill:rgba(245,166,35,0.8)"/>
-          <text class="hz-val" x="290" y="205">8%</text>
-
-          <!-- Rejected 19% -->
-          <text class="hz-label" x="10" y="250">Rejected</text>
-          <rect class="hz-bar" x="10" y="260" width="57" height="20" rx="4" style="fill:rgba(255,255,255,0.2)"/>
-          <text class="hz-val" x="290" y="275">19%</text>
-        </svg>
-      </div>
+    <div class="card">
+      <div class="card-header">Pipeline Aggregates</div>
+      <div class="tool-row"><span>Synced Profile Blobs</span><span id="ad-profiles">--</span></div>
+      <div class="tool-row"><span>Tracked Applications</span><span id="ad-apps">--</span></div>
+      <div class="tool-row"><span>Field Failure Reports</span><span id="ad-reports">--</span></div>
+      <div class="tool-row"><span>Platform Status</span><span style="color:var(--success)">Healthy</span></div>
     </div>
   </div>
-
-  <div class="chart-card" style="margin-bottom: 40px;">
-    <h2 class="chart-header">Active Users (Last 7 Days)</h2>
-    <div class="chart-container" style="height: 250px;">
-      <svg class="svg-chart" viewBox="0 0 1000 250" preserveAspectRatio="xMidYMid meet">
-        <line x1="50" y1="200" x2="950" y2="200" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
-        
-        <path class="line-path" d="M 100 150 L 220 170 L 340 130 L 460 90 L 580 110 L 700 60 L 820 40"/>
-        
-        <circle class="line-dot" cx="100" cy="150" r="5"/>
-        <text class="bar-label" x="100" y="220" style="text-anchor:middle;">Mon</text>
-        
-        <circle class="line-dot" cx="220" cy="170" r="5"/>
-        <text class="bar-label" x="220" y="220" style="text-anchor:middle;">Tue</text>
-
-        <circle class="line-dot" cx="340" cy="130" r="5"/>
-        <text class="bar-label" x="340" y="220" style="text-anchor:middle;">Wed</text>
-
-        <circle class="line-dot" cx="460" cy="90" r="5"/>
-        <text class="bar-label" x="460" y="220" style="text-anchor:middle;">Thu</text>
-
-        <circle class="line-dot" cx="580" cy="110" r="5"/>
-        <text class="bar-label" x="580" y="220" style="text-anchor:middle;">Fri</text>
-
-        <circle class="line-dot" cx="700" cy="60" r="5"/>
-        <text class="bar-label" x="700" y="220" style="text-anchor:middle;">Sat</text>
-
-        <circle class="line-dot" cx="820" cy="40" r="5"/>
-        <text class="bar-label" x="820" y="220" style="text-anchor:middle;">Sun</text>
-      </svg>
-    </div>
-  </div>
-
 </div>
 
 <script>
-  requireAuth();
-
-  // CRIT-2: Verify admin role via live API call
-  (async function verifyAdminRole() {
-    const token = localStorage.getItem('jxa_token');
-    if (!token) { window.location.href = '../auth.html'; return; }
-    try {
-      const res = await fetch(`${SYNC_API}/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const serverRole = data.role || data.user?.role;
-      if (serverRole !== 'admin') {
-        localStorage.removeItem('jxa_role');
-        window.location.href = '../dashboard.html';
-        return;
-      }
-      localStorage.setItem('jxa_role', 'admin');
-      loadAnalytics();
-    } catch (e) { window.location.href = '../dashboard.html'; }
-  })();
-
-  function logout() {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
-    keys.forEach(k => localStorage.removeItem(k));
-    window.location.href = '../auth.html';
-  }
+  renderAdminNav('analytics.html');
+  verifyAdminAccess(loadAnalytics);
 
   async function loadAnalytics() {
-    const token = localStorage.getItem("jxa_token");
     try {
-      const res = await fetch(`${SYNC_API}/admin/stats`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await adminFetch('/admin/analytics');
       if (res.ok) {
         const data = await res.json();
-        const stats = data.stats || {};
-        document.getElementById('stat-total-users').textContent = stats.totalUsers ?? 0;
-        document.getElementById('stat-tier-ratio').textContent = `${stats.freeUsers || 0}F / ${stats.paidUsers || 0}P`;
-        document.getElementById('stat-page-views').textContent = stats.pageViews ?? 0;
-        document.getElementById('stat-api-requests').textContent = stats.apiRequests ?? 0;
+        const s = data.stats || {};
+        const tools = data.toolSummary || {};
+
+        document.getElementById('an-users').textContent = fmtNum(s.totalUsers);
+        document.getElementById('an-ratio').textContent = `${s.freeUsers || 0} Free / ${s.paidUsers || 0} Paid`;
+        document.getElementById('an-views').textContent = fmtNum(s.pageViews);
+        document.getElementById('an-requests').textContent = fmtNum(s.apiRequests);
+
+        document.getElementById('ad-profiles').textContent = fmtNum(s.totalProfiles);
+        document.getElementById('ad-apps').textContent = fmtNum(s.totalApplications);
+        document.getElementById('ad-reports').textContent = fmtNum(s.totalReports);
+
+        document.getElementById('ad-af').textContent = `${tools.autofill?.total || 0} runs`;
+        document.getElementById('ad-rb').textContent = `${tools.resumeBuilder?.total || 0} runs`;
+        document.getElementById('ad-cl').textContent = `${tools.coverLetter?.total || 0} runs`;
+        document.getElementById('ad-ats').textContent = `${tools.atsChecker?.total || 0} runs`;
+        document.getElementById('ad-ps').textContent = `${tools.profileSync?.total || 0} runs`;
+        document.getElementById('ad-ts').textContent = `${tools.trackerSync?.total || 0} runs`;
       }
     } catch(e) {
-      console.error("Telemetry fetch failed:", e);
+      showToast('Error loading analytics', 'error');
     }
   }
-
-  loadAnalytics();
 </script>
 </body>
 </html>

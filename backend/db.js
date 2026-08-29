@@ -663,6 +663,54 @@ module.exports = {
     return false;
   },
 
+  async updateUserStatus(userId, status) {
+    if (usePg) {
+      const res = await pool.query("UPDATE users SET status = $1 WHERE id = $2", [status, userId]);
+      return res.rowCount > 0;
+    }
+
+    const registry = loadRegistry();
+    const user = registry.find(u => u.id === userId);
+    if (user) {
+      user.status = status;
+      saveRegistry(registry);
+      return true;
+    }
+    return false;
+  },
+
+  async updateUserRole(userId, role) {
+    if (usePg) {
+      const res = await pool.query("UPDATE users SET role = $1 WHERE id = $2", [role, userId]);
+      return res.rowCount > 0;
+    }
+
+    const registry = loadRegistry();
+    const user = registry.find(u => u.id === userId);
+    if (user) {
+      user.role = role;
+      saveRegistry(registry);
+      return true;
+    }
+    return false;
+  },
+
+  async resolveReport(reportId) {
+    if (usePg) {
+      const res = await pool.query("UPDATE reports SET status = 'resolved' WHERE id = $1", [reportId]);
+      return res.rowCount > 0;
+    }
+
+    const reports = loadReports();
+    const report = reports.find(r => r.id === reportId);
+    if (report) {
+      report.status = "resolved";
+      saveReports(reports);
+      return true;
+    }
+    return false;
+  },
+
   async recordTelemetryHit(metric) {
     if (usePg) {
       await pool.query(

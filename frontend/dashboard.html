@@ -174,6 +174,15 @@ select.form-input { cursor:pointer; }
 </div>
 
 <div class="container">
+  <!-- System Announcement Banner -->
+  <div id="sys-broadcast-banner" style="display:none; margin-bottom: 20px; padding: 14px 18px; border-radius: 10px; font-family: var(--mono); font-size: 12px; font-weight: 500; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid;">
+    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+      <span id="sys-broadcast-tag" style="padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase;">ANNOUNCEMENT</span>
+      <span id="sys-broadcast-text" style="color: var(--text);"></span>
+    </div>
+    <button onclick="document.getElementById('sys-broadcast-banner').style.display='none'" style="background:none; border:none; color:rgba(255,255,255,0.6); cursor:pointer; font-size:16px; line-height:1;">&times;</button>
+  </div>
+
   <!-- Page header -->
   <div class="page-header">
     <div>
@@ -556,6 +565,42 @@ document.addEventListener('jobxapply:offline', () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ metric: 'pageViews' })
   }).catch(() => {});
+
+  // Fetch active system broadcast banner
+  try {
+    const bRes = await fetch(`${SYNC_API}/admin/banner`);
+    if (bRes.ok) {
+      const bData = await bRes.json();
+      if (bData.banner && bData.banner.active && bData.banner.text) {
+        const bEl = document.getElementById('sys-broadcast-banner');
+        const bTag = document.getElementById('sys-broadcast-tag');
+        const bTxt = document.getElementById('sys-broadcast-text');
+        bTxt.textContent = bData.banner.text;
+        
+        const sev = bData.banner.severity || 'info';
+        if (sev === 'critical') {
+          bEl.style.background = 'rgba(245, 90, 35, 0.12)';
+          bEl.style.borderColor = 'rgba(245, 90, 35, 0.4)';
+          bTag.style.background = 'rgba(245, 90, 35, 0.2)';
+          bTag.style.color = '#F55A23';
+          bTag.textContent = 'CRITICAL';
+        } else if (sev === 'warning') {
+          bEl.style.background = 'rgba(245, 166, 35, 0.12)';
+          bEl.style.borderColor = 'rgba(245, 166, 35, 0.4)';
+          bTag.style.background = 'rgba(245, 166, 35, 0.2)';
+          bTag.style.color = '#F5A623';
+          bTag.textContent = 'NOTICE';
+        } else {
+          bEl.style.background = 'rgba(91, 79, 232, 0.12)';
+          bEl.style.borderColor = 'rgba(91, 79, 232, 0.4)';
+          bTag.style.background = 'rgba(91, 79, 232, 0.2)';
+          bTag.style.color = '#5B4FE8';
+          bTag.textContent = 'UPDATE';
+        }
+        bEl.style.display = 'flex';
+      }
+    }
+  } catch(e) {}
 
   // 2. Fetch fresh updates silently in the background
   try {

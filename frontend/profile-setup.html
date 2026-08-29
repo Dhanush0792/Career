@@ -93,6 +93,20 @@ body::after {
     <h1 class="page-title">Master Profile Setup</h1>
   </header>
 
+  <!-- Role Persona Switcher & Manager -->
+  <div class="persona-bar" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 18px; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); font-weight:700;">Role Persona:</span>
+      <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:#0b1020; color:#fff; border:1px solid var(--primary); padding:7px 14px; border-radius:8px; font-family:var(--mono); font-size:12px; cursor:pointer; font-weight:600; outline:none;"></select>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button type="button" class="btn btn-secondary" onclick="createPersona()" style="padding:6px 12px; font-size:11px;">+ New Persona</button>
+      <button type="button" class="btn btn-secondary" onclick="duplicatePersona()" style="padding:6px 12px; font-size:11px;">Duplicate</button>
+      <button type="button" class="btn btn-secondary" onclick="renamePersona()" style="padding:6px 12px; font-size:11px;">Rename</button>
+      <button type="button" class="btn btn-secondary" onclick="deletePersona()" style="padding:6px 12px; font-size:11px; color:#ff7878; border-color:rgba(255,120,120,0.3);">Delete</button>
+    </div>
+  </div>
+
   <div class="profile-grid">
     <!-- Left Navigation -->
     <div class="tabs-nav">
@@ -757,6 +771,128 @@ const FIELDS = [
   'eduPhD_college', 'eduPhD_degree', 'eduPhD_stream', 'eduPhD_year', 'eduPhD_cgpa'
 ];
 
+let allPersonas = { "default": { profileName: "Primary Profile" } };
+let currentPersonaId = "default";
+
+function updatePersonaDropdown() {
+  const sel = document.getElementById("persona-selector");
+  if (!sel) return;
+  sel.innerHTML = "";
+  Object.keys(allPersonas).forEach(id => {
+    const p = allPersonas[id] || {};
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = p.profileName || p.targetRole || p.fullName || ("Persona " + id);
+    if (id === currentPersonaId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function extractCurrentFormProfile() {
+  const profile = {};
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f-' + f);
+    if (el) profile[f] = el.value.trim();
+  });
+  profile.eduGrad_pursuing = document.getElementById('f-eduGrad_pursuing')?.checked || false;
+  profile.eduPG_pursuing = document.getElementById('f-eduPG_pursuing')?.checked || false;
+  profile.eduMasters_pursuing = document.getElementById('f-eduMasters_pursuing')?.checked || false;
+  profile.eduPhD_pursuing = document.getElementById('f-eduPhD_pursuing')?.checked || false;
+
+  const activeRoles = [];
+  document.querySelectorAll(".role-chip-cb:checked").forEach(cb => {
+    activeRoles.push(cb.value);
+  });
+  profile.targetRoles = activeRoles.join(", ");
+  profile.profileName = allPersonas[currentPersonaId]?.profileName || profile.targetRole || "Primary Profile";
+  return profile;
+}
+
+function populateFormFields(p) {
+  if (!p) return;
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f-' + f);
+    if (el && p[f] !== undefined) el.value = p[f];
+  });
+
+  // Checkboxes
+  document.getElementById('f-eduGrad_pursuing').checked = Boolean(p.eduGrad_pursuing);
+  document.getElementById('f-eduPG_pursuing').checked = Boolean(p.eduPG_pursuing);
+  document.getElementById('f-eduMasters_pursuing').checked = Boolean(p.eduMasters_pursuing);
+  document.getElementById('f-eduPhD_pursuing').checked = Boolean(p.eduPhD_pursuing);
+
+  // Target roles checkbox chips
+  const rolesStr = p.targetRoles || "";
+  const activeRoles = rolesStr.split(",").map(r => r.trim()).filter(Boolean);
+  document.querySelectorAll(".role-chip-cb").forEach(cb => {
+    cb.checked = activeRoles.includes(cb.value);
+  });
+
+  toggleEmploymentFields();
+}
+
+function switchActivePersona(newId) {
+  if (!allPersonas[newId]) return;
+  allPersonas[currentPersonaId] = extractCurrentFormProfile();
+  currentPersonaId = newId;
+  localStorage.setItem('jxa_active_profile_id', newId);
+  populateFormFields(allPersonas[newId]);
+  updatePersonaDropdown();
+  showToast(`Switched to ${allPersonas[newId].profileName || newId}`);
+}
+
+function createPersona() {
+  const name = prompt("Enter title for new role persona (e.g. Full Stack Developer):");
+  if (!name || !name.trim()) return;
+  allPersonas[currentPersonaId] = extractCurrentFormProfile();
+  const newId = "persona_" + Date.now();
+  const newProfile = { ...allPersonas[currentPersonaId], profileName: name.trim(), targetRole: name.trim() };
+  allPersonas[newId] = newProfile;
+  currentPersonaId = newId;
+  localStorage.setItem('jxa_active_profile_id', newId);
+  populateFormFields(newProfile);
+  updatePersonaDropdown();
+  showToast(`Created persona: ${name.trim()}`);
+}
+
+function duplicatePersona() {
+  const current = extractCurrentFormProfile();
+  const name = prompt("Enter name for duplicated persona:", (current.profileName || "Profile") + " Copy");
+  if (!name || !name.trim()) return;
+  const newId = "persona_" + Date.now();
+  allPersonas[newId] = { ...current, profileName: name.trim() };
+  currentPersonaId = newId;
+  localStorage.setItem('jxa_active_profile_id', newId);
+  populateFormFields(allPersonas[newId]);
+  updatePersonaDropdown();
+  showToast(`Duplicated persona: ${name.trim()}`);
+}
+
+function renamePersona() {
+  const currentName = allPersonas[currentPersonaId]?.profileName || "Primary Profile";
+  const name = prompt("Rename current persona:", currentName);
+  if (!name || !name.trim()) return;
+  if (!allPersonas[currentPersonaId]) allPersonas[currentPersonaId] = {};
+  allPersonas[currentPersonaId].profileName = name.trim();
+  updatePersonaDropdown();
+  showToast(`Renamed to: ${name.trim()}`);
+}
+
+function deletePersona() {
+  const keys = Object.keys(allPersonas);
+  if (keys.length <= 1) {
+    alert("At least one persona profile must remain.");
+    return;
+  }
+  if (!confirm(`Delete persona "${allPersonas[currentPersonaId]?.profileName || currentPersonaId}"?`)) return;
+  delete allPersonas[currentPersonaId];
+  currentPersonaId = Object.keys(allPersonas)[0];
+  localStorage.setItem('jxa_active_profile_id', currentPersonaId);
+  populateFormFields(allPersonas[currentPersonaId]);
+  updatePersonaDropdown();
+  showToast("Persona deleted");
+}
+
 async function saveCloudProfile() {
   const passcode = document.getElementById('f-passcode').value.trim();
   if (!passcode) {
@@ -767,39 +903,23 @@ async function saveCloudProfile() {
 
   localStorage.setItem('jxa_passcode', passcode);
 
-  const profile = {};
-  FIELDS.forEach(f => {
-    const el = document.getElementById('f-' + f);
-    if (el) profile[f] = el.value.trim();
-  });
-
-  if (!profile.fullName || !profile.email) {
+  const currentProfile = extractCurrentFormProfile();
+  if (!currentProfile.fullName || !currentProfile.email) {
     alert('Full Name and Email are required.');
     switchTab('tab-basics', document.querySelectorAll('.tabs-nav button')[0]);
     return;
   }
 
-  // Handle checkboxes
-  profile.eduGrad_pursuing = document.getElementById('f-eduGrad_pursuing').checked;
-  profile.eduPG_pursuing = document.getElementById('f-eduPG_pursuing').checked;
-  profile.eduMasters_pursuing = document.getElementById('f-eduMasters_pursuing').checked;
-  profile.eduPhD_pursuing = document.getElementById('f-eduPhD_pursuing').checked;
+  allPersonas[currentPersonaId] = currentProfile;
 
-  // Handle target roles checkboxes
-  const activeRoles = [];
-  document.querySelectorAll(".role-chip-cb:checked").forEach(cb => {
-    activeRoles.push(cb.value);
-  });
-  profile.targetRoles = activeRoles.join(", ");
-
-  document.getElementById('save-status').textContent = 'Syncing...';
+  document.getElementById('save-status').textContent = 'Syncing personas to cloud...';
   document.getElementById('save-status').style.color = 'var(--muted)';
 
-  const res = await saveProfile(profile);
+  const res = await saveProfile(currentProfile);
   if (res.ok) {
-    document.getElementById('save-status').textContent = 'Synced with Cloud ✓';
+    document.getElementById('save-status').textContent = 'Synced with Cloud';
     document.getElementById('save-status').style.color = 'var(--success)';
-    showToast('Profile synced successfully!');
+    showToast('All profile personas synced successfully!');
   } else {
     document.getElementById('save-status').textContent = 'Cloud sync failed.';
     document.getElementById('save-status').style.color = 'var(--alert)';
@@ -809,7 +929,6 @@ async function saveCloudProfile() {
 
 // Initial Loading
 document.addEventListener("DOMContentLoaded", async () => {
-  // Check authentication
   if (!window.CareerBridgeSync.requireAuth()) return;
 
   renderNav(document.getElementById('main-nav'), 'profile-setup.html');
@@ -817,45 +936,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedPasscode = localStorage.getItem('jxa_passcode') || "";
   document.getElementById('f-passcode').value = savedPasscode;
 
-  function populateFormFields(p) {
-    if (!p) return;
-    FIELDS.forEach(f => {
-      const el = document.getElementById('f-' + f);
-      if (el && p[f] !== undefined) el.value = p[f];
-    });
-
-    // Checkboxes
-    document.getElementById('f-eduGrad_pursuing').checked = Boolean(p.eduGrad_pursuing);
-    document.getElementById('f-eduPG_pursuing').checked = Boolean(p.eduPG_pursuing);
-    document.getElementById('f-eduMasters_pursuing').checked = Boolean(p.eduMasters_pursuing);
-    document.getElementById('f-eduPhD_pursuing').checked = Boolean(p.eduPhD_pursuing);
-
-    // Target roles checkbox chips
-    const rolesStr = p.targetRoles || "";
-    const activeRoles = rolesStr.split(",").map(r => r.trim()).filter(Boolean);
-    document.querySelectorAll(".role-chip-cb").forEach(cb => {
-      cb.checked = activeRoles.includes(cb.value);
-    });
-  }
-
-  // 1. Load instantly from cache
+  // 1. Load from cache
   const cachedState = getCachedProfileState();
-  if (cachedState && cachedState.profile) {
-    populateFormFields(cachedState.profile);
+  if (cachedState) {
+    if (cachedState.profiles && Object.keys(cachedState.profiles).length) {
+      allPersonas = cachedState.profiles;
+      currentPersonaId = cachedState.activeProfileId || localStorage.getItem('jxa_active_profile_id') || Object.keys(allPersonas)[0];
+    } else if (cachedState.profile) {
+      allPersonas = { "default": cachedState.profile };
+      currentPersonaId = "default";
+    }
+    updatePersonaDropdown();
+    if (allPersonas[currentPersonaId]) populateFormFields(allPersonas[currentPersonaId]);
   }
 
   // 2. Fetch updates in background
-  let state;
   try {
-    state = await loadProfile();
-    if (state && state.profile) {
-      populateFormFields(state.profile);
+    const state = await loadProfile();
+    if (state) {
+      if (state.profiles && Object.keys(state.profiles).length) {
+        allPersonas = state.profiles;
+        currentPersonaId = state.activeProfileId || localStorage.getItem('jxa_active_profile_id') || Object.keys(allPersonas)[0];
+      } else if (state.profile) {
+        allPersonas = { "default": state.profile };
+        currentPersonaId = "default";
+      }
+      updatePersonaDropdown();
+      if (allPersonas[currentPersonaId]) populateFormFields(allPersonas[currentPersonaId]);
     }
   } catch (e) {
-    console.error("Background load failed:", e);
-    state = cachedState;
+    console.error("Background profile load failed:", e);
   }
-  const p = state?.profile || {};
 
   toggleEmploymentFields();
 });
