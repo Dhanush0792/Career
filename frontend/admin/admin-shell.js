@@ -1,4 +1,4 @@
-﻿// admin-shell.js -- Shared utilities for all JobXApply admin pages
+// admin-shell.js -- Shared utilities for all JobXApply admin pages
 // Loaded via <script src="admin-shell.js"> before any page-specific script.
 
 const ADMIN_API = (typeof SYNC_API !== "undefined") ? SYNC_API : "https://jobxapply-backend.onrender.com/api";
@@ -80,20 +80,29 @@ function adminLogout() {
 
 async function verifyAdminAccess(onSuccess) {
   var token = adminToken();
-  if (!token) { window.location.href = "../auth.html"; return; }
+  if (!token) {
+    if (!window.location.pathname.endsWith('login.html')) {
+      window.location.href = 'login.html';
+    }
+    return;
+  }
   try {
     var res = await adminFetch("/profile");
     var data = await res.json();
     var role = data.role || (data.user && data.user.role);
     if (role !== "admin") {
       localStorage.removeItem("jxa_role");
-      window.location.href = "../dashboard.html";
+      if (!window.location.pathname.endsWith('login.html')) {
+        window.location.href = 'login.html';
+      }
       return;
     }
     localStorage.setItem("jxa_role", "admin");
     if (typeof onSuccess === "function") onSuccess();
   } catch (e) {
-    window.location.href = "../dashboard.html";
+    if (!window.location.pathname.endsWith('login.html')) {
+      window.location.href = 'login.html';
+    }
   }
 }
 

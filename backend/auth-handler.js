@@ -123,6 +123,57 @@ async function loginUser(req, res, bodyData) {
   }
 }
 
+// Dedicated Admin Login Handler
+async function loginAdmin(req, res, bodyData, helpers = {}) {
+  try {
+    const { email, password } = bodyData;
+    
+    if (!email || !password) {
+      return sendJson(res, 400, { ok: false, error: "Email and master password are required." });
+    }
+    
+    const user = await db.getUserByEmail(email);
+    if (!user || !user.passwordHash) {
+      if (helpers.recordLoginFailure) helpers.recordLoginFailure(email);
+      return sendJson(res, 401, { ok: false, error: "Invalid credentials or administrative privileges required." });
+    }
+    
+    const isMatch = bcrypt.compareSync(password, user.passwordHash);
+    if (!isMatch) {
+      if (helpers.recordLoginFailure) helpers.recordLoginFailure(email);
+      return sendJson(res, 401, { ok: false, error: "Invalid credentials or administrative privileges required." });
+    }
+
+    if (user.role !== "admin") {
+      return sendJson(res, 403, { ok: false, error: "Access Denied: Administrative role required." });
+    }
+    
+    if (helpers.clearLoginFailures) helpers.clearLoginFailures(email);
+    if (helpers.logAdminActivity) helpers.logAdminActivity(`Admin authenticated: ${user.email}`);
+
+    // Generate dedicated JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: "admin" },
+      JWT_SECRET,
+      { expiresIn: "12h" }
+    );
+    
+    sendJson(res, 200, {
+      ok: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: "admin"
+      }
+    });
+  } catch (err) {
+    console.error("Admin login error:", err);
+    sendJson(res, 500, { ok: false, error: "Admin authentication service error." });
+  }
+}
+
 // Update user account details
 async function updateUserAccount(req, res, bodyData, activeUser) {
   try {
@@ -192,6 +243,7 @@ function verifyToken(req) {
 module.exports = {
   registerUser,
   loginUser,
+  loginAdmin,
   updateUserAccount,
   forgotPassword,
   resetPassword,

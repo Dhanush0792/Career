@@ -711,6 +711,25 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Dedicated Admin Authentication Route
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/login") {
+    const xfwd = req.headers["x-forwarded-for"];
+    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
+    if (isRateLimited(clientIp, 5, 60000, ipRateLimits)) {
+      writeCorsHeaders(req, res);
+      sendJson(res, 429, { ok: false, error: "Too many authentication attempts. Please wait 1 minute." });
+      return;
+    }
+    try {
+      const body = await readBody(req);
+      const payload = JSON.parse(body || "{}");
+      await auth.loginAdmin(req, res, payload, { recordLoginFailure, isAccountLocked, clearLoginFailures, logAdminActivity });
+    } catch (e) {
+      sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Invalid JSON format" });
+    }
+    return;
+  }
+
   if (req.method === "POST" && urlObj.pathname === "/api/auth/forgot-password") {
     try {
       const body = await readBody(req);

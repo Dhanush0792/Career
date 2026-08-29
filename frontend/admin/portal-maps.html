@@ -355,10 +355,9 @@
 <script>
   requireAuth();
 
-  // CRIT-2: Verify admin role via live API call
   (async function verifyAdminRole() {
     const token = localStorage.getItem('jxa_token');
-    if (!token) { window.location.href = '../auth.html'; return; }
+    if (!token) { window.location.href = 'login.html'; return; }
     try {
       const res = await fetch(`${SYNC_API}/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -367,13 +366,13 @@
       const serverRole = data.role || data.user?.role;
       if (serverRole !== 'admin') {
         localStorage.removeItem('jxa_role');
-        window.location.href = '../dashboard.html';
+        window.location.href = 'login.html';
         return;
       }
       localStorage.setItem('jxa_role', 'admin');
       if (typeof renderAdminNav === 'function') renderAdminNav('content.html');
       loadMaps();
-    } catch (e) { window.location.href = '../dashboard.html'; }
+    } catch (e) { window.location.href = 'login.html'; }
   })();
 
   function logout() {

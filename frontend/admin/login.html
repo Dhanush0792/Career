@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Admin Authentication</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style-glass.css">
+<script src="../shared-shell.js?v=2"></script>
+<link rel="icon" type="image/png" href="../assets/app-logo.png?v=4">
+<style>
+  :root {
+    --base: #0B1020;
+    --primary: #5B4FE8;
+    --success: #2FDDC4;
+    --alert: #F5A623;
+    --danger: #F55A23;
+    --white: #ffffff;
+    --text: #f4f7ff;
+    --muted: rgba(244,247,255,0.65);
+    --dim: rgba(244,247,255,0.4);
+    --glass-bg: rgba(255,255,255,0.05);
+    --glass-border: rgba(255,255,255,0.12);
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  body {
+    min-height: 100vh;
+    background-color: var(--base);
+    color: var(--text);
+    font-family: var(--body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 20px;
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.08) 0%, transparent 45%);
+  }
+  .login-card {
+    background: rgba(11,16,32,0.85);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    width: 100%;
+    max-width: 440px;
+    padding: 36px 32px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--alert), var(--primary));
+  }
+  .logo-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .logo-box img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
+  .logo-title {
+    font-family: var(--display);
+    font-size: 24px;
+    color: var(--white);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .logo-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--alert);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .form-group {
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .input-field {
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--glass-border);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--alert); }
+
+  .btn-login {
+    background: var(--alert);
+    color: #070a18;
+    border: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-login:hover { opacity: 0.92; }
+  .btn-login:active { transform: scale(0.99); }
+
+  .auth-notice {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(245,166,35,0.06);
+    border: 1px solid rgba(245,166,35,0.2);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .err-msg {
+    color: var(--danger);
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .back-link:hover { color: var(--white); }
+</style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="logo-box">
+    <img src="../assets/app-logo.png?v=4" alt="JobXApply Logo">
+    <div>
+      <div class="logo-title">JOBXAPPLY // ADMIN</div>
+      <div class="logo-sub">Command Center Gateway</div>
+    </div>
+  </div>
+
+  <form id="admin-login-form">
+    <div class="form-group">
+      <label for="admin-email">Admin Email</label>
+      <input type="email" id="admin-email" class="input-field" placeholder="admin@jobxapply.app" required autocomplete="username">
+    </div>
+
+    <div class="form-group">
+      <label for="admin-password">Password / Master Key</label>
+      <input type="password" id="admin-password" class="input-field" placeholder="••••••••••••" required autocomplete="current-password">
+    </div>
+
+    <button type="submit" class="btn-login" id="btn-submit">Authenticate</button>
+    <div class="err-msg" id="err-msg"></div>
+  </form>
+
+  <div class="auth-notice">
+    Protected Gateway: All authentication attempts are rate-limited, logged in tamper-evident audit tables, and verified against cryptographically salted hashes.
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <a href="../dashboard.html" class="back-link">&larr; User Dashboard</a>
+    <a href="../auth.html" class="back-link">Standard Login &rarr;</a>
+  </div>
+</div>
+
+<script>
+  // If already logged in as admin, forward directly
+  (async function checkExistingAdmin() {
+    const token = localStorage.getItem('jxa_token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${SYNC_API}/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const role = data.role || data.user?.role;
+        if (role === 'admin') {
+          localStorage.setItem('jxa_role', 'admin');
+          window.location.href = 'index.html';
+        }
+      }
+    } catch(e) {}
+  })();
+
+  const form = document.getElementById('admin-login-form');
+  const btn = document.getElementById('btn-submit');
+  const errMsg = document.getElementById('err-msg');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errMsg.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+
+    const email = document.getElementById('admin-email').value.trim();
+    const password = document.getElementById('admin-password').value;
+
+    try {
+      const res = await fetch(`${SYNC_API}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.ok && data.token) {
+        localStorage.setItem('jxa_token', data.token);
+        localStorage.setItem('jxa_role', 'admin');
+        if (data.user?.email) localStorage.setItem('jxa_user_email', data.user.email);
+        btn.textContent = 'Authenticated... Redirecting';
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 400);
+      } else {
+        errMsg.textContent = data.error || 'Invalid credentials or administrative privileges required.';
+        errMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Authenticate';
+      }
+    } catch(err) {
+      errMsg.textContent = 'Network or connection error. Please verify backend service.';
+      errMsg.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Authenticate';
+    }
+  });
+</script>
+</body>
+</html>
