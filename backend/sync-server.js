@@ -537,7 +537,8 @@ async function getRequestUser(req) {
   // 2. Legacy / local custom JWT check
   const decodedLocal = auth.verifyToken(req);
   if (decodedLocal) {
-    return await db.getUserById(decodedLocal.userId);
+    const localId = decodedLocal.id || decodedLocal.userId;
+    if (localId) return await db.getUserById(localId);
   }
 
   // 3. Sync passcode hash check (for browser extension / automation clients)

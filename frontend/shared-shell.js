@@ -113,23 +113,13 @@ function requireAuth() {
       window.location.href = prefix + 'auth.html';
     }
   } else {
-    if (tokenRole === 'admin') {
-      if (!isInAdmin) {
-        if (document.documentElement) {
-          document.documentElement.style.display = 'none';
-        }
-        window.location.href = prefix + 'admin/index.html';
-        return;
+    // Non-admin trying to access admin pages
+    if (tokenRole !== 'admin' && isInAdmin) {
+      if (document.documentElement) {
+        document.documentElement.style.display = 'none';
       }
-    } else {
-      // Regular user / candidate
-      if (isInAdmin) {
-        if (document.documentElement) {
-          document.documentElement.style.display = 'none';
-        }
-        window.location.href = '../dashboard.html';
-        return;
-      }
+      window.location.href = '../dashboard.html';
+      return;
     }
     // Background pull tracker data from server on startup
     pullApplicationsFromServer().catch(() => {});

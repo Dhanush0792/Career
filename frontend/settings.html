@@ -212,11 +212,10 @@ async function savePasscode() {
     if (res?.ok) {
       showToast('Sync Key updated and synced successfully');
       
-      // Dispatch pairing event so the extension updates immediately
-      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+      // Dispatch secure signal-only pairing event (no plaintext credentials on window)
+      window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
         detail: {
-          token: localStorage.getItem('jxa_token') || "",
-          passcode: p1,
+          paired: true,
           email: localStorage.getItem('jxa_user_email') || ""
         }
       }));
