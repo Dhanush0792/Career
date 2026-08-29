@@ -61,6 +61,7 @@
     border-radius: 12px;
     backdrop-filter: blur(16px);
     padding: 24px;
+    margin-bottom: 24px;
   }
 
   .card-header {
@@ -164,6 +165,58 @@
     transform: translateX(22px);
   }
 
+  /* Preset Items */
+  .preset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .preset-item {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .preset-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .preset-title {
+    font-family: var(--display);
+    font-size: 18px;
+    color: var(--white);
+  }
+  .preset-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--alert);
+    background: rgba(245,166,35,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .preset-body {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .btn-sm {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glass-border);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-sm.danger { color: var(--danger); border-color: rgba(245,90,35,0.3); }
+
   @media (max-width: 1024px) {
     .grid-2 { grid-template-columns: 1fr; }
   }
@@ -260,11 +313,55 @@
       </div>
     </div>
   </div>
+
+  <!-- ATS Role Presets Customizer (New) -->
+  <div class="card">
+    <div class="card-header">
+      <span>ATS Role Presets &amp; Scoring Criteria</span>
+      <button class="btn-submit" style="padding:6px 12px; font-size:11px;" onclick="showAddPresetForm()">+ Add Role Preset</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.4;">
+      Configure the role categories, target keyword vocabulary, and technical competencies evaluated by the ATS Scan Engine.
+    </p>
+
+    <!-- New Preset Modal / Inline Form -->
+    <div id="preset-form-box" style="display:none; background:rgba(0,0,0,0.3); border:1px solid var(--alert); border-radius:8px; padding:18px; margin-bottom:20px;">
+      <h3 style="font-family:var(--display); font-size:18px; color:var(--alert); margin:0 0 12px 0;">ADD / EDIT ROLE PRESET</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Role Key (e.g. data_analyst)</label>
+          <input type="text" id="preset-key" class="input-text" placeholder="e.g. data_analyst">
+        </div>
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" id="preset-name" class="input-text" placeholder="e.g. Senior Data Analyst">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Target Keywords (comma-separated)</label>
+        <input type="text" id="preset-keywords" class="input-text" placeholder="e.g. data visualization, sql, bi, statistics, analytics">
+      </div>
+      <div class="form-group">
+        <label>Technical Skills (comma-separated)</label>
+        <input type="text" id="preset-skills" class="input-text" placeholder="e.g. tableau, power bi, python, postgresql, excel">
+      </div>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button class="btn-submit" onclick="saveRolePreset()">Save Preset</button>
+        <button class="btn-sm" onclick="document.getElementById('preset-form-box').style.display='none'">Cancel</button>
+      </div>
+    </div>
+
+    <div class="preset-list" id="preset-list-container">
+      <div style="padding:20px; text-align:center; color:var(--muted); font-family:var(--mono);">Loading presets...</div>
+    </div>
+  </div>
 </div>
 
 <script>
   renderAdminNav('content.html');
   verifyAdminAccess(loadContentSettings);
+
+  let currentPresets = {};
 
   async function loadContentSettings() {
     // 1. Load Banner
@@ -291,6 +388,110 @@
         });
       }
     } catch(e) {}
+
+    // 3. Load Role Presets
+    loadRolePresets();
+  }
+
+  async function loadRolePresets() {
+    try {
+      const rRes = await adminFetch('/admin/role-presets');
+      if (rRes.ok) {
+        const rData = await rRes.json();
+        currentPresets = rData.roles || {};
+        renderRolePresets(currentPresets);
+      }
+    } catch(e) {
+      showToast('Error loading presets', 'error');
+    }
+  }
+
+  function renderRolePresets(presets) {
+    const container = document.getElementById('preset-list-container');
+    container.innerHTML = '';
+
+    Object.keys(presets).forEach(k => {
+      const p = presets[k];
+      const div = document.createElement('div');
+      div.className = 'preset-item';
+      div.innerHTML = `
+        <div class="preset-head">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="preset-title">${escHtml(p.name || k)}</span>
+            <span class="preset-tag">KEY: ${escHtml(k)}</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-sm" onclick="editPreset('${escHtml(k)}')">Edit</button>
+            ${k !== 'default' ? `<button class="btn-sm danger" onclick="deletePreset('${escHtml(k)}')">Delete</button>` : ''}
+          </div>
+        </div>
+        <div class="preset-body">
+          <div><strong style="color:var(--white);">Keywords:</strong> ${(p.keywords || []).map(escHtml).join(', ') || 'None'}</div>
+          <div style="margin-top:4px;"><strong style="color:var(--white);">Skills:</strong> ${(p.skills || []).map(escHtml).join(', ') || 'None'}</div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function showAddPresetForm() {
+    document.getElementById('preset-key').value = '';
+    document.getElementById('preset-key').disabled = false;
+    document.getElementById('preset-name').value = '';
+    document.getElementById('preset-keywords').value = '';
+    document.getElementById('preset-skills').value = '';
+    document.getElementById('preset-form-box').style.display = 'block';
+  }
+
+  function editPreset(key) {
+    const p = currentPresets[key];
+    if (!p) return;
+    document.getElementById('preset-key').value = key;
+    document.getElementById('preset-key').disabled = true;
+    document.getElementById('preset-name').value = p.name || '';
+    document.getElementById('preset-keywords').value = (p.keywords || []).join(', ');
+    document.getElementById('preset-skills').value = (p.skills || []).join(', ');
+    document.getElementById('preset-form-box').style.display = 'block';
+  }
+
+  async function saveRolePreset() {
+    const key = document.getElementById('preset-key').value.trim().toLowerCase();
+    const name = document.getElementById('preset-name').value.trim();
+    const keywords = document.getElementById('preset-keywords').value.split(',').map(s => s.trim()).filter(Boolean);
+    const skills = document.getElementById('preset-skills').value.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (!key || !name) return showToast('Key and name are required', 'error');
+
+    try {
+      const res = await adminFetch('/admin/role-presets', {
+        method: 'POST',
+        body: JSON.stringify({ key, name, keywords, skills })
+      });
+      if (res.ok) {
+        showToast('Role preset saved successfully', 'success');
+        document.getElementById('preset-form-box').style.display = 'none';
+        loadRolePresets();
+      } else {
+        showToast('Failed to save preset', 'error');
+      }
+    } catch(e) {
+      showToast('Network error saving preset', 'error');
+    }
+  }
+
+  async function deletePreset(key) {
+    if (!confirm(`Delete preset '${key}'?`)) return;
+    try {
+      const res = await adminFetch(`/admin/role-presets/${key}`, { method: 'DELETE' });
+      if (res.ok) {
+        showToast('Role preset deleted', 'info');
+        loadRolePresets();
+      } else {
+        showToast('Failed to delete preset', 'error');
+      }
+    } catch(e) {
+      showToast('Network error', 'error');
+    }
   }
 
   async function saveBanner() {

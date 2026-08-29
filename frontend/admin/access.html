@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply Admin // Access & Audit Logs</title>
+<title>JobXApply Admin // Access & Rate Limit Guard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -46,6 +46,13 @@
     text-transform: uppercase;
     margin: 0 0 20px 0;
     letter-spacing: 0.02em;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
   }
 
   .card {
@@ -101,6 +108,24 @@
   }
   .badge-admin { background: rgba(245,166,35,0.15); color: var(--alert); border: 1px solid rgba(245,166,35,0.3); }
   .badge-action { background: rgba(91,79,232,0.15); color: var(--primary); border: 1px solid rgba(91,79,232,0.3); }
+  .badge-danger { background: rgba(245,90,35,0.15); color: var(--danger); border: 1px solid rgba(245,90,35,0.3); }
+  .badge-success { background: rgba(47,221,196,0.1); color: var(--success); border: 1px solid rgba(47,221,196,0.3); }
+
+  .btn-sm {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--glass-border);
+    color: var(--white);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-sm.success { color: var(--success); border-color: rgba(47,221,196,0.3); }
+
+  @media (max-width: 1024px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -108,7 +133,49 @@
 <nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
 
 <div class="container">
-  <h1>ACCESS GOVERNANCE &amp; AUDIT LOGS</h1>
+  <h1>ACCESS GOVERNANCE &amp; RATE-LIMIT GUARD</h1>
+
+  <!-- Active Rate Limits & Locked Accounts -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <span>IP Rate-Limit Watchlist</span>
+        <button class="btn-sm" onclick="loadRateLimits()">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>IP Address</th>
+            <th>Attempts (1m)</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="ip-tbody">
+          <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;font-family:var(--mono);">Loading active IPs...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span>Locked Account Thresholds</span>
+        <button class="btn-sm" onclick="loadRateLimits()">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Account Email</th>
+            <th>Lockout Remaining</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="lockout-tbody">
+          <tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px;font-family:var(--mono);">Loading locked accounts...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <!-- Access Audit Log -->
   <div class="card">
@@ -134,7 +201,90 @@
 
 <script>
   renderAdminNav('access.html');
-  verifyAdminAccess(loadAuditLogs);
+  verifyAdminAccess(initPage);
+
+  function initPage() {
+    loadAuditLogs();
+    loadRateLimits();
+  }
+
+  async function loadRateLimits() {
+    try {
+      const res = await adminFetch('/admin/rate-limits');
+      if (res.ok) {
+        const data = await res.json();
+        renderIps(data.activeIps || []);
+        renderLockouts(data.lockedAccounts || []);
+      }
+    } catch(e) {}
+  }
+
+  function renderIps(ips) {
+    const tbody = document.getElementById('ip-tbody');
+    tbody.innerHTML = '';
+    if (ips.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;font-family:var(--mono);">No active IP rate limits.</td></tr>';
+      return;
+    }
+    ips.forEach(i => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="td-mono" style="color:var(--white);">${escHtml(i.ip)}</td>
+        <td class="td-mono">${i.attempts}</td>
+        <td><span class="badge ${i.isBlocked ? 'badge-danger' : 'badge-success'}">${i.isBlocked ? 'Throttled' : 'Monitoring'}</span></td>
+        <td><button class="btn-sm success" onclick="unblockIp('${escHtml(i.ip)}')">Clear / Unblock</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderLockouts(lockouts) {
+    const tbody = document.getElementById('lockout-tbody');
+    tbody.innerHTML = '';
+    if (lockouts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px;font-family:var(--mono);">Zero accounts currently locked.</td></tr>';
+      return;
+    }
+    lockouts.forEach(l => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:600;color:var(--white);">${escHtml(l.email)}</td>
+        <td class="td-mono" style="color:var(--alert);">${l.remainingSec}s</td>
+        <td><button class="btn-sm success" onclick="unlockEmail('${escHtml(l.email)}')">Unlock</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function unblockIp(ip) {
+    try {
+      const res = await adminFetch('/admin/rate-limits/unblock', {
+        method: 'POST',
+        body: JSON.stringify({ ip })
+      });
+      if (res.ok) {
+        showToast('IP unblocked', 'success');
+        loadRateLimits();
+      }
+    } catch(e) {
+      showToast('Network error', 'error');
+    }
+  }
+
+  async function unlockEmail(email) {
+    try {
+      const res = await adminFetch('/admin/rate-limits/unblock', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+      if (res.ok) {
+        showToast('Account unlocked', 'success');
+        loadRateLimits();
+      }
+    } catch(e) {
+      showToast('Network error', 'error');
+    }
+  }
 
   async function loadAuditLogs() {
     try {

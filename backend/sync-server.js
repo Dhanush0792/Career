@@ -350,6 +350,43 @@ const platformConfig = {
     coverLetter: true,
     atsChecker: true,
     tracker: true
+  },
+  rolePresets: {
+    sde: {
+      name: "Software Development Engineer",
+      keywords: ["software engineering", "data structures", "algorithms", "git", "testing", "system design", "agile", "object-oriented"],
+      skills: ["java", "javascript", "python", "c++", "sql", "html", "css"]
+    },
+    backend: {
+      name: "Backend Engineer",
+      keywords: ["backend", "api design", "microservices", "databases", "rest", "scalability", "cloud computing", "docker", "security"],
+      skills: ["node.js", "express", "sql", "postgresql", "mongodb", "aws", "redis", "python", "go"]
+    },
+    java: {
+      name: "Java Developer",
+      keywords: ["java", "jvm", "spring boot", "maven", "gradle", "multithreading", "hibernate", "mvc", "microservices", "unit testing"],
+      skills: ["java", "spring", "jpa", "sql", "junit", "git", "hibernate", "docker"]
+    },
+    marketing: {
+      name: "Growth & Marketing Specialist",
+      keywords: ["marketing", "analytics", "campaign management", "seo", "sem", "content strategy", "social media", "growth", "conversion"],
+      skills: ["google analytics", "seo", "adwords", "hubspot", "crm", "content writing", "email marketing"]
+    },
+    sales: {
+      name: "Sales & Account Executive",
+      keywords: ["sales", "business development", "crm", "negotiating", "lead generation", "pipeline management", "customer relationship", "closing"],
+      skills: ["salesforce", "crm", "cold calling", "presentation", "negotiation", "hubspot"]
+    },
+    customer_care: {
+      name: "Customer Support Executive",
+      keywords: ["customer support", "communication", "ticketing", "troubleshooting", "crm", "query resolution", "escalation", "empathy"],
+      skills: ["zendesk", "salesforce", "freshdesk", "live chat", "phone support", "problem solving"]
+    },
+    default: {
+      name: "General Professional",
+      keywords: ["professional", "communication", "organization", "problem solving", "management", "leadership", "collaboration"],
+      skills: ["office", "excel", "word", "powerpoint", "slack", "zoom"]
+    }
   }
 };
 
@@ -1253,6 +1290,93 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/admin/rate-limits — view active IP rate-limits and locked accounts
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/rate-limits") {
+    const activeIps = [];
+    const now = Date.now();
+    for (const [ip, timestamps] of ipRateLimits.entries()) {
+      const recent = timestamps.filter(t => now - t < 60000);
+      if (recent.length > 0) {
+        activeIps.push({ ip, attempts: recent.length, isBlocked: recent.length >= 5 });
+      }
+    }
+    const lockedAccounts = [];
+    for (const [email, entry] of loginFailures.entries()) {
+      if (entry.lockedUntil && now < entry.lockedUntil) {
+        lockedAccounts.push({ email, lockedUntil: entry.lockedUntil, remainingSec: Math.round((entry.lockedUntil - now) / 1000) });
+      }
+    }
+    sendJson(res, 200, { ok: true, activeIps, lockedAccounts });
+    return;
+  }
+
+  // POST /api/admin/rate-limits/unblock — unblock an IP or unlock an account
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/rate-limits/unblock") {
+    let body;
+    try { body = await readBody(req, 4096); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      if (incoming.ip) {
+        ipRateLimits.delete(incoming.ip);
+        logAdminActivity(`Unblocked IP: ${incoming.ip}`);
+      }
+      if (incoming.email) {
+        clearLoginFailures(incoming.email);
+        logAdminActivity(`Unlocked account: ${incoming.email}`);
+      }
+      sendJson(res, 200, { ok: true, message: "Unblocked successfully." });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: "Bad request" });
+    }
+    return;
+  }
+
+  // GET /api/admin/role-presets — view all ATS role presets
+  if (req.method === "GET" && (urlObj.pathname === "/api/admin/role-presets" || urlObj.pathname === "/api/ats/roles")) {
+    sendJson(res, 200, { ok: true, roles: platformConfig.rolePresets });
+    return;
+  }
+
+  // POST /api/admin/role-presets — add or edit an ATS role preset
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/role-presets") {
+    let body;
+    try { body = await readBody(req, 16384); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      const key = (incoming.key || "").toLowerCase().trim().replace(/[^a-z0-9_]/g, "");
+      if (!key) return sendJson(res, 400, { ok: false, error: "Role key identifier required" });
+      
+      const name = typeof incoming.name === "string" ? incoming.name.slice(0, 100).trim() : key;
+      const keywords = Array.isArray(incoming.keywords) ? incoming.keywords.map(k => String(k).toLowerCase().trim()).filter(Boolean) : [];
+      const skills = Array.isArray(incoming.skills) ? incoming.skills.map(s => String(s).toLowerCase().trim()).filter(Boolean) : [];
+
+      platformConfig.rolePresets[key] = { name, keywords, skills };
+      logAdminActivity(`Updated ATS role preset: ${name} (${key})`);
+      sendJson(res, 200, { ok: true, roles: platformConfig.rolePresets });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: "Invalid payload" });
+    }
+    return;
+  }
+
+  // DELETE /api/admin/role-presets/:key — delete a role preset
+  if (req.method === "DELETE" && /^\/api\/admin\/role-presets\/[^/]+$/.test(urlObj.pathname)) {
+    const key = urlObj.pathname.split("/")[4];
+    if (key === "default") return sendJson(res, 400, { ok: false, error: "Cannot delete default preset" });
+    if (platformConfig.rolePresets[key]) {
+      delete platformConfig.rolePresets[key];
+      logAdminActivity(`Deleted ATS role preset: ${key}`);
+      sendJson(res, 200, { ok: true, roles: platformConfig.rolePresets });
+    } else {
+      sendJson(res, 404, { ok: false, error: "Role preset not found" });
+    }
+    return;
+  }
+
   // POST /api/admin/users/:id/suspend
   if (req.method === "POST" && /^\/api\/admin\/users\/[^/]+\/suspend$/.test(urlObj.pathname)) {
     const userId = urlObj.pathname.split("/")[4];
@@ -1363,39 +1487,9 @@ const server = http.createServer(async (req, res) => {
         }
 
         // 1. Roles dictionary configuration
-        const ROLE_PRESETS = {
-          sde: {
-            keywords: ["software engineering", "data structures", "algorithms", "git", "testing", "system design", "agile", "object-oriented"],
-            skills: ["java", "javascript", "python", "c++", "sql", "html", "css"]
-          },
-          backend: {
-            keywords: ["backend", "api design", "microservices", "databases", "rest", "scalability", "cloud computing", "docker", "security"],
-            skills: ["node.js", "express", "sql", "postgresql", "mongodb", "aws", "redis", "python", "go"]
-          },
-          java: {
-            keywords: ["java", "jvm", "spring boot", "maven", "gradle", "multithreading", "hibernate", "mvc", "microservices", "unit testing"],
-            skills: ["java", "spring", "jpa", "sql", "junit", "git", "hibernate", "docker"]
-          },
-          marketing: {
-            keywords: ["marketing", "analytics", "campaign management", "seo", "sem", "content strategy", "social media", "growth", "conversion"],
-            skills: ["google analytics", "seo", "adwords", "hubspot", "crm", "content writing", "email marketing"]
-          },
-          sales: {
-            keywords: ["sales", "business development", "crm", "negotiating", "lead generation", "pipeline management", "customer relationship", "closing"],
-            skills: ["salesforce", "crm", "cold calling", "presentation", "negotiation", "hubspot"]
-          },
-          customer_care: {
-            keywords: ["customer support", "communication", "ticketing", "troubleshooting", "crm", "query resolution", "escalation", "empathy"],
-            skills: ["zendesk", "salesforce", "freshdesk", "live chat", "phone support", "problem solving"]
-          },
-          default: {
-            keywords: ["professional", "communication", "organization", "problem solving", "management", "leadership", "collaboration"],
-            skills: ["office", "excel", "word", "powerpoint", "slack", "zoom"]
-          }
-        };
-
-        const preset = ROLE_PRESETS[role] || ROLE_PRESETS.default;
-        const targetWords = [...preset.keywords, ...preset.skills];
+        const ROLE_PRESETS = platformConfig.rolePresets || {};
+        const preset = ROLE_PRESETS[role] || ROLE_PRESETS.default || { keywords: [], skills: [] };
+        const targetWords = [...(preset.keywords || []), ...(preset.skills || [])];
 
         // Combine profile fields into a single text blob for full scanning
         const resumeText = [
