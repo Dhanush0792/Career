@@ -31,6 +31,16 @@
     "lastSync": 1786712391450
   },
   {
+    "id": "u_dhanush_admin",
+    "email": "dhanushsiddilingam@gmail.com",
+    "name": "Dhanush Siddilingam",
+    "passwordHash": "$2b$12$Dmuu9X117/yjXsHzHqAVeepdB78Ncil8uEOmEkMlzgFydw51vIn.a",
+    "role": "admin",
+    "tier": "paid",
+    "createdAt": 1786712391450,
+    "lastSync": 1786712391450
+  },
+  {
     "id": "u_0r5oesix1ch",
     "email": "lockout_test_1787286781719@jobxapply.local",
     "name": "Lockout Test",

@@ -505,7 +505,13 @@ async function getRequestUser(req) {
     if (decoded) {
       const userId = decoded.sub; // Supabase uses 'sub' for user UUID
       const email = decoded.email;
-      const name = decoded.user_metadata?.full_name || decoded.name || email.split("@")[0];
+      const name = decoded.user_metadata?.full_name || decoded.name || (email ? email.split("@")[0] : "Operative");
+      const ADMIN_EMAILS = new Set([
+        "dhanushsiddilingam@gmail.com",
+        "admin@jobxapply.app"
+      ]);
+      const isAdminEmail = ADMIN_EMAILS.has((email || "").toLowerCase().trim());
+      const effectiveRole = isAdminEmail ? "admin" : "user";
       
       let user = await db.getUserById(userId);
       if (!user) {
@@ -514,10 +520,13 @@ async function getRequestUser(req) {
           id: userId,
           email: email,
           name: name,
-          role: "user",
-          tier: "free"
+          role: effectiveRole,
+          tier: isAdminEmail ? "paid" : "free"
         });
         user = await db.getUserById(userId);
+      } else if (isAdminEmail && user.role !== "admin") {
+        await db.updateUserRole(userId, "admin");
+        user.role = "admin";
       }
       return user;
     }

@@ -116,17 +116,19 @@ async function processSession(token, userEmail = "") {
         localStorage.setItem("jxa_user_email", stateData.user.email);
       }
       
+      if (stateData.role === "admin") {
+        statusText.textContent = "Admin privileges verified. Redirecting...";
+        setTimeout(() => window.location.replace("admin/index.html"), 400);
+        return;
+      }
+      
       const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
       if (hasProfile) {
         localStorage.setItem("jxa_local_profile", JSON.stringify(stateData.profile));
         localStorage.setItem("jxa_local_state", JSON.stringify(stateData));
         statusText.textContent = "Redirecting to dashboard...";
         setTimeout(() => {
-          if (stateData.role === "admin") {
-            window.location.replace("admin/index.html");
-          } else {
-            window.location.replace("dashboard.html");
-          }
+          window.location.replace("dashboard.html");
         }, 500);
       } else {
         statusText.textContent = "Launching onboarding wizard...";

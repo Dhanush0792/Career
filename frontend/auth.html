@@ -246,17 +246,19 @@ async function processOAuthSession(token, userEmail = '') {
         localStorage.setItem('jxa_user_email', stateData.user.email);
       }
 
+      if (stateData.role === 'admin') {
+        addLog('Admin privileges verified. Redirecting to Command Center...', 'success');
+        setTimeout(() => window.location.href = 'admin/index.html', 400);
+        return;
+      }
+
       const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
       if (hasProfile) {
         localStorage.setItem('jxa_local_profile', JSON.stringify(stateData.profile));
         localStorage.setItem('jxa_local_state', JSON.stringify(stateData));
         addLog('Profile synchronized. Redirecting to dashboard...', 'success');
         setTimeout(() => {
-          if (stateData.role === 'admin') {
-            window.location.href = 'admin/index.html';
-          } else {
-            window.location.href = 'dashboard.html';
-          }
+          window.location.href = 'dashboard.html';
         }, 500);
       } else {
         addLog('Launching onboarding wizard...', 'info');
