@@ -1,0 +1,101 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="none">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="facetTopLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C71F5"/>
+      <stop offset="50%" stop-color="#5B4FE8"/>
+      <stop offset="100%" stop-color="#3B2FC9"/>
+    </linearGradient>
+
+    <linearGradient id="facetTopRight" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#55EBD7"/>
+      <stop offset="50%" stop-color="#2FDDC4"/>
+      <stop offset="100%" stop-color="#18BBA3"/>
+    </linearGradient>
+
+    <linearGradient id="facetBottomLeft" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4F3FD6"/>
+      <stop offset="70%" stop-color="#2A9D8F"/>
+      <stop offset="100%" stop-color="#2FDDC4"/>
+    </linearGradient>
+
+    <linearGradient id="facetBottomRight" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#149A86"/>
+      <stop offset="50%" stop-color="#2FDDC4"/>
+      <stop offset="100%" stop-color="#5B4FE8"/>
+    </linearGradient>
+
+    <!-- 3D Extrusion Depths -->
+    <linearGradient id="depthDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F1226"/>
+      <stop offset="100%" stop-color="#060814"/>
+    </linearGradient>
+    
+    <linearGradient id="depthBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#252A4A"/>
+      <stop offset="100%" stop-color="#0E1225"/>
+    </linearGradient>
+
+    <linearGradient id="centerDiamond" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8F85FF"/>
+      <stop offset="50%" stop-color="#5B4FE8"/>
+      <stop offset="100%" stop-color="#2FDDC4"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Specular Bevel Highlight -->
+    <linearGradient id="glint" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+      <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 3D Shadow Depth Underneath -->
+  <g transform="translate(0, 18)" opacity="0.6">
+    <path d="M120 70 L216 70 L256 160 L296 70 L392 70 L310 230 L402 410 L306 410 L256 310 L206 410 L110 410 L202 230 Z" fill="#03050C" filter="url(#softGlow)"/>
+  </g>
+
+  <!-- 3D Extrusion Thickness Walls -->
+  <g id="extrusionWalls">
+    <!-- Bottom right side walls -->
+    <polygon points="392,70 412,90 330,250 310,230" fill="url(#depthDark)"/>
+    <polygon points="310,230 330,250 422,430 402,410" fill="url(#depthDark)"/>
+    <polygon points="402,410 422,430 326,430 306,410" fill="url(#depthDark)"/>
+    <polygon points="206,410 226,430 130,430 110,410" fill="url(#depthDark)"/>
+    <polygon points="256,310 276,330 226,430 206,410" fill="url(#depthBevel)"/>
+  </g>
+
+  <!-- Main 3D Front Facets of X -->
+  <!-- Top Left Arm -->
+  <polygon points="120,70 216,70 256,160 190,195" fill="url(#facetTopLeft)"/>
+  <polygon points="120,70 190,195 155,230" fill="#4B3EC8"/>
+
+  <!-- Top Right Arm -->
+  <polygon points="296,70 392,70 340,195 256,160" fill="url(#facetTopRight)"/>
+  <polygon points="392,70 357,230 340,195" fill="#20BFA7"/>
+
+  <!-- Bottom Left Arm -->
+  <polygon points="155,230 190,265 110,410 80,360" fill="#3D30B8"/>
+  <polygon points="190,265 256,300 206,410 110,410" fill="url(#facetBottomLeft)"/>
+
+  <!-- Bottom Right Arm -->
+  <polygon points="357,230 402,410 306,410 256,300" fill="url(#facetBottomRight)"/>
+  <polygon points="357,230 322,265 306,410 402,410" fill="#1CA994"/>
+
+  <!-- Central Diamond Core -->
+  <polygon points="256,160 322,230 256,300 190,230" fill="url(#centerDiamond)"/>
+  
+  <!-- Inner Cutout Diamond (Geometric Portal) -->
+  <polygon points="256,190 290,230 256,270 222,230" fill="#080C1B"/>
+
+  <!-- Chamfer Highlight / Glint Along Top Edges -->
+  <polyline points="120,70 216,70 256,160 296,70 392,70" stroke="url(#glint)" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <circle cx="122" cy="72" r="6" fill="#FFFFFF" opacity="0.9" filter="url(#softGlow)"/>
+  <circle cx="390" cy="72" r="5" fill="#55EBD7" opacity="0.8" filter="url(#softGlow)"/>
+</svg>
