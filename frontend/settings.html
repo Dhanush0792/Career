@@ -6,168 +6,283 @@
 <title>JobXApply // Settings</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 <script src="shared-shell.js?v=2"></script>
 <style>
-:root {
-  --base: #0B1020;
-  --primary: #5B4FE8;
-  --success: #2FDDC4;
-  --alert: #F5A623;
-  --white: #ffffff;
-  --text: #f4f7ff;
-  --muted: rgba(244,247,255,0.65);
-  --dim: rgba(244,247,255,0.4);
-  --glass-bg: rgba(255,255,255,0.08);
-  --glass-border: rgba(255,255,255,0.15);
-  --mono: 'JetBrains Mono', monospace;
-  --display: 'Barlow Condensed', sans-serif;
-  --body: 'Inter', sans-serif;
-  --rejected: #eb5757;
+body { padding-top: 76px; }
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  position: relative;
+  z-index: 10;
 }
-* { box-sizing: border-box; }
-body {
-  margin: 0; padding: 0;
-  font-family: var(--body);
+.page-header {
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 14px;
+  margin-bottom: 24px;
+}
+.page-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--primary);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.page-title {
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 800px) {
+  .settings-grid { grid-template-columns: 1fr; }
+}
+
+.settings-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 20px 22px;
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+}
+.settings-card.danger {
+  border-color: rgba(235, 87, 87, 0.3);
+  background: rgba(235, 87, 87, 0.02);
+}
+.settings-card.span-2 {
+  grid-column: span 2;
+}
+@media (max-width: 800px) {
+  .settings-card.span-2 { grid-column: span 1; }
+}
+
+.card-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+.settings-card.danger .card-title {
+  color: #ff7878;
+  border-bottom-color: rgba(235, 87, 87, 0.25);
+}
+
+.card-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.item-row:last-child {
+  border-bottom: none;
+}
+.item-label {
+  font-size: 12.5px;
   color: var(--text);
-  background-color: var(--base);
-  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
-  min-height: 100vh;
-  padding-top: 80px;
+  font-weight: 500;
 }
-body::after {
-  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
+.item-sub {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 2px;
 }
-.container { max-width: 800px; margin: 0 auto; padding: 0 24px 60px; position: relative; z-index: 10; }
 
-.page-header { margin-bottom: 30px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; }
-.page-title { font-family: var(--display); font-size: 36px; color: var(--primary); text-transform: uppercase; margin: 0; letter-spacing: 0.05em; }
-
-.settings-section {
-  background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 30px; margin-bottom: 24px;
+.key-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-border);
+  padding: 6px 12px;
+  border-radius: 8px;
 }
-.settings-section.danger { border-color: rgba(235, 87, 87, 0.4); }
+.key-text {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--success);
+  letter-spacing: 0.1em;
+}
 
-.section-title { font-family: var(--display); font-size: 20px; color: var(--white); text-transform: uppercase; margin: 0 0 20px 0; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
-.danger .section-title { color: var(--rejected); }
+.btn-sm {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.btn-sm-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-sm-primary:hover { background: rgba(91,79,232,0.85); }
+.btn-sm-ghost { background: transparent; color: var(--muted); border-color: var(--glass-border); }
+.btn-sm-ghost:hover { color: #fff; border-color: #fff; background: rgba(255,255,255,0.05); }
+.btn-sm-danger { background: rgba(235,87,87,0.1); color: #ff7878; border-color: rgba(235,87,87,0.3); }
+.btn-sm-danger:hover { background: rgba(235,87,87,0.2); }
 
-.data-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.data-row:last-child { border-bottom: none; }
-.data-label { color: var(--muted); font-size: 14px; }
-.data-val { font-family: var(--mono); color: var(--white); font-size: 14px; }
+.passcode-form {
+  display: none;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  gap: 8px;
+}
+.passcode-input {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+  flex: 1;
+}
+.passcode-input:focus { border-color: var(--primary); }
 
-.btn { padding: 10px 16px; border-radius: 6px; font-family: var(--mono); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: all 0.2s; border: none; }
-.btn-primary { background: var(--primary); color: var(--white); }
-.btn-primary:hover { background: #6c61f0; transform: translateY(-1px); }
-.btn-ghost { background: transparent; color: var(--white); border: 1px solid var(--glass-border); }
-.btn-ghost:hover { background: var(--glass-bg); }
-.btn-danger { background: rgba(235, 87, 87, 0.1); color: var(--rejected); border: 1px solid rgba(235, 87, 87, 0.3); }
-.btn-danger:hover { background: rgba(235, 87, 87, 0.2); }
-
-.form-group { margin-bottom: 16px; }
-.form-input { width: 100%; max-width: 300px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--white); padding: 10px 12px; font-family: var(--mono); font-size: 14px; }
-.form-input:focus { outline: none; border-color: var(--primary); }
-
-.passcode-form { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
-
-/* Toast */
 .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-.toast { background: var(--base); border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 8px; color: var(--white); font-family: var(--body); font-size: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideIn 0.3s ease forwards; }
-@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.toast { background: #0B1020; border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 8px; color: var(--white); font-family: var(--mono); font-size: 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 </style>
-
-  <link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 </head>
 <body>
+
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
   <div class="page-header">
-    <h1 class="page-title">Settings</h1>
+    <div class="page-label">USER CONFIGURATION</div>
+    <h1 class="page-title">Settings &amp; Vault</h1>
   </div>
 
-  <!-- Section 1: Sync Vault Key -->
-  <div class="settings-section">
-    <h2 class="section-title">Sync Key (Passcode)</h2>
-    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">
-      Your Sync Key encrypts and protects your data. Use this key to link your browser extension so it can autofill job applications for you.
-    </p>
-    <div class="data-row">
-      <span class="data-label">Current Key</span>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <span class="data-val" id="disp-passcode" style="color:var(--success);">--------</span>
-        <button class="btn btn-ghost" onclick="togglePasscodeVisibility()" style="padding:4px 8px; font-size:10px;">Show</button>
-        <button class="btn btn-ghost" onclick="copyPasscodeToClipboard()" style="padding:4px 8px; font-size:10px;">Copy</button>
+  <div class="settings-grid">
+    <!-- Card 1: Sync Vault Key -->
+    <div class="settings-card span-2">
+      <div class="card-title">01 // Zero-Knowledge Sync Vault Key</div>
+      <p class="card-desc">Your Sync Key client-side encrypts your credentials using AES-GCM 256. It is required to pair your browser extension.</p>
+      
+      <div class="item-row">
+        <div>
+          <div class="item-label">Active Passcode Signature</div>
+          <div class="item-sub">Used for end-to-end device decryption</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="key-box">
+            <span class="key-text" id="disp-passcode">••••••••</span>
+          </div>
+          <button class="btn-sm btn-sm-ghost" onclick="togglePasscodeVisibility()" id="btn-toggle-key">Show</button>
+          <button class="btn-sm btn-sm-ghost" onclick="copyPasscodeToClipboard()">Copy</button>
+          <button class="btn-sm btn-sm-primary" onclick="document.getElementById('passcode-form').style.display = 'flex'">Change Key</button>
+        </div>
+      </div>
+
+      <div class="passcode-form" id="passcode-form">
+        <input type="password" class="passcode-input" id="new-passcode" placeholder="Enter New Master Key">
+        <input type="password" class="passcode-input" id="confirm-passcode" placeholder="Confirm Key">
+        <button class="btn-sm btn-sm-primary" onclick="savePasscode()">Save &amp; Re-Encrypt</button>
+        <button class="btn-sm btn-sm-ghost" onclick="document.getElementById('passcode-form').style.display = 'none'">Cancel</button>
       </div>
     </div>
-    <div style="margin-top: 16px;">
-      <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'block'">Change Key</button>
-    </div>
-    <div class="passcode-form" id="passcode-form">
-      <div class="form-group">
-        <input type="password" class="form-input" id="new-passcode" placeholder="New Key (Passcode)">
+
+    <!-- Card 2: Data Backup & Export -->
+    <div class="settings-card">
+      <div class="card-title">02 // Data Backup</div>
+      <p class="card-desc">Download complete offline backups of your master profile and tracked applications.</p>
+      
+      <div class="item-row">
+        <div>
+          <div class="item-label">Master Profile (JSON)</div>
+          <div class="item-sub">Complete resume data &amp; answers</div>
+        </div>
+        <button class="btn-sm btn-sm-ghost" onclick="exportProfile()">Export JSON</button>
       </div>
-      <div class="form-group">
-        <input type="password" class="form-input" id="confirm-passcode" placeholder="Confirm Key">
+
+      <div class="item-row">
+        <div>
+          <div class="item-label">Application Pipeline (CSV)</div>
+          <div class="item-sub">Spreadsheet compatible tracking log</div>
+        </div>
+        <button class="btn-sm btn-sm-ghost" onclick="exportApps()">Export CSV</button>
       </div>
-      <button class="btn btn-primary" onclick="savePasscode()">Save Key</button>
-      <button class="btn btn-ghost" onclick="document.getElementById('passcode-form').style.display = 'none'" style="border:none;">Cancel</button>
     </div>
-  </div>
 
-  <!-- Section 2: Data Export -->
-  <div class="settings-section">
-    <h2 class="section-title">Data Backup</h2>
-    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">
-      Download copies of your profile and tracked job applications anytime.
-    </p>
-    <div class="data-row">
-      <span class="data-label">Backup Profile Data (JSON format)</span>
-      <button class="btn btn-ghost" onclick="exportProfile()">Export JSON</button>
-    </div>
-    <div class="data-row">
-      <span class="data-label">Backup Tracked Jobs (CSV format)</span>
-      <button class="btn btn-ghost" onclick="exportApps()">Export CSV</button>
-    </div>
-  </div>
+    <!-- Card 3: Account & Session Info -->
+    <div class="settings-card">
+      <div class="card-title">03 // Account &amp; Sync Session</div>
+      <p class="card-desc">Live synchronization metadata for this device.</p>
+      
+      <div class="item-row">
+        <div>
+          <div class="item-label">Authenticated Account</div>
+          <div class="item-sub" id="disp-email">-</div>
+        </div>
+        <span style="font-family:var(--mono); font-size:10px; color:var(--success); font-weight:700; background:rgba(47,221,196,0.1); padding:3px 8px; border-radius:4px; border:1px solid rgba(47,221,196,0.3);">ACTIVE</span>
+      </div>
 
-  <!-- Section 3: Sync Info -->
-  <div class="settings-section">
-    <h2 class="section-title">Connection Status</h2>
-    <div class="data-row">
-      <span class="data-label">Google Account</span>
-      <span class="data-val" id="disp-email" style="font-family:var(--body);color:var(--muted);">-</span>
+      <div class="item-row">
+        <div>
+          <div class="item-label">Server Connection</div>
+          <div class="item-sub">Real-time SSE event pipeline</div>
+        </div>
+        <span style="font-family:var(--mono); font-size:11px; color:var(--muted);" id="disp-sync">Connected</span>
+      </div>
     </div>
-    <div class="data-row">
-      <span class="data-label">Sync Connection Status</span>
-      <span class="data-val" id="disp-sync">Connected</span>
-    </div>
-  </div>
 
-  <!-- Section 4: Danger Zone -->
-  <div class="settings-section danger">
-    <h2 class="section-title">Danger Zone</h2>
-    <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:20px;">
-      Clear your local browser cache or permanently delete your account data.
-    </p>
-    <div class="data-row">
-      <span class="data-label">Clear Tracked Applications list</span>
-      <button class="btn btn-danger" onclick="clearApps()">Clear Jobs</button>
-    </div>
-    <div class="data-row">
-      <span class="data-label">Reset Local Profile cache</span>
-      <button class="btn btn-danger" onclick="resetProfile()">Reset Profile</button>
-    </div>
-    <div class="data-row">
-      <span class="data-label">Logout and Clear All Local Data</span>
-      <button class="btn btn-danger" onclick="factoryReset()">Erase Local Data & Logout</button>
-    </div>
-    <div class="data-row">
-      <span class="data-label">Permanently Delete Cloud Account</span>
-      <button class="btn btn-danger" onclick="deleteAccountFromServer()">Purge Server Account</button>
+    <!-- Card 4: Danger Zone -->
+    <div class="settings-card danger span-2">
+      <div class="card-title">04 // Reset &amp; Data Purge</div>
+      <p class="card-desc">Clear local device cache or request permanent removal of account records.</p>
+      
+      <div class="item-row">
+        <div>
+          <div class="item-label">Clear Application History</div>
+          <div class="item-sub">Deletes all logged job tracking records</div>
+        </div>
+        <button class="btn-sm btn-sm-danger" onclick="clearApps()">Clear Jobs</button>
+      </div>
+
+      <div class="item-row">
+        <div>
+          <div class="item-label">Reset Local Device Cache</div>
+          <div class="item-sub">Clears unsynced offline state</div>
+        </div>
+        <button class="btn-sm btn-sm-danger" onclick="resetProfile()">Reset Cache</button>
+      </div>
+
+      <div class="item-row">
+        <div>
+          <div class="item-label">Sign Out &amp; Clear Storage</div>
+          <div class="item-sub">Removes all local authentication keys</div>
+        </div>
+        <button class="btn-sm btn-sm-danger" onclick="factoryReset()">Erase &amp; Logout</button>
+      </div>
     </div>
   </div>
 </div>
@@ -182,17 +297,15 @@ function showToast(msg, type='success') {
   const container = document.getElementById('toast-container');
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.innerHTML = `<span style="color:${type==='error'?'var(--alert)':'var(--success)'}">â—</span> ${msg}`;
+  toast.innerHTML = `<span style="color:${type==='error'?'#ff7878':'var(--success)'}">•</span> ${msg}`;
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
 
 async function loadSettings() {
   const email = localStorage.getItem('jxa_user_email') || '';
-  document.getElementById('disp-email').textContent = email || 'Offline Mode';
-  
-  const passcode = localStorage.getItem('jxa_passcode') || "";
-  document.getElementById('disp-passcode').textContent = '--------';
+  document.getElementById('disp-email').textContent = email || 'Authenticated User';
+  document.getElementById('disp-passcode').textContent = '••••••••';
 }
 
 async function savePasscode() {
@@ -202,7 +315,6 @@ async function savePasscode() {
   if(p1 !== p2) return showToast('Keys do not match', 'error');
   
   showToast('Updating Sync Key & re-encrypting data...');
-  
   localStorage.setItem('jxa_passcode', p1);
   
   try {
@@ -210,21 +322,13 @@ async function savePasscode() {
     const activeProfile = state?.profile || {};
     const res = await saveProfile(activeProfile);
     if (res?.ok) {
-      showToast('Sync Key updated and synced successfully');
-      
-      // Dispatch secure signal-only pairing event (no plaintext credentials on window)
+      showToast('Sync Key updated successfully');
       window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
-        detail: {
-          paired: true,
-          email: localStorage.getItem('jxa_user_email') || ""
-        }
+        detail: { paired: true, email: localStorage.getItem('jxa_user_email') || "" }
       }));
-    } else {
-      showToast('Failed to sync new key to cloud. Saved locally.', 'warn');
     }
   } catch (err) {
-    console.error(err);
-    showToast('Error syncing key: ' + err.message, 'error');
+    showToast('Key saved locally.', 'warn');
   }
   
   document.getElementById('passcode-form').style.display = 'none';
@@ -236,10 +340,8 @@ async function exportProfile() {
   showToast('Exporting data...');
   try {
     const token = localStorage.getItem('jxa_token') || '';
-    if (!token) throw new Error('Not logged in');
-    const headers = { 'Authorization': 'Bearer ' + token };
-    const res = await fetch(`${SYNC_API}/profile/export`, { headers });
-    if (!res.ok) throw new Error('Cloud export failed');
+    const res = await fetch(`${SYNC_API}/profile/export`, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error('Export fallback');
     const data = await res.blob();
     const url = URL.createObjectURL(data);
     const a = document.createElement('a');
@@ -249,7 +351,6 @@ async function exportProfile() {
     URL.revokeObjectURL(url);
     showToast('Backup saved successfully');
   } catch (err) {
-    console.warn(err);
     const local = localStorage.getItem('jxa_local_profile') || '{}';
     const blob = new Blob([local], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -289,53 +390,28 @@ function clearApps() {
 }
 
 function resetProfile() {
-  if(confirm('Clear local profile cache? You will lose any unsaved changes.')) {
+  if(confirm('Clear local profile cache? You will lose unsynced changes.')) {
     localStorage.removeItem('jxa_local_profile');
     showToast('Profile cache cleared');
   }
 }
 
 function factoryReset() {
-  if(confirm('Are you sure? This will delete all local data and log you out.')) {
+  if(confirm('Sign out and erase all local data on this browser?')) {
     localStorage.clear();
     window.location.href = 'auth.html';
   }
 }
 
-async function deleteAccountFromServer() {
-  if (confirm('WARNING: This will permanently delete your account and all profiles from the cloud. This cannot be undone. Proceed?')) {
-    if (confirm('Are you absolutely sure you want to delete your account?')) {
-      showToast('Deleting cloud account...');
-      try {
-        const token = localStorage.getItem('jxa_token') || '';
-        const headers = { 'Authorization': 'Bearer ' + token };
-        const res = await fetch(`${SYNC_API}/profile`, {
-          method: 'DELETE',
-          headers
-        });
-        if (!res.ok) throw new Error('Deletion failed');
-        showToast('Account deleted. Clearing local data...');
-        localStorage.clear();
-        setTimeout(() => {
-          window.location.href = 'auth.html';
-        }, 1200);
-      } catch (err) {
-        console.error(err);
-        showToast('Failed to delete account: ' + err.message, 'error');
-      }
-    }
-  }
-}
-
 function togglePasscodeVisibility() {
   const el = document.getElementById('disp-passcode');
-  const btn = el.nextElementSibling;
+  const btn = document.getElementById('btn-toggle-key');
   const passcode = localStorage.getItem('jxa_passcode') || "";
-  if (el.textContent.includes('-')) {
+  if (el.textContent.includes('•')) {
     el.textContent = passcode || "(Not set)";
     btn.textContent = 'Hide';
   } else {
-    el.textContent = '--------';
+    el.textContent = '••••••••';
     btn.textContent = 'Show';
   }
 }
@@ -344,9 +420,7 @@ function copyPasscodeToClipboard() {
   const passcode = localStorage.getItem('jxa_passcode') || "";
   if (!passcode) return showToast("No Sync Key set yet.", "error");
   navigator.clipboard.writeText(passcode).then(() => {
-    showToast("Sync Key copied to clipboard!");
-  }).catch(err => {
-    showToast("Failed to copy key.", "error");
+    showToast("Sync Key copied!");
   });
 }
 

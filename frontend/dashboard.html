@@ -242,7 +242,7 @@ select.form-input { cursor:pointer; }
           <div class="tool-btn__desc">Market percentiles &amp; counter-offer scripts.</div>
         </a>
         <a href="extension-setup.html" class="tool-btn">
-          <div class="tool-btn__icon">âŠ•</div>
+          <div class="tool-btn__icon">Š•</div>
           <div class="tool-btn__title">EXTENSION SETUP</div>
           <div class="tool-btn__desc">Install and pair browser autofill.</div>
         </a>
@@ -299,7 +299,7 @@ function addLog(text, cls = '') {
   consoleBox.scrollTop = consoleBox.scrollHeight;
 }
 
-// â”€â”€ Profile rendering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Profile rendering ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function renderProfileState(state) {
   const profile = state?.profile || {};
   const { count, total, pct } = calcCompleteness(profile);
@@ -354,7 +354,7 @@ function renderProfileState(state) {
   }
 }
 
-// â”€â”€ Application tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Application tracker ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function renderTracker() {
   const apps = loadApplications();
   const wrap = document.getElementById('tracker-wrap');
@@ -451,7 +451,7 @@ function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// â”€â”€ Add Application Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Add Application Modal ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 const modal = document.getElementById('add-app-modal');
 document.getElementById('open-add-modal').addEventListener('click', () => {
   // Set today as default date
@@ -482,7 +482,7 @@ document.getElementById('modal-save').addEventListener('click', () => {
   addLog(`Logged: ${company} - ${role}`, 'success');
 });
 
-// â”€â”€ Profile Selector & Modal Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Profile Selector & Modal Actions ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 const profileSelect = document.getElementById('active-profile-select');
 profileSelect.addEventListener('change', async (e) => {
   const newActiveId = e.target.value;
@@ -525,7 +525,7 @@ document.getElementById('profile-modal-save').addEventListener('click', async ()
   }
 });
 
-// â”€â”€ SSE + Initial Load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ SSE + Initial Load ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 const syncDot = document.getElementById('sync-dot');
 const syncLabel = document.getElementById('sync-label');
 

@@ -720,7 +720,7 @@ function renderTable(filtered) {
     const stalled = isStalledApp(app);
     
     const compRole = `
-      <div class="company-name">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--primary);text-decoration:none;">${esc(app.company)} â†—</a>` : esc(app.company)}</div>
+      <div class="company-name">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--primary);text-decoration:none;">${esc(app.company)} †—</a>` : esc(app.company)}</div>
       <div class="role-name">${esc(app.role)}</div>
     `;
     
@@ -787,7 +787,7 @@ function renderKanban(filtered) {
 
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div class="kanban-card-title">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--white); text-decoration:none;">${esc(app.company)} â†—</a>` : esc(app.company)}</div>
+          <div class="kanban-card-title">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--white); text-decoration:none;">${esc(app.company)} †—</a>` : esc(app.company)}</div>
           <div style="display:flex; gap:4px;">
             <button class="btn-icon outreach" onclick="openOutreachModal('${app.id}')" style="padding:2px 5px; font-size:9px;">Draft</button>
             <button class="btn-icon" onclick="editApp('${app.id}')" style="padding:2px 5px; font-size:9px;">Edit</button>

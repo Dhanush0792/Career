@@ -334,8 +334,8 @@ body::after {
       </div>
 
       <div style="display:flex;gap:8px;">
-        <button class="dl-btn" onclick="regenerateCode()" style="flex:1;justify-content:center;">â†» NEW CODE</button>
-        <button class="dl-btn" onclick="copyCode()" id="copy-btn" style="flex:1;justify-content:center;">âŠ• COPY CODE</button>
+        <button class="dl-btn" onclick="regenerateCode()" style="flex:1;justify-content:center;">†» NEW CODE</button>
+        <button class="dl-btn" onclick="copyCode()" id="copy-btn" style="flex:1;justify-content:center;">Š• COPY CODE</button>
       </div>
 
       <!-- Extension connection status -->
@@ -407,7 +407,7 @@ body::after {
       <div class="card__title">04 // HOW AUTOFILL WORKS</div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;">
         <div style="padding:16px;border-right:1px solid var(--glass-border);text-align:center;">
-          <div style="font-size:24px;margin-bottom:8px;">âŠ•</div>
+          <div style="font-size:24px;margin-bottom:8px;">Š•</div>
           <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px;">DETECT</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5;">Extension detects the portal by URL pattern and picks the right fill engine</div>
         </div>
@@ -451,7 +451,7 @@ function addLog(text, cls = '') {
   consoleBox.scrollTop = consoleBox.scrollHeight;
 }
 
-// â”€â”€ Browser SVG Icons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Browser SVG Icons ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 const BROWSER_SVGS = {
   edge: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M21.5 14.5C21.5 19.19 17.69 23 13 23C8.31 23 4.5 19.19 4.5 14.5C4.5 14.17 4.52 13.84 4.55 13.52C5.66 14.95 7.4 15.87 9.36 15.87C13.04 15.87 16.06 12.84 16.06 9.16C16.06 7.73 15.59 6.41 14.8 5.34C18.74 6.67 21.5 10.26 21.5 14.5Z" fill="#0078D4"/>
@@ -477,7 +477,7 @@ const BROWSER_SVGS = {
   </svg>`
 };
 
-// â”€â”€ Browser Detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Browser Detection ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function detectBrowser() {
   const ua = navigator.userAgent;
   const iconEl  = document.getElementById('browser-icon');
@@ -523,7 +523,7 @@ function detectBrowser() {
 }
 detectBrowser();
 
-// â”€â”€ Add to Browser button (Modal approach) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Add to Browser button (Modal approach) ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function handleAddToBrowser() {
   const ua = navigator.userAgent;
   let managerUrl = 'chrome://extensions';
@@ -592,7 +592,7 @@ function handleAddToBrowser() {
 
 
 
-// â”€â”€ Download Extension â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Download Extension ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function downloadExtension() {
   addLog('[DOWNLOAD] Requesting extension package from server...', 'info');
 
@@ -619,7 +619,7 @@ function downloadExtension() {
     });
 }
 
-// â”€â”€ Browser Tab Switcher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Browser Tab Switcher ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function switchBrowserTab(browser) {
   document.querySelectorAll('.btab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.btab-panel').forEach(p => p.classList.remove('active'));
@@ -629,7 +629,7 @@ function switchBrowserTab(browser) {
   if (panel) panel.classList.add('active');
 }
 
-// â”€â”€ Pairing Code â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Pairing Code ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 let codeValue = '';
 let expiryTimer = null;
 let expirySeconds = 300;
@@ -673,7 +673,7 @@ function copyCode() {
   navigator.clipboard?.writeText(codeValue).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.textContent = '[OK] COPIED';
-    setTimeout(() => btn.textContent = 'âŠ• COPY CODE', 2000);
+    setTimeout(() => btn.textContent = 'Š• COPY CODE', 2000);
     addLog('[COPY] Code copied to clipboard.', 'success');
   }).catch(() => {
     showToast('Copy failed - select the code manually.', 'error');
@@ -683,7 +683,7 @@ function copyCode() {
 // Initial code
 generateCode();
 
-// â”€â”€ Simulate Pairing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ”€”€ Simulate Pairing ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function simulatePairing() {
   const btn = document.getElementById('simulate-pair-btn');
   btn.disabled = true;

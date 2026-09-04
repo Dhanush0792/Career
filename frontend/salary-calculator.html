@@ -301,7 +301,7 @@ body::after {
       </div>
 
       <div class="form-group">
-        <label class="form-label">Offered Base Salary ($ or â‚¹ in LPA)</label>
+        <label class="form-label">Offered Base Salary ($ or ‚¹ in LPA)</label>
         <input type="number" class="form-input" id="inp-offer" placeholder="e.g. 135000 or 18" value="130000">
       </div>
 
@@ -422,7 +422,7 @@ function calculateSalaryBenchmark() {
   const rawOffer = parseFloat(document.getElementById('inp-offer').value) || 0;
 
   const isIndia = location.startsWith('in_');
-  const currencySymbol = isIndia ? 'â‚¹' : '$';
+  const currencySymbol = isIndia ? '‚¹' : '$';
   const currencySuffix = isIndia ? ' LPA' : '';
 
   const roleData = SALARY_BENCHMARKS[role] || SALARY_BENCHMARKS.swe_mid;
