@@ -46,7 +46,7 @@ body::after {
   width: 100%;
   max-width: 420px;
   border: 1px solid var(--border);
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.75);
   border-radius: 24px;
   padding: 36px 28px;
   backdrop-filter: blur(24px);
@@ -60,11 +60,11 @@ body::after {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 .brand-mark {
   font-family: var(--display);
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 900;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -218,7 +218,6 @@ const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5c
 let supabaseClient = null;
 
 const btnGoogle = document.getElementById('btn-google');
-const btnText = document.getElementById('btn-text');
 const statusBadge = document.getElementById('status-badge');
 const statusMsg = document.getElementById('status-msg');
 
@@ -247,7 +246,7 @@ async function processOAuthSession(token, userEmail = '') {
   if (isProcessingOAuth || !token) return;
   isProcessingOAuth = true;
 
-  btnGoogle.disabled = true;
+  if (btnGoogle) btnGoogle.disabled = true;
   showStatus('Verifying session...');
 
   const email = userEmail || parseJwtEmail(token);
@@ -294,7 +293,16 @@ async function processOAuthSession(token, userEmail = '') {
   }
 }
 
-// 1. Check for incoming access_token in URL hash
+// 1. Initialize Supabase Client
+if (SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase !== 'undefined') {
+  try {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch(e) {
+    console.warn('Supabase initialization warning:', e);
+  }
+}
+
+// 2. Check for incoming access_token in URL hash
 if (window.location.hash && window.location.hash.includes('access_token')) {
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
   const hashToken = hashParams.get('access_token');
@@ -303,46 +311,33 @@ if (window.location.hash && window.location.hash.includes('access_token')) {
   }
 }
 
-// 2. Initialize Supabase Client
-if (SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase !== 'undefined') {
-  try {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-      if (session?.access_token) {
-        processOAuthSession(session.access_token, session.user?.email);
-      }
-    });
-
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      if (session?.access_token) {
-        processOAuthSession(session.access_token, session.user?.email);
-      }
-    });
-  } catch(e) {
-    console.warn('Supabase initialization warning:', e);
-  }
-}
-
 // 3. Trigger Google OAuth
 async function handleGoogleLogin() {
   if (!supabaseClient) {
-    alert('Google authentication service is unavailable. Please check internet connectivity.');
+    alert('Google authentication service is unavailable. Please check your internet connection.');
     return;
   }
   
   btnGoogle.disabled = true;
-  showStatus('Redirecting to Google Sign-In...');
+  showStatus('Opening Google Sign-In...');
   
   try {
+    // Clear any stale session first
+    try { await supabaseClient.auth.signOut(); } catch(_) {}
+
     const callbackUrl = new URL('auth-callback.html', window.location.href).href;
-    const { error } = await supabaseClient.auth.signInWithOAuth({
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: callbackUrl
+        redirectTo: callbackUrl,
+        skipBrowserRedirect: false
       }
     });
+
     if (error) throw error;
+    if (data?.url) {
+      window.location.href = data.url;
+    }
   } catch (err) {
     btnGoogle.disabled = false;
     if (statusBadge) statusBadge.style.display = 'none';
@@ -381,18 +376,6 @@ if (logoutReason && logoutReason !== 'unauthenticated') {
     desc.textContent = 'You have successfully signed out.';
     box.style.display = 'block';
   }
-}
-
-// 5. If valid active session already exists and not logged out, auto-redirect
-if (!logoutReason && localStorage.getItem('jxa_token') && !window.location.hash.includes('access_token')) {
-  showStatus('Active session detected. Redirecting...');
-  setTimeout(() => {
-    if (localStorage.getItem('jxa_role') === 'admin') {
-      window.location.replace('admin/index.html');
-    } else {
-      window.location.replace('dashboard.html');
-    }
-  }, 200);
 }
 </script>
 </body>
