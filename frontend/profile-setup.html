@@ -116,7 +116,8 @@ body::after {
       <button class="tab-btn" onclick="switchTab('tab-experience', this)">04 // EXPERIENCE <span>➔</span></button>
       <button class="tab-btn" onclick="switchTab('tab-documents', this)">05 // DOCUMENTS <span>➔</span></button>
       <button class="tab-btn" onclick="switchTab('tab-additional', this)">06 // ADDITIONAL <span>➔</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-security', this)">07 // SYNC & KEY <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-vault', this)">07 // Q&amp;A VAULT <span>➔</span></button>
+      <button class="tab-btn" onclick="switchTab('tab-security', this)">08 // SYNC &amp; KEY <span>➔</span></button>
     </div>
 
     <!-- Right Content Card -->
@@ -568,9 +569,60 @@ body::after {
           </div>
         </div>
 
-        <!-- Tab 7: Security & Sync -->
+        <!-- Tab 7: Q&A Vault & Saved Snippets -->
+        <div class="tab-pane" id="tab-vault">
+          <div class="section-title">07 / Behavioral Q&amp;A Vault &amp; Saved Application Snippets</div>
+          <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
+            Store your authentic, human-written responses for common application prompts. The JobXApply browser extension will automatically match and fill these fields on Workday, Greenhouse, Lever, Naukri, and other job portals.
+          </p>
+
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-q_why_hire">Why Should We Hire You? / Why Are You a Good Fit?</label>
+            <textarea id="f-q_why_hire" style="min-height: 110px;" placeholder="Highlight your unique combination of skills, achievements, and work ethic..."></textarea>
+          </div>
+
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-q_why_company">Why Do You Want to Work at Our Company?</label>
+            <textarea id="f-q_why_company" style="min-height: 110px;" placeholder="Describe your interest in company mission, engineering culture, or market leadership..."></textarea>
+          </div>
+
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-q_achievement">What Is Your Greatest Professional Achievement or Project?</label>
+            <textarea id="f-q_achievement" style="min-height: 110px;" placeholder="Detail a notable project, metric impact (e.g. 40% performance gain), or key milestone..."></textarea>
+          </div>
+
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-q_challenge">Describe a Significant Challenge You Overcame</label>
+            <textarea id="f-q_challenge" style="min-height: 110px;" placeholder="Situation, action taken, technical obstacle resolved, and the final outcome..."></textarea>
+          </div>
+
+          <div class="form-group full" style="margin-bottom: 16px;">
+            <label for="f-q_strengths_weaknesses">Core Strengths &amp; Areas of Continuous Improvement</label>
+            <textarea id="f-q_strengths_weaknesses" style="min-height: 100px;" placeholder="Outline your key strengths and a constructive growth area you actively refine..."></textarea>
+          </div>
+
+          <div class="form-group full" style="margin-bottom: 20px;">
+            <label for="f-q_leadership">Leadership Experience &amp; Initiative</label>
+            <textarea id="f-q_leadership" style="min-height: 100px;" placeholder="Provide an example of leading an initiative, mentoring peers, or taking ownership..."></textarea>
+          </div>
+
+          <!-- Dynamic Custom Snippets Section -->
+          <div style="border-top: 1px dashed var(--glass-border); padding-top: 18px; margin-top: 18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight:700;">
+                Custom Application Snippets
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="addCustomSnippet()" style="padding: 4px 10px; font-size: 10px;">+ Add Snippet</button>
+            </div>
+            <div id="custom-snippets-container" style="display:flex; flex-direction:column; gap:12px;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 8: Security & Sync -->
         <div class="tab-pane" id="tab-security">
-          <div class="section-title">07 / Sync Vault & Encryption Keys</div>
+          <div class="section-title">08 / Sync Vault & Encryption Keys</div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
             Your profile data is encrypted client-side using a secure vault passcode. Without this passcode, the server cannot read your plaintext profile.
           </p>
@@ -763,6 +815,7 @@ const FIELDS = [
   'alternativeEmail', 'pincode', 'maritalStatus', 'employmentStatus', 'expectedSalary', 'noticePeriod',
   'totalExperience', 'headline', 'skills', 'summary', 'linkedin', 'github', 'portfolio',
   'experience', 'resumeDraft', 'coverLetterDraft', 'otherDocuments', 'handicapped', 'healthIssues',
+  'q_why_hire', 'q_why_company', 'q_achievement', 'q_challenge', 'q_strengths_weaknesses', 'q_leadership',
   'edu10_school', 'edu10_board', 'edu10_year', 'edu10_cgpa',
   'edu12_school', 'edu12_board', 'edu12_year', 'edu12_cgpa',
   'eduGrad_college', 'eduGrad_degree', 'eduGrad_stream', 'eduGrad_year', 'eduGrad_cgpa',
@@ -773,6 +826,7 @@ const FIELDS = [
 
 let allPersonas = { "default": { profileName: "Primary Profile" } };
 let currentPersonaId = "default";
+let currentCustomSnippets = [];
 
 function updatePersonaDropdown() {
   const sel = document.getElementById("persona-selector");
@@ -788,6 +842,66 @@ function updatePersonaDropdown() {
   });
 }
 
+function renderCustomSnippets() {
+  const container = document.getElementById("custom-snippets-container");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (currentCustomSnippets.length === 0) {
+    container.innerHTML = '<div style="font-family:var(--mono); font-size:11px; color:var(--dim); padding:8px 0;">No custom snippets added yet. Click "+ Add Snippet" to add one.</div>';
+    return;
+  }
+
+  currentCustomSnippets.forEach((snip, idx) => {
+    const card = document.createElement("div");
+    card.style.background = "rgba(0,0,0,0.25)";
+    card.style.border = "1px solid var(--glass-border)";
+    card.style.borderRadius = "8px";
+    card.style.padding = "12px";
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <input type="text" value="${escHtml(snip.title || '')}" placeholder="Snippet Title (e.g. Relocation Willingness)" onchange="updateSnippetTitle(${idx}, this.value)" style="background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,0.15); color:var(--primary); font-family:var(--mono); font-size:11px; font-weight:700; width:65%; outline:none;">
+        <button type="button" class="btn btn-secondary" onclick="removeSnippet(${idx})" style="padding:2px 8px; font-size:10px; color:#ff7878; border-color:rgba(255,120,120,0.3);">Remove</button>
+      </div>
+      <input type="text" value="${escHtml(snip.aliases || '')}" placeholder="Match Keywords (comma-separated, e.g. relocate, willing to relocate, relocation)" onchange="updateSnippetAliases(${idx}, this.value)" style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); border-radius:4px; color:var(--muted); font-family:var(--mono); font-size:10px; width:100%; padding:6px 8px; margin-bottom:8px; outline:none;">
+      <textarea placeholder="Your pre-written answer..." onchange="updateSnippetBody(${idx}, this.value)" style="min-height:70px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:4px; color:var(--text); font-family:var(--body); font-size:11px; width:100%; padding:8px; outline:none;">${escHtml(snip.body || '')}</textarea>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function addCustomSnippet() {
+  currentCustomSnippets.push({
+    id: "snip_" + Date.now(),
+    title: "",
+    aliases: "",
+    body: ""
+  });
+  renderCustomSnippets();
+}
+
+function removeSnippet(idx) {
+  currentCustomSnippets.splice(idx, 1);
+  renderCustomSnippets();
+}
+
+function updateSnippetTitle(idx, val) {
+  if (currentCustomSnippets[idx]) currentCustomSnippets[idx].title = val;
+}
+
+function updateSnippetAliases(idx, val) {
+  if (currentCustomSnippets[idx]) currentCustomSnippets[idx].aliases = val;
+}
+
+function updateSnippetBody(idx, val) {
+  if (currentCustomSnippets[idx]) currentCustomSnippets[idx].body = val;
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function extractCurrentFormProfile() {
   const profile = {};
   FIELDS.forEach(f => {
@@ -798,6 +912,7 @@ function extractCurrentFormProfile() {
   profile.eduPG_pursuing = document.getElementById('f-eduPG_pursuing')?.checked || false;
   profile.eduMasters_pursuing = document.getElementById('f-eduMasters_pursuing')?.checked || false;
   profile.eduPhD_pursuing = document.getElementById('f-eduPhD_pursuing')?.checked || false;
+  profile.customSnippets = currentCustomSnippets;
 
   const activeRoles = [];
   document.querySelectorAll(".role-chip-cb:checked").forEach(cb => {
@@ -814,6 +929,10 @@ function populateFormFields(p) {
     const el = document.getElementById('f-' + f);
     if (el && p[f] !== undefined) el.value = p[f];
   });
+
+  // Custom Snippets
+  currentCustomSnippets = Array.isArray(p.customSnippets) ? p.customSnippets : [];
+  renderCustomSnippets();
 
   // Checkboxes
   document.getElementById('f-eduGrad_pursuing').checked = Boolean(p.eduGrad_pursuing);

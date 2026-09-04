@@ -7,6 +7,7 @@ export const DEFAULT_PROFILE_FIELDS = [
   "alternativeEmail", "pincode", "maritalStatus", "employmentStatus",
   "expectedSalary", "handicapped", "healthIssues", "targetRoles",
   "coverLetterDraft", "otherDocuments",
+  "q_why_hire", "q_why_company", "q_achievement", "q_challenge", "q_strengths_weaknesses", "q_leadership",
   "edu10_school", "edu10_board", "edu10_year", "edu10_cgpa",
   "edu12_school", "edu12_board", "edu12_year", "edu12_cgpa",
   "eduGrad_college", "eduGrad_degree", "eduGrad_stream", "eduGrad_year", "eduGrad_cgpa", "eduGrad_pursuing",
@@ -55,6 +56,14 @@ export const FIELD_ALIASES = {
   otherDocuments: ["other documents", "supporting documents", "additional documents"],
   noticePeriod: ["notice period", "notice", "days to join", "joining time"],
   totalExperience: ["total experience", "years of experience", "work experience", "experience in years", "experience (years)"],
+  
+  // Behavioral & Application Q&A Vault
+  q_why_hire: ["why should we hire you", "why hire", "why are you a good fit", "why fit for this role", "what makes you a good fit", "why you are the best candidate", "why should you be considered", "why do you think you are suitable"],
+  q_why_company: ["why do you want to work here", "why our company", "why join us", "why this company", "what interests you about this role", "why do you want to join", "why work at", "motivation to join"],
+  q_achievement: ["greatest achievement", "proudest project", "key accomplishment", "significant project", "major achievement", "most proud of", "key project"],
+  q_challenge: ["challenge you overcame", "difficult technical challenge", "conflict you resolved", "handled a setback", "problem you solved", "overcame an obstacle", "complex situation"],
+  q_strengths_weaknesses: ["strengths and weaknesses", "greatest strength", "area of improvement", "core strengths", "areas for improvement"],
+  q_leadership: ["leadership experience", "demonstrated initiative", "led a project", "mentored someone", "leadership", "taking initiative"],
   
   edu10_school: ["10th school", "10th board school", "ssc school", "matriculation school", "school name (10", "class x school", "class 10 school", "secondary school name", "high school name"],
   edu10_board: ["10th board", "ssc board", "matriculation board", "class x board", "class 10 board", "secondary board", "secondary school board"],

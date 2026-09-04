@@ -41,6 +41,14 @@ const FIELD_ALIASES = {
   noticeperiod: ["notice period", "notice", "days to join", "joining time"],
   totalexperience: ["total experience", "years of experience", "work experience", "experience in years", "experience (years)"],
   
+  // Behavioral & Application Q&A Vault
+  q_why_hire: ["why should we hire you", "why hire", "why are you a good fit", "why fit for this role", "what makes you a good fit", "why you are the best candidate", "why should you be considered", "why do you think you are suitable"],
+  q_why_company: ["why do you want to work here", "why our company", "why join us", "why this company", "what interests you about this role", "why do you want to join", "why work at", "motivation to join"],
+  q_achievement: ["greatest achievement", "proudest project", "key accomplishment", "significant project", "major achievement", "most proud of", "key project"],
+  q_challenge: ["challenge you overcame", "difficult technical challenge", "conflict you resolved", "handled a setback", "problem you solved", "overcame an obstacle", "complex situation"],
+  q_strengths_weaknesses: ["strengths and weaknesses", "greatest strength", "area of improvement", "core strengths", "areas for improvement"],
+  q_leadership: ["leadership experience", "demonstrated initiative", "led a project", "mentored someone", "leadership", "taking initiative"],
+  
   edu10_school: ["10th school", "10th board school", "ssc school", "matriculation school", "school name (10", "class x school", "class 10 school", "secondary school name", "high school name"],
   edu10_board: ["10th board", "ssc board", "matriculation board", "class x board", "class 10 board", "secondary board", "secondary school board"],
   edu10_year: ["10th passing year", "10th year", "ssc passing year", "matric_year", "matric year", "matriculation passing year", "class x passing year", "class 10 passing year", "year of passing (10", "year of completion (10", "secondary passing year"],
@@ -718,11 +726,25 @@ document.addEventListener("submit", handleSubmit, true);
         } else if (category === "eeo") {
           results.push({ field, status: "skipped", via: "eeo-rule" });
         } else if (category === "essay") {
-          const draft = `As a professional with experience in ${rawProfile.skills ? String(rawProfile.skills).split(',').slice(0, 3).join(', ') : 'product development'}, I am highly interested in this role. My background aligns with your core requirements, and I am excited about the opportunity to add value to your team.`;
-          setValue(el, draft);
-          el.style.outline = "2px solid #ffeb3b";
+          let chosenAnswer = value;
+          // Check if specific behavioral field matched or fallback to customSnippets / profile summary
+          if (!chosenAnswer && Array.isArray(rawProfile.customSnippets)) {
+            const normLabel = normalize(labelText);
+            for (const snip of rawProfile.customSnippets) {
+              const aliases = (snip.aliases || "").split(",").map(a => normalize(a)).filter(Boolean);
+              if (aliases.some(a => normLabel.includes(a) || a.includes(normLabel))) {
+                chosenAnswer = snip.body;
+                break;
+              }
+            }
+          }
+          if (!chosenAnswer) {
+            chosenAnswer = `As a professional with experience in ${rawProfile.skills ? String(rawProfile.skills).split(',').slice(0, 3).join(', ') : 'technology and problem solving'}, I am highly interested in this role. My background aligns directly with your core requirements, and I am excited about the opportunity to contribute to your team.`;
+          }
+          setValue(el, chosenAnswer);
+          el.style.outline = "2px solid #2fddc4";
           filledCount++;
-          results.push({ field, status: "drafted", via: "essay-rule" });
+          results.push({ field, status: "filled", via: "vault-essay-rule" });
         } else {
           setValue(el, value);
           filledCount++;
