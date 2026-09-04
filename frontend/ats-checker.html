@@ -229,6 +229,153 @@ body::after {
   background: rgba(11, 16, 32, 0.4);
   border-radius: 12px;
 }
+
+/* Tab Switcher for Results */
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+.view-tab-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.view-tab-btn:hover {
+  color: var(--white);
+  border-color: rgba(255,255,255,0.2);
+}
+.view-tab-btn.active {
+  background: rgba(91,79,232,0.18);
+  border-color: var(--primary);
+  color: var(--white);
+}
+
+/* Side-by-Side Visualizer */
+.visualizer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.visualizer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.visualizer-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.legend-dot.hit {
+  background: rgba(47, 221, 196, 0.25);
+  border: 1px solid var(--success);
+}
+.legend-dot.miss {
+  background: rgba(245, 166, 35, 0.2);
+  border: 1px solid var(--alert);
+}
+
+.visualizer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  height: 480px;
+}
+@media (max-width: 900px) {
+  .visualizer-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+.visualizer-pane {
+  background: rgba(7, 10, 24, 0.7);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pane-header {
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.pane-body {
+  padding: 14px;
+  overflow-y: auto;
+  font-family: var(--body);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.85);
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+}
+.pane-body::-webkit-scrollbar {
+  width: 5px;
+}
+.pane-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+
+/* Keyword Highlights */
+mark.kw-hit {
+  background: rgba(47, 221, 196, 0.18);
+  color: var(--success);
+  border-bottom: 2px solid var(--success);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+mark.kw-hit:hover, mark.kw-hit.active-focus {
+  background: rgba(47, 221, 196, 0.4);
+}
+mark.kw-miss {
+  background: rgba(245, 166, 35, 0.16);
+  color: #ffc254;
+  border-bottom: 2px dashed var(--alert);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+}
 </style>
 <link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
 </head>
@@ -300,85 +447,131 @@ body::after {
           </div>
         </div>
 
-        <!-- Progress breakdown -->
-        <div style="margin-top: 10px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--muted);">
-            <div>
-              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                <span>Parseability & Formatting (20%)</span>
-                <span id="score-parseability" style="color:var(--white);">0%</span>
+        <!-- Tab Switcher -->
+        <div class="view-tabs">
+          <button class="view-tab-btn active" id="tab-btn-summary" onclick="switchAtsView('summary')">Summary Breakdown</button>
+          <button class="view-tab-btn" id="tab-btn-visualizer" onclick="switchAtsView('visualizer')">Side-by-Side Match Visualizer</button>
+        </div>
+
+        <!-- View 1: Summary Breakdown -->
+        <div id="view-summary" style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- Progress breakdown -->
+          <div style="margin-top: 4px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-family: var(--mono); font-size: 11px; color: var(--muted);">
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                  <span>Parseability & Formatting (20%)</span>
+                  <span id="score-parseability" style="color:var(--white);">0%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                  <div id="bar-parseability" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+                </div>
               </div>
-              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                <div id="bar-parseability" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                  <span>Job Title Alignment (10%)</span>
+                  <span id="score-title" style="color:var(--white);">0%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                  <div id="bar-title" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                  <span>Keyword & Skill Coverage (30%)</span>
+                  <span id="score-keyword" style="color:var(--white);">0%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                  <div id="bar-keyword" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                  <span>Placement & Density (10%)</span>
+                  <span id="score-density" style="color:var(--white);">0%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                  <div id="bar-density" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                  <span>Achievement Quality (15%)</span>
+                  <span id="score-achievement" style="color:var(--white);">0%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                  <div id="bar-achievement" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+                  <span>Completeness & Hygiene (15%)</span>
+                  <span id="score-completeness" style="color:var(--white);">0%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                  <div id="bar-completeness" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+                </div>
               </div>
             </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                <span>Job Title Alignment (10%)</span>
-                <span id="score-title" style="color:var(--white);">0%</span>
+          </div>
+
+          <!-- Keywords & suggestions (gated for guests) -->
+          <div id="gated-results" style="position: relative; display: flex; flex-direction: column; gap: 20px;">
+            <div class="scanned-keywords">
+              <div class="kw-box">
+                <div class="kw-title" style="color:var(--success);">MATCHED KEYWORDS</div>
+                <div id="matched-tags"></div>
               </div>
-              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                <div id="bar-title" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-              </div>
-            </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                <span>Keyword & Skill Coverage (30%)</span>
-                <span id="score-keyword" style="color:var(--white);">0%</span>
-              </div>
-              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                <div id="bar-keyword" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+              <div class="kw-box">
+                <div class="kw-title" style="color:var(--primary);">MISSING / UNMATCHED</div>
+                <div id="missing-tags"></div>
               </div>
             </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                <span>Placement & Density (10%)</span>
-                <span id="score-density" style="color:var(--white);">0%</span>
-              </div>
-              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                <div id="bar-density" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-              </div>
-            </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                <span>Achievement Quality (15%)</span>
-                <span id="score-achievement" style="color:var(--white);">0%</span>
-              </div>
-              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                <div id="bar-achievement" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
-              </div>
-            </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
-                <span>Completeness & Hygiene (15%)</span>
-                <span id="score-completeness" style="color:var(--white);">0%</span>
-              </div>
-              <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                <div id="bar-completeness" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.4s;"></div>
+
+            <div class="card" style="margin-bottom: 20px;">
+              <div class="card__title">03 // OPTIMIZATION SUGGESTIONS</div>
+              <div class="suggestions-box">
+                <ul id="suggestions-list" style="margin-left: 20px; font-family: var(--body); font-size: 13px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Populated dynamically -->
+                </ul>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Keywords & suggestions (gated for guests) -->
-        <div id="gated-results" style="position: relative; display: flex; flex-direction: column; gap: 20px;">
-          <div class="scanned-keywords">
-            <div class="kw-box">
-              <div class="kw-title" style="color:var(--success);">MATCHED KEYWORDS</div>
-              <div id="matched-tags"></div>
+        <!-- View 2: Side-by-Side Visualizer -->
+        <div id="view-visualizer" class="visualizer-container" style="display: none;">
+          <div class="visualizer-toolbar">
+            <div class="visualizer-legend">
+              <div class="legend-item"><div class="legend-dot hit"></div> <span style="color:var(--success);">Matched Keyword</span></div>
+              <div class="legend-item"><div class="legend-dot miss"></div> <span style="color:#ffc254;">Missing from Resume</span></div>
             </div>
-            <div class="kw-box">
-              <div class="kw-title" style="color:var(--primary);">MISSING / UNMATCHED</div>
-              <div id="missing-tags"></div>
+            <div id="visualizer-stats" style="color:var(--muted); font-size:10px;">
+              0 Matched &bull; 0 Missing
             </div>
           </div>
 
-          <div class="card" style="margin-bottom: 20px;">
-            <div class="card__title">03 // OPTIMIZATION SUGGESTIONS</div>
-            <div class="suggestions-box">
-              <ul id="suggestions-list" style="margin-left: 20px; font-family: var(--body); font-size: 13px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
-                <!-- Populated dynamically -->
-              </ul>
+          <div class="visualizer-grid">
+            <!-- Left Pane: Job Description with Highlights -->
+            <div class="visualizer-pane">
+              <div class="pane-header">
+                <span style="color:var(--white);">Job Description</span>
+                <span id="jd-kw-count" style="color:var(--primary); font-size:10px; font-weight:normal;">0 Target Keywords</span>
+              </div>
+              <div class="pane-body" id="visualizer-jd-content">
+                Job description content will appear here.
+              </div>
+            </div>
+
+            <!-- Right Pane: Extracted Resume Text with Highlights -->
+            <div class="visualizer-pane">
+              <div class="pane-header">
+                <span style="color:var(--white);">Extracted Resume Text</span>
+                <span id="resume-kw-count" style="color:var(--success); font-size:10px; font-weight:normal;">0 Matched Found</span>
+              </div>
+              <div class="pane-body" id="visualizer-resume-content">
+                Parsed resume content will appear here.
+              </div>
             </div>
           </div>
         </div>
@@ -649,6 +842,9 @@ runBtn.addEventListener('click', async () => {
         suggestionsEl.innerHTML = '<li style="color:var(--success);">✓ Perfect compatibility! No optimization changes required.</li>';
       }
 
+      // Render Visualizer data
+      renderSideBySideVisualizer(jdText, extractedText, result.matchedKeywords, result.missingKeywords);
+
       addLog(`[DONE] Compatibility score: ${score}%. Recommendations successfully generated.`, 'success');
       placeholderPanel.style.display = 'none';
       resultsPanel.style.display = 'flex';
@@ -702,6 +898,91 @@ runBtn.addEventListener('click', async () => {
     }
   }, 1000);
 });
+
+function switchAtsView(view) {
+  const summaryTab = document.getElementById('tab-btn-summary');
+  const visualizerTab = document.getElementById('tab-btn-visualizer');
+  const summaryView = document.getElementById('view-summary');
+  const visualizerView = document.getElementById('view-visualizer');
+
+  if (view === 'summary') {
+    summaryTab.classList.add('active');
+    visualizerTab.classList.remove('active');
+    summaryView.style.display = 'flex';
+    visualizerView.style.display = 'none';
+  } else {
+    visualizerTab.classList.add('active');
+    summaryTab.classList.remove('active');
+    summaryView.style.display = 'none';
+    visualizerView.style.display = 'flex';
+  }
+}
+
+function renderSideBySideVisualizer(jdRaw, resumeRaw, matchedKeywords, missingKeywords) {
+  const jdPane = document.getElementById('visualizer-jd-content');
+  const resumePane = document.getElementById('visualizer-resume-content');
+  const statsEl = document.getElementById('visualizer-stats');
+  const jdCountEl = document.getElementById('jd-kw-count');
+  const resumeCountEl = document.getElementById('resume-kw-count');
+
+  const totalMatched = (matchedKeywords || []).length;
+  const totalMissing = (missingKeywords || []).length;
+  const totalKeywords = totalMatched + totalMissing;
+
+  statsEl.textContent = `${totalMatched} Matched • ${totalMissing} Missing`;
+  jdCountEl.textContent = `${totalKeywords} Target Keywords`;
+  resumeCountEl.textContent = `${totalMatched} Matched Occurrences`;
+
+  // Sort keywords by length descending so longer compound terms match first
+  const sortedMatched = [...(matchedKeywords || [])].sort((a, b) => b.length - a.length);
+  const sortedMissing = [...(missingKeywords || [])].sort((a, b) => b.length - a.length);
+
+  // Highlight Job Description text
+  let highlightedJd = escapeHtml(jdRaw);
+  sortedMatched.forEach(kw => {
+    if (!kw || kw.length < 2) return;
+    const escaped = escapeRegex(escapeHtml(kw));
+    const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+    highlightedJd = highlightedJd.replace(regex, '<mark class="kw-hit" title="Matched in Resume" onclick="focusKeyword(\'$1\')">$1</mark>');
+  });
+  sortedMissing.forEach(kw => {
+    if (!kw || kw.length < 2) return;
+    const escaped = escapeRegex(escapeHtml(kw));
+    const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+    highlightedJd = highlightedJd.replace(regex, '<mark class="kw-miss" title="Missing from Resume">$1</mark>');
+  });
+  jdPane.innerHTML = highlightedJd;
+
+  // Highlight Resume text with matched keywords
+  let highlightedResume = escapeHtml(resumeRaw);
+  sortedMatched.forEach(kw => {
+    if (!kw || kw.length < 2) return;
+    const escaped = escapeRegex(escapeHtml(kw));
+    const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
+    highlightedResume = highlightedResume.replace(regex, '<mark class="kw-hit" data-keyword="$1" title="Matched in Job Description" onclick="focusKeyword(\'$1\')">$1</mark>');
+  });
+  resumePane.innerHTML = highlightedResume;
+}
+
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function focusKeyword(kw) {
+  const resumePane = document.getElementById('visualizer-resume-content');
+  const marks = resumePane.querySelectorAll('mark.kw-hit');
+  let firstFound = null;
+  marks.forEach(m => {
+    if (m.textContent.toLowerCase() === kw.toLowerCase()) {
+      m.classList.add('active-focus');
+      if (!firstFound) firstFound = m;
+      setTimeout(() => m.classList.remove('active-focus'), 2000);
+    }
+  });
+  if (firstFound) {
+    firstFound.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
 
 function showLimitModal() {
   const modal = document.createElement('div');
