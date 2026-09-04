@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -235,6 +235,13 @@ body::after {
 </div>
 
 <script>
+const ADMIN_EMAILS = ["dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+const currentEmail = (localStorage.getItem("jxa_user_email") || "").toLowerCase().trim();
+if (localStorage.getItem("jxa_role") === "admin" || ADMIN_EMAILS.includes(currentEmail)) {
+  localStorage.setItem("jxa_role", "admin");
+  window.location.replace("admin/index.html");
+}
+
 requireAuth();
 renderNav(document.getElementById('main-nav'), 'onboarding.html');
 

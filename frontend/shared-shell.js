@@ -944,7 +944,11 @@ const NAV_ITEMS = [
  */
 function renderNav(container, activePage) {
   const token = localStorage.getItem('jxa_token');
-  const links = NAV_ITEMS.map(item => {
+  const role = localStorage.getItem('jxa_role');
+  const email = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
+  const isAdmin = role === 'admin' || email === 'dhanushsiddilingam@gmail.com' || email === 'admin@jobxapply.app';
+
+  let links = NAV_ITEMS.map(item => {
     let href = item.href;
     if (item.label === 'Extension') {
       href = token ? 'extension-setup.html' : 'extension-landing.html';
@@ -956,6 +960,11 @@ function renderNav(container, activePage) {
     const isActive = href === activePage;
     return `<a href="${href}" class="nav__link${isActive ? ' nav__link--active' : ''}">${item.label}</a>`;
   }).join('');
+
+  if (isAdmin) {
+    const adminLink = `<a href="admin/index.html" class="nav__link" style="color:#F5A623;font-weight:700;border:1px solid rgba(245,166,35,0.4);border-radius:6px;padding:4px 10px;background:rgba(245,166,35,0.1);letter-spacing:0.04em;">ADMIN PANEL</a>`;
+    links = adminLink + links;
+  }
 
   const btnHtml = token
     ? `<button class="nav__logout" onclick="logout()">LOGOUT</button>`

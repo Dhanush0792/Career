@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -87,7 +87,7 @@ async function processSession(token, userEmail = "") {
   isProcessing = true;
 
   try {
-    const email = userEmail || parseJwtEmail(token);
+    const email = (userEmail || parseJwtEmail(token) || "").toLowerCase().trim();
     statusText.textContent = "Session verified. Checking profile...";
     
     // Store credentials safely
@@ -95,9 +95,15 @@ async function processSession(token, userEmail = "") {
     localStorage.setItem("jxa_last_active", String(Date.now()));
     if (email) localStorage.setItem("jxa_user_email", email);
 
+    // Immediate client-side check for super-admin / admin emails
+    const ADMIN_EMAILS = ["dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+    let isAdmin = ADMIN_EMAILS.includes(email);
+    if (isAdmin) {
+      localStorage.setItem("jxa_role", "admin");
+    }
+
     // Call profile endpoint to check if existing user with completed profile or new user
     let isExistingUser = false;
-    let isAdmin = false;
 
     try {
       const profileRes = await fetch(`${SYNC_API}/profile`, {
@@ -107,12 +113,13 @@ async function processSession(token, userEmail = "") {
 
       if (profileRes.ok) {
         const stateData = await profileRes.json();
-        localStorage.setItem("jxa_role", stateData.role || "user");
+        const role = stateData.role || (isAdmin ? "admin" : "user");
+        localStorage.setItem("jxa_role", role);
         if (stateData.user?.email) {
           localStorage.setItem("jxa_user_email", stateData.user.email);
         }
         
-        if (stateData.role === "admin") {
+        if (role === "admin" || stateData.role === "admin") {
           isAdmin = true;
         }
 
@@ -143,7 +150,11 @@ async function processSession(token, userEmail = "") {
     }
   } catch (err) {
     console.error("Callback processing error:", err);
-    window.location.replace("onboarding.html");
+    if (localStorage.getItem("jxa_role") === "admin") {
+      window.location.replace("admin/index.html");
+    } else {
+      window.location.replace("onboarding.html");
+    }
   }
 }
 
