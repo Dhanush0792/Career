@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -89,35 +89,22 @@ body::after {
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
-  <header class="header">
-    <h1 class="page-title">Master Profile Setup</h1>
+  <header class="header" style="margin-bottom:24px; border-bottom:1px solid var(--glass-border); padding-bottom:16px;">
+    <div style="font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px;">PROFILE CONFIGURATION</div>
+    <h1 class="page-title" style="margin:0; font-family:var(--display); font-size:32px; text-transform:uppercase; color:var(--white);">Master Profile Setup</h1>
   </header>
-
-  <!-- Role Persona Switcher & Manager -->
-  <div class="persona-bar" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px 18px; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
-    <div style="display:flex; align-items:center; gap:12px;">
-      <span style="font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); font-weight:700;">Role Persona:</span>
-      <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:#0b1020; color:#fff; border:1px solid var(--primary); padding:7px 14px; border-radius:8px; font-family:var(--mono); font-size:12px; cursor:pointer; font-weight:600; outline:none;"></select>
-    </div>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <button type="button" class="btn btn-secondary" onclick="createPersona()" style="padding:6px 12px; font-size:11px;">+ New Persona</button>
-      <button type="button" class="btn btn-secondary" onclick="duplicatePersona()" style="padding:6px 12px; font-size:11px;">Duplicate</button>
-      <button type="button" class="btn btn-secondary" onclick="renamePersona()" style="padding:6px 12px; font-size:11px;">Rename</button>
-      <button type="button" class="btn btn-secondary" onclick="deletePersona()" style="padding:6px 12px; font-size:11px; color:#ff7878; border-color:rgba(255,120,120,0.3);">Delete</button>
-    </div>
-  </div>
 
   <div class="profile-grid">
     <!-- Left Navigation -->
     <div class="tabs-nav">
-      <button class="tab-btn active" onclick="switchTab('tab-basics', this)">01 // BASICS <span>âž”</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-academic', this)">02 // ACADEMIC <span>âž”</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-professional', this)">03 // PROFESSIONAL <span>âž”</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-experience', this)">04 // EXPERIENCE <span>âž”</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-documents', this)">05 // DOCUMENTS <span>âž”</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-additional', this)">06 // ADDITIONAL <span>âž”</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-vault', this)">07 // Q&amp;A VAULT <span>âž”</span></button>
-      <button class="tab-btn" onclick="switchTab('tab-security', this)">08 // SYNC &amp; KEY <span>âž”</span></button>
+      <button class="tab-btn active" onclick="switchTab('tab-basics', this)">01 // BASICS <span>-></span></button>
+      <button class="tab-btn" onclick="switchTab('tab-academic', this)">02 // ACADEMIC <span>-></span></button>
+      <button class="tab-btn" onclick="switchTab('tab-professional', this)">03 // PROFESSIONAL <span>-></span></button>
+      <button class="tab-btn" onclick="switchTab('tab-experience', this)">04 // EXPERIENCE <span>-></span></button>
+      <button class="tab-btn" onclick="switchTab('tab-documents', this)">05 // DOCUMENTS <span>-></span></button>
+      <button class="tab-btn" onclick="switchTab('tab-additional', this)">06 // ADDITIONAL <span>-></span></button>
+      <button class="tab-btn" onclick="switchTab('tab-vault', this)">07 // Q&amp;A VAULT <span>-></span></button>
+      <button class="tab-btn" onclick="switchTab('tab-security', this)">08 // SYNC &amp; KEY <span>-></span></button>
     </div>
 
     <!-- Right Content Card -->
@@ -649,7 +636,7 @@ body::after {
 </div>
 
 <script>
-// Auth & Navigation â€” must run first
+// Auth & Navigation - must run first
 if (typeof requireAuth === 'function') requireAuth();
 if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'profile-setup.html');
 

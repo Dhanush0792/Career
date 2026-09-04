@@ -277,7 +277,7 @@
       background: rgba(0,0,0,0.2);
     }
 
-    /* Preview Right Panel â€” full height, no overflow */
+    /* Preview Right Panel - full height, no overflow */
     .preview-col {
       height: 100%;
       min-height: 0;
@@ -473,10 +473,10 @@
 
     .preview-sheet {
       background: white;
-      color: #1e293b;
-      padding: 35px;
-      border-radius: 2px;
-      font-family: 'Inter', sans-serif;
+      color: #000000;
+      padding: 40px 48px;
+      border-radius: 0;
+      font-family: 'Times New Roman', Times, serif, 'Inter', sans-serif;
       width: 794px;
       height: 1123px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.4);
@@ -486,26 +486,23 @@
     }
 
     .preview-header {
-      border-bottom: 2px solid #00f3ff;
-      padding-bottom: 12px;
-      margin-bottom: 16px;
+      border-bottom: 1.5px solid #000000;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
       text-align: center;
     }
 
     .preview-name {
       margin: 0;
-      font-size: 1.8rem;
-      color: #0f172a;
+      font-size: 1.7rem;
+      color: #000000;
       font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .preview-title {
-      margin: 4px 0 8px;
-      font-size: 1.1rem;
-      color: #00bcd4;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: none;
     }
 
     .preview-contact {
@@ -513,22 +510,23 @@
       justify-content: center;
       gap: 12px;
       flex-wrap: wrap;
-      font-size: 0.8rem;
-      color: #64748b;
+      font-size: 0.85rem;
+      color: #000000;
+      margin-top: 4px;
     }
 
     .preview-section {
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
 
     .preview-section-title {
-      font-size: 1rem;
-      border-bottom: 1px solid #e2e8f0;
-      padding-bottom: 4px;
-      margin-bottom: 8px;
-      color: #0f172a;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #000000;
+      padding-bottom: 2px;
+      margin-bottom: 6px;
+      color: #000000;
       text-transform: uppercase;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.5px;
     }
 
@@ -1202,8 +1200,7 @@
 
       sheet.innerHTML = `
         <div class="preview-header">
-          <h1 class="preview-name">${name}</h1>
-          <h2 class="preview-title">${title}</h2>
+          <h1 class="preview-name">${name || ''}</h1>
           <div class="preview-contact">
             ${email ? `<span>${email}</span>` : ""}
             ${phone ? `<span>${phone}</span>` : ""}
@@ -1215,7 +1212,7 @@
         ${summary ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Summary</h3>
-            <p style="font-size: 0.85rem; color: #334155; line-height: 1.4; white-space: pre-line;">${summary}</p>
+            <p style="font-size: 0.85rem; color: #000000; line-height: 1.4; white-space: pre-line;">${summary}</p>
           </div>
         ` : ""}
 
@@ -1236,7 +1233,7 @@
         ${skills.length > 0 ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Skills</h3>
-            <p class="preview-skills">${skills.join(" • ")}</p>
+            <p class="preview-skills" style="color: #000000;">${skills.join(" • ")}</p>
           </div>
         ` : ""}
 
@@ -1250,14 +1247,14 @@
         ${certs.length > 0 ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Certifications</h3>
-            <p class="preview-skills">${certs.join(" • ")}</p>
+            <p class="preview-skills" style="color: #000000;">${certs.join(" • ")}</p>
           </div>
         ` : ""}
 
         ${addItems.length > 0 ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Additional Information</h3>
-            <p style="font-size: 0.85rem; color: #334155; line-height: 1.5;">${addItems.join("<br>")}</p>
+            <p style="font-size: 0.85rem; color: #000000; line-height: 1.5;">${addItems.join("<br>")}</p>
           </div>
         ` : ""}
       `;

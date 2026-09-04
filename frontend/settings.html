@@ -98,7 +98,7 @@ body::after {
     <div class="data-row">
       <span class="data-label">Current Key</span>
       <div style="display:flex; gap:8px; align-items:center;">
-        <span class="data-val" id="disp-passcode" style="color:var(--success);">â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</span>
+        <span class="data-val" id="disp-passcode" style="color:var(--success);">--------</span>
         <button class="btn btn-ghost" onclick="togglePasscodeVisibility()" style="padding:4px 8px; font-size:10px;">Show</button>
         <button class="btn btn-ghost" onclick="copyPasscodeToClipboard()" style="padding:4px 8px; font-size:10px;">Copy</button>
       </div>
@@ -139,7 +139,7 @@ body::after {
     <h2 class="section-title">Connection Status</h2>
     <div class="data-row">
       <span class="data-label">Google Account</span>
-      <span class="data-val" id="disp-email" style="font-family:var(--body);color:var(--muted);">â€”</span>
+      <span class="data-val" id="disp-email" style="font-family:var(--body);color:var(--muted);">-</span>
     </div>
     <div class="data-row">
       <span class="data-label">Sync Connection Status</span>
@@ -192,7 +192,7 @@ async function loadSettings() {
   document.getElementById('disp-email').textContent = email || 'Offline Mode';
   
   const passcode = localStorage.getItem('jxa_passcode') || "";
-  document.getElementById('disp-passcode').textContent = 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢';
+  document.getElementById('disp-passcode').textContent = '--------';
 }
 
 async function savePasscode() {
@@ -331,11 +331,11 @@ function togglePasscodeVisibility() {
   const el = document.getElementById('disp-passcode');
   const btn = el.nextElementSibling;
   const passcode = localStorage.getItem('jxa_passcode') || "";
-  if (el.textContent.includes('â€¢')) {
+  if (el.textContent.includes('-')) {
     el.textContent = passcode || "(Not set)";
     btn.textContent = 'Hide';
   } else {
-    el.textContent = 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢';
+    el.textContent = '--------';
     btn.textContent = 'Show';
   }
 }

@@ -794,7 +794,7 @@ function renderKanban(filtered) {
           </div>
         </div>
         <div class="kanban-card-role">${esc(app.role)}</div>
-        ${app.salary || app.location ? `<div style="font-family:var(--mono); font-size:10px; color:var(--success);">${esc(app.salary || '')} ${app.location ? 'â€¢ ' + esc(app.location) : ''}</div>` : ''}
+        ${app.salary || app.location ? `<div style="font-family:var(--mono); font-size:10px; color:var(--success);">${esc(app.salary || '')} ${app.location ? '- ' + esc(app.location) : ''}</div>` : ''}
         ${stalled ? `<div><span class="stalled-badge">14d+ Stalled (Ghosting Risk)</span></div>` : ''}
         <div class="kanban-card-footer">
           <span>${esc(app.portal) || 'Direct'}</span>
@@ -891,7 +891,7 @@ function renderAnalytics() {
     row.innerHTML = `
       <div style="display:flex; flex-direction:column;">
         <span style="font-weight:600; color:var(--white);">${esc(portal)}</span>
-        <span style="font-family:var(--mono); font-size:10px; color:var(--muted);">${stat.total} applied â€¢ ${stat.positive} responses</span>
+        <span style="font-family:var(--mono); font-size:10px; color:var(--muted);">${stat.total} applied - ${stat.positive} responses</span>
       </div>
       <div style="text-align:right;">
         <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${rate >= 20 ? 'var(--success)' : 'var(--muted)'};">${rate}%</span>

@@ -1245,13 +1245,13 @@ function updateAtsScore() {
   
   let html = '';
   checks.forEach(c => {
-    html += `<li style="color:var(--alert)">Ã¢Å¡Â  ${c}</li>`;
+    html += `<li style="color:var(--alert)"> ${c}</li>`;
   });
   
   if (missingKeywords.length > 0) {
-    html += `<li style="color:var(--muted)">Ã°Å¸â€™Â¡ Incorporate keywords from job requirements: <strong>${missingKeywords.slice(0, 5).join(', ')}</strong></li>`;
+    html += `<li style="color:var(--muted)"> Incorporate keywords from job requirements: <strong>${missingKeywords.slice(0, 5).join(', ')}</strong></li>`;
   } else {
-    html += `<li style="color:var(--success)">Ã¢Å“â€œ Matches all target requirements!</li>`;
+    html += `<li style="color:var(--success)"> Matches all target requirements!</li>`;
   }
   
   document.getElementById('ats-suggestions').innerHTML = html;

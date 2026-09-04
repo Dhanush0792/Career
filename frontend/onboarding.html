@@ -135,7 +135,7 @@ body::after {
 
       <div class="dropzone" id="resume-dropzone">
         <div class="dropzone-title">Drag & Drop Resume here</div>
-        <div class="dropzone-desc">PDF or DOCX Â· Click to select</div>
+        <div class="dropzone-desc">PDF or DOCX - Click to select</div>
         <input type="file" id="resume-input" accept="application/pdf,.docx" style="display:none;">
       </div>
 
@@ -145,7 +145,7 @@ body::after {
       
       <div class="wiz-nav">
         <button class="btn-back" onclick="goBackToChoice()">â† Back</button>
-        <button class="btn-next" onclick="skipUploadAndGo()" style="max-width: 250px;">Skip Upload & Go âž”</button>
+        <button class="btn-next" onclick="skipUploadAndGo()" style="max-width: 250px;">Skip Upload & Go -></button>
       </div>
     </div>
   </div>
@@ -172,7 +172,7 @@ body::after {
       </div>
       <div class="wiz-nav">
         <button class="btn-back" id="back-btn-step1" onclick="goBackFromStep1()">â† Back</button>
-        <button class="btn-next" onclick="goStep(2)" style="max-width: 250px;">Next: Professional âž”</button>
+        <button class="btn-next" onclick="goStep(2)" style="max-width: 250px;">Next: Professional -></button>
       </div>
     </div>
   </div>
@@ -202,7 +202,7 @@ body::after {
       </div>
       <div class="wiz-nav">
         <button class="btn-back" onclick="goStep(1)">â† Back</button>
-        <button class="btn-next" onclick="goStep(3)" style="max-width: 250px;">Next: Confirm & Finish âž”</button>
+        <button class="btn-next" onclick="goStep(3)" style="max-width: 250px;">Next: Confirm & Finish -></button>
       </div>
     </div>
   </div>
@@ -226,7 +226,7 @@ body::after {
 
       <div class="wiz-nav">
         <button class="btn-back" onclick="goStep(2)">â† Back</button>
-        <button class="btn-finish" id="commit-btn" onclick="commitProfile()">âœ“ Complete & Save</button>
+        <button class="btn-finish" id="commit-btn" onclick="commitProfile()">[OK] Complete & Save</button>
       </div>
       <div id="commit-status" style="margin-top:12px; font-family:var(--mono); font-size:10px; color:var(--muted); min-height:16px;"></div>
     </div>
@@ -478,12 +478,12 @@ async function commitProfile() {
   try {
     const res = await saveProfile(profile);
     if (res.ok) {
-      statusEl.textContent = 'âœ“ Profile saved! Redirecting...';
+      statusEl.textContent = '[OK] Profile saved! Redirecting...';
       statusEl.style.color = 'var(--success)';
       showToast('Profile saved successfully!');
       setTimeout(() => window.location.href = 'dashboard.html', 1200);
     } else {
-      statusEl.textContent = 'âœ“ Saved locally. Cloud sync pending.';
+      statusEl.textContent = '[OK] Saved locally. Cloud sync pending.';
       statusEl.style.color = 'var(--alert)';
       setTimeout(() => window.location.href = 'dashboard.html', 1500);
     }

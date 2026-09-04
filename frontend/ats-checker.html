@@ -421,7 +421,7 @@ mark.kw-miss {
       </div>
 
       <!-- Action Button & Log console -->
-      <button class="analyze-btn" id="run-check-btn">â€º ANALYZE COMPATIBILITY</button>
+      <button class="analyze-btn" id="run-check-btn">> ANALYZE COMPATIBILITY</button>
       <div class="console-box" id="console">
         <div class="console-line info">[SYS_INIT] ATS Analyzer ready. Select role, upload resume, and click Analyze.</div>
       </div>
@@ -439,11 +439,11 @@ mark.kw-miss {
       <!-- Results panel -->
       <div class="results-panel" id="results-panel">
         <div class="score-badge">
-          <div class="score-val" id="score-number">â€”</div>
+          <div class="score-val" id="score-number">-</div>
           <div class="score-desc">
             <span style="color:var(--white);font-weight:700;">ATS COMPATIBILITY SCORE</span><br>
             Weighed keyword matching, section checks, and job alignment scoring.<br>
-            <span id="score-detail" style="color:var(--dim);">â€”</span>
+            <span id="score-detail" style="color:var(--dim);">-</span>
           </div>
         </div>
 
@@ -626,7 +626,7 @@ function handleResumeFile(file) {
   reader.onload = function(e) {
     uploadedFileData = e.target.result;
     uploadedFileName = file.name;
-    fileInfo.textContent = `âœ“ SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
+    fileInfo.textContent = `[OK] SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
     fileInfo.style.display = 'block';
     addLog(`[UPLOAD] Loaded ${isDocx ? 'DOCX' : 'PDF'}: ${file.name}`, 'success');
   };
@@ -839,7 +839,7 @@ runBtn.addEventListener('click', async () => {
       });
 
       if (result.suggestions.length === 0) {
-        suggestionsEl.innerHTML = '<li style="color:var(--success);">âœ“ Perfect compatibility! No optimization changes required.</li>';
+        suggestionsEl.innerHTML = '<li style="color:var(--success);">[OK] Perfect compatibility! No optimization changes required.</li>';
       }
 
       // Render Visualizer data
@@ -929,7 +929,7 @@ function renderSideBySideVisualizer(jdRaw, resumeRaw, matchedKeywords, missingKe
   const totalMissing = (missingKeywords || []).length;
   const totalKeywords = totalMatched + totalMissing;
 
-  statsEl.textContent = `${totalMatched} Matched â€¢ ${totalMissing} Missing`;
+  statsEl.textContent = `${totalMatched} Matched - ${totalMissing} Missing`;
   jdCountEl.textContent = `${totalKeywords} Target Keywords`;
   resumeCountEl.textContent = `${totalMatched} Matched Occurrences`;
 
