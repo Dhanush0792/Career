@@ -23,10 +23,11 @@ body::after {
 .page-title em { font-style: normal; color: var(--primary); }
 
 /* Stats Panel */
-.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
-@media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-.stat-card { border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); padding: 18px; border-radius: 12px; backdrop-filter: blur(16px); text-align: center; }
-.stat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.stats-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 24px; }
+@media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+.stat-card { border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); padding: 16px; border-radius: 12px; backdrop-filter: blur(16px); text-align: center; }
+.stat-val { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
 .stat-lbl { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* Filter & View Switcher */
@@ -43,6 +44,82 @@ body::after {
 .view-toggle { display: inline-flex; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; padding: 2px; }
 .view-toggle-btn { background: transparent; border: none; color: var(--muted); padding: 6px 14px; font-family: var(--mono); font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
 .view-toggle-btn.active { background: var(--primary); color: var(--white); }
+
+/* Ghosting Badge */
+.stalled-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(235, 87, 87, 0.15);
+  border: 1px solid rgba(235, 87, 87, 0.35);
+  color: #ff8585;
+}
+
+/* Analytics Dashboard View */
+.analytics-view {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .analytics-grid { grid-template-columns: 1fr; }
+}
+.analytics-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 20px;
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.analytics-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary);
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+.funnel-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.funnel-bar-wrap {
+  height: 14px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+.funnel-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.portal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 12px;
+}
+.portal-row:last-child { border-bottom: none; }
 
 /* Table styling */
 .table-container { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 14px; overflow: hidden; backdrop-filter: blur(16px); }
@@ -229,6 +306,14 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
           <label>Follow-Up Date</label>
           <input type="date" class="form-input" id="f-followup">
         </div>
+        <div class="form-group">
+          <label>Target / Offered Salary (e.g. $120k, 18 LPA)</label>
+          <input type="text" class="form-input" id="f-salary" placeholder="e.g. $125,000 or 15-20 LPA">
+        </div>
+        <div class="form-group">
+          <label>Location / Remote</label>
+          <input type="text" class="form-input" id="f-location" placeholder="e.g. Remote, San Francisco, Bangalore">
+        </div>
         <div class="form-group full">
           <label>Job URL</label>
           <input type="url" class="form-input" id="f-url" placeholder="https://...">
@@ -331,6 +416,10 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
       <div class="stat-lbl">Offers</div>
     </div>
     <div class="stat-card">
+      <div class="stat-val" id="stat-stalled" style="color:#ff8585;">0</div>
+      <div class="stat-lbl">Ghosted / 14d+ Stalled</div>
+    </div>
+    <div class="stat-card">
       <div class="stat-val" id="stat-rate" style="color:var(--success);">0%</div>
       <div class="stat-lbl">Response Rate</div>
     </div>
@@ -347,6 +436,7 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
         <option value="interview">Interview</option>
         <option value="offer">Offer</option>
         <option value="rejected">Rejected</option>
+        <option value="stalled">Ghosted / 14d+ Stalled</option>
         <option value="followup">Follow-Up Due</option>
       </select>
     </div>
@@ -354,6 +444,7 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
       <div class="view-toggle">
         <button class="view-toggle-btn active" id="btn-view-table" onclick="switchView('table')">Table</button>
         <button class="view-toggle-btn" id="btn-view-kanban" onclick="switchView('kanban')">Kanban</button>
+        <button class="view-toggle-btn" id="btn-view-analytics" onclick="switchView('analytics')">Analytics</button>
       </div>
       <button class="btn btn-ghost" onclick="exportCSV()">Export CSV</button>
     </div>
@@ -372,6 +463,7 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
         <tr>
           <th>Company &amp; Role</th>
           <th>Source / Portal</th>
+          <th>Salary &amp; Location</th>
           <th>Status</th>
           <th>Applied Date</th>
           <th>Follow-up</th>
@@ -382,6 +474,33 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
         <!-- Rendered by JS -->
       </tbody>
     </table>
+  </div>
+
+  <!-- Analytics View Container -->
+  <div class="analytics-view" id="analytics-container">
+    <div class="analytics-grid">
+      <!-- Funnel Card -->
+      <div class="analytics-card">
+        <div class="analytics-title">
+          <span>Application Funnel Conversion</span>
+          <span id="funnel-total-badge" style="color:var(--muted); font-weight:normal; font-size:10px;">0 Submissions</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px;" id="funnel-stages-wrap">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Channel & Portal Performance -->
+      <div class="analytics-card">
+        <div class="analytics-title">
+          <span>Portal &amp; Source Response Rate</span>
+          <span style="color:var(--muted); font-weight:normal; font-size:10px;">Channel ROI</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;" id="portal-roi-wrap">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Kanban Board View Container -->
@@ -441,6 +560,7 @@ function switchView(mode) {
   
   document.getElementById('btn-view-table').classList.toggle('active', mode === 'table');
   document.getElementById('btn-view-kanban').classList.toggle('active', mode === 'kanban');
+  document.getElementById('btn-view-analytics').classList.toggle('active', mode === 'analytics');
   
   renderActiveView();
 }
@@ -449,11 +569,20 @@ function loadData() {
   apps = loadApplications() || [];
 }
 
+function isStalledApp(app) {
+  if (!app || !app.date) return false;
+  if (['offer', 'rejected'].includes(app.status)) return false;
+  const appliedDate = new Date(app.date);
+  const diffDays = (new Date() - appliedDate) / (1000 * 60 * 60 * 24);
+  return diffDays >= 14 && ['applied', 'screening'].includes(app.status);
+}
+
 function updateStats() {
   const total = apps.length;
   const active = apps.filter(a => a.status !== 'rejected').length;
   const interview = apps.filter(a => a.status === 'interview').length;
   const offer = apps.filter(a => a.status === 'offer').length;
+  const stalled = apps.filter(a => isStalledApp(a)).length;
   const responses = apps.filter(a => ['screening', 'interview', 'offer'].includes(a.status)).length;
   const rate = total > 0 ? Math.round((responses / total) * 100) : 0;
 
@@ -461,6 +590,7 @@ function updateStats() {
   document.getElementById('stat-active').textContent = active;
   document.getElementById('stat-interview').textContent = interview;
   document.getElementById('stat-offer').textContent = offer;
+  document.getElementById('stat-stalled').textContent = stalled;
   document.getElementById('stat-rate').textContent = rate + '%';
 }
 
@@ -483,12 +613,14 @@ function exportCSV() {
     alert("No applications to export.");
     return;
   }
-  const headers = ["Company", "Role", "Portal", "Status", "Applied Date", "Follow Up", "URL", "Notes"];
+  const headers = ["Company", "Role", "Portal", "Status", "Salary", "Location", "Applied Date", "Follow Up", "URL", "Notes"];
   const rows = apps.map(a => [
     `"${(a.company || '').replace(/"/g, '""')}"`,
     `"${(a.role || '').replace(/"/g, '""')}"`,
     `"${(a.portal || '').replace(/"/g, '""')}"`,
     `"${(a.status || '').replace(/"/g, '""')}"`,
+    `"${(a.salary || '').replace(/"/g, '""')}"`,
+    `"${(a.location || '').replace(/"/g, '""')}"`,
     `"${a.date || ''}"`,
     `"${a.followUp || ''}"`,
     `"${(a.url || '').replace(/"/g, '""')}"`,
@@ -513,6 +645,8 @@ function getFilteredApps() {
   
   if (filter === 'followup') {
     filtered = filtered.filter(a => isFollowUpDue(a));
+  } else if (filter === 'stalled') {
+    filtered = filtered.filter(a => isStalledApp(a));
   } else if (filter !== 'all') {
     filtered = filtered.filter(a => a.status === filter);
   }
@@ -522,6 +656,8 @@ function getFilteredApps() {
       (a.company || '').toLowerCase().includes(search) ||
       (a.role || '').toLowerCase().includes(search) ||
       (a.portal || '').toLowerCase().includes(search) ||
+      (a.salary || '').toLowerCase().includes(search) ||
+      (a.location || '').toLowerCase().includes(search) ||
       (a.notes || '').toLowerCase().includes(search)
     );
   }
@@ -538,11 +674,13 @@ function renderActiveView() {
   const hasApps = apps.length > 0;
   const tableContainer = document.getElementById('table-container');
   const kanbanContainer = document.getElementById('kanban-container');
+  const analyticsContainer = document.getElementById('analytics-container');
   const emptyState = document.getElementById('empty-state');
 
   if (!hasApps) {
     tableContainer.style.display = 'none';
     kanbanContainer.style.display = 'none';
+    analyticsContainer.style.display = 'none';
     emptyState.style.display = 'block';
     return;
   }
@@ -551,11 +689,18 @@ function renderActiveView() {
 
   if (activeView === 'kanban') {
     tableContainer.style.display = 'none';
+    analyticsContainer.style.display = 'none';
     kanbanContainer.style.display = 'grid';
     renderKanban(filtered);
+  } else if (activeView === 'analytics') {
+    tableContainer.style.display = 'none';
+    kanbanContainer.style.display = 'none';
+    analyticsContainer.style.display = 'flex';
+    renderAnalytics();
   } else {
     tableContainer.style.display = 'block';
     kanbanContainer.style.display = 'none';
+    analyticsContainer.style.display = 'none';
     renderTable(filtered);
   }
 }
@@ -565,13 +710,14 @@ function renderTable(filtered) {
   tbody.innerHTML = '';
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">No applications match the search or filter criteria.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">No applications match the search or filter criteria.</td></tr>`;
     return;
   }
 
   filtered.forEach(app => {
     const tr = document.createElement('tr');
     const due = isFollowUpDue(app);
+    const stalled = isStalledApp(app);
     
     const compRole = `
       <div class="company-name">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--primary);text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
@@ -592,10 +738,20 @@ function renderTable(filtered) {
       ? `<span style="display:inline-block; padding:3px 8px; border-radius:12px; background:rgba(245,166,35,0.15); color:var(--alert); font-family:var(--mono); font-size:10px; font-weight:700;">Action Due</span>`
       : `<span class="date-lbl">${app.followUp || '-'}</span>`;
 
+    const statusBadgeHtml = stalled
+      ? `<div><span class="status-pill ${app.status}">${app.status}</span> <span class="stalled-badge">14d+ Stalled</span></div>`
+      : `<span class="status-pill ${app.status}">${app.status}</span>`;
+
+    const compDetails = `
+      <div style="font-family:var(--mono); font-size:11px; color:var(--white);">${esc(app.salary) || '-'}</div>
+      <div style="font-size:11px; color:var(--muted);">${esc(app.location) || ''}</div>
+    `;
+
     tr.innerHTML = `
       <td>${compRole}</td>
       <td><span class="portal-lbl">${esc(app.portal) || '-'}</span></td>
-      <td><span class="status-pill ${app.status}">${app.status}</span></td>
+      <td>${compDetails}</td>
+      <td>${statusBadgeHtml}</td>
       <td><span class="date-lbl">${app.date || '-'}</span></td>
       <td>${followUpHtml}</td>
       <td class="row-actions">
@@ -627,6 +783,8 @@ function renderKanban(filtered) {
       card.ondragstart = (e) => handleDragStart(e, app.id);
       card.ondragend = handleDragEnd;
 
+      const stalled = isStalledApp(app);
+
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div class="kanban-card-title">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--white); text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
@@ -636,6 +794,8 @@ function renderKanban(filtered) {
           </div>
         </div>
         <div class="kanban-card-role">${esc(app.role)}</div>
+        ${app.salary || app.location ? `<div style="font-family:var(--mono); font-size:10px; color:var(--success);">${esc(app.salary || '')} ${app.location ? '• ' + esc(app.location) : ''}</div>` : ''}
+        ${stalled ? `<div><span class="stalled-badge">14d+ Stalled (Ghosting Risk)</span></div>` : ''}
         <div class="kanban-card-footer">
           <span>${esc(app.portal) || 'Direct'}</span>
           <span>${app.date || ''}</span>
@@ -643,6 +803,102 @@ function renderKanban(filtered) {
       `;
       container.appendChild(card);
     });
+  });
+}
+
+function renderAnalytics() {
+  const total = apps.length;
+  document.getElementById('funnel-total-badge').textContent = `${total} Submissions`;
+
+  // Funnel Data
+  const screening = apps.filter(a => ['screening', 'interview', 'offer'].includes(a.status)).length;
+  const interviews = apps.filter(a => ['interview', 'offer'].includes(a.status)).length;
+  const offers = apps.filter(a => a.status === 'offer').length;
+
+  const pctScreening = total > 0 ? Math.round((screening / total) * 100) : 0;
+  const pctInterview = total > 0 ? Math.round((interviews / total) * 100) : 0;
+  const pctOffer = total > 0 ? Math.round((offers / total) * 100) : 0;
+
+  const funnelWrap = document.getElementById('funnel-stages-wrap');
+  funnelWrap.innerHTML = `
+    <div class="funnel-stage">
+      <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px;">
+        <span style="color:var(--white);">1. Applied Submissions</span>
+        <span>${total} (100%)</span>
+      </div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width: 100%; background: #64748b;"></div>
+      </div>
+    </div>
+
+    <div class="funnel-stage">
+      <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px;">
+        <span style="color:#a19af7;">2. Passed Screening</span>
+        <span>${screening} (${pctScreening}%)</span>
+      </div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width: ${pctScreening}%; background: var(--primary);"></div>
+      </div>
+    </div>
+
+    <div class="funnel-stage">
+      <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px;">
+        <span style="color:var(--alert);">3. Technical &amp; Onsite Interviews</span>
+        <span>${interviews} (${pctInterview}%)</span>
+      </div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width: ${pctInterview}%; background: var(--alert);"></div>
+      </div>
+    </div>
+
+    <div class="funnel-stage">
+      <div style="display:flex; justify-content:space-between; font-family:var(--mono); font-size:11px;">
+        <span style="color:var(--success);">4. Formal Offers</span>
+        <span style="color:var(--success); font-weight:bold;">${offers} (${pctOffer}%)</span>
+      </div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width: ${pctOffer}%; background: var(--success);"></div>
+      </div>
+    </div>
+  `;
+
+  // Portal ROI Breakdown
+  const portalMap = {};
+  apps.forEach(a => {
+    const portal = (a.portal || 'Direct / Other').trim();
+    if (!portalMap[portal]) {
+      portalMap[portal] = { total: 0, positive: 0 };
+    }
+    portalMap[portal].total++;
+    if (['screening', 'interview', 'offer'].includes(a.status)) {
+      portalMap[portal].positive++;
+    }
+  });
+
+  const portalRoiWrap = document.getElementById('portal-roi-wrap');
+  portalRoiWrap.innerHTML = '';
+  
+  const portalEntries = Object.entries(portalMap).sort((a, b) => b[1].total - a[1].total);
+  if (portalEntries.length === 0) {
+    portalRoiWrap.innerHTML = `<div style="font-family:var(--mono); font-size:11px; color:var(--muted); text-align:center; padding:20px;">No portal data available yet.</div>`;
+    return;
+  }
+
+  portalEntries.forEach(([portal, stat]) => {
+    const rate = Math.round((stat.positive / stat.total) * 100);
+    const row = document.createElement('div');
+    row.className = 'portal-row';
+    row.innerHTML = `
+      <div style="display:flex; flex-direction:column;">
+        <span style="font-weight:600; color:var(--white);">${esc(portal)}</span>
+        <span style="font-family:var(--mono); font-size:10px; color:var(--muted);">${stat.total} applied • ${stat.positive} responses</span>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${rate >= 20 ? 'var(--success)' : 'var(--muted)'};">${rate}%</span>
+        <div style="font-family:var(--mono); font-size:9px; color:var(--dim);">Response Rate</div>
+      </div>
+    `;
+    portalRoiWrap.appendChild(row);
   });
 }
 
@@ -763,6 +1019,8 @@ function editApp(id) {
   document.getElementById('f-role').value = app.role;
   document.getElementById('f-portal').value = app.portal || '';
   document.getElementById('f-status').value = app.status || 'applied';
+  document.getElementById('f-salary').value = app.salary || '';
+  document.getElementById('f-location').value = app.location || '';
   document.getElementById('f-date').value = app.date || '';
   document.getElementById('f-followup').value = app.followUp || '';
   document.getElementById('f-url').value = app.url || '';
@@ -780,6 +1038,8 @@ async function saveApp(e) {
     role: document.getElementById('f-role').value.trim(),
     portal: document.getElementById('f-portal').value.trim(),
     status: document.getElementById('f-status').value,
+    salary: document.getElementById('f-salary').value.trim(),
+    location: document.getElementById('f-location').value.trim(),
     date: document.getElementById('f-date').value,
     followUp: document.getElementById('f-followup').value,
     url: document.getElementById('f-url').value.trim(),
