@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 <style>
 :root {
   --black:   #0B1020;
@@ -202,7 +203,7 @@ body::after {
 
   <div id="status-badge" class="status-badge">
     <div class="spinner"></div>
-    <span id="status-msg">Connecting to Google...</span>
+    <span id="status-msg">Opening Google Account Chooser...</span>
   </div>
 
   <div class="footer-links">
@@ -237,7 +238,7 @@ try {
   console.error('Supabase init error:', e);
 }
 
-// Trigger Google OAuth Direct Redirect
+// Trigger Google OAuth with Account Chooser Prompt
 function handleGoogleLogin() {
   if (!supabaseClient) {
     alert('Google authentication service is initializing. Please try again in 2 seconds.');
@@ -245,14 +246,17 @@ function handleGoogleLogin() {
   }
   
   btnGoogle.disabled = true;
-  showStatus('Redirecting to Google Sign-In...');
+  showStatus('Opening Google Account Chooser...');
   
   const callbackUrl = window.location.origin + '/auth-callback.html';
   
   supabaseClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: callbackUrl
+      redirectTo: callbackUrl,
+      queryParams: {
+        prompt: 'select_account'
+      }
     }
   }).then(({ data, error }) => {
     if (error) {

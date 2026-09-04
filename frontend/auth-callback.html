@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 <style>
 body {
   font-family: 'Inter', sans-serif;
@@ -87,14 +88,17 @@ async function processSession(token, userEmail = "") {
 
   try {
     const email = userEmail || parseJwtEmail(token);
-    statusText.textContent = "Session verified. Synchronizing profile...";
+    statusText.textContent = "Session verified. Checking profile...";
     
     // Store credentials safely
     localStorage.setItem("jxa_token", token);
     localStorage.setItem("jxa_last_active", String(Date.now()));
     if (email) localStorage.setItem("jxa_user_email", email);
 
-    // Fetch initial profile
+    // Call profile endpoint to check if existing user with completed profile or new user
+    let isExistingUser = false;
+    let isAdmin = false;
+
     try {
       const profileRes = await fetch(`${SYNC_API}/profile`, {
         headers: { "Authorization": `Bearer ${token}` },
@@ -109,34 +113,42 @@ async function processSession(token, userEmail = "") {
         }
         
         if (stateData.role === "admin") {
-          statusText.textContent = "Admin verified. Redirecting...";
-          window.location.replace("admin/index.html");
-          return;
+          isAdmin = true;
         }
-        
-        const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
-        if (hasProfile) {
-          localStorage.setItem("jxa_local_profile", JSON.stringify(stateData.profile));
+
+        // Check if user has an existing completed profile
+        const profile = stateData?.profile || {};
+        if (profile.fullName && String(profile.fullName).trim().length > 0) {
+          isExistingUser = true;
+          localStorage.setItem("jxa_local_profile", JSON.stringify(profile));
           localStorage.setItem("jxa_local_state", JSON.stringify(stateData));
-          statusText.textContent = "Redirecting to dashboard...";
-          window.location.replace("dashboard.html");
-          return;
         }
       }
     } catch(fetchErr) {
-      console.warn("Backend sync warning:", fetchErr);
+      console.warn("Backend sync check warning:", fetchErr);
     }
 
-    statusText.textContent = "Welcome! Redirecting to dashboard...";
-    window.location.replace("dashboard.html");
+    if (isAdmin) {
+      statusText.textContent = "Admin verified. Opening Command Center...";
+      window.location.replace("admin/index.html");
+      return;
+    }
+
+    if (isExistingUser) {
+      statusText.textContent = "Welcome back! Redirecting to dashboard...";
+      window.location.replace("dashboard.html");
+    } else {
+      statusText.textContent = "New account detected! Starting onboarding...";
+      window.location.replace("onboarding.html");
+    }
   } catch (err) {
-    console.error("Callback error:", err);
-    window.location.replace("dashboard.html");
+    console.error("Callback processing error:", err);
+    window.location.replace("onboarding.html");
   }
 }
 
 async function handleCallback() {
-  // 1. Direct Hash Check (access_token in URL)
+  // 1. Direct Hash Check (access_token in URL hash)
   const hash = window.location.hash.substring(1);
   if (hash) {
     const params = new URLSearchParams(hash);
@@ -155,7 +167,7 @@ async function handleCallback() {
     return;
   }
 
-  // 3. Supabase Client Verification
+  // 3. Supabase Client Session Verification
   try {
     if (typeof supabase !== "undefined") {
       const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -176,14 +188,14 @@ async function handleCallback() {
     console.warn("Supabase session check:", err);
   }
 
-  // 4. Fallback if no token could be recovered after 2 seconds
+  // 4. Fallback if no token could be recovered after 2.5 seconds
   setTimeout(() => {
     if (!isProcessing) {
       statusText.style.color = "#ff6b6b";
       statusText.textContent = "Authentication incomplete. Returning to login...";
-      setTimeout(() => window.location.replace("auth.html"), 1000);
+      setTimeout(() => window.location.replace("auth.html"), 1200);
     }
-  }, 2000);
+  }, 2500);
 }
 
 handleCallback();
