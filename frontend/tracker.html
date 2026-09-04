@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -16,28 +16,33 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; padding-bottom: 60px; }
+.container { max-width: 1300px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 10; padding-bottom: 60px; }
 .page-header { border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
 .page-label { font-family: var(--mono); font-size: 10px; color: var(--primary); letter-spacing: .14em; text-transform: uppercase; }
 .page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); margin: 0; }
 .page-title em { font-style: normal; color: var(--primary); }
 
 /* Stats Panel */
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-@media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+@media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
 .stat-card { border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.03); padding: 18px; border-radius: 12px; backdrop-filter: blur(16px); text-align: center; }
 .stat-val { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
 .stat-lbl { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 
-/* Filter & Add Row */
+/* Filter & View Switcher */
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
-.filters { display: flex; gap: 10px; }
+.filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .filter-select { background: rgba(7, 10, 24, 0.6); color: var(--white); border: 1px solid var(--glass-border); padding: 8px 14px; border-radius: 8px; font-family: var(--mono); font-size: 11px; outline: none; cursor: pointer; }
 .btn { padding: 10px 18px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 6px; }
 .btn-primary { background: var(--primary); color: var(--white); border-color: var(--primary); }
 .btn-primary:hover { background: rgba(91, 79, 232, 0.85); }
 .btn-ghost { background: transparent; color: var(--muted); border-color: var(--glass-border); }
 .btn-ghost:hover { color: var(--white); border-color: var(--white); }
+
+/* View Toggle Buttons */
+.view-toggle { display: inline-flex; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; padding: 2px; }
+.view-toggle-btn { background: transparent; border: none; color: var(--muted); padding: 6px 14px; font-family: var(--mono); font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
+.view-toggle-btn.active { background: var(--primary); color: var(--white); }
 
 /* Table styling */
 .table-container { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 14px; overflow: hidden; backdrop-filter: blur(16px); }
@@ -81,6 +86,83 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
   background: rgba(235,87,87,0.15);
   border-color: #ff7878;
   color: #ff7878;
+}
+
+/* Kanban Board Styling */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  align-items: flex-start;
+}
+@media (max-width: 1024px) {
+  .kanban-board { grid-template-columns: 1fr; }
+}
+.kanban-col {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 14px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.kanban-col-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--glass-border);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.kanban-col-head.applied { color: #f4f7ff; }
+.kanban-col-head.screening { color: #a19af7; }
+.kanban-col-head.interview { color: var(--alert); }
+.kanban-col-head.offer { color: var(--success); }
+.kanban-col-head.rejected { color: #ff7878; }
+
+.kanban-card {
+  background: rgba(11, 16, 32, 0.85);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 14px;
+  cursor: grab;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kanban-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+.kanban-card.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+.kanban-card-title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--white);
+}
+.kanban-card-role {
+  font-size: 11px;
+  color: var(--muted);
+}
+.kanban-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  margin-top: 4px;
 }
 
 /* Empty state */
@@ -187,13 +269,13 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
       <div class="page-label">APPLICATIONS MANAGER</div>
       <h1 class="page-title">TRACKING <em>PIPELINE</em></h1>
     </div>
-    <div>
+    <div style="display:flex; gap:10px; align-items:center;">
       <button class="btn btn-primary" onclick="openAddModal()">+ Log Application</button>
     </div>
   </div>
 
   <!-- Stats Grid -->
-  <div class="stats-grid" style="grid-template-columns: repeat(5, 1fr);">
+  <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-val" id="stat-total">0</div>
       <div class="stat-lbl">Total Applied</div>
@@ -216,11 +298,11 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
     </div>
   </div>
 
-  <!-- Filter Toolbar -->
-  <div class="toolbar" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
-    <div class="filters" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-      <input type="text" id="search-input" oninput="renderTable()" placeholder="Search company, title, or portal..." class="filter-select" style="min-width: 240px;">
-      <select class="filter-select" id="filter-status" onchange="renderTable()">
+  <!-- Filter Toolbar & View Switcher -->
+  <div class="toolbar">
+    <div class="filters">
+      <input type="text" id="search-input" oninput="renderActiveView()" placeholder="Search company, title, or portal..." class="filter-select" style="min-width: 240px;">
+      <select class="filter-select" id="filter-status" onchange="renderActiveView()">
         <option value="all">All Statuses</option>
         <option value="applied">Applied</option>
         <option value="screening">Screening</option>
@@ -230,7 +312,11 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
         <option value="followup">Follow-Up Due</option>
       </select>
     </div>
-    <div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <div class="view-toggle">
+        <button class="view-toggle-btn active" id="btn-view-table" onclick="switchView('table')">Table</button>
+        <button class="view-toggle-btn" id="btn-view-kanban" onclick="switchView('kanban')">Kanban</button>
+      </div>
       <button class="btn btn-ghost" onclick="exportCSV()">Export CSV</button>
     </div>
   </div>
@@ -241,7 +327,7 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
     <div class="empty-state-desc">You have not logged any job applications yet, or no applications match the active search and filter. Click "+ Log Application" to add one.</div>
   </div>
 
-  <!-- Table Pipeline -->
+  <!-- Table View Container -->
   <div class="table-container" id="table-container">
     <table>
       <thead>
@@ -259,6 +345,49 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
       </tbody>
     </table>
   </div>
+
+  <!-- Kanban Board View Container -->
+  <div class="kanban-board" id="kanban-container" style="display:none;">
+    <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'applied')">
+      <div class="kanban-col-head applied">
+        <span>Applied</span>
+        <span id="col-count-applied">0</span>
+      </div>
+      <div id="col-items-applied" style="display:flex; flex-direction:column; gap:10px; min-height:100px;"></div>
+    </div>
+
+    <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'screening')">
+      <div class="kanban-col-head screening">
+        <span>Screening</span>
+        <span id="col-count-screening">0</span>
+      </div>
+      <div id="col-items-screening" style="display:flex; flex-direction:column; gap:10px; min-height:100px;"></div>
+    </div>
+
+    <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'interview')">
+      <div class="kanban-col-head interview">
+        <span>Interview</span>
+        <span id="col-count-interview">0</span>
+      </div>
+      <div id="col-items-interview" style="display:flex; flex-direction:column; gap:10px; min-height:100px;"></div>
+    </div>
+
+    <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'offer')">
+      <div class="kanban-col-head offer">
+        <span>Offer</span>
+        <span id="col-count-offer">0</span>
+      </div>
+      <div id="col-items-offer" style="display:flex; flex-direction:column; gap:10px; min-height:100px;"></div>
+    </div>
+
+    <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDrop(event, 'rejected')">
+      <div class="kanban-col-head rejected">
+        <span>Rejected</span>
+        <span id="col-count-rejected">0</span>
+      </div>
+      <div id="col-items-rejected" style="display:flex; flex-direction:column; gap:10px; min-height:100px;"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -266,6 +395,17 @@ requireAuth();
 renderNav(document.getElementById('main-nav'), 'tracker.html');
 
 let apps = [];
+let activeView = localStorage.getItem('jxa_tracker_view') || 'table';
+
+function switchView(mode) {
+  activeView = mode;
+  localStorage.setItem('jxa_tracker_view', mode);
+  
+  document.getElementById('btn-view-table').classList.toggle('active', mode === 'table');
+  document.getElementById('btn-view-kanban').classList.toggle('active', mode === 'kanban');
+  
+  renderActiveView();
+}
 
 function loadData() {
   apps = loadApplications() || [];
@@ -327,10 +467,7 @@ function exportCSV() {
   link.remove();
 }
 
-function renderTable() {
-  loadData();
-  updateStats();
-  
+function getFilteredApps() {
   const filter = document.getElementById('filter-status').value;
   const search = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
   
@@ -351,62 +488,151 @@ function renderTable() {
     );
   }
   
-  // Sort by date applied descending
   filtered.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  return filtered;
+}
 
+function renderActiveView() {
+  loadData();
+  updateStats();
+
+  const filtered = getFilteredApps();
+  const hasApps = apps.length > 0;
+  const tableContainer = document.getElementById('table-container');
+  const kanbanContainer = document.getElementById('kanban-container');
+  const emptyState = document.getElementById('empty-state');
+
+  if (!hasApps) {
+    tableContainer.style.display = 'none';
+    kanbanContainer.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  if (activeView === 'kanban') {
+    tableContainer.style.display = 'none';
+    kanbanContainer.style.display = 'grid';
+    renderKanban(filtered);
+  } else {
+    tableContainer.style.display = 'block';
+    kanbanContainer.style.display = 'none';
+    renderTable(filtered);
+  }
+}
+
+function renderTable(filtered) {
   const tbody = document.getElementById('apps-body');
   tbody.innerHTML = '';
-  
-  if (apps.length === 0) {
-    document.getElementById('table-container').style.display = 'none';
-    document.getElementById('empty-state').style.display = 'block';
-  } else {
-    document.getElementById('table-container').style.display = 'block';
-    document.getElementById('empty-state').style.display = 'none';
-    
-    if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">No applications match the search or filter criteria.</td></tr>`;
-    } else {
-      filtered.forEach(app => {
-        const tr = document.createElement('tr');
-        const due = isFollowUpDue(app);
-        
-        const compRole = `
-          <div class="company-name">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--primary);text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
-          <div class="role-name">${esc(app.role)}</div>
-        `;
-        
-        const statusSelect = `
-          <select onchange="changeStatus('${app.id}', this.value)">
-            <option value="applied" ${app.status==='applied'?'selected':''}>Applied</option>
-            <option value="screening" ${app.status==='screening'?'selected':''}>Screening</option>
-            <option value="interview" ${app.status==='interview'?'selected':''}>Interview</option>
-            <option value="offer" ${app.status==='offer'?'selected':''}>Offer</option>
-            <option value="rejected" ${app.status==='rejected'?'selected':''}>Rejected</option>
-          </select>
-        `;
 
-        const followUpHtml = due
-          ? `<span style="display:inline-block; padding:3px 8px; border-radius:12px; background:rgba(245,166,35,0.15); color:var(--alert); font-family:var(--mono); font-size:10px; font-weight:700;">Action Due</span>`
-          : `<span class="date-lbl">${app.followUp || '-'}</span>`;
-
-        tr.innerHTML = `
-          <td>${compRole}</td>
-          <td><span class="portal-lbl">${esc(app.portal) || '-'}</span></td>
-          <td><span class="status-pill ${app.status}">${app.status}</span></td>
-          <td><span class="date-lbl">${app.date || '-'}</span></td>
-          <td>${followUpHtml}</td>
-          <td class="row-actions">
-            ${statusSelect}
-            ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" title="View Proof">View</button>` : ''}
-            <button class="btn-icon" onclick="editApp('${app.id}')" title="Edit">Edit</button>
-            <button class="btn-icon del" onclick="deleteApp('${app.id}')" title="Delete">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">No applications match the search or filter criteria.</td></tr>`;
+    return;
   }
+
+  filtered.forEach(app => {
+    const tr = document.createElement('tr');
+    const due = isFollowUpDue(app);
+    
+    const compRole = `
+      <div class="company-name">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--primary);text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
+      <div class="role-name">${esc(app.role)}</div>
+    `;
+    
+    const statusSelect = `
+      <select onchange="changeStatus('${app.id}', this.value)">
+        <option value="applied" ${app.status==='applied'?'selected':''}>Applied</option>
+        <option value="screening" ${app.status==='screening'?'selected':''}>Screening</option>
+        <option value="interview" ${app.status==='interview'?'selected':''}>Interview</option>
+        <option value="offer" ${app.status==='offer'?'selected':''}>Offer</option>
+        <option value="rejected" ${app.status==='rejected'?'selected':''}>Rejected</option>
+      </select>
+    `;
+
+    const followUpHtml = due
+      ? `<span style="display:inline-block; padding:3px 8px; border-radius:12px; background:rgba(245,166,35,0.15); color:var(--alert); font-family:var(--mono); font-size:10px; font-weight:700;">Action Due</span>`
+      : `<span class="date-lbl">${app.followUp || '-'}</span>`;
+
+    tr.innerHTML = `
+      <td>${compRole}</td>
+      <td><span class="portal-lbl">${esc(app.portal) || '-'}</span></td>
+      <td><span class="status-pill ${app.status}">${app.status}</span></td>
+      <td><span class="date-lbl">${app.date || '-'}</span></td>
+      <td>${followUpHtml}</td>
+      <td class="row-actions">
+        ${statusSelect}
+        ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" title="View Proof">View</button>` : ''}
+        <button class="btn-icon" onclick="editApp('${app.id}')" title="Edit">Edit</button>
+        <button class="btn-icon del" onclick="deleteApp('${app.id}')" title="Delete">Delete</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderKanban(filtered) {
+  const columns = ['applied', 'screening', 'interview', 'offer', 'rejected'];
+  
+  columns.forEach(col => {
+    const colItems = filtered.filter(a => (a.status || 'applied') === col);
+    document.getElementById(`col-count-${col}`).textContent = colItems.length;
+    const container = document.getElementById(`col-items-${col}`);
+    container.innerHTML = '';
+
+    colItems.forEach(app => {
+      const card = document.createElement('div');
+      card.className = 'kanban-card';
+      card.draggable = true;
+      card.id = `card-${app.id}`;
+      card.ondragstart = (e) => handleDragStart(e, app.id);
+      card.ondragend = handleDragEnd;
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div class="kanban-card-title">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--white); text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
+          <div style="display:flex; gap:4px;">
+            ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" style="padding:2px 5px; font-size:9px;">Proof</button>` : ''}
+            <button class="btn-icon" onclick="editApp('${app.id}')" style="padding:2px 5px; font-size:9px;">Edit</button>
+          </div>
+        </div>
+        <div class="kanban-card-role">${esc(app.role)}</div>
+        <div class="kanban-card-footer">
+          <span>${esc(app.portal) || 'Direct'}</span>
+          <span>${app.date || ''}</span>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
+}
+
+// Drag and drop handlers
+let draggedAppId = null;
+
+function handleDragStart(e, appId) {
+  draggedAppId = appId;
+  e.target.classList.add('dragging');
+  e.dataTransfer.setData('text/plain', appId);
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  draggedAppId = null;
+}
+
+function allowDrop(e) {
+  e.preventDefault();
+}
+
+function handleDrop(e, targetStatus) {
+  e.preventDefault();
+  const id = e.dataTransfer.getData('text/plain') || draggedAppId;
+  if (!id) return;
+
+  updateApplicationStatus(id, targetStatus);
+  showToast(`Moved to ${targetStatus}`);
+  setTimeout(renderActiveView, 150);
 }
 
 function esc(str) {
@@ -457,7 +683,6 @@ async function saveApp(e) {
   };
 
   if (idStr) {
-    // Update existing
     const appIndex = apps.findIndex(a => String(a.id) === String(idStr));
     if (appIndex !== -1) {
       apps[appIndex] = { ...apps[appIndex], ...appData };
@@ -465,25 +690,24 @@ async function saveApp(e) {
       syncApplications(apps).catch(() => {});
     }
   } else {
-    // Create new
     appData.id = Date.now().toString();
     addApplication(appData);
   }
 
   closeModal();
-  renderTable();
+  renderActiveView();
   showToast('Application saved.');
 }
 
 function changeStatus(id, newStatus) {
   updateApplicationStatus(id, newStatus);
-  setTimeout(renderTable, 200);
+  setTimeout(renderActiveView, 200);
 }
 
 function deleteApp(id) {
   if (confirm('Delete this application record?')) {
     deleteApplication(id);
-    setTimeout(renderTable, 200);
+    setTimeout(renderActiveView, 200);
   }
 }
 
@@ -509,7 +733,7 @@ function closeSnapshotModal() {
 }
 
 // Render initially
-renderTable();
+switchView(activeView);
 </script>
 </body>
 </html>

@@ -557,6 +557,18 @@ function extractJobMetadata() {
   } else if (host.includes("indeed.com")) {
     title = document.querySelector(".jobsearch-JobInfoHeader-title, h1")?.textContent?.trim() || "";
     company = document.querySelector("[data-company-name='true'], .jobsearch-InlineCompanyRating-companyHeader")?.textContent?.trim() || "";
+  } else if (host.includes("naukri.com")) {
+    title = document.querySelector(".jd-header-title, .title, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".jd-header-comp-name, .company-name")?.textContent?.trim() || "";
+  } else if (host.includes("wellfound.com") || host.includes("angel.co")) {
+    title = document.querySelector("h1, .job-title")?.textContent?.trim() || "";
+    company = document.querySelector("h2, .company-name")?.textContent?.trim() || "";
+  } else if (host.includes("internshala.com")) {
+    title = document.querySelector(".heading_4_5.profile, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".heading_6.company_name, .company-name")?.textContent?.trim() || "";
+  } else if (host.includes("glassdoor.com")) {
+    title = document.querySelector("[data-test='jobTitle'], h1")?.textContent?.trim() || "";
+    company = document.querySelector("[data-test='employerName']")?.textContent?.trim() || "";
   }
 
   if (!title) {
