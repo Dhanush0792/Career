@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -259,6 +259,44 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
     <div style="padding: 16px 20px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: flex-end; gap: 12px; background: #0B1020;">
       <a id="download-snapshot" class="btn btn-primary" download style="text-decoration: none;">Download Proof</a>
       <button class="btn btn-ghost" onclick="closeSnapshotModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cold Outreach & Recruiter Follow-up Modal -->
+<div id="outreach-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-box" style="max-width: 600px;">
+    <div class="modal-title">
+      <span>Recruiter Outreach &amp; Follow-up Drafts</span>
+      <button onclick="closeOutreachModal()" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+    </div>
+    
+    <div style="margin-bottom: 14px;">
+      <label style="font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase; display:block; margin-bottom:6px;">Select Template Strategy</label>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="view-toggle-btn active" id="tab-draft-followup" onclick="setOutreachTemplate('followup')">7-Day Follow-Up</button>
+        <button type="button" class="view-toggle-btn" id="tab-draft-linkedin" onclick="setOutreachTemplate('linkedin')">LinkedIn Connection</button>
+        <button type="button" class="view-toggle-btn" id="tab-draft-postinterview" onclick="setOutreachTemplate('postinterview')">Post-Interview Thank You</button>
+        <button type="button" class="view-toggle-btn" id="tab-draft-cold" onclick="setOutreachTemplate('cold')">Cold Intro to Hiring Manager</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Subject Line (for Emails)</label>
+      <input type="text" id="outreach-subject" class="form-input" readonly>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Message Draft</label>
+      <textarea id="outreach-body" class="form-input" style="min-height: 160px; font-family: var(--body); font-size: 13px; line-height: 1.5;"></textarea>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span id="outreach-copy-status" style="font-family:var(--mono); font-size:11px; color:var(--success);"></span>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn btn-primary" onclick="copyOutreachDraft()">Copy to Clipboard</button>
+        <button type="button" class="btn btn-ghost" onclick="closeOutreachModal()">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -562,7 +600,8 @@ function renderTable(filtered) {
       <td>${followUpHtml}</td>
       <td class="row-actions">
         ${statusSelect}
-        ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" title="View Proof">View</button>` : ''}
+        <button class="btn-icon outreach" onclick="openOutreachModal('${app.id}')" title="Generate Follow-up / Outreach Draft">Outreach</button>
+        ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" title="View Proof">Proof</button>` : ''}
         <button class="btn-icon" onclick="editApp('${app.id}')" title="Edit">Edit</button>
         <button class="btn-icon del" onclick="deleteApp('${app.id}')" title="Delete">Delete</button>
       </td>
@@ -592,7 +631,7 @@ function renderKanban(filtered) {
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div class="kanban-card-title">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--white); text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
           <div style="display:flex; gap:4px;">
-            ${app.snapshot ? `<button class="btn-icon" onclick="viewSnapshot('${app.id}')" style="padding:2px 5px; font-size:9px;">Proof</button>` : ''}
+            <button class="btn-icon outreach" onclick="openOutreachModal('${app.id}')" style="padding:2px 5px; font-size:9px;">Draft</button>
             <button class="btn-icon" onclick="editApp('${app.id}')" style="padding:2px 5px; font-size:9px;">Edit</button>
           </div>
         </div>
@@ -633,6 +672,71 @@ function handleDrop(e, targetStatus) {
   updateApplicationStatus(id, targetStatus);
   showToast(`Moved to ${targetStatus}`);
   setTimeout(renderActiveView, 150);
+}
+
+// Outreach & Follow-up Draft Generator Logic
+let currentOutreachApp = null;
+let currentOutreachStrategy = 'followup';
+
+function openOutreachModal(id) {
+  const app = apps.find(a => String(a.id) === String(id));
+  if (!app) return;
+  currentOutreachApp = app;
+  document.getElementById('outreach-copy-status').textContent = '';
+  setOutreachTemplate('followup');
+  document.getElementById('outreach-modal').style.display = 'flex';
+}
+
+function closeOutreachModal() {
+  document.getElementById('outreach-modal').style.display = 'none';
+}
+
+function setOutreachTemplate(strategy) {
+  currentOutreachStrategy = strategy;
+  ['followup', 'linkedin', 'postinterview', 'cold'].forEach(s => {
+    const btn = document.getElementById(`tab-draft-${s}`);
+    if (btn) btn.classList.toggle('active', s === strategy);
+  });
+
+  if (!currentOutreachApp) return;
+
+  const candidateProfile = JSON.parse(localStorage.getItem('jxa_local_profile') || '{}');
+  const candidateName = candidateProfile.fullName || 'Candidate';
+  const company = currentOutreachApp.company || 'Company';
+  const role = currentOutreachApp.role || 'the position';
+
+  let subject = '';
+  let body = '';
+
+  if (strategy === 'followup') {
+    subject = `Following Up on Application: ${role} - ${candidateName}`;
+    body = `Hi Hiring Team at ${company},\n\nI hope you are having a productive week.\n\nI recently submitted my application for the ${role} position at ${company}. I wanted to follow up and reiterate my strong enthusiasm for the role.\n\nWith my background in engineering and hands-on problem solving, I am confident I can make an immediate positive impact on your team. Please let me know if you need any additional portfolio links or work samples from my end.\n\nThank you for your time and consideration.\n\nBest regards,\n${candidateName}`;
+  } else if (strategy === 'linkedin') {
+    subject = `N/A (LinkedIn Connection Note - under 300 characters)`;
+    body = `Hi [Name], I saw the ${role} opening at ${company} and recently applied. Given my relevant engineering background, I would love to connect and follow ${company}'s journey. Thank you! - ${candidateName}`;
+  } else if (strategy === 'postinterview') {
+    subject = `Thank You: Interview for ${role} - ${candidateName}`;
+    body = `Hi [Interviewer Name],\n\nThank you for taking the time to speak with me today about the ${role} opportunity at ${company}.\n\nI really enjoyed learning more about the team's ongoing initiatives and challenges. Our discussion reinforced my excitement about the role and how my technical experience directly aligns with your goals.\n\nI look forward to hearing about the next steps. Please let me know if you need any further information.\n\nBest regards,\n${candidateName}`;
+  } else if (strategy === 'cold') {
+    subject = `Quick Note regarding ${role} at ${company} - ${candidateName}`;
+    body = `Hi [Hiring Manager Name],\n\nI hope you are doing well.\n\nI noticed that ${company} is growing the team for ${role}. With my experience delivering robust, scalable solutions, I wanted to reach out directly to see if you are currently reviewing candidates.\n\nI've attached my resume and would welcome a brief conversation to explore how I can contribute to your team's roadmap this quarter.\n\nBest regards,\n${candidateName}`;
+  }
+
+  document.getElementById('outreach-subject').value = subject;
+  document.getElementById('outreach-body').value = body;
+}
+
+async function copyOutreachDraft() {
+  const body = document.getElementById('outreach-body').value;
+  try {
+    await navigator.clipboard.writeText(body);
+    document.getElementById('outreach-copy-status').textContent = 'Draft copied to clipboard!';
+    setTimeout(() => {
+      document.getElementById('outreach-copy-status').textContent = '';
+    }, 3000);
+  } catch (err) {
+    showToast('Failed to copy', 'error');
+  }
 }
 
 function esc(str) {
