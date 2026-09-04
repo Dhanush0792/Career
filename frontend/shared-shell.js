@@ -53,8 +53,74 @@ function parseJwtPayload(token) {
   }
 }
 
+// ─── Session Lifecycle & Inactivity Management ──────────────────────────────
+const INACTIVITY_TIMEOUT_MS = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+let _activeSSE = null;
+let _lastActivityUpdate = 0;
+
+function recordUserActivity() {
+  const now = Date.now();
+  if (now - _lastActivityUpdate > 60000) { // Throttle writes to at most once per minute
+    _lastActivityUpdate = now;
+    if (localStorage.getItem('jxa_token')) {
+      localStorage.setItem('jxa_last_active', String(now));
+    }
+  }
+}
+
+// Attach user activity listeners
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  ['mousedown', 'keydown', 'scroll', 'touchstart', 'visibilitychange'].forEach(evt => {
+    window.addEventListener(evt, recordUserActivity, { passive: true });
+  });
+
+  // Cross-tab synchronization listener: instantly catch logout in another tab
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'jxa_token' && !e.newValue) {
+      triggerSessionLogout('logged_out', false);
+    }
+  });
+
+  // Periodically check inactivity in background
+  setInterval(() => {
+    if (localStorage.getItem('jxa_token')) {
+      const lastActive = Number(localStorage.getItem('jxa_last_active') || Date.now());
+      if (Date.now() - lastActive >= INACTIVITY_TIMEOUT_MS) {
+        triggerSessionLogout('inactivity');
+      }
+    }
+  }, 60000);
+}
+
+function triggerSessionLogout(reason = 'logged_out', navigate = true) {
+  // 1. Close SSE connection if active
+  if (_activeSSE && typeof _activeSSE.close === 'function') {
+    try { _activeSSE.close(); } catch(e) {}
+    _activeSSE = null;
+  }
+
+  // 2. Clear all local application keys
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
+  keys.forEach(k => localStorage.removeItem(k));
+
+  // 3. Notify extension of signed-out state
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
+      detail: { paired: false, email: "" }
+    }));
+  }
+
+  // 4. Navigate to authentication gateway with reason
+  if (navigate && typeof window !== 'undefined') {
+    const isInAdmin = window.location.pathname.includes('/admin/');
+    const prefix = isInAdmin ? '../' : '';
+    const safeReason = encodeURIComponent(reason);
+    window.location.href = `${prefix}auth.html?reason=${safeReason}`;
+  }
+}
+
 /**
- * Redirect to auth.html if no session token exists or if token is expired.
+ * Redirect to auth.html if no session token exists, if token is expired, or if inactive for 2+ days.
  * Call this at the top of every inner page.
  */
 function requireAuth() {
@@ -78,22 +144,35 @@ function requireAuth() {
   const token = localStorage.getItem('jxa_token');
   let isValidToken = false;
   let tokenRole = 'user';
+  let invalidReason = 'expired';
 
   if (token) {
-    const payload = parseJwtPayload(token);
-    if (payload) {
-      // Check expiration
-      if (payload.exp && payload.exp * 1000 < Date.now()) {
-        localStorage.removeItem('jxa_token');
-        localStorage.removeItem('jxa_role');
-      } else {
-        isValidToken = true;
-        tokenRole = payload.role || payload.user_metadata?.role || localStorage.getItem('jxa_role') || 'user';
-      }
+    const lastActive = Number(localStorage.getItem('jxa_last_active') || 0);
+    const now = Date.now();
+
+    // Check Case 1: Inactivity >= 2 days
+    if (lastActive && (now - lastActive >= INACTIVITY_TIMEOUT_MS)) {
+      isValidToken = false;
+      invalidReason = 'inactivity';
     } else {
-      // Opaque token / fallback token
-      isValidToken = true;
-      tokenRole = localStorage.getItem('jxa_role') || 'user';
+      const payload = parseJwtPayload(token);
+      if (payload) {
+        // Check Case 2: JWT expiration
+        if (payload.exp && payload.exp * 1000 < now) {
+          isValidToken = false;
+          invalidReason = 'expired';
+        } else {
+          isValidToken = true;
+          tokenRole = payload.role || payload.user_metadata?.role || localStorage.getItem('jxa_role') || 'user';
+          // Touch activity timestamp
+          recordUserActivity();
+        }
+      } else {
+        // Opaque token / fallback token
+        isValidToken = true;
+        tokenRole = localStorage.getItem('jxa_role') || 'user';
+        recordUserActivity();
+      }
     }
   }
 
@@ -110,7 +189,7 @@ function requireAuth() {
     } else if (page.includes('autofill-lab')) {
       window.location.href = prefix + 'tools.html#autofill-lab';
     } else {
-      window.location.href = prefix + 'auth.html';
+      triggerSessionLogout(token ? invalidReason : 'unauthenticated');
     }
   } else {
     // Non-admin trying to access admin pages
@@ -131,9 +210,7 @@ function requireAuth() {
 requireAuth();
 
 function logout() {
-  const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
-  keys.forEach(k => localStorage.removeItem(k));
-  window.location.href = 'auth.html';
+  triggerSessionLogout('logged_out');
 }
 
 // ─── Zero-Knowledge Client-Side Cryptographic Engine (AES-GCM 256 + PBKDF2 SHA-256) ───
@@ -740,8 +817,11 @@ async function connectSSE() {
     source.addEventListener('error', () => {
       document.dispatchEvent(new CustomEvent('jobxapply:offline'));
       source.close();
-      setTimeout(connectSSE, 5000); // Auto-reconnect after 5 seconds
+      if (localStorage.getItem('jxa_token') || localStorage.getItem('jxa_passcode')) {
+        setTimeout(connectSSE, 5000); // Auto-reconnect after 5 seconds if authenticated
+      }
     });
+    _activeSSE = source;
     return source;
   } catch (_) {
     return null;
