@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JobXApply // Dashboard</title>
-<meta name="description" content="JobXApply command dashboard — your career operating system at a glance.">
+<meta name="description" content="JobXApply command dashboard â€” your career operating system at a glance.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -108,7 +108,7 @@ body::after {
 select.form-input { cursor:pointer; }
 </style>
 
-  <link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
+  <link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 </head>
 <body>
 
@@ -187,7 +187,7 @@ select.form-input { cursor:pointer; }
   <div class="page-header">
     <div>
       <div class="page-header__label">JOBXAPPLY // COMMAND CENTER</div>
-      <div class="page-header__name">WELCOME, <span id="op-name">—</span></div>
+      <div class="page-header__name">WELCOME, <span id="op-name">â€”</span></div>
       <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
         <span class="page-header__label" style="margin-bottom:0; font-size:10px;">ACTIVE PROFILE:</span>
         <select id="active-profile-select" style="
@@ -206,8 +206,8 @@ select.form-input { cursor:pointer; }
     </div>
     <div class="page-header__meta">
       <div><span class="sync-dot" id="sync-dot"></span><span id="sync-label">Connecting...</span></div>
-      <div>Profile v<span id="op-version">—</span></div>
-      <div id="op-updated" style="color:var(--dim)">—</div>
+      <div>Profile v<span id="op-version">â€”</span></div>
+      <div id="op-updated" style="color:var(--dim)">â€”</div>
     </div>
   </div>
 
@@ -217,14 +217,14 @@ select.form-input { cursor:pointer; }
     <div class="card">
       <div class="card__title">Profile Completeness <span class="card__id">CB-01</span></div>
       <div>
-        <div class="comp-number" id="comp-pct">—</div>
-        <div class="comp-sub" id="comp-sub">— / — fields filled</div>
+        <div class="comp-number" id="comp-pct">â€”</div>
+        <div class="comp-sub" id="comp-sub">â€” / â€” fields filled</div>
       </div>
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="comp-bar"></div>
       </div>
       <div id="comp-hint" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.5;"></div>
-      <a href="profile-setup.html" class="btn btn-ghost" style="margin-top:auto;font-size:10px;">EDIT PROFILE →</a>
+      <a href="profile-setup.html" class="btn btn-ghost" style="margin-top:auto;font-size:10px;">EDIT PROFILE â†’</a>
     </div>
 
     <!-- Card 2: Quick tools -->
@@ -232,32 +232,32 @@ select.form-input { cursor:pointer; }
       <div class="card__title">Core Toolkit <span class="card__id">CB-02</span></div>
       <div class="tools-grid">
         <a href="resume-builder.html" class="tool-btn">
-          <div class="tool-btn__icon">◈</div>
+          <div class="tool-btn__icon">â—ˆ</div>
           <div class="tool-btn__title">RESUME BUILDER</div>
           <div class="tool-btn__desc">Compile your profile into a formatted resume.</div>
         </a>
         <a href="ats-checker.html" class="tool-btn">
-          <div class="tool-btn__icon">◎</div>
+          <div class="tool-btn__icon">â—Ž</div>
           <div class="tool-btn__title">ATS CHECKER</div>
           <div class="tool-btn__desc">Score your resume against job descriptions.</div>
         </a>
         <a href="cover-letter.html" class="tool-btn">
-          <div class="tool-btn__icon">◇</div>
+          <div class="tool-btn__icon">â—‡</div>
           <div class="tool-btn__title">COVER LETTER</div>
           <div class="tool-btn__desc">Draft tailored letters from your profile.</div>
         </a>
         <a href="autofill-lab.html" class="tool-btn">
-          <div class="tool-btn__icon">⬡</div>
+          <div class="tool-btn__icon">â¬¡</div>
           <div class="tool-btn__title">AUTOFILL LAB</div>
           <div class="tool-btn__desc">Preview portal field mappings live.</div>
         </a>
         <a href="salary-calculator.html" class="tool-btn">
-          <div class="tool-btn__icon">✦</div>
+          <div class="tool-btn__icon">âœ¦</div>
           <div class="tool-btn__title">SALARY &amp; NEGOTIATOR</div>
           <div class="tool-btn__desc">Market percentiles &amp; counter-offer scripts.</div>
         </a>
         <a href="extension-setup.html" class="tool-btn">
-          <div class="tool-btn__icon">⊕</div>
+          <div class="tool-btn__icon">âŠ•</div>
           <div class="tool-btn__title">EXTENSION SETUP</div>
           <div class="tool-btn__desc">Install and pair browser autofill.</div>
         </a>
@@ -268,12 +268,12 @@ select.form-input { cursor:pointer; }
     <div class="card">
       <div class="card__title">Sync Metrics <span class="card__id">CB-03</span></div>
       <div id="metrics-content">
-        <div class="metric-row"><span class="metric-label">Profile Version</span><span class="metric-val" id="m-version">—</span></div>
-        <div class="metric-row"><span class="metric-label">Last Synced</span><span class="metric-val" id="m-updated">—</span></div>
-        <div class="metric-row"><span class="metric-label">Fields Filled</span><span class="metric-val" id="m-fields">—</span></div>
-        <div class="metric-row"><span class="metric-label">Applications Logged</span><span class="metric-val" id="m-apps">—</span></div>
-        <div class="metric-row"><span class="metric-label">Sync Origin</span><span class="metric-val" id="m-origin">—</span></div>
-        <div class="metric-row"><span class="metric-label">Account Tier</span><span class="metric-val" id="m-tier" style="color:var(--success); font-weight:700;">—</span></div>
+        <div class="metric-row"><span class="metric-label">Profile Version</span><span class="metric-val" id="m-version">â€”</span></div>
+        <div class="metric-row"><span class="metric-label">Last Synced</span><span class="metric-val" id="m-updated">â€”</span></div>
+        <div class="metric-row"><span class="metric-label">Fields Filled</span><span class="metric-val" id="m-fields">â€”</span></div>
+        <div class="metric-row"><span class="metric-label">Applications Logged</span><span class="metric-val" id="m-apps">â€”</span></div>
+        <div class="metric-row"><span class="metric-label">Sync Origin</span><span class="metric-val" id="m-origin">â€”</span></div>
+        <div class="metric-row"><span class="metric-label">Account Tier</span><span class="metric-val" id="m-tier" style="color:var(--success); font-weight:700;">â€”</span></div>
       </div>
       <div class="console-box" id="console">
         <div class="console-line">[SYS_INIT] Dashboard online. Connecting to sync server...</div>
@@ -297,7 +297,7 @@ select.form-input { cursor:pointer; }
 </div>
 
 <script>
-// Auth guard — must be logged in
+// Auth guard â€” must be logged in
 requireAuth();
 
 // Inject nav
@@ -314,16 +314,16 @@ function addLog(text, cls = '') {
   consoleBox.scrollTop = consoleBox.scrollHeight;
 }
 
-// ── Profile rendering ──────────────────────────────────────────────────────
+// â”€â”€ Profile rendering â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderProfileState(state) {
   const profile = state?.profile || {};
   const { count, total, pct } = calcCompleteness(profile);
-  const name = profile.fullName ? profile.fullName.toUpperCase() : '—';
+  const name = profile.fullName ? profile.fullName.toUpperCase() : 'â€”';
 
   document.getElementById('op-name').textContent = name;
-  document.getElementById('op-version').textContent = state?.version ?? '—';
+  document.getElementById('op-version').textContent = state?.version ?? 'â€”';
   document.getElementById('op-updated').textContent = state?.updatedAt
-    ? new Date(state.updatedAt).toLocaleString() : '—';
+    ? new Date(state.updatedAt).toLocaleString() : 'â€”';
 
   // Completeness
   document.getElementById('comp-pct').textContent = (count > 0) ? pct + '%' : '0%';
@@ -339,18 +339,18 @@ function renderProfileState(state) {
   } else if (pct < 60) {
     hint.innerHTML = 'Add more details to improve autofill accuracy across job portals.';
   } else if (pct < 100) {
-    hint.innerHTML = 'Almost there — fill remaining fields for maximum portal coverage.';
+    hint.innerHTML = 'Almost there â€” fill remaining fields for maximum portal coverage.';
   } else {
-    hint.innerHTML = '<span style="color:var(--success)">✓ Profile complete.</span> You\'re ready for every portal.';
+    hint.innerHTML = '<span style="color:var(--success)">âœ“ Profile complete.</span> You\'re ready for every portal.';
   }
 
   // Sync metrics
-  document.getElementById('m-version').textContent = state?.version ?? '—';
+  document.getElementById('m-version').textContent = state?.version ?? 'â€”';
   document.getElementById('m-updated').textContent = state?.updatedAt
-    ? new Date(state.updatedAt).toLocaleString() : '—';
+    ? new Date(state.updatedAt).toLocaleString() : 'â€”';
   document.getElementById('m-fields').textContent = `${count} / ${total}`;
   document.getElementById('m-apps').textContent = loadApplications().length;
-  document.getElementById('m-origin').textContent = state?.origin || '—';
+  document.getElementById('m-origin').textContent = state?.origin || 'â€”';
   document.getElementById('m-tier').textContent = (state?.tier || 'free').toUpperCase();
 
   // Populate profiles select dropdown
@@ -369,7 +369,7 @@ function renderProfileState(state) {
   }
 }
 
-// ── Application tracker ────────────────────────────────────────────────────
+// â”€â”€ Application tracker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderTracker() {
   const apps = loadApplications();
   const wrap = document.getElementById('tracker-wrap');
@@ -401,10 +401,10 @@ function renderTracker() {
       <tbody>
         ${apps.map(app => `
           <tr data-id="${app.id}">
-            <td>${esc(app.company) || '—'}</td>
-            <td>${esc(app.role) || '—'}</td>
-            <td>${esc(app.date) || '—'}</td>
-            <td>${esc(app.portal) || '—'}</td>
+            <td>${esc(app.company) || 'â€”'}</td>
+            <td>${esc(app.role) || 'â€”'}</td>
+            <td>${esc(app.date) || 'â€”'}</td>
+            <td>${esc(app.portal) || 'â€”'}</td>
             <td><span class="status-pill ${STATUS_MAP[app.status]||'applied'}">${esc(app.status)||'APPLIED'}</span></td>
             <td>
               <div class="row-actions">
@@ -466,7 +466,7 @@ function esc(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ── Add Application Modal ─────────────────────────────────────────────────
+// â”€â”€ Add Application Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const modal = document.getElementById('add-app-modal');
 document.getElementById('open-add-modal').addEventListener('click', () => {
   // Set today as default date
@@ -494,10 +494,10 @@ document.getElementById('modal-save').addEventListener('click', () => {
   modal.classList.remove('open');
   renderTracker();
   showToast('Application logged successfully.', 'success');
-  addLog(`Logged: ${company} — ${role}`, 'success');
+  addLog(`Logged: ${company} â€” ${role}`, 'success');
 });
 
-// ── Profile Selector & Modal Actions ───────────────────────────────────────
+// â”€â”€ Profile Selector & Modal Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const profileSelect = document.getElementById('active-profile-select');
 profileSelect.addEventListener('change', async (e) => {
   const newActiveId = e.target.value;
@@ -540,7 +540,7 @@ document.getElementById('profile-modal-save').addEventListener('click', async ()
   }
 });
 
-// ── SSE + Initial Load ─────────────────────────────────────────────────────
+// â”€â”€ SSE + Initial Load â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const syncDot = document.getElementById('sync-dot');
 const syncLabel = document.getElementById('sync-label');
 

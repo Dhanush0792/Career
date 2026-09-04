@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -263,7 +263,7 @@ tr:hover { background: rgba(255, 255, 255, 0.015); }
 #snapshot-modal .modal-card { max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; background: #0B1020; border: 1px solid var(--glass-border); border-radius: 16px; }
 #snapshot-modal img { max-width: 100%; max-height: 60vh; object-fit: contain; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); }
 </style>
-<link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 </head>
 <body>
 
@@ -720,7 +720,7 @@ function renderTable(filtered) {
     const stalled = isStalledApp(app);
     
     const compRole = `
-      <div class="company-name">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--primary);text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
+      <div class="company-name">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--primary);text-decoration:none;">${esc(app.company)} â†—</a>` : esc(app.company)}</div>
       <div class="role-name">${esc(app.role)}</div>
     `;
     
@@ -787,14 +787,14 @@ function renderKanban(filtered) {
 
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div class="kanban-card-title">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--white); text-decoration:none;">${esc(app.company)} ↗</a>` : esc(app.company)}</div>
+          <div class="kanban-card-title">${app.url ? `<a href="${app.url}" target="_blank" style="color:var(--white); text-decoration:none;">${esc(app.company)} â†—</a>` : esc(app.company)}</div>
           <div style="display:flex; gap:4px;">
             <button class="btn-icon outreach" onclick="openOutreachModal('${app.id}')" style="padding:2px 5px; font-size:9px;">Draft</button>
             <button class="btn-icon" onclick="editApp('${app.id}')" style="padding:2px 5px; font-size:9px;">Edit</button>
           </div>
         </div>
         <div class="kanban-card-role">${esc(app.role)}</div>
-        ${app.salary || app.location ? `<div style="font-family:var(--mono); font-size:10px; color:var(--success);">${esc(app.salary || '')} ${app.location ? '• ' + esc(app.location) : ''}</div>` : ''}
+        ${app.salary || app.location ? `<div style="font-family:var(--mono); font-size:10px; color:var(--success);">${esc(app.salary || '')} ${app.location ? 'â€¢ ' + esc(app.location) : ''}</div>` : ''}
         ${stalled ? `<div><span class="stalled-badge">14d+ Stalled (Ghosting Risk)</span></div>` : ''}
         <div class="kanban-card-footer">
           <span>${esc(app.portal) || 'Direct'}</span>
@@ -891,7 +891,7 @@ function renderAnalytics() {
     row.innerHTML = `
       <div style="display:flex; flex-direction:column;">
         <span style="font-weight:600; color:var(--white);">${esc(portal)}</span>
-        <span style="font-family:var(--mono); font-size:10px; color:var(--muted);">${stat.total} applied • ${stat.positive} responses</span>
+        <span style="font-family:var(--mono); font-size:10px; color:var(--muted);">${stat.total} applied â€¢ ${stat.positive} responses</span>
       </div>
       <div style="text-align:right;">
         <span style="font-family:var(--mono); font-size:12px; font-weight:700; color:${rate >= 20 ? 'var(--success)' : 'var(--muted)'};">${rate}%</span>

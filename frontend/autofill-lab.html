@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -77,7 +77,7 @@ body::after {
 .console-line.warn { color:var(--alert); }
 </style>
 
-  <link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
+  <link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 </head>
 <body>
 
@@ -296,7 +296,7 @@ function renderProfileSnap(profile) {
   snap.innerHTML = PROFILE_DISPLAY_FIELDS.map(([key, label]) => {
     const val = profile[key];
     const hasVal = val && String(val).trim().length > 0;
-    const display = hasVal ? String(val).slice(0, 40) + (String(val).length > 40 ? '…' : '') : '—';
+    const display = hasVal ? String(val).slice(0, 40) + (String(val).length > 40 ? 'â€¦' : '') : 'â€”';
     return `<div class="profile-row">
       <span class="profile-row__label">${label}</span>
       <span class="profile-row__val ${hasVal ? '' : 'empty'}">${display}</span>
@@ -351,7 +351,7 @@ function renderFieldMap(portalKey) {
     const profileVal = currentProfile[fieldKey];
     const hasVal = profileVal && String(profileVal).trim().length > 0;
     if (hasVal) filledCount++;
-    const displayVal = hasVal ? String(profileVal).slice(0, 60) + (String(profileVal).length > 60 ? '…' : '') : '— not in profile —';
+    const displayVal = hasVal ? String(profileVal).slice(0, 60) + (String(profileVal).length > 60 ? 'â€¦' : '') : 'â€” not in profile â€”';
     return `<tr>
       <td class="field-label">${fieldKey}</td>
       <td class="field-selector">${selectors[0]}</td>

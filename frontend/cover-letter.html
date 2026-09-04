@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -343,7 +343,7 @@ body::after {
   }
 }
 </style>
-<link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 </head>
 <body>
 
@@ -1245,13 +1245,13 @@ function updateAtsScore() {
   
   let html = '';
   checks.forEach(c => {
-    html += `<li style="color:var(--alert)">âš  ${c}</li>`;
+    html += `<li style="color:var(--alert)">Ã¢Å¡Â  ${c}</li>`;
   });
   
   if (missingKeywords.length > 0) {
-    html += `<li style="color:var(--muted)">ðŸ’¡ Incorporate keywords from job requirements: <strong>${missingKeywords.slice(0, 5).join(', ')}</strong></li>`;
+    html += `<li style="color:var(--muted)">Ã°Å¸â€™Â¡ Incorporate keywords from job requirements: <strong>${missingKeywords.slice(0, 5).join(', ')}</strong></li>`;
   } else {
-    html += `<li style="color:var(--success)">âœ“ Matches all target requirements!</li>`;
+    html += `<li style="color:var(--success)">Ã¢Å“â€œ Matches all target requirements!</li>`;
   }
   
   document.getElementById('ats-suggestions').innerHTML = html;

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="JobXApply — Mission-class career automation. One profile. 50+ portals. Zero friction.">
+<meta name="description" content="JobXApply â€” Mission-class career automation. One profile. 50+ portals. Zero friction.">
 <title>JobXApply // One-Click Job Application Assistant</title>
 <script type="application/ld+json">
 {
@@ -55,9 +55,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style-glass.css">
 <style>
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TOKENS
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 :root {
   --black:   #0B1020;
   --s1:      rgba(255, 255, 255, 0.07);
@@ -78,9 +78,9 @@
   --body:    'Inter', sans-serif;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RESET
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body {
@@ -98,9 +98,9 @@ button { cursor: none; border: none; background: none; font-family: inherit; col
 ::selection { background: var(--orange); color: #000; }
 :focus-visible { outline: 1px solid var(--orange); outline-offset: 2px; }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    BOOT SCANLINE
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 #scanline {
   display: none !important;
 }
@@ -152,9 +152,9 @@ button { cursor: none; border: none; background: none; font-family: inherit; col
   to { transform: rotate(360deg); }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CROSSHAIR CURSOR
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 #cur-h {
   position: fixed; left: 0; right: 0;
   height: 1px;
@@ -199,9 +199,9 @@ body.on-interactive #cur-ring {
   border-color: rgba(232,77,28,.7);
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SCROLL PROGRESS
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 #spbar {
   position: fixed; top: 0; left: 0;
   height: 1px; width: 0%;
@@ -210,9 +210,9 @@ body.on-interactive #cur-ring {
   transition: width 60ms linear;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TICKER BAR
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .ticker {
   position: fixed; top: 0; left: 0; right: 0;
   height: 28px;
@@ -239,7 +239,7 @@ body.on-interactive #cur-ring {
   height: 28px;
 }
 .ticker__item::before {
-  content: '▸';
+  content: 'â–¸';
   font-size: 8px;
 }
 @keyframes ticker-scroll {
@@ -247,9 +247,9 @@ body.on-interactive #cur-ring {
   to   { transform: translateX(-50%); }
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    NAV
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .nav {
   position: fixed; top: 28px; left: 0; right: 0;
   height: 52px;
@@ -318,9 +318,9 @@ body.on-interactive #cur-ring {
 }
 @keyframes pip { 0%,100%{opacity:1} 50%{opacity:.2} }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    BUTTONS
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   font-family: var(--mono); font-size: 11px; font-weight: 700;
@@ -350,17 +350,17 @@ body.on-interactive #cur-ring {
 .btn--sm { height: 36px; font-size: 10px; padding: 0 18px; }
 .btn__arrow { font-size: 14px; }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CONTAINER
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .container {
   max-width: 1280px; margin: 0 auto;
   padding: 0 32px; position: relative;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SECTION BASE
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .section {
   padding: 120px 0;
   border-top: 1px solid var(--border);
@@ -400,9 +400,9 @@ body.on-interactive #cur-ring {
   line-height: 1;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    REVEAL ANIMATION
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .reveal {
   opacity: 0;
   transform: translateY(20px);
@@ -416,9 +416,9 @@ body.on-interactive #cur-ring {
 .d5 { transition-delay: .40s; }
 .d6 { transition-delay: .48s; }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HERO
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .hero {
   min-height: calc(100vh - 40px);
   padding-top: 36px;
@@ -551,9 +551,9 @@ body.on-interactive #cur-ring {
 }
 .hero__globe:hover .globe-drag-hint { opacity: 0; }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TERMINAL CARD (for features)
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .tcard {
   border: 1px solid var(--border);
   background: var(--s1);
@@ -598,9 +598,9 @@ body.on-interactive #cur-ring {
 .tcard__stat::before { content: '>_'; color: var(--orange); }
 .tcard:hover .tcard__stat { color: var(--muted); }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FEATURE GRID
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .feat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -618,9 +618,9 @@ body.on-interactive #cur-ring {
 .feat-grid .tcard:nth-child(5),
 .feat-grid .tcard:nth-child(6) { border-bottom: none; }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MISSION SECTION (problem statement)
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .mission-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0; border: 1px solid var(--border);
@@ -651,9 +651,9 @@ body.on-interactive #cur-ring {
   height: 2px; background: var(--orange);
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PROTOCOL / HOW IT WORKS
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .protocol-list { display: flex; flex-direction: column; gap: 0; }
 .protocol-step {
   display: grid; grid-template-columns: 80px 1fr;
@@ -690,9 +690,9 @@ body.on-interactive #cur-ring {
 }
 .protocol-step__desc { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TERMINAL SIMULATOR
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .sim-container {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
@@ -851,9 +851,9 @@ body.on-interactive #cur-ring {
   color: var(--white);
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    MARQUEE (targets)
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .marquee-wrap {
   padding: 60px 0;
   border-top: 1px solid var(--border);
@@ -882,9 +882,9 @@ body.on-interactive #cur-ring {
 .mitem:hover { color: var(--orange); background: var(--s2); }
 .mitem__dot { width: 4px; height: 4px; background: var(--dim); flex-shrink: 0; }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TESTIMONIALS (field reports)
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .reports-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0; border: 1px solid var(--border);
@@ -919,9 +919,9 @@ body.on-interactive #cur-ring {
 }
 .report__role { font-size: 12px; color: var(--muted); }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PRICING (access levels)
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .price-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 0; border: 1px solid var(--border);
@@ -971,14 +971,14 @@ body.on-interactive #cur-ring {
   letter-spacing: .02em; color: var(--muted); line-height: 1.4;
 }
 .plevel__feat::before {
-  content: '▸';
+  content: 'â–¸';
   color: var(--orange); flex-shrink: 0;
   font-size: 9px; margin-top: 1px;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FAQ
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .faq { border: 1px solid var(--border); }
 .fq { border-bottom: 1px solid var(--border); }
 .fq:last-child { border-bottom: none; }
@@ -995,7 +995,7 @@ body.on-interactive #cur-ring {
   color: var(--orange); flex-shrink: 0;
   font-size: 10px; letter-spacing: .04em;
 }
-.fq.open .fq-btn::before { content: '[ — ]'; }
+.fq.open .fq-btn::before { content: '[ â€” ]'; }
 .fq-btn:hover { background: var(--s1); color: var(--orange); }
 .fq-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
 .fq-ans {
@@ -1007,9 +1007,9 @@ body.on-interactive #cur-ring {
   margin-bottom: 24px;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CTA SECTION
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .cta-section {
   border-top: 1px solid var(--border);
   padding: 140px 0;
@@ -1045,11 +1045,11 @@ body.on-interactive #cur-ring {
   letter-spacing: .1em; text-transform: uppercase;
   color: var(--dim); display: flex; align-items: center; gap: 8px;
 }
-.trust-it::before { content: '✓'; color: var(--orange); }
+.trust-it::before { content: 'âœ“'; color: var(--orange); }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FOOTER
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 footer {
   border-top: 1px solid var(--border);
   padding: 40px 0;
@@ -1073,22 +1073,22 @@ footer {
   color: var(--dim); letter-spacing: .06em;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DIVIDER
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .divider { width: 100%; height: 1px; background: var(--border); }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    LIVE COUNTER
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .live-counter {
   font-family: var(--mono); font-weight: 700;
   letter-spacing: -.02em;
 }
 
-/* ═══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    RESPONSIVE
-═══════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @media(max-width:1100px) {
   .hero__grid { grid-template-columns: 1fr; }
   .hero__globe { display: none; }
@@ -1130,13 +1130,13 @@ footer {
 }
 </style>
 
-  <link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
+  <link rel="icon" type="image/png" href="assets/app-logo.png?v=5">
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      BOOT SEQUENCE
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="boot-overlay">
   <div class="loader-container">
     <div class="loader-ring"></div>
@@ -1150,17 +1150,17 @@ footer {
 <!-- Scroll progress -->
 <div id="spbar"></div>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      CROSSHAIR CURSOR
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div id="cur-h"></div>
 <div id="cur-v"></div>
 <div id="cur-ring"></div>
 <div id="cur-mark"></div>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      TICKER BAR
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div class="ticker" aria-hidden="true">
   <div class="ticker__inner">
     <div class="ticker__item">CB-SYSTEM ONLINE</div>
@@ -1183,15 +1183,15 @@ footer {
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      NAV
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <script src="public-nav.js"></script>
 
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      HERO
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="hero" id="hero">
   <div class="container">
     <div class="hero__grid">
@@ -1293,7 +1293,7 @@ footer {
             <canvas id="globe-canvas" width="440" height="440" style="width:100%;height:100%;display:block;"></canvas>
           </div>
           <div class="globe-status-badge">
-            <span class="pulse-green">●</span>
+            <span class="pulse-green">â—</span>
             <span id="globe-banner-stat">Initializing vector maps...</span>
           </div>
         </div>
@@ -1303,9 +1303,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      MISSION BRIEFING
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="section" id="briefing">
   <div class="sec-bg-num">01</div>
   <div class="container">
@@ -1313,7 +1313,7 @@ footer {
       <div class="reveal">
         <div class="section__num">01 &nbsp; MISSION BRIEFING</div>
         <h2 class="section__title">THE <em>PROBLEM</em></h2>
-        <p class="section__desc">Every job seeker loses 8–12 hours per week re-entering the same data across fragmented portals. JobXApply eliminates that entirely.</p>
+        <p class="section__desc">Every job seeker loses 8â€“12 hours per week re-entering the same data across fragmented portals. JobXApply eliminates that entirely.</p>
       </div>
       <div class="mission-grid reveal d2">
         <div class="mission-col">
@@ -1324,7 +1324,7 @@ footer {
         <div class="mission-col mission-col--active">
           <div class="mission-col__num">02</div>
           <div class="mission-col__title">One Profile</div>
-          <div class="mission-col__desc">Build your master profile once. JobXApply maps every field to every portal — automatically, intelligently, accurately.</div>
+          <div class="mission-col__desc">Build your master profile once. JobXApply maps every field to every portal â€” automatically, intelligently, accurately.</div>
         </div>
         <div class="mission-col">
           <div class="mission-col__num">03</div>
@@ -1336,9 +1336,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      SIMULATION RUN TIME
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="section" id="simulation">
   <div class="sec-bg-num">02</div>
   <div class="container">
@@ -1410,9 +1410,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      CAPABILITIES
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="section" id="capabilities">
   <div class="sec-bg-num">03</div>
   <div class="container">
@@ -1420,7 +1420,7 @@ footer {
       <div class="section__num">03 &nbsp; SYSTEM CAPABILITIES</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end" class="two-col">
         <h2 class="section__title">FULL MISSION <em>TOOLKIT</em></h2>
-        <p class="section__desc">Six integrated capabilities. One connected system. Everything communicates with everything — no silos, no duplication.</p>
+        <p class="section__desc">Six integrated capabilities. One connected system. Everything communicates with everything â€” no silos, no duplication.</p>
       </div>
     </div>
 
@@ -1457,7 +1457,7 @@ footer {
       <div class="tcard">
         <div class="tcard__id">CAPABILITY-05 &nbsp; TRACKER</div>
         <div class="tcard__title">Application Tracker</div>
-        <div class="tcard__desc">Every application logged automatically. Status, timeline events, follow-up dates, notes — your complete job search operation visible in one view.</div>
+        <div class="tcard__desc">Every application logged automatically. Status, timeline events, follow-up dates, notes â€” your complete job search operation visible in one view.</div>
         <div class="tcard__stat">Full pipeline. Timeline. Follow-ups</div>
       </div>
 
@@ -1472,9 +1472,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      PROTOCOL (how it works)
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="section" id="protocol">
   <div class="sec-bg-num">04</div>
   <div class="container">
@@ -1505,7 +1505,7 @@ footer {
           <div class="protocol-step__body">
             <div class="protocol-step__label">PHASE TWO &nbsp;&bull;&nbsp; CONFIGURE</div>
             <div class="protocol-step__title">Build your master profile</div>
-            <div class="protocol-step__desc">Fill in your details once — education, experience, skills, preferences, links. Your data is encrypted and stored locally. Sync across devices when ready.</div>
+            <div class="protocol-step__desc">Fill in your details once â€” education, experience, skills, preferences, links. Your data is encrypted and stored locally. Sync across devices when ready.</div>
           </div>
         </div>
         <div class="protocol-step" id="ps-2">
@@ -1521,7 +1521,7 @@ footer {
           <div class="protocol-step__body">
             <div class="protocol-step__label">PHASE FOUR &nbsp;&bull;&nbsp; MONITOR</div>
             <div class="protocol-step__title">Track and optimise</div>
-            <div class="protocol-step__desc">Every application is logged. Check your ATS scores, refine your resume, generate cover letters, follow up on time — all from a unified dashboard that follows you everywhere.</div>
+            <div class="protocol-step__desc">Every application is logged. Check your ATS scores, refine your resume, generate cover letters, follow up on time â€” all from a unified dashboard that follows you everywhere.</div>
           </div>
         </div>
       </div>
@@ -1530,14 +1530,14 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      TARGETS (portal marquee)
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div class="marquee-wrap" aria-label="Supported portals" id="targets">
   <div style="padding:0 32px;max-width:1280px;margin:0 auto 28px">
     <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:16px">
       <span style="color:var(--orange)">&rsaquo;</span>
-      TARGET ACQUISITION — PORTAL COVERAGE
+      TARGET ACQUISITION â€” PORTAL COVERAGE
       <span style="flex:1;height:1px;background:var(--border)"></span>
       <span>50+ SYSTEMS MAPPED</span>
     </div>
@@ -1579,9 +1579,9 @@ footer {
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      FIELD REPORTS (testimonials)
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="section" id="field-reports">
   <div class="sec-bg-num">05</div>
   <div class="container">
@@ -1592,7 +1592,7 @@ footer {
     <div class="reports-grid reveal d2">
       <div class="report">
         <div class="report__id">REPORT-NR-001 &nbsp;&bull;&nbsp; BENGALURU</div>
-        <p class="report__quote">40 applications in a week. What used to take an hour each now takes five minutes. ATS scores jumped from 52 to 81 on average. The autofill is genuinely accurate — it handles multi-step forms without me touching anything.</p>
+        <p class="report__quote">40 applications in a week. What used to take an hour each now takes five minutes. ATS scores jumped from 52 to 81 on average. The autofill is genuinely accurate â€” it handles multi-step forms without me touching anything.</p>
         <div class="report__author">
           <div class="report__name">Nikhil Reddy</div>
           <div class="report__role">Backend Engineer</div>
@@ -1600,7 +1600,7 @@ footer {
       </div>
       <div class="report">
         <div class="report__id">REPORT-RU-002 &nbsp;&bull;&nbsp; HYDERABAD</div>
-        <p class="report__quote">LinkedIn Easy Apply multi-step forms used to break every autofill tool I tried. JobXApply gets every field right, every time. The portal maps are maintained remotely — I don't even need to reinstall to get fixes.</p>
+        <p class="report__quote">LinkedIn Easy Apply multi-step forms used to break every autofill tool I tried. JobXApply gets every field right, every time. The portal maps are maintained remotely â€” I don't even need to reinstall to get fixes.</p>
         <div class="report__author">
           <div class="report__name">Rupesh</div>
           <div class="report__role">Student</div>
@@ -1608,7 +1608,7 @@ footer {
       </div>
       <div class="report">
         <div class="report__id">REPORT-IS-003 &nbsp;&bull;&nbsp; MUMBAI</div>
-        <p class="report__quote">Used the tracker and ATS scorer together for my fintech job search. Knew exactly which applications to follow up on and which resumes needed work. Landed the offer in six weeks — half the time I expected.</p>
+        <p class="report__quote">Used the tracker and ATS scorer together for my fintech job search. Knew exactly which applications to follow up on and which resumes needed work. Landed the offer in six weeks â€” half the time I expected.</p>
         <div class="report__author">
           <div class="report__name">Ismail</div>
           <div class="report__role">Software Engineer</div>
@@ -1618,9 +1618,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      ACCESS LEVELS (pricing)
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="section" id="access">
   <div class="sec-bg-num">06</div>
   <div class="container">
@@ -1686,9 +1686,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      INTEL (FAQ)
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="section" id="intel">
   <div class="sec-bg-num">07</div>
   <div class="container">
@@ -1707,7 +1707,7 @@ footer {
         </div>
         <div class="fq">
           <button class="fq-btn" aria-expanded="false">Which browsers does the extension support?</button>
-          <div class="fq-body"><p class="fq-ans">Chrome and Edge with full Manifest V3 builds. Firefox as a temporary add-on for development and testing. Safari is on the roadmap. The extension operates in local-first mode — all features work without a server connection.</p></div>
+          <div class="fq-body"><p class="fq-ans">Chrome and Edge with full Manifest V3 builds. Firefox as a temporary add-on for development and testing. Safari is on the roadmap. The extension operates in local-first mode â€” all features work without a server connection.</p></div>
         </div>
         <div class="fq">
           <button class="fq-btn" aria-expanded="false">What happens if a portal changes its form structure?</button>
@@ -1719,7 +1719,7 @@ footer {
         </div>
         <div class="fq">
           <button class="fq-btn" aria-expanded="false">How does the ATS scorer work?</button>
-          <div class="fq-body"><p class="fq-ans">Paste a job description alongside your resume. The scorer analyses keyword coverage, section presence, structural formatting, and readability — returning a score with section-level breakdown and specific, actionable improvement steps.</p></div>
+          <div class="fq-body"><p class="fq-ans">Paste a job description alongside your resume. The scorer analyses keyword coverage, section presence, structural formatting, and readability â€” returning a score with section-level breakdown and specific, actionable improvement steps.</p></div>
         </div>
         <div class="fq">
           <button class="fq-btn" aria-expanded="false">Does JobXApply work without the sync server?</button>
@@ -1730,9 +1730,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      INITIATE (CTA)
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <section class="cta-section" id="initiate">
   <div class="container">
     <div class="cta-inner">
@@ -1754,9 +1754,9 @@ footer {
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      FOOTER
-═══════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <footer>
   <div class="container">
     <div class="foot__inner">
@@ -1775,16 +1775,16 @@ footer {
   </div>
 </footer>
 
-<!-- ═══════════════════════════════════════════════════
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      JAVASCRIPT
-═══════════════════════════════════════════════════ -->
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <script>
 'use strict';
 
-/* ─── 1. BOOT SCANLINE ────────────────────────────────────────
+/* â”€â”€â”€ 1. BOOT SCANLINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Orange line sweeps from top to bottom on load,
    then content appears.
-──────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function bootSequence() {
   const overlay = document.getElementById('boot-overlay');
   setTimeout(() => {
@@ -1793,9 +1793,9 @@ footer {
 })();
 
 
-/* ─── 2. CROSSHAIR CURSOR ────────────────────────────────────
+/* â”€â”€â”€ 2. CROSSHAIR CURSOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Full-viewport crosshair lines + center ring.
-──────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function initCursor() {
   if (window.matchMedia('(hover:none)').matches) {
     document.querySelectorAll('#cur-h,#cur-v,#cur-ring,#cur-mark').forEach(el => el.style.display = 'none');
@@ -1829,7 +1829,7 @@ footer {
 })();
 
 
-/* ─── 3. SCROLL PROGRESS ─────────────────────────────────────*/
+/* â”€â”€â”€ 3. SCROLL PROGRESS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 (function () {
   const bar = document.getElementById('spbar');
   window.addEventListener('scroll', () => {
@@ -1838,14 +1838,14 @@ footer {
 })();
 
 
-/* ─── 4. NAV SCROLL STATE ────────────────────────────────────*/
+/* â”€â”€â”€ 4. NAV SCROLL STATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 (function () {
   const nav = document.getElementById('nav');
   window.addEventListener('scroll', () => { nav.classList.toggle('scrolled', window.scrollY > 60); }, { passive: true });
 })();
 
 
-/* ─── 5. SCROLL REVEALS ──────────────────────────────────────*/
+/* â”€â”€â”€ 5. SCROLL REVEALS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 (function () {
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('shown'); io.unobserve(e.target); } });
@@ -1854,7 +1854,7 @@ footer {
 })();
 
 
-/* ─── 6. STEP HIGHLIGHT ──────────────────────────────────────*/
+/* â”€â”€â”€ 6. STEP HIGHLIGHT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 (function () {
   const steps = document.querySelectorAll('.protocol-step');
   const io = new IntersectionObserver(entries => {
@@ -1869,7 +1869,7 @@ footer {
 })();
 
 
-/* ─── 7. FAQ ACCORDION ───────────────────────────────────────*/
+/* â”€â”€â”€ 7. FAQ ACCORDION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 (function () {
   document.querySelectorAll('.fq-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1891,7 +1891,7 @@ footer {
 })();
 
 
-/* ─── 8. COUNT-UP ────────────────────────────────────────────*/
+/* â”€â”€â”€ 8. COUNT-UP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
 (function () {
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
@@ -1916,9 +1916,9 @@ footer {
 })();
 
 
-/* ─── 9. LIVE TICKER COUNT ───────────────────────────────────
+/* â”€â”€â”€ 9. LIVE TICKER COUNT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Occasionally ticks the autofill count up.
-──────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function () {
   const el = document.getElementById('tick-count');
   if (!el) return;
@@ -1930,23 +1930,23 @@ footer {
 })();
 
 
-/* ─── 10. GLOBE ───────────────────────────────────────────────
+/* â”€â”€â”€ 10. GLOBE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Canvas-based rotating globe with:
    - lat/lon grid lines
    - city hubs (interactive queries)
    - great circle arcs
    - animated orange signals traveling along arcs
    - atmosphere glow
-──────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /* Old Globe IIFE Removed to prevent conflict with D3 Globe */
 
 
 
-/* ─── 11. TERMINAL SIMULATOR ─────────────────────────────────
+/* â”€â”€â”€ 11. TERMINAL SIMULATOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Handles simulated profile selection and dynamic input
    fill-ins in a mockup browser form.
-──────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function initSimulator() {
   const runBtn = document.getElementById('run-sim-btn');
   const consoleEl = document.getElementById('sim-console');
@@ -2094,9 +2094,9 @@ footer {
 })();
 
 
-/* ─── 12. CTA SIGNAL PULSE on click ─────────────────────────
+/* â”€â”€â”€ 12. CTA SIGNAL PULSE on click â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Expanding orange rings radiate from the CTA button click.
-──────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 (function () {
   document.querySelectorAll('#hero-cta, #initiate .btn--primary').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -2148,7 +2148,7 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
 });
 
 
-// 3D Interactive Globe — India SOI Boundary Edition
+// 3D Interactive Globe â€” India SOI Boundary Edition
 window.addEventListener('load', () => {
   const canvas = document.getElementById('globe-canvas');
   if (!canvas) return;
@@ -2264,7 +2264,7 @@ window.addEventListener('load', () => {
     draw = function() {
       context.clearRect(0, 0, W, H);
 
-      // ── Globe ocean background ──────────────────────────────
+      // â”€â”€ Globe ocean background â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       context.beginPath();
       context.arc(CX, CY, RADIUS, 0, 2 * Math.PI);
       const grad = context.createRadialGradient(CX - 50, CY - 50, 20, CX, CY, RADIUS);
@@ -2276,14 +2276,14 @@ window.addEventListener('load', () => {
       context.strokeStyle = 'rgba(91, 79, 232, 0.4)';
       context.stroke();
 
-      // ── Graticule (lat/lon grid) ────────────────────────────
+      // â”€â”€ Graticule (lat/lon grid) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       context.beginPath();
       path(graticule());
       context.strokeStyle = 'rgba(255, 255, 255, 0.05)';
       context.lineWidth = 0.4;
       context.stroke();
 
-      // ── World countries (India excluded from this layer) ────
+      // â”€â”€ World countries (India excluded from this layer) â”€â”€â”€â”€
       if (landFiltered) {
         landFiltered.features.forEach(d => {
           context.beginPath();
@@ -2296,7 +2296,7 @@ window.addEventListener('load', () => {
         });
       }
 
-      // ── INDIA — SOI Official Boundary overlay ───────────────
+      // â”€â”€ INDIA â€” SOI Official Boundary overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       if (INDIA_SOI) {
         context.beginPath();
         path(INDIA_SOI);
@@ -2314,7 +2314,7 @@ window.addEventListener('load', () => {
         context.stroke();
       }
 
-      // ── City markers & pulse rings ──────────────────────────
+      // â”€â”€ City markers & pulse rings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const visibleCities = [];
       cities.forEach(city => {
         const center = projection.invert([CX, CY]);
@@ -2349,7 +2349,7 @@ window.addEventListener('load', () => {
         }
       });
 
-      // ── City connection arcs & moving signals ──────────────────
+      // â”€â”€ City connection arcs & moving signals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       if (visibleCities.length > 1) {
         for (let i = 0; i < visibleCities.length - 1; i++) {
           // Draw connection line
@@ -2391,7 +2391,7 @@ window.addEventListener('load', () => {
         }
       }
 
-      // ── Rim glow ────────────────────────────────────────────
+      // â”€â”€ Rim glow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       const rimGrad = context.createRadialGradient(CX, CY, RADIUS - 10, CX, CY, RADIUS + 6);
       rimGrad.addColorStop(0, 'rgba(91, 79, 232, 0)');
       rimGrad.addColorStop(1, 'rgba(91, 79, 232, 0.2)');
@@ -2411,7 +2411,7 @@ window.addEventListener('load', () => {
       requestAnimationFrame(animate);
     }
 
-    // ── Mouse drag ──────────────────────────────────────────
+    // â”€â”€ Mouse drag â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     canvas.addEventListener('mousedown', e => {
       autoRotate = false;
       if (inactivityTimer) clearTimeout(inactivityTimer);
@@ -2431,7 +2431,7 @@ window.addEventListener('load', () => {
       inactivityTimer = setTimeout(() => { autoRotate = true; }, 3000);
     });
 
-    // ── Touch drag ──────────────────────────────────────────
+    // â”€â”€ Touch drag â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     canvas.addEventListener('touchstart', e => {
       autoRotate = false;
       if (inactivityTimer) clearTimeout(inactivityTimer);
@@ -2452,25 +2452,25 @@ window.addEventListener('load', () => {
       inactivityTimer = setTimeout(() => { autoRotate = true; }, 3000);
     });
 
-    // ── Start ────────────────────────────────────────────────
+    // â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     projection.rotate(rotation);
     draw();
     animate();
   }
 
-  // ── Banner rotation ─────────────────────────────────────
+  // â”€â”€ Banner rotation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   let msgIndex = 0;
   function rotateBanner() {
     if (bannerStat) {
       const city = cities[msgIndex];
-      bannerStat.textContent = `${city.name} — ${city.msg}`;
+      bannerStat.textContent = `${city.name} â€” ${city.msg}`;
     }
     msgIndex = (msgIndex + 1) % cities.length;
   }
   rotateBanner();
   setInterval(rotateBanner, 3000);
 
-  // ── Safe boundaries fetch with offline fallback ─────────
+  // â”€â”€ Safe boundaries fetch with offline fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Promise.all([
     fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
       .then(r => r.ok ? r.json() : null)
