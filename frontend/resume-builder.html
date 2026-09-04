@@ -94,7 +94,7 @@
 
     .main-content {
       flex: 1;
-      padding: 8px 20px 8px;
+      padding: 6px 16px 6px;
       max-width: 100%;
       display: flex;
       flex-direction: column;
@@ -104,12 +104,43 @@
 
     .builder-grid {
       display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 16px;
+      grid-template-columns: 460px 1fr;
+      gap: 14px;
       flex: 1;
       height: 100%;
       min-height: 0;
       align-items: stretch;
+    }
+
+    /* Zoom & Preview Controls */
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 2px 6px;
+    }
+    .zoom-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .zoom-btn:hover { color: var(--primary); background: rgba(0,243,255,0.1); }
+    .zoom-val {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--white);
+      min-width: 38px;
+      text-align: center;
     }
 
     /* Dropdown styles for actions menu */
@@ -646,15 +677,23 @@
                   <label>Target Role</label>
                   <select id="res-title" onchange="handleRoleSelection()">
                     <option value="">Select Role</option>
-                    <option value="SDE">SDE</option>
+                    <option value="SDE">SDE (Software Dev)</option>
                     <option value="Junior Developer">Junior Developer</option>
-                    <option value="Java/Python/C/C++ Developer">Java/Python/C/C++ Dev</option>
+                    <option value="Java/Python/C/C++ Developer">Java/Python/C++ Dev</option>
                     <option value="Content Manager">Content Manager</option>
                     <option value="Video Editor">Video Editor</option>
                     <option value="Senior Developer">Senior Developer</option>
                     <option value="Marketing Specialist">Marketing Specialist</option>
                     <option value="Customer Care Executive">Customer Care</option>
                     <option value="Business Executive">Business Executive</option>
+                  </select>
+                </div>
+                <div class="fg">
+                  <label>Experience Level</label>
+                  <select id="res-experience-level" onchange="handleRoleSelection()">
+                    <option value="Student">Student (Academic / Intern)</option>
+                    <option value="Fresher" selected>Fresher (0-1 yrs)</option>
+                    <option value="Experienced">Experienced (2+ yrs)</option>
                   </select>
                 </div>
                 <div class="fg">
@@ -669,7 +708,7 @@
                   <label>Location</label>
                   <input type="text" id="res-location" placeholder="City, Country">
                 </div>
-                <div class="fg">
+                <div class="fg cf-full">
                   <label>Website / Portfolio</label>
                   <input type="text" id="res-website" placeholder="github.com/you">
                 </div>
@@ -774,15 +813,26 @@
         <!-- Right: Full-height A4 Preview -->
         <div class="preview-col">
           <div class="sticky-preview">
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 8px 8px; flex-shrink:0; border-bottom:1px solid var(--border-color); margin-bottom:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px 8px; flex-shrink:0; border-bottom:1px solid var(--border-color); margin-bottom:6px;">
               <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;">Live Resume Preview</span>
-              <div style="position:relative;">
-                <button onclick="toggleMenuDropdown(event)" style="background:transparent;border:none;color:var(--primary);font-size:11px;font-family:var(--mono);font-weight:700;cursor:pointer;padding:2px 8px;">ACTIONS</button>
-                <div id="dropdown-content" style="display:none;position:absolute;right:0;top:28px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:100;min-width:160px;padding:4px 0;overflow:hidden;">
-                  <a href="#" class="dropdown-item" onclick="copyLatexCode();return false;">Copy LaTeX</a>
-                  <a href="#" class="dropdown-item" onclick="downloadLatexFile();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Download .tex</a>
-                  <a href="#" class="dropdown-item" onclick="exportJSON();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export JSON</a>
-                  <a href="#" class="dropdown-item" onclick="exportPDF();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export PDF</a>
+              
+              <div style="display:flex; align-items:center; gap:8px;">
+                <!-- Zoom Controls -->
+                <div class="zoom-controls">
+                  <button class="zoom-btn" onclick="changeZoom(-0.05)" title="Zoom Out">-</button>
+                  <span class="zoom-val" id="zoom-display">100%</span>
+                  <button class="zoom-btn" onclick="changeZoom(0.05)" title="Zoom In">+</button>
+                  <button class="zoom-btn" onclick="resetZoomToFit()" title="Fit to Screen" style="border-left:1px solid var(--border-color); margin-left:2px; padding-left:6px;">Fit</button>
+                </div>
+
+                <div style="position:relative;">
+                  <button onclick="toggleMenuDropdown(event)" style="background:transparent;border:none;color:var(--primary);font-size:11px;font-family:var(--mono);font-weight:700;cursor:pointer;padding:2px 8px;">ACTIONS</button>
+                  <div id="dropdown-content" style="display:none;position:absolute;right:0;top:28px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:100;min-width:160px;padding:4px 0;overflow:hidden;">
+                    <a href="#" class="dropdown-item" onclick="copyLatexCode();return false;">Copy LaTeX</a>
+                    <a href="#" class="dropdown-item" onclick="downloadLatexFile();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Download .tex</a>
+                    <a href="#" class="dropdown-item" onclick="exportJSON();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export JSON</a>
+                    <a href="#" class="dropdown-item" onclick="exportPDF();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export PDF</a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -903,7 +953,8 @@
       const role = document.getElementById("res-title").value;
       if (!role) return;
       
-      const status = activeUserProfile.employmentStatus || "Fresher";
+      const expLevelEl = document.getElementById("res-experience-level");
+      const status = expLevelEl ? expLevelEl.value : (activeUserProfile.employmentStatus || "Fresher");
       const summaries = ROLE_SUMMARIES[role];
       if (summaries) {
         const summary = summaries[status] || summaries["Fresher"];
@@ -1220,7 +1271,47 @@
       setTimeout(fitPreview, 50);
     };
 
-    // Auto-scale live preview sheet to fit viewport HEIGHT â€” full A4 always visible
+    let userZoomScale = null; // null means auto fit
+
+    function changeZoom(delta) {
+      const container = document.querySelector('.preview-container');
+      const sheet = document.getElementById('live-preview-sheet');
+      if (!container || !sheet) return;
+
+      const availH = container.clientHeight;
+      const availW = container.clientWidth;
+      const autoScale = Math.min(availH / 1123, availW / 794);
+
+      let current = userZoomScale !== null ? userZoomScale : autoScale;
+      current = Math.max(0.3, Math.min(2.0, current + delta));
+      userZoomScale = current;
+
+      applyZoom(userZoomScale, container, sheet);
+    }
+
+    function resetZoomToFit() {
+      userZoomScale = null;
+      fitPreview();
+    }
+
+    function applyZoom(scale, container, sheet) {
+      const availW = container.clientWidth;
+      const leftOffset = Math.max(0, (availW - 794 * scale) / 2);
+
+      sheet.style.transformOrigin = 'top left';
+      sheet.style.transform = `scale(${scale})`;
+      sheet.style.marginLeft = `${leftOffset}px`;
+      sheet.style.marginBottom = `${1123 * (scale - 1)}px`;
+      sheet.style.marginTop = '0';
+      sheet.style.marginRight = '0';
+
+      const zoomDisplay = document.getElementById('zoom-display');
+      if (zoomDisplay) {
+        zoomDisplay.textContent = `${Math.round(scale * 100)}%`;
+      }
+    }
+
+    // Auto-scale live preview sheet to fit viewport HEIGHT and WIDTH — full A4 always visible
     function fitPreview() {
       const container = document.querySelector('.preview-container');
       const sheet = document.getElementById('live-preview-sheet');
@@ -1230,21 +1321,24 @@
       const availW = container.clientWidth;
       if (!availH || !availW) return;
 
+      if (userZoomScale !== null) {
+        applyZoom(userZoomScale, container, sheet);
+        return;
+      }
+
       const scaleH = availH / 1123;
       const scaleW = availW / 794;
       const scale = Math.min(scaleH, scaleW);
 
-      // Center horizontally by offsetting from left
-      const leftOffset = (availW - 794 * scale) / 2;
+      applyZoom(scale, container, sheet);
+    }
 
-      // Use top-left origin so we control both axes precisely
-      sheet.style.transformOrigin = 'top left';
-      sheet.style.transform = `scale(${scale})`;
-      sheet.style.marginLeft = `${leftOffset}px`;
-      // Negative bottom margin collapses the layout footprint so container is not overflowed
-      sheet.style.marginBottom = `${1123 * (scale - 1)}px`;
-      sheet.style.marginTop = '0';
-      sheet.style.marginRight = '0';
+    // Observe container resize smoothly
+    const previewContainerEl = document.querySelector('.preview-container');
+    if (previewContainerEl && window.ResizeObserver) {
+      new ResizeObserver(() => {
+        fitPreview();
+      }).observe(previewContainerEl);
     }
 
     window.addEventListener('resize', fitPreview);
