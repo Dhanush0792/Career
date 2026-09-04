@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Salary Benchmarker &amp; Offer Negotiation</title>
+<meta name="description" content="Calculate real market compensation percentiles and generate tailored counter-offer negotiation scripts.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<script src="shared-shell.js?v=2"></script>
+<style>
+body {
+  padding-top: 80px;
+  overflow-x: hidden;
+}
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+  position: relative;
+  z-index: 10;
+}
+.page-header {
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 16px;
+  margin-bottom: 28px;
+}
+.page-label { font-family: var(--mono); font-size: 10px; color: var(--primary); letter-spacing: .14em; text-transform: uppercase; }
+.page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); margin: 0; }
+.page-title em { font-style: normal; color: var(--primary); }
+
+.grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 24px;
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,.03);
+  padding: 24px;
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+}
+.card__title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.form-input, .select-input {
+  width: 100%;
+  height: 42px;
+  background: rgba(7,10,24,.6);
+  border: 1px solid var(--glass-border);
+  color: var(--white);
+  font-family: var(--body);
+  font-size: 13px;
+  padding: 0 12px;
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+}
+.form-input:focus, .select-input:focus { border-color: var(--primary); }
+
+.calc-btn {
+  width: 100%;
+  height: 48px;
+  background: var(--primary);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .2s;
+  margin-top: 8px;
+}
+.calc-btn:hover { background: rgba(91,79,232,.85); }
+
+/* Percentile Bar Box */
+.percentile-box {
+  background: rgba(7, 10, 24, 0.7);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.percentile-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.percentile-track {
+  height: 12px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  position: relative;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.percentile-fill {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  border-radius: 6px;
+  transition: width 0.6s ease;
+}
+.percentile-marker {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 4px;
+  background: #ffffff;
+  border-radius: 2px;
+  box-shadow: 0 0 8px rgba(255,255,255,0.8);
+  transition: left 0.6s ease;
+}
+
+.market-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  text-align: center;
+}
+.market-stat-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--glass-border);
+  padding: 12px;
+  border-radius: 8px;
+}
+.market-stat-val {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 2px;
+}
+.market-stat-lbl {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* Script Strategy Switcher */
+.strategy-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.strategy-btn {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  color: var(--muted);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.strategy-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.2); }
+.strategy-btn.active {
+  background: rgba(91,79,232,0.18);
+  border-color: var(--primary);
+  color: var(--white);
+}
+
+.script-output {
+  width: 100%;
+  min-height: 180px;
+  background: rgba(7,10,24,.6);
+  border: 1px solid var(--glass-border);
+  color: var(--white);
+  font-family: var(--body);
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 14px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.script-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+.btn {
+  padding: 9px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--primary); color: var(--white); border-color: var(--primary); }
+.btn-primary:hover { background: rgba(91, 79, 232, 0.85); }
+.btn-ghost { background: transparent; color: var(--muted); border-color: var(--glass-border); }
+.btn-ghost:hover { color: var(--white); border-color: var(--white); }
+</style>
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=4">
+</head>
+<body>
+
+<nav class="nav" id="main-nav"></nav>
+
+<div class="container">
+  <header class="page-header">
+    <div class="page-label">COMPENSATION INTELLIGENCE</div>
+    <h1 class="page-title">SALARY BENCHMARKER &amp; <em>NEGOTIATOR</em></h1>
+  </header>
+
+  <div class="grid">
+    <!-- Left Column: Inputs -->
+    <div class="card">
+      <div class="card__title">01 // TARGET PARAMETERS</div>
+
+      <div class="form-group">
+        <label class="form-label">Role Category</label>
+        <select class="select-input" id="inp-role">
+          <option value="swe_junior">Software Engineer (Entry / 0-2 yrs)</option>
+          <option value="swe_mid" selected>Software Engineer (Mid-Level / 3-5 yrs)</option>
+          <option value="swe_senior">Senior Software Engineer (5-8+ yrs)</option>
+          <option value="frontend">Frontend / UI Engineer</option>
+          <option value="backend">Backend / Distributed Systems Engineer</option>
+          <option value="fullstack">Full-Stack Web Developer</option>
+          <option value="devops">DevOps / Cloud / Platform Engineer</option>
+          <option value="data">Data Scientist / Machine Learning Engineer</option>
+          <option value="pm">Product Manager</option>
+          <option value="qa">QA / Automation Test Engineer</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Location / Market Tier</label>
+        <select class="select-input" id="inp-location">
+          <option value="us_tier1">US - Tier 1 (SF Bay, NYC, Seattle)</option>
+          <option value="us_tier2">US - Tier 2 (Austin, Boston, Denver, LA)</option>
+          <option value="us_remote">US - Remote / National Avg</option>
+          <option value="in_tier1">India - Tier 1 (Bangalore, Hyderabad, NCR)</option>
+          <option value="in_tier2">India - Tier 2 (Pune, Chennai, Mumbai)</option>
+          <option value="uk_eu">UK &amp; Western Europe (London, Berlin, Amsterdam)</option>
+          <option value="global_remote">Global Remote (USD Equivalent)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Company Tier / Funding Stage</label>
+        <select class="select-input" id="inp-company-tier">
+          <option value="faang">Tier 1 Big Tech / FAANG / Late Stage Unicorn</option>
+          <option value="series_bc" selected>Series B-C High Growth Startup</option>
+          <option value="seed_a">Seed / Series A Early Stage Startup</option>
+          <option value="enterprise">Established Enterprise / Non-Tech Industry</option>
+          <option value="agency">Agency / IT Services Provider</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Offered Base Salary ($ or ₹ in LPA)</label>
+        <input type="number" class="form-input" id="inp-offer" placeholder="e.g. 135000 or 18" value="130000">
+      </div>
+
+      <button class="calc-btn" onclick="calculateSalaryBenchmark()">› Calculate Benchmark</button>
+    </div>
+
+    <!-- Right Column: Results & Negotiation Scripts -->
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <!-- Benchmark Analysis -->
+      <div class="card">
+        <div class="card__title">
+          <span>02 // MARKET PERCENTILE BENCHMARK</span>
+          <span id="benchmark-standing" style="color:var(--success); font-size:10px;"></span>
+        </div>
+
+        <div class="percentile-box">
+          <div class="percentile-labels">
+            <span>25th Pct (Entry Range)</span>
+            <span>50th Pct (Median)</span>
+            <span>75th Pct (Top Tier)</span>
+            <span>90th Pct (Staff/Lead)</span>
+          </div>
+          <div class="percentile-track">
+            <div class="percentile-fill" id="p-fill" style="width: 50%;"></div>
+            <div class="percentile-marker" id="p-marker" style="left: 50%;"></div>
+          </div>
+          <div id="position-summary" style="font-family:var(--body); font-size:13px; color:var(--white); line-height:1.5; text-align:center;">
+            Calculating market standing...
+          </div>
+        </div>
+
+        <div class="market-stats">
+          <div class="market-stat-card">
+            <div class="market-stat-val" id="val-low">—</div>
+            <div class="market-stat-lbl">Market Minimum (25th)</div>
+          </div>
+          <div class="market-stat-card">
+            <div class="market-stat-val" id="val-median" style="color:var(--primary);">—</div>
+            <div class="market-stat-lbl">Market Median (50th)</div>
+          </div>
+          <div class="market-stat-card">
+            <div class="market-stat-val" id="val-high" style="color:var(--success);">—</div>
+            <div class="market-stat-lbl">Market High (90th)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Counter-Offer Script Generator -->
+      <div class="card">
+        <div class="card__title">
+          <span>03 // NEGOTIATION &amp; COUNTER-OFFER SCRIPTS</span>
+          <span style="color:var(--muted); font-size:9px; font-weight:normal;">HUMAN-TONED REBUTTALS</span>
+        </div>
+
+        <div class="strategy-tabs">
+          <button class="strategy-btn active" id="btn-strat-polite" onclick="setStrategy('polite')">Standard Counter-Offer (10-15% bump)</button>
+          <button class="strategy-btn" id="btn-strat-competing" onclick="setStrategy('competing')">Leveraging Competing Offer</button>
+          <button class="strategy-btn" id="btn-strat-equity" onclick="setStrategy('equity')">Base vs Equity Re-balancing</button>
+          <button class="strategy-btn" id="btn-strat-remote" onclick="setStrategy('remote')">Remote / Sign-on Bonus Focus</button>
+        </div>
+
+        <textarea class="script-output" id="script-output" readonly></textarea>
+
+        <div class="script-actions">
+          <span id="copy-status" style="font-family:var(--mono); font-size:11px; color:var(--success);"></span>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" onclick="copyNegotiationScript()">Copy Script</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+requireAuth();
+renderNav(document.getElementById('main-nav'), 'salary-calculator.html');
+
+// Salary Baseline Matrix (Base compensation in USD standard, calibrated for INR when location is India)
+const SALARY_BENCHMARKS = {
+  swe_junior: { baseUsd: [95000, 115000, 135000, 150000], baseInr: [7, 10, 14, 18] },
+  swe_mid:    { baseUsd: [125000, 145000, 170000, 195000], baseInr: [14, 18, 26, 35] },
+  swe_senior: { baseUsd: [165000, 190000, 225000, 260000], baseInr: [28, 38, 52, 70] },
+  frontend:   { baseUsd: [115000, 135000, 160000, 185000], baseInr: [12, 16, 24, 32] },
+  backend:    { baseUsd: [130000, 150000, 175000, 205000], baseInr: [15, 20, 28, 38] },
+  fullstack:  { baseUsd: [120000, 140000, 165000, 190000], baseInr: [13, 17, 25, 34] },
+  devops:     { baseUsd: [135000, 155000, 180000, 210000], baseInr: [16, 22, 30, 40] },
+  data:       { baseUsd: [130000, 155000, 185000, 215000], baseInr: [15, 22, 32, 45] },
+  pm:         { baseUsd: [120000, 145000, 175000, 205000], baseInr: [15, 20, 30, 42] },
+  qa:         { baseUsd: [90000, 110000, 130000, 150000],  baseInr: [6, 9, 13, 18] }
+};
+
+const LOCATION_MULTIPLIERS = {
+  us_tier1: 1.15,
+  us_tier2: 1.0,
+  us_remote: 0.95,
+  in_tier1: 1.1,
+  in_tier2: 0.85,
+  uk_eu: 0.85,
+  global_remote: 0.90
+};
+
+const COMPANY_MULTIPLIERS = {
+  faang: 1.25,
+  series_bc: 1.05,
+  seed_a: 0.90,
+  enterprise: 0.95,
+  agency: 0.80
+};
+
+let currentBenchmarkData = null;
+let currentStrategy = 'polite';
+
+function calculateSalaryBenchmark() {
+  const role = document.getElementById('inp-role').value;
+  const location = document.getElementById('inp-location').value;
+  const companyTier = document.getElementById('inp-company-tier').value;
+  const rawOffer = parseFloat(document.getElementById('inp-offer').value) || 0;
+
+  const isIndia = location.startsWith('in_');
+  const currencySymbol = isIndia ? '₹' : '$';
+  const currencySuffix = isIndia ? ' LPA' : '';
+
+  const roleData = SALARY_BENCHMARKS[role] || SALARY_BENCHMARKS.swe_mid;
+  const baseRange = isIndia ? roleData.baseInr : roleData.baseUsd;
+
+  const locMult = LOCATION_MULTIPLIERS[location] || 1.0;
+  const compMult = COMPANY_MULTIPLIERS[companyTier] || 1.0;
+  const totalMult = locMult * compMult;
+
+  const p25 = Math.round(baseRange[0] * totalMult);
+  const p50 = Math.round(baseRange[1] * totalMult);
+  const p75 = Math.round(baseRange[2] * totalMult);
+  const p90 = Math.round(baseRange[3] * totalMult);
+
+  document.getElementById('val-low').textContent = `${currencySymbol}${p25.toLocaleString()}${currencySuffix}`;
+  document.getElementById('val-median').textContent = `${currencySymbol}${p50.toLocaleString()}${currencySuffix}`;
+  document.getElementById('val-high').textContent = `${currencySymbol}${p90.toLocaleString()}${currencySuffix}`;
+
+  // Calculate offered standing percentage
+  let pct = 50;
+  if (rawOffer <= p25) {
+    pct = Math.max(5, Math.round((rawOffer / p25) * 25));
+  } else if (rawOffer <= p50) {
+    pct = 25 + Math.round(((rawOffer - p25) / (p50 - p25)) * 25);
+  } else if (rawOffer <= p75) {
+    pct = 50 + Math.round(((rawOffer - p50) / (p75 - p50)) * 25);
+  } else {
+    pct = 75 + Math.min(25, Math.round(((rawOffer - p75) / (p90 - p75)) * 25));
+  }
+
+  document.getElementById('p-fill').style.width = `${pct}%`;
+  document.getElementById('p-marker').style.left = `${pct}%`;
+
+  const standingEl = document.getElementById('benchmark-standing');
+  const summaryEl = document.getElementById('position-summary');
+
+  if (pct >= 75) {
+    standingEl.textContent = 'TOP TIER (Upper Quartile)';
+    standingEl.style.color = 'var(--success)';
+    summaryEl.innerHTML = `Your offer of <strong>${currencySymbol}${rawOffer.toLocaleString()}${currencySuffix}</strong> sits in the <strong>top ${100 - pct}%</strong> of the market. You have strong initial terms.`;
+  } else if (pct >= 45) {
+    standingEl.textContent = 'MARKET MEDIAN';
+    standingEl.style.color = 'var(--primary)';
+    summaryEl.innerHTML = `Your offer of <strong>${currencySymbol}${rawOffer.toLocaleString()}${currencySuffix}</strong> aligns with the <strong>${pct}th percentile median</strong>. There is healthy headroom to negotiate 8-15% higher.`;
+  } else {
+    standingEl.textContent = 'BELOW MEDIAN (High Negotiation Opportunity)';
+    standingEl.style.color = '#ff8585';
+    summaryEl.innerHTML = `Your offer of <strong>${currencySymbol}${rawOffer.toLocaleString()}${currencySuffix}</strong> is currently at the <strong>${pct}th percentile</strong>. Counter-offering toward the <strong>${currencySymbol}${p50.toLocaleString()}${currencySuffix}</strong> median is strongly recommended.`;
+  }
+
+  currentBenchmarkData = {
+    offer: rawOffer,
+    currencySymbol,
+    currencySuffix,
+    p25, p50, p75, p90,
+    targetCounter: Math.round(rawOffer * 1.12 > p75 ? p75 : rawOffer * 1.12),
+    roleText: document.getElementById('inp-role').selectedOptions[0].text
+  };
+
+  renderNegotiationScript();
+}
+
+function setStrategy(strategy) {
+  currentStrategy = strategy;
+  ['polite', 'competing', 'equity', 'remote'].forEach(s => {
+    const btn = document.getElementById(`btn-strat-${s}`);
+    if (btn) btn.classList.toggle('active', s === strategy);
+  });
+  renderNegotiationScript();
+}
+
+function renderNegotiationScript() {
+  if (!currentBenchmarkData) return;
+  const { offer, currencySymbol, currencySuffix, targetCounter, p50, p75 } = currentBenchmarkData;
+  const profile = JSON.parse(localStorage.getItem('jxa_local_profile') || '{}');
+  const candidateName = profile.fullName || 'Candidate';
+
+  let script = '';
+
+  if (currentStrategy === 'polite') {
+    script = `Hi [Recruiter / Hiring Manager Name],\n\nThank you very much for extending the offer. I am genuinely excited about the team's roadmap and the prospect of contributing to [Company Name].\n\nBased on my experience delivering reliable engineering outcomes and recent market compensation data for this role, I was targeting closer to ${currencySymbol}${targetCounter.toLocaleString()}${currencySuffix}.\n\nIf we can bridge the gap to ${currencySymbol}${targetCounter.toLocaleString()}${currencySuffix} in base compensation, I would be thrilled to sign immediately and decline other ongoing conversations.\n\nThank you again for your time and flexibility. I look forward to your thoughts!\n\nBest regards,\n${candidateName}`;
+  } else if (currentStrategy === 'competing') {
+    script = `Hi [Recruiter / Hiring Manager Name],\n\nI really appreciate the offer and enjoyed meeting the team throughout the interview process. [Company Name] remains my top choice due to the technical vision and culture.\n\nI am currently in final rounds with another company where the compensation package is positioned around ${currencySymbol}${Math.round(offer * 1.15).toLocaleString()}${currencySuffix}. Because [Company Name] is my preferred destination, if you are able to adjust the base compensation to ${currencySymbol}${targetCounter.toLocaleString()}${currencySuffix}, I would be ready to commit right away.\n\nPlease let me know if this is possible from your end.\n\nBest regards,\n${candidateName}`;
+  } else if (currentStrategy === 'equity') {
+    script = `Hi [Recruiter / Hiring Manager Name],\n\nThank you for sharing the detailed offer package. I am very enthusiastic about joining the team.\n\nLooking over the total rewards breakdown, I am eager to align myself with the long-term success of [Company Name]. If base salary flexibility is limited at ${currencySymbol}${offer.toLocaleString()}${currencySuffix}, would you be open to adjusting the equity grant by 15-20% or providing an accelerated vesting schedule?\n\nI want to make sure we find a structure that works well for both sides as I step into this role.\n\nBest regards,\n${candidateName}`;
+  } else if (currentStrategy === 'remote') {
+    script = `Hi [Recruiter / Hiring Manager Name],\n\nThank you again for the offer to join [Company Name]. I'm very excited about the impact I can have on the team.\n\nWhile reviewing the offer of ${currencySymbol}${offer.toLocaleString()}${currencySuffix}, I wanted to ask if we could consider a sign-on bonus of ${currencySymbol}${Math.round(offer * 0.08).toLocaleString()}${currencySuffix} to help offset home office setup and transition expenses, alongside flexibility for remote work parameters.\n\nWith that addition, I would be fully prepared to accept the offer today.\n\nBest regards,\n${candidateName}`;
+  }
+
+  document.getElementById('script-output').value = script;
+}
+
+async function copyNegotiationScript() {
+  const text = document.getElementById('script-output').value;
+  try {
+    await navigator.clipboard.writeText(text);
+    document.getElementById('copy-status').textContent = 'Script copied to clipboard!';
+    setTimeout(() => {
+      document.getElementById('copy-status').textContent = '';
+    }, 3000);
+  } catch (err) {
+    showToast('Failed to copy', 'error');
+  }
+}
+
+// Initial calculation on page load
+calculateSalaryBenchmark();
+</script>
+</body>
+</html>

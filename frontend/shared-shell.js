@@ -133,7 +133,7 @@ function requireAuth() {
   }
 
   // Whitelist public pages (extension-agnostic names)
-  const publicPages = ['', 'auth', 'extension-setup', 'extension-landing', 'index', 'about', 'tools', 'ats-checker', 'gov-resizer', 'roadmap-software-engineer', 'roadmap-data-scientist', 'gov-ssc-cgl', 'gov-ibps-po', 'resume-importance'];
+  const publicPages = ['', 'auth', 'extension-setup', 'extension-landing', 'index', 'about', 'tools', 'ats-checker', 'salary-calculator', 'gov-resizer', 'roadmap-software-engineer', 'roadmap-data-scientist', 'gov-ssc-cgl', 'gov-ibps-po', 'resume-importance'];
   if (publicPages.includes(page)) {
     if (localStorage.getItem('jxa_token')) {
       pullApplicationsFromServer().catch(() => {});
