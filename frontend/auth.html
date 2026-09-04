@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -212,10 +212,9 @@ body::after {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
-<script src="shared-shell.js?v=2"></script>
 <script>
-const SUPABASE_URL = window.SUPABASE_URL || "https://fbyjrfrejgzcpqtdwudu.supabase.co";
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZieWpyZnJlamd6Y3BxdGR3dWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3ODk0NTIsImV4cCI6MjEwMjM2NTQ1Mn0.L_21DGKOHU4HQ05IY9MqvDwklh2knTkjMObHmDIB0Ic";
+const SUPABASE_URL = "https://fbyjrfrejgzcpqtdwudu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZieWpyZnJlamd6Y3BxdGR3dWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3ODk0NTIsImV4cCI6MjEwMjM2NTQ1Mn0.L_21DGKOHU4HQ05IY9MqvDwklh2knTkjMObHmDIB0Ic";
 let supabaseClient = null;
 
 const btnGoogle = document.getElementById('btn-google');
@@ -229,124 +228,50 @@ function showStatus(msg) {
   }
 }
 
-function parseJwtEmail(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-    );
-    return JSON.parse(jsonPayload).email || '';
-  } catch (e) {
-    return '';
-  }
-}
-
-let isProcessingOAuth = false;
-async function processOAuthSession(token, userEmail = '') {
-  if (isProcessingOAuth || !token) return;
-  isProcessingOAuth = true;
-
-  if (btnGoogle) btnGoogle.disabled = true;
-  showStatus('Verifying session...');
-
-  const email = userEmail || parseJwtEmail(token);
-  localStorage.setItem('jxa_token', token);
-  localStorage.setItem('jxa_last_active', String(Date.now()));
-  if (email) localStorage.setItem('jxa_user_email', email);
-
-  try {
-    const res = await fetch(`${SYNC_API}/profile`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      cache: 'no-store'
-    });
-
-    if (res.ok) {
-      const stateData = await res.json();
-      localStorage.setItem('jxa_role', stateData.role || 'user');
-      if (stateData.user?.email) {
-        localStorage.setItem('jxa_user_email', stateData.user.email);
-      }
-
-      if (stateData.role === 'admin') {
-        showStatus('Welcome Admin! Redirecting...');
-        setTimeout(() => window.location.replace('admin/index.html'), 300);
-        return;
-      }
-
-      const hasProfile = stateData?.profile?.fullName && String(stateData.profile.fullName).trim().length > 0;
-      if (hasProfile) {
-        localStorage.setItem('jxa_local_profile', JSON.stringify(stateData.profile));
-        localStorage.setItem('jxa_local_state', JSON.stringify(stateData));
-        showStatus('Redirecting to dashboard...');
-        setTimeout(() => window.location.replace('dashboard.html'), 300);
-      } else {
-        showStatus('Setting up your profile...');
-        setTimeout(() => window.location.replace('onboarding.html'), 300);
-      }
-    } else {
-      showStatus('Redirecting to dashboard...');
-      setTimeout(() => window.location.replace('dashboard.html'), 300);
-    }
-  } catch (err) {
-    showStatus('Redirecting to dashboard...');
-    setTimeout(() => window.location.replace('dashboard.html'), 300);
-  }
-}
-
-// 1. Initialize Supabase Client
-if (SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase !== 'undefined') {
-  try {
+// Initialize Supabase Client
+try {
+  if (typeof supabase !== 'undefined') {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  } catch(e) {
-    console.warn('Supabase initialization warning:', e);
   }
+} catch(e) {
+  console.error('Supabase init error:', e);
 }
 
-// 2. Check for incoming access_token in URL hash
-if (window.location.hash && window.location.hash.includes('access_token')) {
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const hashToken = hashParams.get('access_token');
-  if (hashToken) {
-    processOAuthSession(hashToken);
-  }
-}
-
-// 3. Trigger Google OAuth
-async function handleGoogleLogin() {
+// Trigger Google OAuth Direct Redirect
+function handleGoogleLogin() {
   if (!supabaseClient) {
-    alert('Google authentication service is unavailable. Please check your internet connection.');
+    alert('Google authentication service is initializing. Please try again in 2 seconds.');
     return;
   }
   
   btnGoogle.disabled = true;
-  showStatus('Opening Google Sign-In...');
+  showStatus('Redirecting to Google Sign-In...');
   
-  try {
-    // Clear any stale session first
-    try { await supabaseClient.auth.signOut(); } catch(_) {}
-
-    const callbackUrl = new URL('auth-callback.html', window.location.href).href;
-    const { data, error } = await supabaseClient.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: callbackUrl,
-        skipBrowserRedirect: false
-      }
-    });
-
-    if (error) throw error;
-    if (data?.url) {
-      window.location.href = data.url;
+  const callbackUrl = window.location.origin + '/auth-callback.html';
+  
+  supabaseClient.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: callbackUrl
     }
-  } catch (err) {
+  }).then(({ data, error }) => {
+    if (error) {
+      btnGoogle.disabled = false;
+      if (statusBadge) statusBadge.style.display = 'none';
+      alert('Sign-In Error: ' + error.message);
+      return;
+    }
+    if (data?.url) {
+      window.location.assign(data.url);
+    }
+  }).catch((err) => {
     btnGoogle.disabled = false;
     if (statusBadge) statusBadge.style.display = 'none';
-    alert('Sign-In Error: ' + err.message);
-  }
+    alert('Network error: ' + err.message);
+  });
 }
 
-// 4. Handle session notice banners
+// Handle session notice banners if redirected from app
 const urlParams = new URLSearchParams(window.location.search);
 const logoutReason = urlParams.get('reason');
 
