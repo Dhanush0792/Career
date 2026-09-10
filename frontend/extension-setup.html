@@ -183,10 +183,13 @@ body::after {
     <div class="card">
       <div class="card__title">01 // INSTALL GUIDE</div>
 
-      <div class="browser-tabs" id="browser-tabs">
+      <div class="browser-tabs" id="browser-tabs" style="overflow-x:auto; flex-wrap:wrap; gap:4px;">
         <button class="btab active" data-browser="chrome" onclick="switchBrowserTab('chrome')">Chrome</button>
-        <button class="btab" data-browser="firefox" onclick="switchBrowserTab('firefox')">Firefox</button>
+        <button class="btab" data-browser="brave" onclick="switchBrowserTab('brave')">Brave</button>
         <button class="btab" data-browser="edge" onclick="switchBrowserTab('edge')">Edge</button>
+        <button class="btab" data-browser="opera" onclick="switchBrowserTab('opera')">Opera</button>
+        <button class="btab" data-browser="perplexity" onclick="switchBrowserTab('perplexity')">Perplexity / Arc</button>
+        <button class="btab" data-browser="firefox" onclick="switchBrowserTab('firefox')">Firefox</button>
       </div>
 
       <!-- Chrome steps -->
@@ -239,37 +242,44 @@ body::after {
         </div>
       </div>
 
-      <!-- Firefox steps -->
-      <div class="btab-panel" id="panel-firefox">
+      <!-- Brave steps -->
+      <div class="btab-panel" id="panel-brave">
         <div class="step-list">
           <div class="step">
             <div class="step__num">1</div>
             <div class="step__body">
-              <div class="step__title">DOWNLOAD EXTENSION</div>
-              <div class="step__desc">Click "Download ZIP" and extract the folder.</div>
+              <div class="step__title">DOWNLOAD & EXTRACT</div>
+              <div class="step__desc">Download the extension ZIP and extract the archive to a convenient local folder.</div>
               <div class="step__action"><button class="dl-btn" onclick="downloadExtension()" style="height:34px;padding:0 14px;font-size:9px;">v Download Now</button></div>
             </div>
           </div>
           <div class="step">
             <div class="step__num">2</div>
             <div class="step__body">
-              <div class="step__title">OPEN FIREFOX DEBUGGING</div>
-              <div class="step__desc">In Firefox address bar, type:</div>
-              <div class="step__code">about:debugging#/runtime/this-firefox</div>
+              <div class="step__title">OPEN BRAVE EXTENSIONS</div>
+              <div class="step__desc">In Brave address bar, open:</div>
+              <div class="step__code">brave://extensions</div>
             </div>
           </div>
           <div class="step">
             <div class="step__num">3</div>
             <div class="step__body">
-              <div class="step__title">LOAD TEMPORARY ADD-ON</div>
-              <div class="step__desc">Click "Load Temporary Add-on" and select the <strong>manifest.json</strong> file inside the extracted folder.</div>
+              <div class="step__title">ENABLE DEVELOPER MODE</div>
+              <div class="step__desc">Toggle "Developer mode" in the top-right corner of Brave's extensions page.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">4</div>
+            <div class="step__body">
+              <div class="step__title">LOAD UNPACKED</div>
+              <div class="step__desc">Click "Load unpacked" and select the extracted extension folder.</div>
             </div>
           </div>
           <div class="step">
             <div class="step__num done">[OK]</div>
             <div class="step__body">
-              <div class="step__title">PAIR YOUR ACCOUNT</div>
-              <div class="step__desc">The extension icon will appear. Enter the pairing code below to link your profile.</div>
+              <div class="step__title">PIN & PAIR</div>
+              <div class="step__desc">Click the puzzle icon in Brave's toolbar, pin JobXApply, and pair your profile below.</div>
             </div>
           </div>
         </div>
@@ -317,6 +327,128 @@ body::after {
           </div>
         </div>
       </div>
+
+      <!-- Opera steps -->
+      <div class="btab-panel" id="panel-opera">
+        <div class="step-list">
+          <div class="step">
+            <div class="step__num">1</div>
+            <div class="step__body">
+              <div class="step__title">DOWNLOAD & EXTRACT</div>
+              <div class="step__desc">Download the extension ZIP and extract the archive to a local folder.</div>
+              <div class="step__action"><button class="dl-btn" onclick="downloadExtension()" style="height:34px;padding:0 14px;font-size:9px;">v Download Now</button></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <div class="step__body">
+              <div class="step__title">OPEN OPERA EXTENSIONS</div>
+              <div class="step__desc">In Opera address bar, navigate to:</div>
+              <div class="step__code">opera://extensions</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__body">
+              <div class="step__title">ENABLE DEVELOPER MODE</div>
+              <div class="step__desc">Toggle "Developer mode" switch in the top-right corner.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">4</div>
+            <div class="step__body">
+              <div class="step__title">LOAD UNPACKED</div>
+              <div class="step__desc">Click "Load unpacked" and select the extension folder containing manifest.json.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num done">[OK]</div>
+            <div class="step__body">
+              <div class="step__title">READY TO SYNC</div>
+              <div class="step__desc">Open the extension popup and input your pairing code.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Perplexity / Arc steps -->
+      <div class="btab-panel" id="panel-perplexity">
+        <div class="step-list">
+          <div class="step">
+            <div class="step__num">1</div>
+            <div class="step__body">
+              <div class="step__title">DOWNLOAD & EXTRACT</div>
+              <div class="step__desc">Save and extract the extension ZIP package locally.</div>
+              <div class="step__action"><button class="dl-btn" onclick="downloadExtension()" style="height:34px;padding:0 14px;font-size:9px;">v Download Now</button></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <div class="step__body">
+              <div class="step__title">OPEN CHROMIUM EXTENSIONS</div>
+              <div class="step__desc">In Perplexity Comet, Arc, or Vivaldi, open the Extensions manager:</div>
+              <div class="step__code">chrome://extensions</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__body">
+              <div class="step__title">DEVELOPER MODE</div>
+              <div class="step__desc">Turn on Developer Mode and click "Load Unpacked".</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">4</div>
+            <div class="step__body">
+              <div class="step__title">SELECT DIRECTORY</div>
+              <div class="step__desc">Choose the unzipped folder containing manifest.json.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num done">[OK]</div>
+            <div class="step__body">
+              <div class="step__title">COMPLETE PAIRING</div>
+              <div class="step__desc">Pin the icon in your toolbar and enter the 6-digit sync code below.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Firefox steps -->
+      <div class="btab-panel" id="panel-firefox">
+        <div class="step-list">
+          <div class="step">
+            <div class="step__num">1</div>
+            <div class="step__body">
+              <div class="step__title">DOWNLOAD EXTENSION</div>
+              <div class="step__desc">Click "Download ZIP" and extract the folder.</div>
+              <div class="step__action"><button class="dl-btn" onclick="downloadExtension()" style="height:34px;padding:0 14px;font-size:9px;">v Download Now</button></div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">2</div>
+            <div class="step__body">
+              <div class="step__title">OPEN FIREFOX DEBUGGING</div>
+              <div class="step__desc">In Firefox address bar, type:</div>
+              <div class="step__code">about:debugging#/runtime/this-firefox</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__body">
+              <div class="step__title">LOAD TEMPORARY ADD-ON</div>
+              <div class="step__desc">Click "Load Temporary Add-on" and select the <strong>manifest.json</strong> file inside the extracted folder.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step__num done">[OK]</div>
+            <div class="step__body">
+              <div class="step__title">PAIR YOUR ACCOUNT</div>
+              <div class="step__desc">The extension icon will appear. Enter the pairing code below to link your profile.</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Card 2: Pairing / Status -->
@@ -334,8 +466,8 @@ body::after {
       </div>
 
       <div style="display:flex;gap:8px;">
-        <button class="dl-btn" onclick="regenerateCode()" style="flex:1;justify-content:center;">†» NEW CODE</button>
-        <button class="dl-btn" onclick="copyCode()" id="copy-btn" style="flex:1;justify-content:center;">Š• COPY CODE</button>
+        <button class="dl-btn" onclick="regenerateCode()" style="flex:1;justify-content:center;">+ NEW CODE</button>
+        <button class="dl-btn" onclick="copyCode()" id="copy-btn" style="flex:1;justify-content:center;">[COPY] COPY CODE</button>
       </div>
 
       <!-- Extension connection status -->
@@ -407,7 +539,7 @@ body::after {
       <div class="card__title">04 // HOW AUTOFILL WORKS</div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;">
         <div style="padding:16px;border-right:1px solid var(--glass-border);text-align:center;">
-          <div style="font-size:24px;margin-bottom:8px;">Š•</div>
+          <div style="font-size:24px;margin-bottom:8px;"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
           <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--primary);text-transform:uppercase;margin-bottom:4px;">DETECT</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.5;">Extension detects the portal by URL pattern and picks the right fill engine</div>
         </div>
@@ -465,6 +597,16 @@ const BROWSER_SVGS = {
     <path d="M12 16.5A4.5 4.5 0 0 1 7.5 12L2 17A10 10 0 0 0 21.76 16.5Z" fill="#FBBC05"/>
     <circle cx="12" cy="12" r="3.5" fill="white"/>
   </svg>`,
+  brave: `<svg viewBox="0 0 24 24" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4zm0 2.18l7 3.11v4.71c0 4.5-3.08 8.7-7 9.82-3.92-1.12-7-5.32-7-9.82V7.29l7-3.11z" fill="#FB542B"/>
+    <path d="M12 6.5l-4 3v3.5l4 4 4-4V9.5l-4-3z" fill="#FF7654"/>
+  </svg>`,
+  opera: `<svg viewBox="0 0 24 24" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 17.5c-3.04 0-5.5-3.36-5.5-7.5S8.96 4.5 12 4.5s5.5 3.36 5.5 7.5-2.46 7.5-5.5 7.5z" fill="#FF1B2D"/>
+  </svg>`,
+  perplexity: `<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#2FDFC4" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+  </svg>`,
   firefox: `<svg viewBox="0 0 24 24" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
     <circle cx="12" cy="12" r="10" fill="#FF9500"/>
     <path d="M12 2C8.13 2 4.83 4.11 3.07 7.2C4.43 5.88 6.49 5 8.5 5C10.5 5 12.5 6 14 8C15.5 6 17.5 5 19.5 5C18 3.2 15.1 2 12 2Z" fill="#FF0039"/>
@@ -477,7 +619,7 @@ const BROWSER_SVGS = {
   </svg>`
 };
 
-// ”€”€ Browser Detection ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+// ─── Browser Detection ─────────────────────────────────────────────────────────
 function detectBrowser() {
   const ua = navigator.userAgent;
   const iconEl  = document.getElementById('browser-icon');
@@ -487,27 +629,37 @@ function detectBrowser() {
 
   let browser = 'Chrome';
   let svgKey = 'chrome';
+  let tabKey = 'chrome';
   let compatible = true;
   let sub = 'Chromium-based - Full support';
 
-  if (/Edg\//.test(ua)) {
-    browser = 'Microsoft Edge'; svgKey = 'edge'; sub = 'Chromium-based - Full support';
-    switchBrowserTab('edge');
+  const isBrave = Boolean(navigator.brave && typeof navigator.brave.isBrave === 'function');
+
+  if (isBrave) {
+    browser = 'Brave'; svgKey = 'brave'; tabKey = 'brave'; sub = 'Chromium-based Shield Engine - Full support';
+  } else if (/OPR\/|Opera\//.test(ua)) {
+    browser = 'Opera'; svgKey = 'opera'; tabKey = 'opera'; sub = 'Chromium-based - Full support';
+  } else if (/Edg\//.test(ua)) {
+    browser = 'Microsoft Edge'; svgKey = 'edge'; tabKey = 'edge'; sub = 'Chromium-based - Full support';
+  } else if (/Arc\//.test(ua)) {
+    browser = 'Arc Browser'; svgKey = 'perplexity'; tabKey = 'perplexity'; sub = 'Chromium-based - Full support';
+  } else if (/Perplexity/i.test(ua) || /Comet/i.test(ua)) {
+    browser = 'Perplexity Comet'; svgKey = 'perplexity'; tabKey = 'perplexity'; sub = 'Chromium-based - Full support';
+  } else if (/Vivaldi\//.test(ua)) {
+    browser = 'Vivaldi'; svgKey = 'perplexity'; tabKey = 'perplexity'; sub = 'Chromium-based - Full support';
   } else if (/Firefox\//.test(ua)) {
-    browser = 'Mozilla Firefox'; svgKey = 'firefox'; sub = 'Gecko-based - Full support';
-    switchBrowserTab('firefox');
-  } else if (/OPR\//.test(ua)) {
-    browser = 'Opera'; svgKey = 'chrome'; sub = 'Chromium-based - Full support';
+    browser = 'Mozilla Firefox'; svgKey = 'firefox'; tabKey = 'firefox'; sub = 'Gecko-based - Full support';
   } else if (/Chrome\//.test(ua)) {
-    browser = 'Google Chrome'; svgKey = 'chrome'; sub = 'Chromium-based - Full support';
+    browser = 'Google Chrome'; svgKey = 'chrome'; tabKey = 'chrome'; sub = 'Chromium-based - Full support';
   } else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) {
     browser = 'Safari'; svgKey = 'generic'; compatible = false;
-    sub = 'Safari has limited extension support. Use Chrome or Firefox.';
+    sub = 'Safari has limited extension support. Use Chrome, Brave, Edge, or Firefox.';
   } else {
-    browser = 'Unknown Browser'; svgKey = 'generic'; sub = 'Install Chrome or Firefox for full support.';
+    browser = 'Chromium Browser'; svgKey = 'generic'; sub = 'Chromium compatibility enabled.';
   }
 
-  // Use SVG instead of emoji
+  switchBrowserTab(tabKey);
+
   if (iconEl) iconEl.innerHTML = BROWSER_SVGS[svgKey] || BROWSER_SVGS.generic;
   if (nameEl) nameEl.textContent = browser.toUpperCase();
   if (subEl)  subEl.textContent = sub;
@@ -515,26 +667,41 @@ function detectBrowser() {
 
   addLog(`[DETECT] Browser identified: ${browser}.`, 'info');
   if (!compatible) {
-    addLog(`[WARN] ${browser} has limited extension support. Chrome or Firefox recommended.`, 'warn');
-    document.getElementById('add-to-browser-btn').style.opacity = '.5';
+    addLog(`[WARN] ${browser} has limited extension support. Chrome or Brave recommended.`, 'warn');
+    const btn = document.getElementById('add-to-browser-btn');
+    if (btn) btn.style.opacity = '.5';
   }
 
   return browser;
 }
 detectBrowser();
 
-// ”€”€ Add to Browser button (Modal approach) ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+// ─── Add to Browser button (Modal approach) ───────────────────────────────────
 function handleAddToBrowser() {
   const ua = navigator.userAgent;
   let managerUrl = 'chrome://extensions';
   let browserName = 'Chrome';
 
-  if (/Firefox\//.test(ua)) {
-    managerUrl = 'about:debugging#/runtime/this-firefox';
-    browserName = 'Firefox';
+  const isBrave = Boolean(navigator.brave && typeof navigator.brave.isBrave === 'function');
+
+  if (isBrave) {
+    managerUrl = 'brave://extensions';
+    browserName = 'Brave';
+  } else if (/OPR\/|Opera\//.test(ua)) {
+    managerUrl = 'opera://extensions';
+    browserName = 'Opera';
   } else if (/Edg\//.test(ua)) {
     managerUrl = 'edge://extensions';
     browserName = 'Edge';
+  } else if (/Firefox\//.test(ua)) {
+    managerUrl = 'about:debugging#/runtime/this-firefox';
+    browserName = 'Firefox';
+  } else if (/Arc\//.test(ua)) {
+    managerUrl = 'arc://extensions';
+    browserName = 'Arc';
+  } else if (/Perplexity|Comet/i.test(ua)) {
+    managerUrl = 'chrome://extensions';
+    browserName = 'Perplexity Comet';
   }
 
   // Copy to clipboard
@@ -574,7 +741,7 @@ function handleAddToBrowser() {
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="width:24px;height:24px;border-radius:50%;background:#5b4fe8;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
-          <div><div style="color:#f4f7ff;font-size:12px;font-weight:700;margin-bottom:2px;">Enable Developer Mode</div><div style="color:rgba(244,247,255,0.5);font-size:11px;">Toggle "Developer mode" in the top-right corner of the extensions page.</div></div>
+          <div><div style="color:#f4f7ff;font-size:12px;font-weight:700;margin-bottom:2px;">Enable Developer Mode</div><div style="color:rgba(244,247,255,0.5);font-size:11px;">Toggle "Developer mode" in the extensions page.</div></div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start;">
           <div style="width:24px;height:24px;border-radius:50%;background:#2fddc4;color:#070a18;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div>
@@ -673,7 +840,7 @@ function copyCode() {
   navigator.clipboard?.writeText(codeValue).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.textContent = '[OK] COPIED';
-    setTimeout(() => btn.textContent = 'Š• COPY CODE', 2000);
+    setTimeout(() => btn.textContent = '[COPY] COPY CODE', 2000);
     addLog('[COPY] Code copied to clipboard.', 'success');
   }).catch(() => {
     showToast('Copy failed - select the code manually.', 'error');
@@ -683,7 +850,7 @@ function copyCode() {
 // Initial code
 generateCode();
 
-// ”€”€ Simulate Pairing ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+// ─── Simulate Pairing ────────────────────────────────────────────────────────
 function simulatePairing() {
   const btn = document.getElementById('simulate-pair-btn');
   btn.disabled = true;
@@ -719,11 +886,26 @@ function setExtStatus(connected) {
   }
 }
 
-// Restore status from storage
-if (localStorage.getItem('jxa_extension_coupled') === 'true') {
+// Check real extension presence via ping/pong handshake
+let extensionDetected = false;
+
+window.addEventListener('jobxapply:pongExtension', (e) => {
+  extensionDetected = true;
   setExtStatus(true);
-  addLog('[STATUS] Extension previously paired. Sync active.', 'success');
+  addLog('[DETECT] Active browser extension detected and synced.', 'success');
+});
+
+function pingExtension() {
+  window.dispatchEvent(new CustomEvent('jobxapply:pingExtension'));
 }
+
+// Initial ping
+pingExtension();
+setTimeout(pingExtension, 600);
+setTimeout(pingExtension, 1500);
+
+// Default to NOT CONNECTED on fresh page load unless simulated in this tab session or ping responded
+setExtStatus(false);
 </script>
 </body>
 </html>

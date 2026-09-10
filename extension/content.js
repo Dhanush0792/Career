@@ -1043,6 +1043,13 @@ function handleFieldClick(e) {
 }
 
 
+// Listen for ping check from extension setup page
+window.addEventListener("jobxapply:pingExtension", () => {
+  window.dispatchEvent(new CustomEvent("jobxapply:pongExtension", {
+    detail: { version: "1.0.0", active: true }
+  }));
+});
+
 // Listen for pairing event from the JobXApply website
 function handleShareAuth(e) {
   if (!checkContext()) return;
@@ -1060,4 +1067,5 @@ function handleShareAuth(e) {
   }
 }
 window.addEventListener("jobxapply:shareAuth", handleShareAuth);
+
 
