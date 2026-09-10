@@ -56,11 +56,11 @@ body::after {
 .card {
   border: 1px solid var(--glass-border);
   background: rgba(255,255,255,.03);
-  padding: 12px 16px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  border-radius: 10px;
+  gap: 8px;
+  border-radius: 12px;
   backdrop-filter: blur(16px);
 }
 
@@ -68,7 +68,10 @@ body::after {
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 8px;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 #editor-card::-webkit-scrollbar {
   width: 6px;
@@ -88,65 +91,101 @@ body::after {
   flex-direction: column;
 }
 
-.card__title {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--primary);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 6px;
-  margin-bottom: 4px;
+/* Expandable Accordion Sections */
+.accordion-section {
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(10, 15, 30, 0.4);
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.accordion-section.open {
+  border-color: rgba(91,79,232,0.4);
+}
+.accordion-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(91,79,232,0.06);
+  transition: background 0.15s;
+}
+.accordion-header:hover {
+  background: rgba(91,79,232,0.12);
+}
+.accordion-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+.accordion-chevron {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 700;
+  transition: transform 0.2s;
+}
+.accordion-body {
+  display: none;
+  padding: 12px 14px 14px;
+}
+.accordion-section.open .accordion-body {
+  display: block;
 }
 
 .text-area {
   width: 100%;
-  height: 42px;
+  height: 64px;
   background: rgba(7,10,24,.6);
   border: 1px solid var(--glass-border);
   color: var(--white);
   font-family: var(--mono);
   font-size: 12px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   outline: none;
-  resize: none;
+  resize: vertical;
   border-radius: 8px;
 }
 .text-area:focus { border-color:var(--primary); }
 
-    .form-grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .form-col-12 {
-      grid-column: span 2;
-    }
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.form-col-12 {
+  grid-column: span 2;
+}
 
-.form-row { display:flex; flex-direction:column; gap:4px; }
+.form-row { display:flex; flex-direction:column; gap:5px; }
 .form-row label { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
-.form-row input, .form-row select { background:rgba(7,10,24,.6); border:1px solid var(--glass-border); padding:6px 10px; font-family:var(--mono); font-size:12.5px; color:var(--white); outline:none; border-radius:8px; }
+.form-row input, .form-row select { background:rgba(7,10,24,.6); border:1px solid var(--glass-border); padding:8px 12px; font-family:var(--mono); font-size:12.5px; color:var(--white); outline:none; border-radius:8px; }
 .form-row select option { background: #0b1020 !important; color: #f4f7ff !important; font-family: var(--mono) !important; font-size: 12.5px !important; }
 .form-row input:focus, .form-row select:focus { border-color:var(--primary); }
 
 .gen-btn {
   width: 100%;
-  height: 38px;
+  height: 46px;
   background: var(--primary);
   color: var(--white);
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
   border: 1px solid var(--primary);
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
   transition: all .2s;
+  box-shadow: 0 4px 14px rgba(91,79,232,0.3);
+  margin-top: 4px;
+  flex-shrink: 0;
 }
 .gen-btn:hover { background:rgba(91,79,232,.85); }
 .gen-btn:disabled { opacity:.45; cursor:not-allowed; }
@@ -359,114 +398,148 @@ body::after {
         <a href="profile-setup.html" style="color:var(--primary);margin-left:6px;">Complete Profile -></a>
       </div>
 
-      <div class="card__title">01 // TARGET JOB DETAILS</div>
-      <div class="form-grid-2">
-        <div class="form-row">
-          <label>Select Cover Letter Style</label>
-          <select id="template-select">
-            <option value="01">Classic Corporate (Palatino Serif)</option>
-            <option value="02">Modern Minimalist (Helvetica Sans)</option>
-            <option value="03">Narrative / Storyteller (Charter Serif)</option>
-            <option value="04">Executive Strategist (Times Serif)</option>
-            <option value="05">Technical / Developer (Monospace Headers)</option>
-            <option value="06">Bold & Impactful (Helvetica Bold)</option>
-            <option value="07">Academic Formal (Times Traditional)</option>
-            <option value="08">Startup Builder (Helvetica Compact)</option>
-            <option value="09">Career Pivot / Transition (Palatino Minimal)</option>
-            <option value="10">Referral-Based (Traditional Flush)</option>
-          </select>
+      <!-- 01 Target Job Details -->
+      <div class="accordion-section open" id="cl-acc-job">
+        <div class="accordion-header" onclick="toggleAccordion('cl-acc-job')">
+          <span class="accordion-title">01 // Target Job & Style</span>
+          <span class="accordion-chevron">[ - ]</span>
         </div>
-        <div class="form-row">
-          <label>Company Name</label>
-          <input type="text" id="company-input" placeholder="e.g. Google India" maxlength="120">
-        </div>
-        
-        <div class="form-row">
-          <label>Target Role / Position</label>
-          <select id="role-input" onchange="handleCoverLetterRoleSelection()">
-            <option value="">Select Target Role</option>
-            <option value="SDE">SDE</option>
-            <option value="Junior Developer">Junior Developer</option>
-            <option value="Java/Python/C/C++ Developer">Java/Python/C/C++ Developer</option>
-            <option value="Content Manager">Content Manager</option>
-            <option value="Video Editor">Video Editor</option>
-            <option value="Senior Developer">Senior Developer</option>
-            <option value="Marketing Specialist">Marketing Specialist</option>
-            <option value="Customer Care Executive">Customer Care Executive</option>
-            <option value="Business Executive">Business Executive</option>
-          </select>
-        </div>
+        <div class="accordion-body">
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label>Select Style Template</label>
+              <select id="template-select">
+                <option value="01">Classic Corporate (Palatino Serif)</option>
+                <option value="02">Modern Minimalist (Helvetica Sans)</option>
+                <option value="03">Narrative / Storyteller (Charter Serif)</option>
+                <option value="04">Executive Strategist (Times Serif)</option>
+                <option value="05">Technical / Developer (Monospace Headers)</option>
+                <option value="06">Bold & Impactful (Helvetica Bold)</option>
+                <option value="07">Academic Formal (Times Traditional)</option>
+                <option value="08">Startup Builder (Helvetica Compact)</option>
+                <option value="09">Career Pivot / Transition (Palatino Minimal)</option>
+                <option value="10">Referral-Based (Traditional Flush)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Company Name</label>
+              <input type="text" id="company-input" placeholder="e.g. Google India" maxlength="120">
+            </div>
+            
+            <div class="form-row">
+              <label>Target Role / Position</label>
+              <select id="role-input" onchange="handleCoverLetterRoleSelection()">
+                <option value="">Select Target Role</option>
+                <option value="SDE">SDE</option>
+                <option value="Junior Developer">Junior Developer</option>
+                <option value="Java/Python/C/C++ Developer">Java/Python/C/C++ Developer</option>
+                <option value="Content Manager">Content Manager</option>
+                <option value="Video Editor">Video Editor</option>
+                <option value="Senior Developer">Senior Developer</option>
+                <option value="Marketing Specialist">Marketing Specialist</option>
+                <option value="Customer Care Executive">Customer Care Executive</option>
+                <option value="Business Executive">Business Executive</option>
+              </select>
+            </div>
 
-        <div class="form-row">
-          <label>Experience Level</label>
-          <select id="cl-experience-level" onchange="handleCoverLetterRoleSelection()">
-            <option value="Student">Student (Academic / Intern)</option>
-            <option value="Fresher" selected>Fresher (0-1 yrs)</option>
-            <option value="Experienced">Experienced (2+ yrs)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="card__title" style="margin-top:8px;">02 // RECIPIENT DETAILS</div>
-      <div class="form-grid-2">
-        <div class="form-row">
-          <label>Recipient Name</label>
-          <input type="text" id="recipient-name" placeholder="e.g. hiring manager, recruiter" value="Hiring Team">
-        </div>
-
-        <div class="form-row">
-          <label>Recipient Title</label>
-          <input type="text" id="recipient-title" placeholder="e.g. Director" value="Hiring Manager">
-        </div>
-
-        <div class="form-row form-col-12">
-          <label>Recipient Address / Location</label>
-          <input type="text" id="recipient-address" placeholder="e.g. Bangalore Office, Karnataka">
+            <div class="form-row">
+              <label>Experience Level</label>
+              <select id="cl-experience-level" onchange="handleCoverLetterRoleSelection()">
+                <option value="Student">Student (Academic / Intern)</option>
+                <option value="Fresher" selected>Fresher (0-1 yrs)</option>
+                <option value="Experienced">Experienced (2+ yrs)</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="card__title" style="margin-top:8px;">03 // FORMATTING & OPTIONS</div>
-      <div class="form-grid-2">
-        <div class="form-row">
-          <label>Subject Line Template</label>
-          <input type="text" id="subject-input" placeholder="e.g. RE: Application" value="RE: Application for target role">
+      <!-- 02 Recipient Details -->
+      <div class="accordion-section" id="cl-acc-recipient">
+        <div class="accordion-header" onclick="toggleAccordion('cl-acc-recipient')">
+          <span class="accordion-title">02 // Recipient Details</span>
+          <span class="accordion-chevron">[ + ]</span>
         </div>
+        <div class="accordion-body">
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label>Recipient Name</label>
+              <input type="text" id="recipient-name" placeholder="e.g. hiring manager, recruiter" value="Hiring Team">
+            </div>
 
-        <div class="form-row">
-          <label>Select Predefined Pitch Summary</label>
-          <select id="summary-select" onchange="applyPredefinedSummary()">
-            <option value="">-- Choose pre-defined summaries --</option>
-            <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
-            <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
-            <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
-            <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
-          </select>
-        </div>
+            <div class="form-row">
+              <label>Recipient Title</label>
+              <input type="text" id="recipient-title" placeholder="e.g. Director" value="Hiring Manager">
+            </div>
 
-        <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center; height:32px;">
-          <label for="opt-subject" style="margin:0;">Include Subject Line</label>
-          <input type="checkbox" id="opt-subject" checked style="width:auto; margin:0;">
-        </div>
-
-        <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center; height:32px;">
-          <label for="opt-enclosure" style="margin:0;">Include Enclosure line</label>
-          <input type="checkbox" id="opt-enclosure" style="width:auto; margin:0;">
-        </div>
-
-        <div class="form-row form-col-12" id="enclosure-text-row" style="display:none;">
-          <label>Enclosure Documents</label>
-          <input type="text" id="enclosure-input" placeholder="e.g. Resume, Portfolio" value="Resume, Portfolio">
+            <div class="form-row form-col-12">
+              <label>Recipient Address / Location</label>
+              <input type="text" id="recipient-address" placeholder="e.g. Bangalore Office, Karnataka">
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="form-row" style="margin-top:6px;">
-        <label>Job Description Requirements (ATS tailer)</label>
-        <textarea class="text-area" id="jd-input" style="height:48px;" placeholder="Optional: Paste requirements to compute real-time ATS match rating..." oninput="updateAtsScore()"></textarea>
+      <!-- 03 Pitch & Formatting Options -->
+      <div class="accordion-section" id="cl-acc-options">
+        <div class="accordion-header" onclick="toggleAccordion('cl-acc-options')">
+          <span class="accordion-title">03 // Pitch & Formatting</span>
+          <span class="accordion-chevron">[ + ]</span>
+        </div>
+        <div class="accordion-body">
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label>Subject Line Template</label>
+              <input type="text" id="subject-input" placeholder="e.g. RE: Application" value="RE: Application for target role">
+            </div>
+
+            <div class="form-row">
+              <label>Predefined Pitch Summary</label>
+              <select id="summary-select" onchange="applyPredefinedSummary()">
+                <option value="">-- Choose pre-defined summaries --</option>
+                <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
+                <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
+                <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
+                <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
+              </select>
+            </div>
+
+            <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center; height:36px;">
+              <label for="opt-subject" style="margin:0;">Include Subject Line</label>
+              <input type="checkbox" id="opt-subject" checked style="width:auto; margin:0;">
+            </div>
+
+            <div class="form-row" style="flex-direction:row; justify-content:space-between; align-items:center; height:36px;">
+              <label for="opt-enclosure" style="margin:0;">Include Enclosure line</label>
+              <input type="checkbox" id="opt-enclosure" style="width:auto; margin:0;">
+            </div>
+
+            <div class="form-row form-col-12" id="enclosure-text-row" style="display:none;">
+              <label>Enclosure Documents</label>
+              <input type="text" id="enclosure-input" placeholder="e.g. Resume, Portfolio" value="Resume, Portfolio">
+            </div>
+          </div>
+        </div>
       </div>
 
-      <button class="gen-btn" id="gen-btn" style="margin-top:6px;">TAILOR COVER LETTER</button>
+      <!-- 04 Job Requirements & ATS Tailer -->
+      <div class="accordion-section" id="cl-acc-jd">
+        <div class="accordion-header" onclick="toggleAccordion('cl-acc-jd')">
+          <span class="accordion-title">04 // Job Description (ATS Tailer)</span>
+          <span class="accordion-chevron">[ + ]</span>
+        </div>
+        <div class="accordion-body">
+          <div class="form-row">
+            <label>Paste Job Requirements / Description</label>
+            <textarea class="text-area" id="jd-input" style="height:80px;" placeholder="Optional: Paste requirements to compute real-time ATS match rating..." oninput="updateAtsScore()"></textarea>
+          </div>
+        </div>
+      </div>
 
-      <div class="console-box" id="console" style="margin-top:6px;">
+      <!-- Main Action Button -->
+      <button class="gen-btn" id="gen-btn">TAILOR COVER LETTER</button>
+
+      <div class="console-box" id="console" style="margin-top:4px;">
         <div class="console-line">[SYS_INIT] Cover Letter builder ready. Fill inputs and trigger tailor.</div>
       </div>
     </div>
@@ -529,6 +602,18 @@ body::after {
 <script>
 requireAuth();
 renderNav(document.getElementById('main-nav'), 'cover-letter.html');
+
+// Accordion toggle function for Cover Letter Builder
+window.toggleAccordion = function(id) {
+  const sec = document.getElementById(id);
+  if (!sec) return;
+  sec.classList.toggle('open');
+  const chevron = sec.querySelector('.accordion-chevron');
+  if (chevron) {
+    chevron.textContent = sec.classList.contains('open') ? '[ - ]' : '[ + ]';
+  }
+  setTimeout(fitPreview, 50);
+};
 
 const consoleBox = document.getElementById('console');
 const genBtn = document.getElementById('gen-btn');
