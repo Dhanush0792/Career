@@ -227,6 +227,7 @@ body::after {
   box-sizing: border-box;
   outline: none;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .latex-code-box {
@@ -830,19 +831,28 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     }
   }
 
-  // Register real-time inputs auto-save handlers
+  // Register real-time inputs auto-save handlers & live preview refresh
   const syncInputs = [
-    'template-select', 'company-input', 'role-input',
+    'template-select', 'company-input', 'role-input', 'cl-experience-level',
     'recipient-name', 'recipient-title', 'recipient-address', 'subject-input',
     'opt-subject', 'opt-enclosure', 'enclosure-input', 'summary-select', 'jd-input'
   ];
   syncInputs.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('input', triggerAutoSave);
-      el.addEventListener('change', triggerAutoSave);
+      el.addEventListener('input', () => {
+        updateLivePreview();
+        triggerAutoSave();
+      });
+      el.addEventListener('change', () => {
+        updateLivePreview();
+        triggerAutoSave();
+      });
     }
   });
+
+  // Initial live preview render as soon as profile is loaded
+  updateLivePreview();
 
   // Listen for real-time SSE broadcasts from other tabs/devices
   document.addEventListener('jobxapply:profile', (e) => {
@@ -949,10 +959,227 @@ function onPreviewEdit() {
   triggerAutoSave();
 }
 
-// Role selection changes
+// Helper to escape LaTeX characters
+function escapeLatex(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/[\u2600-\u27BF]|[\u{1F300}-\u{1FAFF}]/gu, "")
+    .replace(/\\/g, "\\textbackslash{}")
+    .replace(/([&%$#_{}])/g, "\\$1")
+    .replace(/\^/g, "\\textasciicircum{}")
+    .replace(/~/g, "\\textasciitilde{}")
+    .replace(/</g, "\\textless{}")
+    .replace(/>/g, "\\textgreater{}")
+    .replace(/\n/g, " ");
+}
+
+// LaTeX Template Definitions (synchronous client-side compilation for Overleaf-style instant updates)
+const LATEX_TEMPLATES = {
+  "01": (d) => `\\documentclass[a4paper,11pt]{article}
+\\usepackage[a4paper,margin=1.0in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{palatino}
+\\usepackage{hyperref}
+\\setlength{\\parindent}{0pt}
+\\setlength{\\parskip}{1em}
+\\hypersetup{colorlinks=true, urlcolor=blue}
+
+\\begin{document}
+
+\\begin{flushright}
+  \\textbf{${escapeLatex(d.fullName)}}\\\\
+  ${escapeLatex(d.email)} \\,|\\, ${escapeLatex(d.phone)}\\\\
+  ${escapeLatex(d.linkedinUrl)} \\,|\\, ${escapeLatex(d.portfolioUrl)}\\\\
+\\end{flushright}
+
+\\vspace{1em}
+${escapeLatex(d.date)}
+
+\\vspace{1em}
+${escapeLatex(d.recipientName)}\\\\
+${escapeLatex(d.recipientTitle)}\\\\
+${escapeLatex(d.companyName)}\\\\
+${escapeLatex(d.companyAddress)}
+
+\\vspace{1em}
+${d.subjectLine ? `\\textbf{Subject: ${escapeLatex(d.subjectLine)}}` : ''}
+
+\\vspace{1em}
+${escapeLatex(d.salutation)}
+
+${escapeLatex(d.openingParagraph)}
+
+${escapeLatex(d.bodyParagraph1)}
+
+${escapeLatex(d.bodyParagraph2)}
+
+${escapeLatex(d.closingParagraph)}
+
+\\vspace{1em}
+${escapeLatex(d.signOff)}
+
+\\vspace{2em}
+\\textbf{${escapeLatex(d.fullName)}}
+
+\\vspace{2em}
+${d.enclosureLine ? `Enclosures: ${escapeLatex(d.enclosureLine)}` : ''}
+
+\\end{document}`,
+
+  "02": (d) => `\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.9in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{helvet}
+\\renewcommand{\\familydefault}{\\sfdefault}
+\\usepackage{xcolor}
+\\usepackage{hyperref}
+\\setlength{\\parindent}{0pt}
+\\setlength{\\parskip}{0.8em}
+\\hypersetup{colorlinks=true, urlcolor=gray}
+
+\\begin{document}
+
+{\\Huge \\textbf{${escapeLatex(d.fullName)}}}\\\\[4pt]
+{\\small \\textcolor{gray}{${escapeLatex(d.email)} \\,|\\, ${escapeLatex(d.phone)} \\,|\\, ${escapeLatex(d.linkedinUrl)} \\,|\\, ${escapeLatex(d.portfolioUrl)}}}\\\\
+\\rule{\\textwidth}{0.5pt}
+
+\\vspace{1em}
+${escapeLatex(d.date)}
+
+\\vspace{0.5em}
+\\textbf{${escapeLatex(d.recipientName)}}\\\\
+${escapeLatex(d.recipientTitle)} \\,|\\, \\textbf{${escapeLatex(d.companyName)}}\\\\
+${escapeLatex(d.companyAddress)}
+
+\\vspace{1em}
+${d.subjectLine ? `\\textbf{Subject: ${escapeLatex(d.subjectLine)}}` : ''}
+
+\\vspace{0.5em}
+${escapeLatex(d.salutation)}
+
+${escapeLatex(d.openingParagraph)}
+
+${escapeLatex(d.bodyParagraph1)}
+
+${escapeLatex(d.bodyParagraph2)}
+
+${escapeLatex(d.closingParagraph)}
+
+\\vspace{1.5em}
+${escapeLatex(d.signOff)}\\\\[1.5em]
+\\textbf{${escapeLatex(d.fullName)}}
+
+\\vspace{2em}
+${d.enclosureLine ? `Enclosures: ${escapeLatex(d.enclosureLine)}` : ''}
+
+\\end{document}`,
+
+  "05": (d) => `\\documentclass[a4paper,10pt]{article}
+\\usepackage[a4paper,margin=0.9in]{geometry}
+\\usepackage[T1]{fontenc}
+\\usepackage{courier}
+\\usepackage{helvet}
+\\renewcommand{\\familydefault}{\\sfdefault}
+\\usepackage{hyperref}
+\\setlength{\\parindent}{0pt}
+\\setlength{\\parskip}{0.85em}
+\\hypersetup{colorlinks=true, urlcolor=blue}
+
+\\begin{document}
+
+{\\texttt{Console.log("Hello, Senders");}}\\\\
+\\textbf{\\Huge ${escapeLatex(d.fullName)}}\\\\
+\\texttt{Contact: ${escapeLatex(d.email)} | ${escapeLatex(d.phone)} | ${escapeLatex(d.linkedinUrl)} | ${escapeLatex(d.portfolioUrl)}}\\\\
+\\rule{\\textwidth}{1pt}
+
+\\vspace{1em}
+${escapeLatex(d.date)}
+
+\\vspace{1em}
+${escapeLatex(d.recipientName)} \\\\
+${escapeLatex(d.recipientTitle)} \\\\
+\\textbf{${escapeLatex(d.companyName)}} \\\\
+${escapeLatex(d.companyAddress)}
+
+\\vspace{1em}
+${d.subjectLine ? `\\textbf{Subject: ${escapeLatex(d.subjectLine)}}` : ''}
+
+\\vspace{1em}
+${escapeLatex(d.salutation)}
+
+${escapeLatex(d.openingParagraph)}
+
+${escapeLatex(d.bodyParagraph1)}
+
+${escapeLatex(d.bodyParagraph2)}
+
+${escapeLatex(d.closingParagraph)}
+
+\\vspace{1.5em}
+${escapeLatex(d.signOff)}\\\\[2em]
+\\textbf{${escapeLatex(d.fullName)}}
+
+\\vspace{2em}
+${d.enclosureLine ? `Enclosures: ${escapeLatex(d.enclosureLine)}` : ''}
+
+\\end{document}`
+};
+
+// Build current letter data payload
+function getCoverLetterPayloadData() {
+  const company = document.getElementById('company-input')?.value.trim() || '';
+  const role = document.getElementById('role-input')?.value.trim() || '';
+  const templateId = document.getElementById('template-select')?.value || '01';
+  const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const summaryKey = document.getElementById('summary-select')?.value || '';
+  const summaryBody = PREDEFINED_SUMMARIES[summaryKey] || userProfile.summary || 'I am excited to bring my engineering background and collaborative approach to your product challenges.';
+
+  return {
+    templateId,
+    fullName: userProfile.fullName || 'Candidate Name',
+    email: userProfile.email || 'candidate@example.com',
+    phone: userProfile.phone || '+91 98765 43210',
+    linkedinUrl: userProfile.linkedin || '',
+    portfolioUrl: userProfile.portfolio || '',
+    date: today,
+    recipientName: document.getElementById('recipient-name')?.value.trim() || 'Hiring Team',
+    recipientTitle: document.getElementById('recipient-title')?.value.trim() || 'Hiring Manager',
+    companyName: company || '[Target Company]',
+    companyAddress: document.getElementById('recipient-address')?.value.trim() || 'Headquarters / Regional Office',
+    subjectLine: document.getElementById('opt-subject')?.checked ? document.getElementById('subject-input')?.value.trim() : '',
+    salutation: `Dear ${document.getElementById('recipient-name')?.value.trim() || 'Hiring Team'},`,
+    openingParagraph: `I am writing to express my strong interest in the ${role || 'Software Engineering'} position at ${company || 'your organization'}. As an engineer with a track record of crafting user-centric platforms and clean API endpoints, I am confident in my ability to immediately add value to your team.`,
+    bodyParagraph1: summaryBody,
+    bodyParagraph2: `What excites me most about ${company || 'your organization'} is your dedication to engineering excellence and developer ergonomics. I am eager to apply my experience in modern frameworks, microservices, and reliable architectures to help scale your operations.`,
+    closingParagraph: `I would appreciate the opportunity to speak with you further regarding how my skills align with your engineering needs. Thank you for your time, consideration, and dedication to building high-impact technology.`,
+    signOff: 'Sincerely,',
+    enclosureLine: document.getElementById('opt-enclosure')?.checked ? document.getElementById('enclosure-input')?.value.trim() : ''
+  };
+}
+
+// Live Overleaf-style reactive compiler
+function updateLivePreview() {
+  const data = getCoverLetterPayloadData();
+  renderRichPreview(data);
+
+  // Generate corresponding LaTeX code instantly
+  const latexGen = LATEX_TEMPLATES[data.templateId] || LATEX_TEMPLATES["01"];
+  generatedLatex = latexGen(data);
+  if (latexPreview) {
+    latexPreview.textContent = generatedLatex;
+  }
+
+  updateAtsScore();
+}
+
+// Role selection changes: updates summary preset and triggers instant preview
 function handleCoverLetterRoleSelection() {
   const role = document.getElementById("role-input").value;
-  if (!role) return;
+  if (!role) {
+    updateLivePreview();
+    return;
+  }
   
   // Update subject line automatically
   document.getElementById('subject-input').value = `RE: Application for ${role} role`;
@@ -987,28 +1214,30 @@ function handleCoverLetterRoleSelection() {
     `;
     
     addLog(`[ROLE_SELECTION] Loaded summary preset for: ${role} (${expLevel})`, 'info');
-    showToast(`Applied ${role} summary preset.`);
-    triggerAutoSave();
   }
+
+  updateLivePreview();
+  triggerAutoSave();
 }
 
 function applyPredefinedSummary() {
   const val = document.getElementById('summary-select').value;
   if (val && PREDEFINED_SUMMARIES[val]) {
-    addLog(`[UI_INPUT] Applied predefined pitch summary: ${val}`);
-    showToast('Summary selected. Click Tailor to generate letter.');
-    triggerAutoSave();
+    addLog(`[UI_INPUT] Applied pitch summary preset: ${val}`);
   }
+  updateLivePreview();
+  triggerAutoSave();
 }
 
-// Tailor Button trigger
+// Tailor Button trigger - generates high-fidelity server version and syncs
 genBtn.addEventListener('click', async () => {
-  const company = document.getElementById('company-input').value.trim();
+  const data = getCoverLetterPayloadData();
+  const company = data.companyName;
   const role = document.getElementById('role-input').value.trim();
-  const templateId = document.getElementById('template-select').value;
   
   if (!company && !role) {
     addLog('[WARN] Company Name and Position are required.', 'warn');
+    showToast('Please enter Company Name and Role', 'error');
     return;
   }
 
@@ -1016,34 +1245,9 @@ genBtn.addEventListener('click', async () => {
   consoleBox.innerHTML = '';
   addLog('[API_POST] Sending tailored payload to JobXApply sync-server...');
 
-  const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-
-  // Get active selected summary
-  const summaryKey = document.getElementById('summary-select').value;
-  const summaryBody = PREDEFINED_SUMMARIES[summaryKey] || userProfile.summary || 'I am excited to bring my engineering background and collaborative approach to your product challenges.';
-
   const payload = {
-    templateId: templateId,
-    data: {
-      fullName: userProfile.fullName || '[Your Name]',
-      email: userProfile.email || '[Your Email]',
-      phone: userProfile.phone || '[Your Phone]',
-      linkedinUrl: userProfile.linkedin || '',
-      portfolioUrl: userProfile.portfolio || '',
-      date: today,
-      recipientName: document.getElementById('recipient-name').value.trim() || 'Hiring Team',
-      recipientTitle: document.getElementById('recipient-title').value.trim() || 'Hiring Manager',
-      companyName: company || '[Company Name]',
-      companyAddress: document.getElementById('recipient-address').value.trim() || '',
-      subjectLine: document.getElementById('opt-subject').checked ? document.getElementById('subject-input').value.trim() : '',
-      salutation: `Dear ${document.getElementById('recipient-name').value.trim() || 'Hiring Team'},`,
-      openingParagraph: `I am writing to express my strong interest in the ${role || 'Product Engineer'} position at ${company || 'your company'}. As an engineer with a track record of crafting user-centric platforms and clean API endpoints, I am confident in my ability to immediately add value to your team.`,
-      bodyParagraph1: summaryBody,
-      bodyParagraph2: `What excites me most about ${company || 'your organization'} is your focus on engineering excellence and developer ergonomics. I am eager to apply my experience in React, TypeScript, and microservices to help scale your operations.`,
-      closingParagraph: `I would appreciate the opportunity to speak with you further regarding how my skills align with your engineering needs. Thank you for your time, consideration, and dedication to building great tools.`,
-      signOff: 'Sincerely,',
-      enclosureLine: document.getElementById('opt-enclosure').checked ? document.getElementById('enclosure-input').value.trim() : ''
-    }
+    templateId: data.templateId,
+    data: data
   };
 
   try {
@@ -1058,78 +1262,85 @@ genBtn.addEventListener('click', async () => {
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || 'Server rejected request');
+    if (res.ok) {
+      const resData = await res.json();
+      if (resData.latex) {
+        generatedLatex = resData.latex;
+        latexPreview.textContent = generatedLatex;
+      }
+      addLog('[SUCCESS] Tailored cover letter verified from server.', 'success');
+      showToast('Cover letter tailored & verified successfully!');
+    } else {
+      updateLivePreview();
+      addLog('[INFO] Generated locally via client engine.', 'info');
+      showToast('Letter updated.');
     }
-
-    const resData = await res.json();
-    generatedLatex = resData.latex;
-
-    renderRichPreview(payload.data);
-    latexPreview.textContent = generatedLatex;
-
-    addLog('[SUCCESS] Tailored cover letter generated from profile.', 'success');
-    updateAtsScore();
     triggerAutoSave();
   } catch (err) {
     console.error(err);
-    addLog(`[API_ERR] Tailor failed: ${err.message}`, 'warn');
-    showToast(err.message, 'error');
+    updateLivePreview();
+    addLog(`[OFFLINE] Rendered locally: ${err.message}`, 'info');
   } finally {
     genBtn.disabled = false;
   }
 });
 
 function renderRichPreview(data) {
+  let fontStyle = "font-family:'Inter', sans-serif;";
+  if (data.templateId === '01' || data.templateId === '03' || data.templateId === '04' || data.templateId === '07' || data.templateId === '09') {
+    fontStyle = "font-family: Georgia, 'Times New Roman', serif;";
+  } else if (data.templateId === '05') {
+    fontStyle = "font-family: 'JetBrains Mono', Courier, monospace;";
+  }
+
   let html = `
-    <div style="font-family:'Inter', sans-serif; line-height:1.65; color:#1a1a1a;">
-      <div style="text-align:right; margin-bottom:24px; border-bottom:1px solid #eee; padding-bottom:12px;">
-        <strong>${data.fullName}</strong><br>
-        ${data.email} | ${data.phone}<br>
-        ${data.linkedinUrl ? data.linkedinUrl + '<br>' : ''}
-        ${data.portfolioUrl ? data.portfolioUrl : ''}
+    <div style="${fontStyle} line-height:1.65; color:#1a1a1a;">
+      <div style="text-align:right; margin-bottom:20px; border-bottom:1.5px solid #e2e8f0; padding-bottom:12px;">
+        <strong style="font-size:16px; letter-spacing:0.02em; color:#0f172a;">${data.fullName}</strong><br>
+        <span style="font-size:12px; color:#475569;">${data.email} | ${data.phone}</span><br>
+        ${data.linkedinUrl ? `<span style="font-size:11px; color:#64748b;">${data.linkedinUrl}</span><br>` : ''}
+        ${data.portfolioUrl ? `<span style="font-size:11px; color:#64748b;">${data.portfolioUrl}</span>` : ''}
       </div>
 
-      <div style="margin-bottom:16px;">
+      <div style="margin-bottom:14px; font-size:12.5px; color:#475569;">
         ${data.date}
       </div>
 
-      <div style="margin-bottom:20px;">
+      <div style="margin-bottom:18px; font-size:13px; color:#1e293b;">
         <strong>${data.recipientName}</strong><br>
         ${data.recipientTitle}<br>
-        ${data.companyName}<br>
+        <strong>${data.companyName}</strong><br>
         ${data.companyAddress}
       </div>
   `;
 
   if (data.subjectLine) {
     html += `
-      <div style="margin-bottom:20px; font-weight:bold; text-transform:uppercase; letter-spacing:0.02em;">
+      <div style="margin-bottom:16px; font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.04em; color:#0f172a; border-left:3px solid #00f3ff; padding-left:8px;">
         Subject: ${data.subjectLine}
       </div>
     `;
   }
 
   html += `
-      <div style="margin-bottom:16px;">
+      <div style="margin-bottom:14px; font-weight:600; color:#1e293b;">
         ${data.salutation}
       </div>
 
-      <p style="margin-bottom:16px;">${data.openingParagraph}</p>
-      <p style="margin-bottom:16px;">${data.bodyParagraph1}</p>
-      <p style="margin-bottom:16px;">${data.bodyParagraph2}</p>
-      <p style="margin-bottom:16px;">${data.closingParagraph}</p>
+      <p style="margin-bottom:14px; font-size:13px; line-height:1.65; color:#334155; text-align:justify;">${data.openingParagraph}</p>
+      <p style="margin-bottom:14px; font-size:13px; line-height:1.65; color:#334155; text-align:justify;">${data.bodyParagraph1}</p>
+      <p style="margin-bottom:14px; font-size:13px; line-height:1.65; color:#334155; text-align:justify;">${data.bodyParagraph2}</p>
+      <p style="margin-bottom:14px; font-size:13px; line-height:1.65; color:#334155; text-align:justify;">${data.closingParagraph}</p>
 
-      <div style="margin-top:24px; margin-bottom:24px;">
+      <div style="margin-top:22px; margin-bottom:20px; font-size:13px; color:#1e293b;">
         ${data.signOff}<br><br>
-        <strong>${data.fullName}</strong>
+        <strong style="font-size:14px; color:#0f172a;">${data.fullName}</strong>
       </div>
   `;
 
   if (data.enclosureLine) {
     html += `
-      <div style="font-size:11px; color:#555; border-top:1px dashed #ccc; padding-top:8px;">
+      <div style="font-size:11px; color:#64748b; border-top:1px dashed #cbd5e1; padding-top:8px; margin-top:16px;">
         Enclosures: ${data.enclosureLine}
       </div>
     `;

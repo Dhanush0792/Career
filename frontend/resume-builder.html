@@ -1339,6 +1339,16 @@
     }
 
     window.addEventListener('resize', fitPreview);
+    document.addEventListener('input', (e) => {
+      if (e.target.matches('input, select, textarea')) {
+        updatePreview();
+      }
+    });
+    document.addEventListener('change', (e) => {
+      if (e.target.matches('input, select, textarea')) {
+        updatePreview();
+      }
+    });
 
     // Export PDF or JSON functions
     function exportPDF() {
