@@ -544,6 +544,7 @@ async function getRequestUser(req) {
       const email = decoded.email;
       const name = decoded.user_metadata?.full_name || decoded.name || (email ? email.split("@")[0] : "Operative");
       const ADMIN_EMAILS = new Set([
+        "hidhanush07@gmail.com",
         "dhanushsiddilingam@gmail.com",
         "admin@jobxapply.app"
       ]);
@@ -1213,6 +1214,7 @@ const server = http.createServer(async (req, res) => {
           const tier = incoming.tier || "free";
           const success = await db.updateUserTier(userId, tier);
           if (success) {
+            logAdminActivity(`Updated tier for user ${userId} to ${tier}`);
             sendJson(res, 200, { ok: true, message: `User ${userId} tier updated to ${tier}` });
           } else {
             sendJson(res, 404, { ok: false, error: "User not found" });
@@ -1224,6 +1226,94 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // Check if it's role update path: {userId}/role
+    if (remainingPath.endsWith("/role")) {
+      const userId = remainingPath.substring(0, remainingPath.lastIndexOf("/role"));
+      if (!userId) {
+        sendJson(res, 400, { ok: false, error: "User ID is required" });
+        return;
+      }
+      let body = "";
+      req.on("data", chunk => { body += chunk; });
+      req.on("end", async () => {
+        try {
+          const incoming = JSON.parse(body || "{}");
+          const role = incoming.role || "user";
+          const success = await db.updateUserRole(userId, role);
+          if (success) {
+            logAdminActivity(`Updated role for user ${userId} to ${role}`);
+            sendJson(res, 200, { ok: true, message: `User ${userId} role updated to ${role}` });
+          } else {
+            sendJson(res, 404, { ok: false, error: "User not found" });
+          }
+        } catch (e) {
+          sendJson(res, 400, { ok: false, error: e.message });
+        }
+      });
+      return;
+    }
+
+    // Check if it's status update path: {userId}/status
+    if (remainingPath.endsWith("/status")) {
+      const userId = remainingPath.substring(0, remainingPath.lastIndexOf("/status"));
+      if (!userId) {
+        sendJson(res, 400, { ok: false, error: "User ID is required" });
+        return;
+      }
+      let body = "";
+      req.on("data", chunk => { body += chunk; });
+      req.on("end", async () => {
+        try {
+          const incoming = JSON.parse(body || "{}");
+          const status = incoming.status || "active";
+          const success = await db.updateUserStatus(userId, status);
+          if (success) {
+            logAdminActivity(`Updated status for user ${userId} to ${status}`);
+            sendJson(res, 200, { ok: true, message: `User ${userId} status updated to ${status}` });
+          } else {
+            sendJson(res, 404, { ok: false, error: "User not found" });
+          }
+        } catch (e) {
+          sendJson(res, 400, { ok: false, error: e.message });
+        }
+      });
+      return;
+    }
+
+    // Check if it's suspend user path: {userId}/suspend
+    if (remainingPath.endsWith("/suspend")) {
+      const userId = remainingPath.substring(0, remainingPath.lastIndexOf("/suspend"));
+      if (!userId) {
+        sendJson(res, 400, { ok: false, error: "User ID is required" });
+        return;
+      }
+      const success = await db.updateUserStatus(userId, "suspended");
+      if (success) {
+        logAdminActivity(`Suspended account for user ${userId}`);
+        sendJson(res, 200, { ok: true, message: `User ${userId} suspended` });
+      } else {
+        sendJson(res, 404, { ok: false, error: "User not found" });
+      }
+      return;
+    }
+
+    // Check if it's reinstate user path: {userId}/reinstate
+    if (remainingPath.endsWith("/reinstate")) {
+      const userId = remainingPath.substring(0, remainingPath.lastIndexOf("/reinstate"));
+      if (!userId) {
+        sendJson(res, 400, { ok: false, error: "User ID is required" });
+        return;
+      }
+      const success = await db.updateUserStatus(userId, "active");
+      if (success) {
+        logAdminActivity(`Reinstated account for user ${userId}`);
+        sendJson(res, 200, { ok: true, message: `User ${userId} reinstated` });
+      } else {
+        sendJson(res, 404, { ok: false, error: "User not found" });
+      }
+      return;
+    }
+
     // Default to Delete User
     if (req.method === "DELETE") {
       const userIdToDelete = remainingPath;
@@ -1232,7 +1322,9 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       await db.deleteUser(userIdToDelete);
+      logAdminActivity(`Permanently deleted user ${userIdToDelete}`);
       sendJson(res, 200, { ok: true, message: `User ${userIdToDelete} successfully deleted` });
+      return;
     }
   }
 

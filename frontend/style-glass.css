@@ -171,23 +171,119 @@ body {
 }
 
 /* ─── Shared Nav (injected via shared-shell.js) ─────────────────────────── */
-.nav__logo {
-  display: flex; align-items: center; gap: 6px;
-  font-family: var(--mono); font-size: 13px; font-weight: 700;
-  color: var(--white); text-decoration: none; letter-spacing: .04em;
+.nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 60px;
+  background: rgba(11, 16, 32, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 1000;
+  display: flex; align-items: center;
 }
-.nav__logo-bracket { color: var(--primary); }
-.nav__link--active { color: var(--primary) !important; }
-.nav__logout {
-  font-family: var(--mono); font-size: 12px; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase;
-  color: var(--dim); cursor: pointer;
-  border: 1px solid var(--glass-border);
+.nav__inner {
+  max-width: 1360px; margin: 0 auto; padding: 0 24px;
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+}
+.nav__brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; flex-shrink: 0;
+}
+.nav__brand-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+.nav__brand-icon img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.nav__brand-text {
+  font-family: var(--body);
+  font-size: 16px; font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.01em;
+}
+.nav__brand-text span {
+  background: linear-gradient(135deg, #5B4FE8, #2FDDC4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.nav__links {
+  display: flex; align-items: center; gap: 4px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.nav__links::-webkit-scrollbar { display: none; }
+.nav__link {
+  font-family: var(--body);
+  font-size: 13px; font-weight: 500;
+  color: rgba(244, 247, 255, 0.72);
+  padding: 7px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.nav__link:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.06);
+}
+.nav__link--active {
+  color: var(--white) !important;
+  background: rgba(91, 79, 232, 0.15) !important;
+  font-weight: 600;
+}
+.nav__actions {
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.nav__admin-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 20px;
+  font-family: var(--body); font-size: 11px; font-weight: 600;
+  color: #F5A623;
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.nav__admin-badge:hover {
+  background: rgba(245, 166, 35, 0.2);
+  border-color: #F5A623;
+  color: #FFB84D;
+}
+.nav__admin-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #F5A623;
+  box-shadow: 0 0 6px rgba(245, 166, 35, 0.7);
+}
+.nav__login-btn {
+  font-family: var(--body); font-size: 12px; font-weight: 600;
+  color: var(--white); background: var(--primary);
+  border: 1px solid var(--primary);
   padding: 6px 14px; border-radius: 8px;
-  background: transparent;
-  transition: color .2s, border-color .2s;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
-.nav__logout:hover { color: var(--primary); border-color: var(--primary); }
+.nav__login-btn:hover {
+  background: rgba(91, 79, 232, 0.85);
+}
+.nav__logout {
+  font-family: var(--body); font-size: 12px; font-weight: 500;
+  color: rgba(244, 247, 255, 0.65);
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 12px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.15s ease;
+}
+.nav__logout:hover {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+}
 
 /* ─── Modal Overlay ─────────────────────────────────────────────────────── */
 .modal-overlay {

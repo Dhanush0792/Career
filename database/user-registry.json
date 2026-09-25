@@ -79,5 +79,15 @@
     "tier": "free",
     "createdAt": 1787286865923,
     "lastSync": 1787286865923
+  },
+  {
+    "id": "u_hidhanush07",
+    "email": "hidhanush07@gmail.com",
+    "name": "Dhanush",
+    "role": "admin",
+    "tier": "paid",
+    "createdAt": 1790343670181,
+    "lastSync": 1790343670181,
+    "passcodeHash": "1fff4b993a48bbd69248c7986db7966b2342656cbbd5fb1a01a6a24d0923cc74"
   }
 ]

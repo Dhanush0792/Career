@@ -163,14 +163,35 @@ function requireAuth() {
           invalidReason = 'expired';
         } else {
           isValidToken = true;
-          tokenRole = payload.role || payload.user_metadata?.role || localStorage.getItem('jxa_role') || 'user';
+          const ADMIN_EMAILS = ['hidhanush07@gmail.com', 'dhanushsiddilingam@gmail.com', 'admin@jobxapply.app'];
+          const userEmail = (payload.email || localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
+          const isAdminByEmail = ADMIN_EMAILS.includes(userEmail);
+          const storedRole = localStorage.getItem('jxa_role');
+
+          if (isAdminByEmail || storedRole === 'admin') {
+            tokenRole = 'admin';
+          } else if (payload.role && payload.role !== 'authenticated') {
+            tokenRole = payload.role;
+          } else {
+            tokenRole = payload.user_metadata?.role || payload.app_metadata?.role || storedRole || 'user';
+          }
+          if (tokenRole === 'admin') {
+            localStorage.setItem('jxa_role', 'admin');
+          }
           // Touch activity timestamp
           recordUserActivity();
         }
       } else {
         // Opaque token / fallback token
         isValidToken = true;
-        tokenRole = localStorage.getItem('jxa_role') || 'user';
+        const ADMIN_EMAILS = ['hidhanush07@gmail.com', 'dhanushsiddilingam@gmail.com', 'admin@jobxapply.app'];
+        const userEmail = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
+        if (ADMIN_EMAILS.includes(userEmail) || localStorage.getItem('jxa_role') === 'admin') {
+          tokenRole = 'admin';
+          localStorage.setItem('jxa_role', 'admin');
+        } else {
+          tokenRole = localStorage.getItem('jxa_role') || 'user';
+        }
         recordUserActivity();
       }
     }
@@ -929,10 +950,10 @@ const NAV_ITEMS = [
   { label: 'Dashboard',    href: 'dashboard.html' },
   { label: 'Profile',      href: 'profile-setup.html' },
   { label: 'Resume',       href: 'resume-builder.html' },
-  { label: 'ATS',          href: 'ats-checker.html' },
+  { label: 'ATS Checker',  href: 'ats-checker.html' },
   { label: 'Cover Letter', href: 'cover-letter.html' },
   { label: 'Tracker',      href: 'tracker.html' },
-  { label: 'Autofill',     href: 'autofill-lab.html' },
+  { label: 'Autofill Lab', href: 'autofill-lab.html' },
   { label: 'Extension',    href: 'extension-landing.html' },
   { label: 'Settings',     href: 'settings.html' },
 ];
@@ -961,20 +982,25 @@ function renderNav(container, activePage) {
     return `<a href="${href}" class="nav__link${isActive ? ' nav__link--active' : ''}">${item.label}</a>`;
   }).join('');
 
+  let adminBadge = '';
   if (isAdmin) {
-    const adminLink = `<a href="admin/index.html" class="nav__link" style="color:#F5A623;font-weight:700;border:1px solid rgba(245,166,35,0.4);border-radius:6px;padding:4px 10px;background:rgba(245,166,35,0.1);letter-spacing:0.04em;">ADMIN PANEL</a>`;
-    links = adminLink + links;
+    adminBadge = `<a href="admin/index.html" class="nav__admin-badge" title="Access Admin Command Center">
+      <span class="nav__admin-dot"></span>
+      <span>Admin</span>
+    </a>`;
   }
 
   const btnHtml = token
-    ? `<button class="nav__logout" onclick="logout()">LOGOUT</button>`
-    : `<button class="nav__logout" onclick="window.location.href='auth.html'">LOGIN</button>`;
+    ? `<div class="nav__actions">${adminBadge}<button class="nav__logout" onclick="logout()">Log Out</button></div>`
+    : `<div class="nav__actions">${adminBadge}<button class="nav__login-btn" onclick="window.location.href='auth.html'">Sign In</button></div>`;
 
   container.innerHTML = `
     <div class="nav__inner">
-      <a href="${token ? 'dashboard.html' : 'index.html'}" class="nav__logo" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
-        <img src="assets/logo.svg" alt="JobXApply Logo" style="width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(91,79,232,0.4));">
-        <span style="font-family:var(--display);font-size:22px;font-weight:900;letter-spacing:0.04em;color:#fff;text-transform:uppercase;">JOB<span style="background:linear-gradient(135deg,#5B4FE8,#2FDDC4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">X</span>APPLY</span>
+      <a href="${token ? 'dashboard.html' : 'index.html'}" class="nav__brand" aria-label="JobXApply Home">
+        <div class="nav__brand-icon">
+          <img src="assets/app-logo.png?v=6" alt="JobXApply Logo">
+        </div>
+        <span class="nav__brand-text">Job<span>X</span>Apply</span>
       </a>
       <div class="nav__links">${links}</div>
       ${btnHtml}

@@ -23,12 +23,20 @@
   width: 100%; display: flex; align-items: center; gap: 4px;
 }
 .ch-nav__logo {
-  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700;
+  font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700;
   color: #fff; text-decoration: none;
-  display: flex; align-items: center; gap: 0;
-  margin-right: 20px; flex-shrink: 0; letter-spacing: .02em;
+  display: flex; align-items: center; gap: 10px;
+  margin-right: 24px; flex-shrink: 0; letter-spacing: -0.01em;
 }
-.ch-nav__logo-bracket { color: #5B4FE8; }
+.ch-nav__logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  display: flex; align-items: center; justify-content: center;
+}
+.ch-nav__logo-icon img {
+  width: 100%; height: 100%; object-fit: cover;
+}
 
 /* Nav Groups container */
 .ch-nav__groups { display: flex; gap: 2px; align-items: center; margin-left: auto; margin-right: 16px; }
@@ -180,9 +188,11 @@
 <nav class="ch-nav" id="ch-pub-nav" role="navigation" aria-label="Main">
   <div class="ch-nav__inner">
 
-    <a href="index.html" class="ch-nav__logo" aria-label="JobXApply Home" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
-      <img src="assets/logo.svg" alt="JobXApply Logo" style="width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(91,79,232,0.4));">
-      <span style="font-family:var(--ch-display,'Barlow Condensed',sans-serif);font-size:22px;font-weight:900;letter-spacing:0.04em;color:#fff;text-transform:uppercase;">JOB<span style="background:linear-gradient(135deg,#5B4FE8,#2FDDC4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">X</span>APPLY</span>
+    <a href="index.html" class="ch-nav__logo" aria-label="JobXApply Home">
+      <div class="ch-nav__logo-icon">
+        <img src="assets/app-logo.png?v=6" alt="JobXApply Logo">
+      </div>
+      <span>Job<span style="background:linear-gradient(135deg,#5B4FE8,#2FDDC4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">X</span>Apply</span>
     </a>
 
     <div class="ch-nav__groups">
@@ -194,13 +204,13 @@
         </button>
         <div class="ch-nav__dropdown" role="menu">
           <div class="ch-nav__dd-label">Explore</div>
-          <a href="features.html"    class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⊕</span>Features</a>
-          <a href="portals.html"     class="ch-nav__dd-link"><span class="ch-nav__dd-icon">◈</span>Job Portals <small style="opacity:.5;font-size:9px;margin-left:4px;">50+</small></a>
-          <a href="how-it-works.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">◎</span>How it Works</a>
+          <a href="features.html"    class="ch-nav__dd-link">Features</a>
+          <a href="portals.html"     class="ch-nav__dd-link">Job Portals <small style="opacity:.6;font-size:10px;margin-left:6px;padding:1px 6px;border-radius:10px;background:rgba(255,255,255,0.08);">50+</small></a>
+          <a href="how-it-works.html" class="ch-nav__dd-link">How it Works</a>
           <div class="ch-nav__dd-divider"></div>
-          <div class="ch-nav__dd-label">Read</div>
-          <a href="blog.html"        class="ch-nav__dd-link"><span class="ch-nav__dd-icon">✦</span>Blog &amp; Career Intel</a>
-          <a href="pricing.html"     class="ch-nav__dd-link"><span class="ch-nav__dd-icon">◧</span>Pricing</a>
+          <div class="ch-nav__dd-label">Resources</div>
+          <a href="blog.html"        class="ch-nav__dd-link">Blog &amp; Career Intel</a>
+          <a href="pricing.html"     class="ch-nav__dd-link">Pricing</a>
         </div>
       </div>
 
@@ -211,14 +221,14 @@
         </button>
         <div class="ch-nav__dropdown" role="menu">
           <div class="ch-nav__dd-label">Career Tools</div>
-          <a href="resume-builder.html"  class="ch-nav__dd-link"><span class="ch-nav__dd-icon">📄</span>Resume Builder</a>
-          <a href="ats-checker.html"     class="ch-nav__dd-link"><span class="ch-nav__dd-icon">◉</span>ATS Checker</a>
-          <a href="cover-letter.html"    class="ch-nav__dd-link"><span class="ch-nav__dd-icon">✉</span>Cover Letter</a>
+          <a href="resume-builder.html"  class="ch-nav__dd-link">Resume Builder</a>
+          <a href="ats-checker.html"     class="ch-nav__dd-link">ATS Checker</a>
+          <a href="cover-letter.html"    class="ch-nav__dd-link">Cover Letter</a>
           <div class="ch-nav__dd-divider"></div>
-          <div class="ch-nav__dd-label">Autofill</div>
-          <a href="autofill-lab.html"    class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⊛</span>Autofill Lab</a>
-          <a href="extension-landing.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⬡</span>Browser Extension</a>
-          <a href="extension-setup.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">↓</span>Install Guide</a>
+          <div class="ch-nav__dd-label">Automation</div>
+          <a href="autofill-lab.html"    class="ch-nav__dd-link">Autofill Lab</a>
+          <a href="extension-landing.html" class="ch-nav__dd-link">Browser Extension</a>
+          <a href="extension-setup.html" class="ch-nav__dd-link">Install Guide</a>
         </div>
       </div>
 
@@ -228,11 +238,11 @@
           Company ${CARET_SVG}
         </button>
         <div class="ch-nav__dropdown" role="menu">
-          <a href="about.html"         class="ch-nav__dd-link"><span class="ch-nav__dd-icon">◇</span>About Us</a>
-          <a href="contact.html"       class="ch-nav__dd-link"><span class="ch-nav__dd-icon">✉</span>Contact Us</a>
-          <a href="mailto:missionhousehq@gmail.com" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">@</span>missionhousehq@gmail.com</a>
+          <a href="about.html"         class="ch-nav__dd-link">About Us</a>
+          <a href="contact.html"       class="ch-nav__dd-link">Contact Us</a>
+          <a href="mailto:missionhousehq@gmail.com" class="ch-nav__dd-link">missionhousehq@gmail.com</a>
           <div class="ch-nav__dd-divider"></div>
-          <a href="privacy-terms.html" class="ch-nav__dd-link"><span class="ch-nav__dd-icon">⚿</span>Privacy &amp; Terms</a>
+          <a href="privacy-terms.html" class="ch-nav__dd-link">Privacy &amp; Terms</a>
         </div>
       </div>
 
@@ -245,8 +255,8 @@
       </button>
       <div class="ch-nav__dropdown" role="menu">
         <div class="ch-nav__dd-label">Account</div>
-        <a href="auth.html"             class="ch-nav__dd-link ch-nav__dd-link--accent"><span class="ch-nav__dd-icon">→</span>Login</a>
-        <a href="auth.html#signup"      class="ch-nav__dd-link"><span class="ch-nav__dd-icon">＋</span>Sign Up</a>
+        <a href="auth.html"             class="ch-nav__dd-link ch-nav__dd-link--accent">Sign In</a>
+        <a href="auth.html#signup"      class="ch-nav__dd-link">Create Account</a>
       </div>
     </div>
 
@@ -262,33 +272,33 @@
 <div class="ch-nav__drawer" id="ch-drawer" role="dialog" aria-modal="true">
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Discover</div>
-    <a href="features.html"     class="ch-nav__drawer-link">⊕ Features</a>
-    <a href="portals.html"      class="ch-nav__drawer-link">◈ Job Portals (50+)</a>
-    <a href="how-it-works.html" class="ch-nav__drawer-link">◎ How it Works</a>
-    <a href="blog.html"         class="ch-nav__drawer-link">✦ Blog &amp; Career Intel</a>
-    <a href="pricing.html"      class="ch-nav__drawer-link">◧ Pricing</a>
+    <a href="features.html"     class="ch-nav__drawer-link">Features</a>
+    <a href="portals.html"      class="ch-nav__drawer-link">Job Portals (50+)</a>
+    <a href="how-it-works.html" class="ch-nav__drawer-link">How it Works</a>
+    <a href="blog.html"         class="ch-nav__drawer-link">Blog &amp; Intel</a>
+    <a href="pricing.html"      class="ch-nav__drawer-link">Pricing</a>
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Tools</div>
-    <a href="resume-builder.html"  class="ch-nav__drawer-link">📄 Resume Builder</a>
-    <a href="ats-checker.html"     class="ch-nav__drawer-link">◉ ATS Checker</a>
-    <a href="cover-letter.html"    class="ch-nav__drawer-link">✉ Cover Letter</a>
-    <a href="autofill-lab.html"    class="ch-nav__drawer-link">⊛ Autofill Lab</a>
-    <a href="extension-landing.html" class="ch-nav__drawer-link">⬡ Browser Extension</a>
+    <a href="resume-builder.html"  class="ch-nav__drawer-link">Resume Builder</a>
+    <a href="ats-checker.html"     class="ch-nav__drawer-link">ATS Checker</a>
+    <a href="cover-letter.html"    class="ch-nav__drawer-link">Cover Letter</a>
+    <a href="autofill-lab.html"    class="ch-nav__drawer-link">Autofill Lab</a>
+    <a href="extension-landing.html" class="ch-nav__drawer-link">Browser Extension</a>
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Company</div>
-    <a href="about.html"          class="ch-nav__drawer-link">◇ About Us</a>
-    <a href="contact.html"        class="ch-nav__drawer-link">✉ Contact Us</a>
-    <a href="mailto:missionhousehq@gmail.com" class="ch-nav__drawer-link">@ missionhousehq@gmail.com</a>
-    <a href="privacy-terms.html"  class="ch-nav__drawer-link">⚿ Privacy &amp; Terms</a>
+    <a href="about.html"          class="ch-nav__drawer-link">About Us</a>
+    <a href="contact.html"        class="ch-nav__drawer-link">Contact Us</a>
+    <a href="mailto:missionhousehq@gmail.com" class="ch-nav__drawer-link">missionhousehq@gmail.com</a>
+    <a href="privacy-terms.html"  class="ch-nav__drawer-link">Privacy &amp; Terms</a>
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Account</div>
-    <a href="auth.html"            class="ch-nav__drawer-link">→ Login</a>
-    <a href="auth.html#signup"     class="ch-nav__drawer-link">＋ Sign Up</a>
+    <a href="auth.html"            class="ch-nav__drawer-link">Sign In</a>
+    <a href="auth.html#signup"     class="ch-nav__drawer-link">Create Account</a>
   </div>
-  <a href="auth.html" class="ch-nav__drawer-cta">GET STARTED →</a>
+  <a href="auth.html" class="ch-nav__drawer-cta">GET STARTED</a>
 </div>
 `;
 
