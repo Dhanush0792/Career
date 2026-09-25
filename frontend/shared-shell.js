@@ -224,6 +224,17 @@ function requireAuth() {
     // Background pull tracker data from server on startup
     pullApplicationsFromServer().catch(() => {});
     connectSSE().catch(() => {});
+
+    // Proactively share authentication session with the extension content script
+    try {
+      window.dispatchEvent(new CustomEvent('jobxapply:shareAuth', {
+        detail: {
+          token: token,
+          email: localStorage.getItem('jxa_user_email') || '',
+          passcode: localStorage.getItem('jxa_passcode') || ''
+        }
+      }));
+    } catch (e) {}
   }
 }
 

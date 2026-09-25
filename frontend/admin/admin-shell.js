@@ -50,11 +50,14 @@ function showToast(msg, type) {
 function renderAdminNav(activePage) {
   var pages = [
     { file: "index.html", label: "Overview" },
+    { file: "cms.html", label: "Live CMS" },
+    { file: "seo.html", label: "SEO & AI" },
     { file: "users.html", label: "Users" },
     { file: "tools.html", label: "Tools" },
-    { file: "content.html", label: "Content" },
+    { file: "content.html", label: "Flags" },
     { file: "access.html", label: "Access" },
     { file: "reports.html", label: "Issues" },
+    { file: "system.html", label: "System" },
     { file: "analytics.html", label: "Analytics" }
   ];
   var navEl = document.getElementById("admin-nav");

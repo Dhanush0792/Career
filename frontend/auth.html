@@ -250,7 +250,9 @@ function handleGoogleLogin() {
   btnGoogle.disabled = true;
   showStatus('Opening Google Account Chooser...');
   
-  const callbackUrl = window.location.origin + '/auth-callback.html';
+  const currentParams = new URLSearchParams(window.location.search);
+  const source = currentParams.get('source') || currentParams.get('origin') || '';
+  const callbackUrl = window.location.origin + '/auth-callback.html' + (source ? `?source=${encodeURIComponent(source)}` : '');
   
   supabaseClient.auth.signInWithOAuth({
     provider: 'google',

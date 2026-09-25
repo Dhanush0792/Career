@@ -96,10 +96,23 @@ async function processSession(token, userEmail = "") {
     if (email) localStorage.setItem("jxa_user_email", email);
 
     // Immediate client-side check for super-admin / admin emails
-    const ADMIN_EMAILS = ["dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+    const ADMIN_EMAILS = ["hidhanush07@gmail.com", "dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
     let isAdmin = ADMIN_EMAILS.includes(email);
     if (isAdmin) {
       localStorage.setItem("jxa_role", "admin");
+    }
+
+    // Pair with browser extension via content script
+    try {
+      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+        detail: {
+          token: token,
+          email: email,
+          passcode: localStorage.getItem("jxa_passcode") || ""
+        }
+      }));
+    } catch (e) {
+      console.warn("Extension auth share event warning:", e);
     }
 
     // Call profile endpoint to check if existing user with completed profile or new user
@@ -133,6 +146,19 @@ async function processSession(token, userEmail = "") {
       }
     } catch(fetchErr) {
       console.warn("Backend sync check warning:", fetchErr);
+    }
+
+    // Check if login was initiated from the extension
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get("source") || urlParams.get("origin") || "";
+    if (source === "extension") {
+      statusText.innerHTML = '<span style="color:#2fddc4; font-weight:700;">Extension Authenticated & Synced!</span><br><span style="color:rgba(244,247,255,0.7); font-size:10px; margin-top:6px; display:inline-block;">You can close this tab and open the extension.</span>';
+      setTimeout(() => {
+        if (isAdmin) window.location.replace("admin/index.html");
+        else if (isExistingUser) window.location.replace("dashboard.html");
+        else window.location.replace("onboarding.html");
+      }, 1500);
+      return;
     }
 
     if (isAdmin) {

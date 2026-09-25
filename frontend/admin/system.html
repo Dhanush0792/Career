@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply Admin // System Health & Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style-glass.css">
+<script src="../shared-shell.js?v=2"></script>
+<script src="admin-shell.js"></script>
+<link rel="icon" type="image/png" href="../assets/app-logo.png?v=6">
+<style>
+  :root {
+    --base: #0B1020;
+    --primary: #5B4FE8;
+    --success: #2FDDC4;
+    --alert: #F5A623;
+    --danger: #F55A23;
+    --white: #ffffff;
+    --text: #f4f7ff;
+    --muted: rgba(244,247,255,0.65);
+    --dim: rgba(244,247,255,0.4);
+    --glass-bg: rgba(255,255,255,0.05);
+    --glass-border: rgba(255,255,255,0.12);
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  body {
+    padding-top: 70px;
+    background-color: var(--base);
+    color: var(--text);
+    font-family: var(--body);
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.1) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
+    min-height: 100vh;
+    margin: 0;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 10; }
+  
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: 36px;
+    color: var(--alert);
+    text-transform: uppercase;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    backdrop-filter: blur(16px);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .card-header {
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--alert);
+    text-transform: uppercase;
+    margin: 0 0 16px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stat-val {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--white);
+    margin: 4px 0;
+  }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .btn-submit {
+    background: rgba(245,166,35,0.15);
+    border: 1px solid var(--alert);
+    color: var(--alert);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .btn-submit:hover {
+    background: var(--alert);
+    color: var(--base);
+  }
+  .btn-success {
+    background: rgba(47,221,196,0.15);
+    border: 1px solid var(--success);
+    color: var(--success);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .btn-success:hover {
+    background: var(--success);
+    color: var(--base);
+  }
+</style>
+</head>
+<body>
+
+<nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
+
+<div class="container">
+  <div class="header-row">
+    <div>
+      <h1>SYSTEM HEALTH &amp; DATABASE OPERATIONS</h1>
+      <p style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:4px;">
+        Real-time telemetry, memory health, active connections, and instant full database backups.
+      </p>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button class="btn-success" onclick="downloadDatabaseBackup()">Download Full DB Backup (.json)</button>
+      <button class="btn-submit" onclick="loadSystemHealth()">Refresh Health</button>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="stat-label">Node Runtime &amp; Platform</div>
+      <div class="stat-val" id="sys-node">--</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--dim);" id="sys-platform">--</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Memory Heap Usage</div>
+      <div class="stat-val" id="sys-mem">-- MB</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--dim);" id="sys-rss">RSS: -- MB</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Process Uptime</div>
+      <div class="stat-val" id="sys-uptime">--</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--success);">LIVE SSE: <span id="sys-sse">0</span></div>
+    </div>
+  </div>
+
+  <!-- Real Time Error Stream -->
+  <div class="card">
+    <div class="card-header">
+      <span>Live System &amp; API Exception Stream</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--dim);">LAST 30 INCIDENTS</span>
+    </div>
+    <div id="error-stream-box" style="font-family:var(--mono);font-size:12px;max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+      <div style="color:var(--muted);padding:10px;">Loading incident logs...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  renderAdminNav('system.html');
+  verifyAdminAccess(loadSystemHealth);
+
+  async function loadSystemHealth() {
+    try {
+      const res = await adminFetch('/admin/system/health');
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('sys-node').textContent = data.nodeVersion || '--';
+        document.getElementById('sys-platform').textContent = data.platform || '--';
+        document.getElementById('sys-mem').textContent = (data.memory ? data.memory.heapUsedMb : '--') + ' MB';
+        document.getElementById('sys-rss').textContent = 'RSS Total: ' + (data.memory ? data.memory.rssMb : '--') + ' MB';
+        
+        const up = data.uptimeSeconds || 0;
+        const h = Math.floor(up / 3600);
+        const m = Math.floor((up % 3600) / 60);
+        const s = up % 60;
+        document.getElementById('sys-uptime').textContent = `${h}h ${m}m ${s}s`;
+        document.getElementById('sys-sse').textContent = data.activeSseClients || 0;
+
+        const errBox = document.getElementById('error-stream-box');
+        errBox.innerHTML = '';
+        const errors = data.recentErrors || [];
+        if (errors.length === 0) {
+          errBox.innerHTML = '<div style="color:var(--success);padding:10px;">No active system errors recorded. Engine operational.</div>';
+        } else {
+          errors.forEach(err => {
+            const div = document.createElement('div');
+            div.style.cssText = 'background:rgba(245,90,35,0.08);border:1px solid rgba(245,90,35,0.2);padding:10px 14px;border-radius:6px;';
+            div.innerHTML = `
+              <div style="display:flex;justify-content:space-between;color:var(--danger);font-weight:700;">
+                <span>${escHtml(err.route || 'SYSTEM')}</span>
+                <span>STATUS ${escHtml(err.status || 500)}</span>
+              </div>
+              <div style="color:var(--text);margin-top:4px;">${escHtml(err.message || 'Unknown exception')}</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:4px;">${escHtml(err.timestamp || '')}</div>
+            `;
+            errBox.appendChild(div);
+          });
+        }
+      }
+    } catch (e) {
+      showToast('Error loading system telemetry', 'error');
+    }
+  }
+
+  async function downloadDatabaseBackup() {
+    try {
+      showToast('Generating snapshot backup...', 'info');
+      const token = adminToken();
+      const res = await fetch(ADMIN_API + '/admin/database/backup', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `jobxapply-backup-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('Database backup downloaded successfully', 'success');
+      } else {
+        showToast('Failed to generate backup', 'error');
+      }
+    } catch (e) {
+      showToast('Connection error during backup', 'error');
+    }
+  }
+</script>
+</body>
+</html>

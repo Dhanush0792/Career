@@ -2620,11 +2620,56 @@ window.addEventListener('load', () => {
       }
     }
   })
-  .catch(err => {
-    console.error('Globe setup error:', err);
-    startWithGeometries(null, null);
   });
 });
+
+// Dynamic CMS content hydration
+(async function hydrateCms() {
+  try {
+    const apiHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://localhost:3000' 
+      : 'https://jobxapply-backend.onrender.com';
+    const res = await fetch(`${apiHost}/api/cms`).catch(() => null);
+    if (!res || !res.ok) return;
+    const data = await res.json();
+    const cms = data.cms;
+    if (!cms) return;
+
+    if (cms.maintenance && cms.maintenance.active) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#F55A23;color:#fff;text-align:center;padding:10px 16px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;';
+      banner.textContent = cms.maintenance.message || 'Platform undergoing scheduled maintenance.';
+      document.body.prepend(banner);
+    }
+
+    const h = cms.hero;
+    if (h) {
+      const tagEl = document.querySelector('.hero__tag');
+      if (tagEl && h.tag) tagEl.textContent = h.tag;
+
+      const subEl = document.querySelector('.hero__sub');
+      if (subEl && h.subtitle) subEl.textContent = h.subtitle;
+
+      const ctaEl = document.getElementById('hero-cta');
+      if (ctaEl && h.ctaText) ctaEl.innerHTML = '&rsaquo; ' + h.ctaText;
+
+      const stats = h.stats;
+      if (stats) {
+        const statEls = document.querySelectorAll('.hstat__val');
+        if (statEls[0] && stats.supportedPortals) {
+          statEls[0].textContent = stats.supportedPortals;
+          statEls[0].dataset.count = parseInt(stats.supportedPortals) || 50;
+        }
+        if (statEls[1] && stats.timeSavedPct) {
+          statEls[1].textContent = stats.timeSavedPct;
+          statEls[1].dataset.count = parseInt(stats.timeSavedPct) || 90;
+        }
+      }
+    }
+  } catch (e) {
+    // Non-blocking fallback to static HTML
+  }
+})();
 </script>
 </body>
 </html>

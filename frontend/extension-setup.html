@@ -895,10 +895,24 @@ function simulatePairing() {
   btn.disabled = true;
   addLog('[HANDSHAKE] Receiving incoming pairing request...', 'info');
 
+  const token = localStorage.getItem('jxa_token') || '';
+  const email = localStorage.getItem('jxa_user_email') || 'hidhanush07@gmail.com';
+  const passcode = localStorage.getItem('jxa_passcode') || '';
+
   setTimeout(() => {
     addLog(`[HANDSHAKE] Code matched: ${codeValue}`, 'info');
     setTimeout(() => {
-      addLog('[HANDSHAKE] Exchanging AES session key...', 'info');
+      addLog('[HANDSHAKE] Exchanging AES session key and sync credentials...', 'info');
+      
+      // Dispatch real shareAuth event to content script & background worker
+      try {
+        window.dispatchEvent(new CustomEvent('jobxapply:shareAuth', {
+          detail: { token, email, passcode }
+        }));
+      } catch (e) {
+        console.warn('Share auth event error:', e);
+      }
+
       setTimeout(() => {
         localStorage.setItem('jxa_extension_coupled', 'true');
         addLog('[SUCCESS] Extension paired. Sync active.', 'success');

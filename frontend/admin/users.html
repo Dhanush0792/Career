@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -281,6 +281,7 @@
         </td>
         <td>
           <div class="actions-cell">
+            <button class="btn-sm" style="color:var(--success);border-color:rgba(47,221,196,0.3);" onclick="impersonateUser('${safeId}')">Impersonate</button>
             ${safeRole === 'admin' 
               ? `<button class="btn-sm warn" onclick="changeRole('${safeId}', 'user')">Demote</button>` 
               : `<button class="btn-sm warn" onclick="changeRole('${safeId}', 'admin')">Make Admin</button>`
@@ -295,6 +296,28 @@
       `;
       tbody.appendChild(tr);
     });
+  }
+
+  async function impersonateUser(userId) {
+    if (!confirm('Log into the platform dashboard as this user?')) return;
+    try {
+      const res = await adminFetch(`/admin/users/${userId}/impersonate`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem('jxa_token', data.token);
+          localStorage.setItem('jxa_user_email', data.user.email);
+          localStorage.setItem('jxa_user_name', data.user.name);
+          localStorage.setItem('jxa_role', data.user.role);
+          showToast(`Impersonating ${data.user.email}... Redirecting`, 'success');
+          setTimeout(() => { window.location.href = '../dashboard.html'; }, 1000);
+        }
+      } else {
+        showToast('Failed to start impersonation session', 'error');
+      }
+    } catch (e) {
+      showToast('Error during impersonation', 'error');
+    }
   }
 
   // Live filter handlers

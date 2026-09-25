@@ -798,5 +798,81 @@ module.exports = {
       pageViews: tel.pageViews || 0,
       apiRequests: tel.apiRequests || 0
     };
+  },
+
+  // ── CMS Dynamic Site Configuration ──────────────────────────────
+  async getCmsConfig() {
+    const CMS_FILE = path.join(__dirname, "..", "database", "platform-cms.json");
+    const defaultConfig = {
+      hero: {
+        tag: "MISSION-CLASS CAREER AUTOMATION",
+        title: "APPLY EVERYWHERE. REPEAT NOTHING.",
+        subtitle: "One master profile. 50+ job portals. Instant auto-fill, algorithmic ATS resume scoring, and targeted cover letter generator. Zero friction.",
+        ctaText: "LAUNCH OPERATIVE CONSOLE",
+        stats: {
+          supportedPortals: "50+",
+          timeSavedPct: "85%",
+          atsPassRate: "92%"
+        }
+      },
+      maintenance: {
+        active: false,
+        message: "Scheduled platform upgrade in progress. Check back shortly."
+      },
+      announcement: {
+        active: false,
+        text: "",
+        link: ""
+      }
+    };
+    try {
+      if (fs.existsSync(CMS_FILE)) {
+        const raw = fs.readFileSync(CMS_FILE, "utf-8");
+        return Object.assign({}, defaultConfig, JSON.parse(raw));
+      }
+    } catch (e) {
+      console.error("[DB] Error loading CMS config:", e);
+    }
+    return defaultConfig;
+  },
+
+  async saveCmsConfig(config) {
+    const CMS_FILE = path.join(__dirname, "..", "database", "platform-cms.json");
+    try {
+      fs.writeFileSync(CMS_FILE, JSON.stringify(config, null, 2), "utf-8");
+      return true;
+    } catch (e) {
+      console.error("[DB] Error saving CMS config:", e);
+      return false;
+    }
+  },
+
+  // ── Full Database Snapshot & Backup ──────────────────────────────
+  async getDatabaseBackup() {
+    const registry = loadRegistry();
+    const reports = loadReports();
+    const telemetry = loadTelemetry();
+    const userDataDump = {};
+
+    registry.forEach(u => {
+      try {
+        userDataDump[u.id] = loadUserData(u.id);
+      } catch (e) {
+        userDataDump[u.id] = null;
+      }
+    });
+
+    const cms = await this.getCmsConfig();
+
+    return {
+      exportedAt: new Date().toISOString(),
+      version: "2.0.0",
+      registry,
+      userData: userDataDump,
+      reports,
+      telemetry,
+      cms
+    };
   }
 };
+

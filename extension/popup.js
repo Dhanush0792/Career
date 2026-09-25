@@ -304,11 +304,72 @@ async function handleDirectLogin() {
   });
 }
 
-// ── Google Web Login ────────────────────────────────────────────────────────
-function handleGoogleWebLogin() {
-  const webAuthUrl = "https://jobxapply-backend.onrender.com/auth.html";
+// ── Active Web Session Detection & Google Login ─────────────────────────────
+async function detectActiveWebSession() {
+  try {
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      if (!tab.url) continue;
+      const url = tab.url.toLowerCase();
+      if (url.includes("jobxapply.netlify.app") || url.includes("localhost:") || url.includes("127.0.0.1:")) {
+        const syncBtn = document.getElementById("syncActiveWebBtn");
+        if (syncBtn) {
+          syncBtn.style.display = "block";
+          syncBtn.onclick = () => pairWithTabSession(tab.id);
+        }
+        return tab;
+      }
+    }
+  } catch (e) {
+    console.warn("Could not query tabs for active session:", e);
+  }
+  return null;
+}
+
+async function pairWithTabSession(tabId) {
+  setLoginStatus("Reading session from JobXApply tab...", "warn");
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => ({
+        token: localStorage.getItem("jxa_token") || "",
+        email: localStorage.getItem("jxa_user_email") || "",
+        passcode: localStorage.getItem("jxa_passcode") || ""
+      })
+    });
+
+    const session = results?.[0]?.result;
+    if (session?.token) {
+      chrome.storage.local.set({
+        jobxapplyToken: session.token,
+        jobxapplyEmail: session.email,
+        jobxapplyPasscode: session.passcode
+      }, () => {
+        setLoginStatus("Authenticated & Synced!", "success");
+        chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, () => {
+          checkAuthState();
+        });
+      });
+    } else {
+      setLoginStatus("No active session in that tab. Sign in first.", "warn");
+    }
+  } catch (err) {
+    setLoginStatus("Tab connection notice: Sign in on the opened page.", "warn");
+  }
+}
+
+async function handleGoogleWebLogin() {
+  const activeTab = await getActiveTab();
+  let baseFrontend = "https://jobxapply.netlify.app";
+  if (activeTab?.url && (activeTab.url.includes("localhost:") || activeTab.url.includes("127.0.0.1:"))) {
+    try {
+      const u = new URL(activeTab.url);
+      baseFrontend = `${u.protocol}//${u.host}`;
+    } catch (e) {}
+  }
+  const webAuthUrl = `${baseFrontend}/auth.html?source=extension`;
   chrome.tabs.create({ url: webAuthUrl });
-  setLoginStatus("Sign in with Google on the opened tab to sync.", "warn");
+  setLoginStatus("Select your Google account on the opened page to sync.", "warn");
 }
 
 // ── Logout / Disconnect ─────────────────────────────────────────────────────
@@ -424,6 +485,7 @@ async function syncFromCloud() {
 
   await loadPortalInfo();
   await checkAuthState();
+  await detectActiveWebSession();
 
   document.getElementById("loginPasscodeBtn")?.addEventListener("click", handleDirectLogin);
   document.getElementById("loginPasscodeInput")?.addEventListener("keydown", (e) => {
@@ -441,8 +503,16 @@ async function syncFromCloud() {
     logApplication(company, role, status);
   });
 
-  document.getElementById("openTrackerBtn")?.addEventListener("click", () => {
-    chrome.tabs.create({ url: "https://jobxapply-backend.onrender.com/tracker.html" });
+  document.getElementById("openTrackerBtn")?.addEventListener("click", async () => {
+    const activeTab = await getActiveTab();
+    let base = "https://jobxapply.netlify.app";
+    if (activeTab?.url && (activeTab.url.includes("localhost:") || activeTab.url.includes("127.0.0.1:"))) {
+      try {
+        const u = new URL(activeTab.url);
+        base = `${u.protocol}//${u.host}`;
+      } catch (e) {}
+    }
+    chrome.tabs.create({ url: `${base}/tracker.html` });
   });
 
   document.getElementById("editProfile")?.addEventListener("click", () => {

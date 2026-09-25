@@ -667,6 +667,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/cms -- public site configuration and dynamic hero copy
+  if (req.method === "GET" && urlObj.pathname === "/api/cms") {
+    const cms = await db.getCmsConfig();
+    sendJson(res, 200, { ok: true, cms });
+    return;
+  }
+
   // POST Telemetry Hit
   if (req.method === "POST" && urlObj.pathname === "/api/telemetry/hit") {
     // HIGH-5: Whitelist metric names to prevent pollution of telemetry table
@@ -1551,6 +1558,170 @@ const server = http.createServer(async (req, res) => {
       stats,
       toolSummary: toolUsageCounters,
       accessLog: accessAuditLog.slice(0, 20)
+    });
+    return;
+  }
+
+  // ── CMS CONTROLLER ENDPOINTS ──────────────────────────────────────
+  // GET /api/admin/cms
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/cms") {
+    const cms = await db.getCmsConfig();
+    sendJson(res, 200, { ok: true, cms });
+    return;
+  }
+
+  // POST /api/admin/cms
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/cms") {
+    let body;
+    try { body = await readBody(req, 64 * 1024); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      await db.saveCmsConfig(incoming);
+      logAdminActivity(`Updated platform CMS & copy settings`);
+      sendJson(res, 200, { ok: true, message: "CMS settings saved successfully" });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: "Invalid CMS configuration format" });
+    }
+    return;
+  }
+
+  // ── LLM AEO/GEO CONFIGURATION ENDPOINTS ────────────────────────────
+  // GET /api/admin/llms-config
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/llms-config") {
+    const llmsFile = path.join(__dirname, "..", "frontend", "llms.txt");
+    const llmsFullFile = path.join(__dirname, "..", "frontend", "llms-full.txt");
+    const llmsContent = fs.existsSync(llmsFile) ? fs.readFileSync(llmsFile, "utf-8") : "";
+    const llmsFullContent = fs.existsSync(llmsFullFile) ? fs.readFileSync(llmsFullFile, "utf-8") : "";
+    sendJson(res, 200, { ok: true, llmsTxt: llmsContent, llmsFullTxt: llmsFullContent });
+    return;
+  }
+
+  // POST /api/admin/llms-config
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/llms-config") {
+    let body;
+    try { body = await readBody(req, 128 * 1024); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Payload too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      const llmsFile = path.join(__dirname, "..", "frontend", "llms.txt");
+      const llmsFullFile = path.join(__dirname, "..", "frontend", "llms-full.txt");
+      if (typeof incoming.llmsTxt === "string") {
+        fs.writeFileSync(llmsFile, incoming.llmsTxt, "utf-8");
+      }
+      if (typeof incoming.llmsFullTxt === "string") {
+        fs.writeFileSync(llmsFullFile, incoming.llmsFullTxt, "utf-8");
+      }
+      logAdminActivity(`Updated AI / LLM knowledge configurations (llms.txt)`);
+      sendJson(res, 200, { ok: true, message: "LLM knowledge files updated successfully" });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: e.message });
+    }
+    return;
+  }
+
+  // ── FULL DATABASE BACKUP DOWNLOAD ──────────────────────────────────
+  // GET /api/admin/database/backup
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/database/backup") {
+    const backup = await db.getDatabaseBackup();
+    logAdminActivity(`Generated full database snapshot backup`);
+    res.writeHead(200, {
+      "Content-Type": "application/json; charset=utf-8",
+      "Content-Disposition": `attachment; filename="jobxapply-backup-${Date.now()}.json"`,
+      "Access-Control-Allow-Origin": "*"
+    });
+    res.end(JSON.stringify(backup, null, 2));
+    return;
+  }
+
+  // ── USER IMPERSONATION / MASQUERADE ────────────────────────────────
+  // POST /api/admin/users/:id/impersonate
+  if (req.method === "POST" && /^\/api\/admin\/users\/[^/]+\/impersonate$/.test(urlObj.pathname)) {
+    const targetUserId = urlObj.pathname.split("/")[4];
+    const targetUser = await db.getUserById(targetUserId);
+    if (!targetUser) {
+      sendJson(res, 404, { ok: false, error: "Target user not found" });
+      return;
+    }
+    // Generate a temporary JWT token for impersonating this user
+    const jwtSecret = process.env.JWT_SECRET || auth.JWT_SECRET;
+    const impersonateToken = jwt.sign(
+      {
+        sub: targetUser.id,
+        email: targetUser.email,
+        name: targetUser.name,
+        role: targetUser.role,
+        impersonatedBy: activeUser ? activeUser.email : "admin"
+      },
+      jwtSecret,
+      { expiresIn: "1h" }
+    );
+    logAdminActivity(`Admin initiated masquerade session for user: ${targetUser.email}`);
+    sendJson(res, 200, {
+      ok: true,
+      token: impersonateToken,
+      user: { id: targetUser.id, email: targetUser.email, name: targetUser.name, role: targetUser.role }
+    });
+    return;
+  }
+
+  // ── USER PROFILE DIRECT EDIT (GET & PUT) ───────────────────────────
+  // GET /api/admin/users/:id/profile
+  if (req.method === "GET" && /^\/api\/admin\/users\/[^/]+\/profile$/.test(urlObj.pathname)) {
+    const targetUserId = urlObj.pathname.split("/")[4];
+    const profile = await db.getProfile(targetUserId);
+    const applications = await db.getApplications(targetUserId);
+    const userMeta = await db.getUserById(targetUserId);
+    sendJson(res, 200, { ok: true, user: userMeta, profile: profile || {}, applications: applications || [] });
+    return;
+  }
+
+  // PUT /api/admin/users/:id/profile
+  if (req.method === "PUT" && /^\/api\/admin\/users\/[^/]+\/profile$/.test(urlObj.pathname)) {
+    const targetUserId = urlObj.pathname.split("/")[4];
+    let body;
+    try { body = await readBody(req, 256 * 1024); } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Payload too large" });
+    }
+    try {
+      const incoming = JSON.parse(body || "{}");
+      if (incoming.profile) {
+        await db.saveProfile(targetUserId, incoming.profile);
+      }
+      if (incoming.tier) {
+        await db.updateUserTier(targetUserId, incoming.tier);
+      }
+      if (incoming.role) {
+        await db.updateUserRole(targetUserId, incoming.role);
+      }
+      logAdminActivity(`Directly edited profile & settings for user ${targetUserId}`);
+      sendJson(res, 200, { ok: true, message: "User profile updated successfully" });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: e.message });
+    }
+    return;
+  }
+
+  // ── SYSTEM HEALTH & TELEMETRY ─────────────────────────────────────
+  // GET /api/admin/system/health
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/system/health") {
+    const mem = process.memoryUsage();
+    sendJson(res, 200, {
+      ok: true,
+      nodeVersion: process.version,
+      platform: process.platform,
+      uptimeSeconds: Math.floor(process.uptime()),
+      memory: {
+        rssMb: Math.round(mem.rss / 1024 / 1024),
+        heapUsedMb: Math.round(mem.heapUsed / 1024 / 1024),
+        heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024)
+      },
+      activeSseClients: clients.size,
+      toolUsage: toolUsageCounters,
+      rateLimitsActive: ipRateLimits.size,
+      recentErrors: apiErrorLog.slice(0, 30)
     });
     return;
   }
