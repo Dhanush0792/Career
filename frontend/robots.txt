@@ -1,16 +1,30 @@
-﻿# robots.txt for JobXApply
+# robots.txt for JobXApply
+# Website: https://jobxapply.netlify.app
+
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /api/
+Disallow: /database/
 
-# Explicitly ensure AI crawlers are unblocked for AEO/GEO indexing
+# ── Generative Engine Optimization (GEO) & AI Search Agents ──
+# Explicitly allowing AI search bots, answer engines, and LLM web retrievers
 User-agent: GPTBot
 Allow: /
 
 User-agent: ChatGPT-User
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
 User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
 Allow: /
 
 User-agent: PerplexityBot
@@ -19,4 +33,26 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: DuckAssistBot
+Allow: /
+
+# Canonical Sitemaps & LLM Context Documents
 Sitemap: https://jobxapply.netlify.app/sitemap.xml
+# LLM knowledge files for AI Agent retrieval
+# See: https://jobxapply.netlify.app/llms.txt
+# See: https://jobxapply.netlify.app/llms-full.txt
