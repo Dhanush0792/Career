@@ -609,23 +609,27 @@ body::after {
 
         <!-- Tab 8: Security & Sync -->
         <div class="tab-pane" id="tab-security">
-          <div class="section-title">08 / Sync Vault & Encryption Keys</div>
+          <div class="section-title">08 / Optional Client-Side Vault Encryption</div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
-            Your profile data is encrypted client-side using a secure vault passcode. Without this passcode, the server cannot read your plaintext profile.
+            Your profile is securely linked to your authenticated account. Optionally, you can set a custom Client-Side Vault Passcode to encrypt your profile fields end-to-end before transmitting them to the server.
           </p>
           <div class="form-group full" style="margin-bottom: 16px;">
-            <label for="f-passcode">Sync Passcode *</label>
-            <input type="password" id="f-passcode" placeholder="Enter secure passcode to encrypt/decrypt data" required>
-            <div style="font-size: 10px; color: var(--alert); margin-top: 6px;">
-              [!] WARNING: Keep this passcode safe. If lost, your remote profile cannot be recovered.
+            <label for="f-passcode">Vault Passcode (Optional)</label>
+            <input type="password" id="f-passcode" placeholder="Leave empty for standard account sync, or enter custom encryption key">
+            <div style="font-size: 10px; color: var(--muted); margin-top: 6px;">
+              Tip: Standard Google OAuth and Email accounts sync automatically without requiring a passcode.
             </div>
           </div>
         </div>
 
-        <!-- Shared Action Footer -->
+        <!-- Shared Action Footer with Next / Previous & Direct Save -->
         <div class="actions-footer">
-          <div id="save-status" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Ready</div>
-          <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button type="button" class="btn btn-secondary" id="btn-prev-tab" onclick="navigateTab(-1)" style="display:none;">&larr; Previous</button>
+            <button type="button" class="btn btn-secondary" id="btn-next-tab" onclick="navigateTab(1)">Next Section &rarr;</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="save-status" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Ready</div>
             <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save Profile</button>
           </div>
         </div>
@@ -641,12 +645,50 @@ if (typeof requireAuth === 'function') requireAuth();
 if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'profile-setup.html');
 
 // Tab Switching
+const TAB_ORDER = [
+  'tab-basics',
+  'tab-academic',
+  'tab-professional',
+  'tab-experience',
+  'tab-documents',
+  'tab-additional',
+  'tab-vault',
+  'tab-security'
+];
+
 function switchTab(tabId, btn) {
   document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   
-  document.getElementById(tabId).classList.add('active');
-  btn.classList.add('active');
+  const pane = document.getElementById(tabId);
+  if (pane) pane.classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  const currentIndex = TAB_ORDER.indexOf(tabId);
+  const prevBtn = document.getElementById('btn-prev-tab');
+  const nextBtn = document.getElementById('btn-next-tab');
+  if (prevBtn) prevBtn.style.display = currentIndex > 0 ? 'inline-flex' : 'none';
+  if (nextBtn) {
+    nextBtn.textContent = currentIndex === TAB_ORDER.length - 1 ? 'Finish & Save' : 'Next Section \u2192';
+  }
+}
+
+function navigateTab(direction) {
+  const currentPane = document.querySelector('.tab-pane.active');
+  const currentId = currentPane ? currentPane.id : 'tab-basics';
+  const currentIndex = TAB_ORDER.indexOf(currentId);
+  const targetIndex = currentIndex + direction;
+
+  if (targetIndex >= TAB_ORDER.length) {
+    saveCloudProfile();
+    return;
+  }
+  if (targetIndex >= 0 && targetIndex < TAB_ORDER.length) {
+    const targetId = TAB_ORDER[targetIndex];
+    const targetBtn = document.querySelectorAll('.tabs-nav button')[targetIndex];
+    switchTab(targetId, targetBtn);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 // Logging
@@ -1000,36 +1042,40 @@ function deletePersona() {
 }
 
 async function saveCloudProfile() {
-  const passcode = document.getElementById('f-passcode').value.trim();
-  if (!passcode) {
-    alert('Please enter a Sync Passcode in the "SYNC & KEY" tab to sync.');
-    switchTab('tab-security', document.querySelectorAll('.tabs-nav button')[7]);
-    return;
-  }
-
-  localStorage.setItem('jxa_passcode', passcode);
-
   const currentProfile = extractCurrentFormProfile();
   if (!currentProfile.fullName || !currentProfile.email) {
-    alert('Full Name and Email are required.');
+    showToast('Full Name and Email are required.', 'error');
     switchTab('tab-basics', document.querySelectorAll('.tabs-nav button')[0]);
     return;
   }
 
+  // Passcode is optional: if provided, update it; otherwise use existing or token
+  const passcodeInput = document.getElementById('f-passcode');
+  if (passcodeInput && passcodeInput.value.trim()) {
+    localStorage.setItem('jxa_passcode', passcodeInput.value.trim());
+  }
+
   allPersonas[currentPersonaId] = currentProfile;
 
-  document.getElementById('save-status').textContent = 'Syncing personas to cloud...';
-  document.getElementById('save-status').style.color = 'var(--muted)';
+  const statusEl = document.getElementById('save-status');
+  if (statusEl) {
+    statusEl.textContent = 'Saving profile to cloud...';
+    statusEl.style.color = 'var(--primary)';
+  }
 
   const res = await saveProfile(currentProfile);
   if (res.ok) {
-    document.getElementById('save-status').textContent = 'Synced with Cloud';
-    document.getElementById('save-status').style.color = 'var(--success)';
-    showToast('All profile personas synced successfully!');
+    if (statusEl) {
+      statusEl.textContent = 'Synced with Cloud';
+      statusEl.style.color = 'var(--success)';
+    }
+    showToast('Profile updated & synchronized successfully!', 'success');
   } else {
-    document.getElementById('save-status').textContent = 'Cloud sync failed.';
-    document.getElementById('save-status').style.color = 'var(--alert)';
-    showToast(res.errors ? res.errors.join('; ') : 'Failed to sync to cloud.', 'error');
+    if (statusEl) {
+      statusEl.textContent = 'Cloud sync pending (saved locally)';
+      statusEl.style.color = 'var(--alert)';
+    }
+    showToast(res.errors ? res.errors.join('; ') : 'Saved locally. Cloud sync pending.', 'info');
   }
 }
 
@@ -1071,10 +1117,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (allPersonas[currentPersonaId]) populateFormFields(allPersonas[currentPersonaId]);
     }
   } catch (e) {
-    console.error("Background profile load failed:", e);
-  }
-
   toggleEmploymentFields();
+
+  // Support direct deep-linking to specific tabs via URL hash (e.g. #tab-experience)
+  const hash = window.location.hash.replace('#', '');
+  if (hash && TAB_ORDER.includes(hash)) {
+    const tabIndex = TAB_ORDER.indexOf(hash);
+    const targetBtn = document.querySelectorAll('.tabs-nav button')[tabIndex];
+    if (targetBtn) switchTab(hash, targetBtn);
+  }
 });
 </script>
 </body>

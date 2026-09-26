@@ -220,7 +220,7 @@ body::after {
           <div class="field-item" id="grp-education"><label>Education</label><textarea id="f-education" placeholder="Detail your degrees..." style="min-height:80px;"></textarea></div>
         </div>
         <div class="field-group full" style="margin-top: 16px;">
-          <div class="field-item"><label>Security Sync Passcode *</label><input type="password" id="f-passcode" placeholder="Enter secure passcode to encrypt your profile" required></div>
+          <div class="field-item"><label>Security Sync Passcode (Optional)</label><input type="password" id="f-passcode" placeholder="Leave empty for standard automatic sync, or enter custom vault key"></div>
         </div>
       </div>
 
@@ -405,23 +405,14 @@ function parseAndExtractText(text) {
     if (!el) return;
     const grp = document.getElementById('grp-' + id);
     if (grp) {
-      grp.classList.add('locked');
-      el.disabled = true;
-      if (!grp.querySelector('.lock-badge')) {
-        const lock = document.createElement('span');
-        lock.className = 'lock-badge';
-        lock.innerHTML = 'Locked (Click to Edit)';
-        lock.onclick = () => {
-          el.disabled = false;
-          grp.classList.remove('locked');
-          lock.remove();
-        };
-        grp.appendChild(lock);
-      }
+      grp.classList.remove('locked');
+      el.disabled = false;
+      const badge = grp.querySelector('.lock-badge');
+      if (badge) badge.remove();
     }
   });
 
-  addLog('[SUCCESS] Resume parsed! Fields loaded & locked for review.', 'success');
+  addLog('[SUCCESS] Resume parsed! Fields populated. Review and edit as needed.', 'success');
   
   setTimeout(() => {
     document.getElementById('panel-upload').classList.remove('active');
@@ -459,15 +450,11 @@ async function commitProfile() {
   statusEl.textContent = 'Saving profile...';
   statusEl.style.color = 'var(--muted)';
 
-  const passcode = document.getElementById('f-passcode').value.trim();
-  if (!passcode) {
-    statusEl.textContent = '[!] Passcode is required to sync profile.';
-    statusEl.style.color = 'var(--alert)';
-    commitBtn.disabled = false;
-    return;
+  const passcodeInput = document.getElementById('f-passcode');
+  const passcode = passcodeInput ? passcodeInput.value.trim() : '';
+  if (passcode) {
+    localStorage.setItem('jxa_passcode', passcode);
   }
-
-  localStorage.setItem('jxa_passcode', passcode);
 
   const profile = {};
   FIELDS.forEach(f => {

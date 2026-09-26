@@ -198,9 +198,9 @@ select.form-input { cursor:pointer; }
 
   <div class="dash-grid">
 
-    <!-- Card 1: Profile completeness -->
+    <!-- Card 1: Profile completeness & Action Checklist -->
     <div class="card">
-      <div class="card__title">Profile Completeness <span class="card__id">CB-01</span></div>
+      <div class="card__title">Profile Readiness <span class="card__id">CB-01</span></div>
       <div>
         <div class="comp-number" id="comp-pct">-</div>
         <div class="comp-sub" id="comp-sub">- / - fields filled</div>
@@ -209,7 +209,11 @@ select.form-input { cursor:pointer; }
         <div class="progress-bar-fill" id="comp-bar"></div>
       </div>
       <div id="comp-hint" style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.5;"></div>
-      <a href="profile-setup.html" class="btn btn-ghost" style="margin-top:auto;font-size:10px;">EDIT PROFILE -></a>
+
+      <!-- Actionable Checklist of Missing Sections -->
+      <div id="comp-checklist" style="display:flex; flex-direction:column; gap:6px; margin: 4px 0;"></div>
+
+      <a href="profile-setup.html" class="btn btn-ghost" style="margin-top:auto;font-size:10px;">EDIT FULL PROFILE -></a>
     </div>
 
     <!-- Card 2: Quick tools -->
@@ -249,15 +253,24 @@ select.form-input { cursor:pointer; }
       </div>
     </div>
 
-    <!-- Card 3: Sync metrics (real only) -->
+    <!-- Card 3: Live Extension Status & Sync Metrics -->
     <div class="card">
-      <div class="card__title">Sync Metrics <span class="card__id">CB-03</span></div>
+      <div class="card__title">Sync &amp; Extension Status <span class="card__id">CB-03</span></div>
+      
+      <!-- Extension Connection Status Pill -->
+      <div id="ext-status-card" style="padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="ext-status-dot" style="width:8px;height:8px;border-radius:50%;background:#F5A623;display:inline-block;"></span>
+          <span id="ext-status-text" style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--white);">Detecting Extension...</span>
+        </div>
+        <a href="extension-setup.html" style="font-family:var(--mono);font-size:10px;color:var(--primary);text-decoration:none;">Setup &rarr;</a>
+      </div>
+
       <div id="metrics-content">
         <div class="metric-row"><span class="metric-label">Profile Version</span><span class="metric-val" id="m-version">-</span></div>
         <div class="metric-row"><span class="metric-label">Last Synced</span><span class="metric-val" id="m-updated">-</span></div>
         <div class="metric-row"><span class="metric-label">Fields Filled</span><span class="metric-val" id="m-fields">-</span></div>
         <div class="metric-row"><span class="metric-label">Applications Logged</span><span class="metric-val" id="m-apps">-</span></div>
-        <div class="metric-row"><span class="metric-label">Sync Origin</span><span class="metric-val" id="m-origin">-</span></div>
         <div class="metric-row"><span class="metric-label">Account Tier</span><span class="metric-val" id="m-tier" style="color:var(--success); font-weight:700;">-</span></div>
       </div>
       <div class="console-box" id="console">
@@ -317,16 +330,32 @@ function renderProfileState(state) {
   setTimeout(() => { bar.style.width = pct + '%'; }, 100);
   if (pct === 100) bar.classList.add('complete');
 
-  // Hint
+  // Hint & Action Checklist
   const hint = document.getElementById('comp-hint');
-  if (pct === 0) {
-    hint.innerHTML = 'Complete your profile to unlock ATS scoring, cover letter drafting, and autofill.';
-  } else if (pct < 60) {
-    hint.innerHTML = 'Add more details to improve autofill accuracy across job portals.';
-  } else if (pct < 100) {
-    hint.innerHTML = 'Almost there - fill remaining fields for maximum portal coverage.';
+  const checklist = document.getElementById('comp-checklist');
+  if (checklist) checklist.innerHTML = '';
+
+  const missingTasks = [];
+  if (!profile.fullName || !profile.email) missingTasks.push({ label: 'Fill basic contact info', tab: 'tab-basics', weight: '+25%' });
+  if (!profile.skills || profile.skills.length < 3) missingTasks.push({ label: 'Add key technical skills', tab: 'tab-professional', weight: '+20%' });
+  if (!profile.experience || profile.experience.length < 10) missingTasks.push({ label: 'Add work experience or projects', tab: 'tab-experience', weight: '+20%' });
+  if (!profile.education && !profile.edu10_school) missingTasks.push({ label: 'Add academic qualifications', tab: 'tab-academic', weight: '+15%' });
+  if (!profile.resumeDraft) missingTasks.push({ label: 'Upload or draft resume', tab: 'tab-documents', weight: '+10%' });
+  if (!profile.q_why_hire && !profile.q_challenge) missingTasks.push({ label: 'Answer portal screening questions', tab: 'tab-vault', weight: '+10%' });
+
+  if (missingTasks.length === 0) {
+    hint.innerHTML = '<span style="color:var(--success)">[OK] Profile 100% complete.</span> You\'re ready for every portal.';
   } else {
-    hint.innerHTML = '<span style="color:var(--success)">[OK] Profile complete.</span> You\'re ready for every portal.';
+    hint.textContent = 'Recommended steps to reach 100% portal readiness:';
+    missingTasks.slice(0, 3).forEach(task => {
+      const item = document.createElement('a');
+      item.href = `profile-setup.html#${task.tab}`;
+      item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--text);text-decoration:none;transition:border-color .15s;';
+      item.innerHTML = `<span>+ ${task.label}</span><span style="color:var(--primary);font-weight:700;">${task.weight}</span>`;
+      item.onmouseenter = () => { item.style.borderColor = 'var(--primary)'; };
+      item.onmouseleave = () => { item.style.borderColor = 'var(--glass-border)'; };
+      checklist.appendChild(item);
+    });
   }
 
   // Sync metrics
@@ -619,6 +648,40 @@ document.addEventListener('jobxapply:offline', () => {
   const snapModal = document.getElementById('snapshot-modal');
   document.getElementById('close-modal').addEventListener('click', () => snapModal.style.display = 'none');
   snapModal.addEventListener('click', (e) => { if (e.target === snapModal) snapModal.style.display = 'none'; });
+
+  // Browser Extension Detection Handshake
+  const extDot = document.getElementById('ext-status-dot');
+  const extText = document.getElementById('ext-status-text');
+
+  function checkExtension() {
+    const isDetected = document.documentElement.getAttribute('data-jobxapply-extension') === 'active' ||
+                       Boolean(window.__JOBXAPPLY_EXTENSION_ACTIVE__);
+    if (isDetected) {
+      if (extDot) extDot.style.background = 'var(--success)';
+      if (extText) extText.textContent = 'Extension Connected';
+    } else {
+      setTimeout(() => {
+        const retryDetected = document.documentElement.getAttribute('data-jobxapply-extension') === 'active' ||
+                              Boolean(window.__JOBXAPPLY_EXTENSION_ACTIVE__);
+        if (retryDetected) {
+          if (extDot) extDot.style.background = 'var(--success)';
+          if (extText) extText.textContent = 'Extension Connected';
+        } else {
+          if (extDot) extDot.style.background = '#94a3b8';
+          if (extText) extText.textContent = 'Extension Not Detected';
+        }
+      }, 1500);
+    }
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'JOBXAPPLY_EXTENSION_PONG') {
+      if (extDot) extDot.style.background = 'var(--success)';
+      if (extText) extText.textContent = 'Extension Connected';
+    }
+  });
+  window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PING' }, '*');
+  checkExtension();
 })();
 </script>
 
