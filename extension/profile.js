@@ -1,4 +1,4 @@
-﻿import { encryptProfileData, decryptProfileData, generatePasscodeHash } from "./shared.js";
+import { encryptProfileData, decryptProfileData, generatePasscodeHash } from "./shared.js";
 
 const FIELDS = [
   "fullName", "firstName", "lastName", "email", "phone", "dob",
@@ -72,7 +72,7 @@ async function pushToCloud(profile, passcode) {
             return;
           }
           if (res?.ok) {
-            setStatus("✓ Saved and synced to cloud!", "ok");
+            setStatus("Saved and synced to cloud!", "ok");
             document.getElementById("conflictUI").style.display = "none";
             resolve(true);
           } else if (res?.conflict && res.current) {
@@ -82,7 +82,7 @@ async function pushToCloud(profile, passcode) {
           } else {
             // Server returned error but we already saved locally
             const errMsg = res?.error || res?.errors || "Server unavailable";
-            setStatus(`Saved locally ✓ — Cloud sync failed: ${errMsg}`, "warn");
+            setStatus(`Saved locally — Cloud sync failed: ${errMsg}`, "warn");
             resolve(false);
           }
         }
@@ -113,7 +113,7 @@ async function fetchFromCloud(passcode) {
       populateFields(p);
       // Also save locally
       await saveLocal(p);
-      setStatus("✓ Profile fetched and loaded from cloud!", "ok");
+      setStatus("Profile fetched and loaded from cloud!", "ok");
     } else {
       setStatus("No profile found on server — check your passcode", "warn");
     }
@@ -143,7 +143,7 @@ async function fetchFromCloud(passcode) {
     setStatus("Saving…");
     try {
       await saveLocal(profile);
-      setStatus("✓ Profile saved on this device!", "ok");
+      setStatus("Profile saved on this device!", "ok");
     } catch (e) {
       setStatus("Save failed: " + e.message, "err");
     }
@@ -177,7 +177,7 @@ async function fetchFromCloud(passcode) {
       populateFields(p);
       await saveLocal(p);
       document.getElementById("conflictUI").style.display = "none";
-      setStatus("✓ Cloud version loaded. Review and save again if needed.", "ok");
+      setStatus("Cloud version loaded. Review and save again if needed.", "ok");
     });
   });
 
