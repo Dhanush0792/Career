@@ -977,8 +977,8 @@ const NAV_ITEMS = [
 function renderNav(container, activePage) {
   const token = localStorage.getItem('jxa_token');
   const role = localStorage.getItem('jxa_role');
-  const email = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
-  const isAdmin = role === 'admin' || email === 'dhanushsiddilingam@gmail.com' || email === 'admin@jobxapply.app';
+  const ADMIN_EMAILS = ['hidhanush07@gmail.com', 'dhanushsiddilingam@gmail.com', 'admin@jobxapply.app'];
+  const isAdmin = role === 'admin' || ADMIN_EMAILS.includes(email);
 
   let links = NAV_ITEMS.map(item => {
     let href = item.href;

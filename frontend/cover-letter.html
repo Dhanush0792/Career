@@ -84,7 +84,7 @@ body::after {
 
 .grid {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: minmax(360px, 420px) 1fr;
   gap: 16px;
   flex: 1;
   height: 100%;
@@ -608,34 +608,42 @@ body::after {
     </div>
 
     <!-- Right: Output Preview Workspace -->
-    <div class="card" id="preview-card" style="padding:10px 14px; gap:8px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding-bottom:8px; flex-shrink:0;">
-        <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:0.1em; text-transform:uppercase;">Cover Letter Preview</span>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div class="tabs-header" style="border-bottom:none; margin:0;">
-            <button class="tab-btn active" onclick="switchTab('rich')">RICH</button>
-            <button class="tab-btn" onclick="switchTab('latex')">LATEX</button>
+    <div class="card" id="preview-card" style="padding:12px 16px; gap:10px;">
+      <div class="preview-toolbar" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding-bottom:10px; flex-shrink:0; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:0.1em; text-transform:uppercase;">Cover Letter Preview</span>
+          <!-- ATS Score badge inline pill -->
+          <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(91,79,232,0.12); border:1px solid rgba(91,79,232,0.3); border-radius:20px; padding:3px 10px;">
+            <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:0.04em;">ATS MATCH</span>
+            <span id="ats-score-badge" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--primary);">0%</span>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:nowrap;">
+          <div class="tabs-header" style="border-bottom:none; margin:0; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:8px; padding:2px;">
+            <button class="tab-btn active" onclick="switchTab('rich')" style="border-radius:6px; padding:5px 12px; font-size:11px; font-weight:600;">RICH</button>
+            <button class="tab-btn" onclick="switchTab('latex')" style="border-radius:6px; padding:5px 12px; font-size:11px; font-weight:600;">LATEX</button>
           </div>
 
           <!-- Zoom Controls -->
-          <div class="zoom-controls">
-            <button class="zoom-btn" onclick="changeZoom(-0.05)" title="Zoom Out">-</button>
-            <span class="zoom-val" id="cl-zoom-display">100%</span>
-            <button class="zoom-btn" onclick="changeZoom(0.05)" title="Zoom In">+</button>
-            <button class="zoom-btn" onclick="resetZoomToFit()" title="Fit to Screen" style="border-left:1px solid var(--glass-border); margin-left:2px; padding-left:6px;">Fit</button>
+          <div class="zoom-controls" style="background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:8px; padding:3px 8px; height:32px;">
+            <button class="zoom-btn" onclick="changeZoom(-0.05)" title="Zoom Out" style="font-size:13px; padding:2px 8px;">-</button>
+            <span class="zoom-val" id="cl-zoom-display" style="font-size:11px; font-weight:600; min-width:42px;">100%</span>
+            <button class="zoom-btn" onclick="changeZoom(0.05)" title="Zoom In" style="font-size:13px; padding:2px 8px;">+</button>
+            <button class="zoom-btn" onclick="resetZoomToFit()" title="Fit to Screen" style="border-left:1px solid var(--glass-border); margin-left:4px; padding-left:8px; font-size:11px;">Fit</button>
           </div>
 
-          <!-- ATS Score badge inline -->
-          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">ATS:</span>
-          <span id="ats-score-badge" style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--primary);">0%</span>
-          <!-- Dropdown for exports -->
+          <!-- Actions Dropdown -->
           <div style="position:relative;">
-            <button onclick="toggleExportMenu(event)" style="background:transparent;border:none;color:var(--primary);font-size:11px;font-family:var(--mono);font-weight:700;cursor:pointer;padding:2px 8px;">ACTIONS</button>
-            <div id="cl-export-menu" style="display:none;position:absolute;right:0;top:26px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:200;min-width:150px;padding:4px 0;">
+            <button onclick="toggleExportMenu(event)" style="background:linear-gradient(135deg, rgba(91,79,232,0.18), rgba(47,221,196,0.18)); border:1px solid var(--glass-border); color:var(--white); font-size:11px; font-family:var(--mono); font-weight:700; cursor:pointer; padding:6px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:6px; height:32px; letter-spacing:0.06em; transition:all .2s;">
+              <span>EXPORT</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="cl-export-menu" style="display:none;position:absolute;right:0;top:38px;background:#0b1022;border:1px solid var(--glass-border);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,0.6);z-index:200;min-width:160px;padding:6px 0;overflow:hidden;">
               <a href="#" class="dropdown-item" onclick="copyLatexCode();return false;">Copy LaTeX</a>
-              <a href="#" class="dropdown-item" onclick="downloadLatexFile();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Download .tex</a>
-              <a href="#" class="dropdown-item" onclick="exportText();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Download .txt</a>
-              <a href="#" class="dropdown-item" onclick="window.print();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Print / PDF</a>
+              <a href="#" class="dropdown-item" onclick="downloadLatexFile();return false;" style="border-top:1px solid rgba(255,255,255,0.06);">Download .tex</a>
+              <a href="#" class="dropdown-item" onclick="exportText();return false;" style="border-top:1px solid rgba(255,255,255,0.06);">Download .txt</a>
+              <a href="#" class="dropdown-item" onclick="window.print();return false;" style="border-top:1px solid rgba(255,255,255,0.06);">Print / PDF</a>
             </div>
           </div>
         </div>
