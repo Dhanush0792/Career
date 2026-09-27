@@ -53,11 +53,12 @@
 <script src="shared-shell.js?v=2"></script>
 <style>
 body {
-  padding-top: 80px;
-  overflow: hidden; /* Lock page scrolling */
+  padding-top: 60px;
+  overflow: hidden;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 body::after {
   content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
@@ -68,50 +69,54 @@ body::after {
   max-width: 100%;
   width: 100%;
   margin: 0;
-  padding: 15px 40px;
+  padding: 12px 32px;
   position: relative;
   z-index: 10;
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 60px);
+  min-height: 0;
+  box-sizing: border-box;
 }
 .page-header {
   border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
-.page-label { font-family:var(--mono); font-size:11px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
-.page-title { font-family:var(--display); font-size:32px; font-weight:900; text-transform:uppercase; color:var(--white); margin: 0; }
+.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:2px; }
+.page-title { font-family:var(--display); font-size:26px; font-weight:900; text-transform:uppercase; color:var(--white); margin: 0; line-height: 1.1; }
 .page-title em { font-style:normal; color:var(--primary); }
 
 /* Widescreen 2-column layout */
 .grid {
   display: grid;
-  grid-template-columns: 460px 1fr;
-  gap: 28px;
+  grid-template-columns: 440px 1fr;
+  gap: 20px;
   flex: 1;
-  height: calc(100% - 70px);
+  height: calc(100% - 60px);
   min-height: 0;
   align-items: stretch;
 }
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   body { overflow: auto; height: auto; }
-  .container { height: auto; }
+  .container { height: auto; padding: 12px 16px; }
   .grid { grid-template-columns: 1fr; height: auto; }
 }
 
 .left-col {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   height: 100%;
+  min-height: 0;
   overflow-y: auto;
-  padding-right: 8px;
+  padding-right: 6px;
 }
 .left-col::-webkit-scrollbar,
 .right-col::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 .left-col::-webkit-scrollbar-track,
 .right-col::-webkit-scrollbar-track {
@@ -119,114 +124,216 @@ body::after {
 }
 .left-col::-webkit-scrollbar-thumb,
 .right-col::-webkit-scrollbar-thumb {
-  background: rgba(0, 243, 255, 0.2);
+  background: rgba(91, 79, 232, 0.3);
   border-radius: 3px;
 }
+.left-col::-webkit-scrollbar-thumb:hover,
+.right-col::-webkit-scrollbar-thumb:hover {
+  background: rgba(47, 221, 196, 0.5);
+}
+
 .right-col {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   overflow-y: auto;
-  padding-right: 8px;
+  padding-right: 6px;
 }
 
 .card {
   border: 1px solid var(--glass-border);
-  background: rgba(255,255,255,.04);
-  padding: 20px;
-  border-radius: 14px;
+  background: rgba(255,255,255,.03);
+  padding: 14px 16px;
+  border-radius: 12px;
   backdrop-filter: blur(16px);
 }
 .card__title {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--primary);
   letter-spacing: .1em;
   text-transform: uppercase;
   border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 8px;
-  margin-bottom: 14px;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
 }
 
-/* Enlarged input styling */
+/* Input styling */
 .text-area {
   width: 100%;
-  height: calc(100vh - 460px);
-  min-height: 120px;
+  height: 130px;
   background: rgba(7,10,24,.6);
   border: 1px solid var(--glass-border);
   color: var(--white);
   font-family: var(--body);
-  font-size: 13px;
-  padding: 12px;
+  font-size: 12.5px;
+  padding: 10px 12px;
   outline: none;
   resize: none;
   border-radius: 8px;
   line-height: 1.5;
+  box-sizing: border-box;
 }
-.text-area:focus { border-color: var(--primary); }
+.text-area:focus { border-color: var(--primary); background: rgba(7,10,24,.85); }
 
 .select-input {
   width: 100%;
-  height: 42px;
+  height: 38px;
   background: rgba(7,10,24,.6);
   border: 1px solid var(--glass-border);
   color: var(--white);
   font-family: var(--body);
-  font-size: 13px;
+  font-size: 12.5px;
   padding: 0 10px;
   border-radius: 6px;
   outline: none;
   cursor: pointer;
+  box-sizing: border-box;
 }
 .select-input:focus { border-color: var(--primary); }
 
+.action-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
 .analyze-btn {
   width: 100%;
-  height: 52px;
-  background: var(--primary);
+  height: 48px;
+  background: linear-gradient(135deg, #5B4FE8 0%, #4438CA 100%);
   color: var(--white);
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
-  border: 1px solid var(--primary);
+  border: 1px solid rgba(255,255,255,0.2);
   cursor: pointer;
-  border-radius: 12px;
-  transition: all .2s;
+  border-radius: 10px;
+  transition: all .2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(91,79,232,0.3);
 }
-.analyze-btn:hover { background: rgba(91,79,232,.85); }
-.analyze-btn:disabled { opacity: .45; cursor: not-allowed; }
+.analyze-btn:hover {
+  background: linear-gradient(135deg, #6D62F7 0%, #5B4FE8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(91,79,232,0.45);
+}
+.analyze-btn:active {
+  transform: translateY(0);
+}
+.analyze-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.status-indicator-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+.status-indicator-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-dot-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+.status-dot-pulse.working {
+  background: var(--alert);
+  box-shadow: 0 0 8px var(--alert);
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
 
 /* Drag & Drop */
 .dropzone {
-  border: 2px dashed var(--glass-border);
+  border: 1.5px dashed var(--glass-border);
   border-radius: 10px;
-  padding: 24px 15px;
+  padding: 16px 12px;
   text-align: center;
   cursor: pointer;
   transition: all .2s;
   background: rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
-.dropzone:hover { border-color: var(--primary); background: rgba(91,79,232,.03); }
+.dropzone:hover { border-color: var(--primary); background: rgba(91,79,232,.04); }
+
+.file-pill {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(47, 221, 196, 0.08);
+  border: 1px solid rgba(47, 221, 196, 0.25);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--success);
+}
+.file-pill-remove {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  line-height: 1;
+}
+.file-pill-remove:hover { color: #ef4444; }
 
 /* Results styles */
-.results-panel { display: none; flex-direction: column; gap: 20px; }
-.score-badge { display: flex; align-items: center; gap: 24px; border: 1px solid var(--glass-border); padding: 20px; background: rgba(255,255,255,.04); border-radius: 12px; }
-.score-val { font-family: var(--display); font-size: 58px; font-weight: 900; line-height: 1; }
-.score-desc { font-family: var(--body); font-size: 13px; color: var(--muted); line-height: 1.6; }
-.scanned-keywords { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.kw-box { border: 1px solid var(--glass-border); padding: 16px; background: rgba(255,255,255,.03); border-radius: 10px; }
-.kw-title { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; margin-bottom: 10px; text-transform: uppercase; }
-.kw-tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 4px 9px; margin: 3px; border: 1px solid; border-radius: 4px; }
+.results-panel { display: none; flex-direction: column; gap: 14px; }
+.score-badge {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid var(--glass-border);
+  padding: 16px 20px;
+  background: rgba(255,255,255,.04);
+  border-radius: 12px;
+}
+.score-val { font-family: var(--display); font-size: 52px; font-weight: 900; line-height: 1; }
+.score-desc { font-family: var(--body); font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.scanned-keywords { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kw-box { border: 1px solid var(--glass-border); padding: 12px 14px; background: rgba(255,255,255,.025); border-radius: 10px; }
+.kw-title { font-family: var(--mono); font-size: 9.5px; font-weight: 700; letter-spacing: .1em; margin-bottom: 8px; text-transform: uppercase; }
+.kw-tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 3px 8px; margin: 2px; border: 1px solid; border-radius: 4px; }
 .kw-tag.match { color: var(--success); border-color: rgba(47,221,196,.3); background: rgba(47,221,196,.07); }
 .kw-tag.missing { color: var(--primary); border-color: rgba(91,79,232,.3); background: rgba(91,79,232,.06); }
 
 /* Suggestions scrollbox */
 .suggestions-box {
-  max-height: 200px;
+  max-height: 150px;
   overflow-y: auto;
   padding-right: 6px;
 }
@@ -234,27 +341,9 @@ body::after {
   width: 4px;
 }
 .suggestions-box::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.12);
   border-radius: 2px;
 }
-
-/* Logging Terminal */
-.console-box {
-  border: 1px solid var(--glass-border);
-  background: rgba(7, 10, 24, 0.85);
-  font-family: var(--mono);
-  font-size: 11px;
-  padding: 12px;
-  border-radius: 10px;
-  height: 90px;
-  overflow-y: auto;
-  color: var(--muted);
-  line-height: 1.5;
-}
-.console-line { margin-bottom: 2px; }
-.console-line.info { color: var(--primary); }
-.console-line.success { color: var(--success); }
-.console-line.warn { color: var(--alert); }
 
 /* Gate Gate */
 .blur-gate { filter: blur(5px); pointer-events: none; user-select: none; }
@@ -440,10 +529,10 @@ mark.kw-miss {
       <!-- Target Job details -->
       <div class="card">
         <div class="card__title">01 // TARGET ROLE & JOB DESCRIPTION</div>
-        <div style="margin-bottom: 12px;">
-          <label style="display:block; font-family:var(--mono); font-size:10px; color:var(--muted); margin-bottom:6px; text-transform:uppercase;">Select Target Role</label>
+        <div style="margin-bottom: 8px;">
+          <label style="display:block; font-family:var(--mono); font-size:9.5px; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">Select Target Role</label>
           <select class="select-input" id="select-role">
-            <option value="default">Default / General</option>
+            <option value="default">Default / General Role</option>
             <option value="sde">Software Development Engineer (SDE)</option>
             <option value="backend">Backend Developer</option>
             <option value="java">Java Developer</option>
@@ -452,33 +541,67 @@ mark.kw-miss {
             <option value="customer_care">Customer Care Operator</option>
           </select>
         </div>
-        <textarea class="text-area" id="jd-input" placeholder="Paste the target job description here. The ATS scorer will extract parameters and match keywords, placement, and bullet density."></textarea>
+        <textarea class="text-area" id="jd-input" placeholder="Paste target job description or requirements here..."></textarea>
       </div>
 
       <!-- Resume Uploader (Merged PDF/DOCX) -->
       <div class="card">
         <div class="card__title">02 // YOUR RESUME (PDF / DOCX)</div>
         <div id="resume-dropzone" class="dropzone">
-          <span style="font-family: var(--mono); font-size: 11px; color: var(--muted); text-transform: uppercase;">Drag & Drop PDF/DOCX or click to choose</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="margin-bottom:2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span style="font-family: var(--mono); font-size: 10.5px; color: var(--text); font-weight: 600; text-transform: uppercase;">Click to Browse or Drag & Drop</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--dim);">Supports PDF and DOCX up to 10MB</span>
           <input type="file" id="resume-file-input" accept="application/pdf,.docx" style="display: none;">
         </div>
-        <div id="file-info" style="display: none; font-family: var(--mono); font-size: 11px; color: var(--success); margin-top: 12px; text-transform: uppercase; font-weight: bold;"></div>
+        <div id="file-pill" class="file-pill">
+          <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="file-name-text" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:280px;"></span>
+          </div>
+          <button type="button" id="file-remove-btn" class="file-pill-remove" title="Remove file">&times;</button>
+        </div>
       </div>
 
-      <!-- Action Button & Log console -->
-      <button class="analyze-btn" id="run-check-btn">> ANALYZE COMPATIBILITY</button>
-      <div class="console-box" id="console">
-        <div class="console-line info">[SYS_INIT] ATS Analyzer ready. Select role, upload resume, and click Analyze.</div>
+      <!-- Action Button & Inline Status (Replaces black terminal box) -->
+      <div class="action-bar-container">
+        <button class="analyze-btn" id="run-check-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Analyze Compatibility</span>
+        </button>
+        
+        <div class="status-indicator-pill">
+          <div class="status-indicator-left">
+            <div class="status-dot-pulse" id="status-dot"></div>
+            <span id="status-text">System ready &bull; 100% Free Public Access</span>
+          </div>
+          <span style="color:var(--dim); font-size:9.5px;">Algorithmic Engine</span>
+        </div>
       </div>
     </div>
 
     <!-- Right Column: Results Dashboard -->
     <div class="right-col">
-      <!-- Placeholder displayed before analysis -->
-      <div id="results-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; border: 1px dashed var(--glass-border); border-radius: 14px; background: rgba(255,255,255,0.01); color: var(--muted); text-align: center; padding: 40px;">
-        <div style="font-family: var(--mono); font-size: 11px; color: var(--primary); border: 1px solid var(--primary); padding: 4px 10px; border-radius: 4px; text-transform: uppercase; margin-bottom: 16px;">System Ready</div>
-        <div style="font-family: var(--mono); font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--white); margin-bottom: 8px;">Awaiting Analysis</div>
-        <div style="font-size: 13px; max-width: 320px; line-height: 1.6;">Paste a job description on the left, upload your resume, and click analyze to compute compatibility alignment.</div>
+      <!-- Modern Empty State Displayed Before Analysis -->
+      <div id="results-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; border: 1px dashed var(--glass-border); border-radius: 12px; background: rgba(255,255,255,0.015); color: var(--muted); text-align: center; padding: 24px;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(91,79,232,0.1); border: 1px solid rgba(91,79,232,0.3); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div style="font-family: var(--display); font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--white); margin-bottom: 4px; letter-spacing: 0.5px;">Awaiting Document Input</div>
+        <div style="font-size: 12.5px; max-width: 360px; line-height: 1.5; color: var(--dim); margin-bottom: 20px;">Paste a job description on the left, upload your resume, and click Analyze to test keyword coverage, formatting, and role alignment.</div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
+          <div style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--muted);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Single-Column Check</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--muted);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Exact Keyword Gaps</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--muted);">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>4-Line Summary Audit</span>
+          </div>
+        </div>
       </div>
 
       <!-- Results panel -->
@@ -679,7 +802,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 // 100% Free Public Access: No requireAuth() gate required
 renderNav(document.getElementById('main-nav'), 'ats-checker.html');
 
-const consoleBox = document.getElementById('console');
 const runBtn = document.getElementById('run-check-btn');
 const resultsPanel = document.getElementById('results-panel');
 const placeholderPanel = document.getElementById('results-placeholder');
@@ -687,7 +809,11 @@ const placeholderPanel = document.getElementById('results-placeholder');
 // File Upload elements
 const resumeDropzone = document.getElementById('resume-dropzone');
 const resumeFileInput = document.getElementById('resume-file-input');
-const fileInfo = document.getElementById('file-info');
+const filePill = document.getElementById('file-pill');
+const fileNameText = document.getElementById('file-name-text');
+const fileRemoveBtn = document.getElementById('file-remove-btn');
+const statusDot = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
 
 let uploadedFileData = null;
 let uploadedFileName = "";
@@ -705,6 +831,16 @@ resumeDropzone.addEventListener('drop', (e) => {
   if (e.dataTransfer.files.length > 0) handleResumeFile(e.dataTransfer.files[0]);
 });
 
+fileRemoveBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  uploadedFileData = null;
+  uploadedFileName = "";
+  resumeFileInput.value = "";
+  filePill.style.display = 'none';
+  resumeDropzone.style.display = 'flex';
+  updateStatus("File removed. Ready for upload.", "idle");
+});
+
 function handleResumeFile(file) {
   if (!file) return;
   const name = file.name.toLowerCase();
@@ -719,19 +855,23 @@ function handleResumeFile(file) {
   reader.onload = function(e) {
     uploadedFileData = e.target.result;
     uploadedFileName = file.name;
-    fileInfo.textContent = `[OK] SELECTED: ${file.name} (${Math.round(file.size/1024)} KB)`;
-    fileInfo.style.display = 'block';
-    addLog(`[UPLOAD] Loaded ${isDocx ? 'DOCX' : 'PDF'}: ${file.name}`, 'success');
+    fileNameText.textContent = `${file.name} (${Math.round(file.size/1024)} KB)`;
+    filePill.style.display = 'flex';
+    resumeDropzone.style.display = 'none';
+    updateStatus(`Ready: ${file.name}`, "idle");
   };
   reader.readAsArrayBuffer(file);
 }
 
-function addLog(text, cls = '') {
-  const line = document.createElement('div');
-  line.className = 'console-line ' + cls;
-  line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-  consoleBox.appendChild(line);
-  consoleBox.scrollTop = consoleBox.scrollHeight;
+function updateStatus(text, mode = "idle") {
+  if (statusText) statusText.textContent = text;
+  if (statusDot) {
+    if (mode === "working") {
+      statusDot.classList.add("working");
+    } else {
+      statusDot.classList.remove("working");
+    }
+  }
 }
 
 let activeProfileData = {};
@@ -740,9 +880,9 @@ let activeProfileData = {};
   try {
     const state = await loadProfile();
     activeProfileData = state?.profile || {};
-    addLog('[SYS_LOAD] System ready. Free public scanner active.', 'info');
+    updateStatus("System ready • 100% Free Public Access", "idle");
   } catch (e) {
-    addLog('[SYS_LOAD] Offline mode ready.', 'info');
+    updateStatus("Offline mode ready • Free Access", "idle");
   }
 })();
 
@@ -845,22 +985,25 @@ runBtn.addEventListener('click', async () => {
   
   if (!jdText) {
     showToast('Please paste a job description first.', 'error');
-    addLog('[WARN] Paste a job description first.', 'warn');
+    updateStatus('Action needed: paste a job description', 'idle');
     return;
   }
 
   if (!uploadedFileData) {
     showToast('Please choose or drop a PDF/DOCX resume file first.', 'error');
-    addLog('[WARN] Please choose or drop a resume file first.', 'warn');
+    updateStatus('Action needed: upload a resume file', 'idle');
     return;
   }
 
   runBtn.disabled = true;
+  runBtn.innerHTML = `
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="status-dot-pulse working"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span>Analyzing Document...</span>
+  `;
   placeholderPanel.style.display = 'none';
   resultsPanel.style.display = 'none';
-  consoleBox.innerHTML = '';
   
-  addLog('Reading your resume...', 'info');
+  updateStatus('Parsing resume structure and keyword density...', 'working');
 
   setTimeout(async () => {
     try {
@@ -870,24 +1013,19 @@ runBtn.addEventListener('click', async () => {
 
       if (isDocx) {
         fileType = 'docx';
-        addLog('Checking file structure...', 'info');
         extractedText = await parseDocxText(uploadedFileData);
-        addLog('[STRUCTURE] DOCX raw text extracted.', 'info');
       } else {
         fileType = 'pdf';
-        addLog('Checking file structure...', 'info');
         const parsed = await parsePdfTextAndLayout(uploadedFileData);
         extractedText = parsed.text;
         layoutData = parsed;
         
         if (parsed.isScanned) {
-          addLog('[STRUCTURE] CRITICAL WARNING: No selectable text extracted. Document is likely a scanned photo or image.', 'warn');
-        } else {
-          addLog(`[STRUCTURE] PDF details extracted: ${parsed.imageCount} image(s), multi-column layout signal: ${parsed.hasColumns ? 'DETECTED' : 'NONE'}.`, 'info');
+          showToast('Warning: Document appears to be a scanned image with no selectable text.', 'warn');
         }
       }
 
-      addLog(`Comparing against target role preset...`, 'info');
+      updateStatus('Computing ATS keyword match score...', 'working');
       
       // Calculate score using shared-shell logic
       const result = scoreResumeData(activeProfileData, role, extractedText, fileType, layoutData);
@@ -1007,28 +1145,25 @@ runBtn.addEventListener('click', async () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ metric: "atsScans" })
-        }).then(res => {
-          if (res.status === 429) {
-            addLog("[RATE_LIMIT] Telemetry reporting throttled.", "warn");
-          }
         }).catch(() => {});
       } catch (e) {}
 
-      addLog(`[DONE] Compatibility score: ${score}%. Free diagnostic complete.`, 'success');
+      updateStatus(`Analysis complete • Compatibility: ${score}%`, 'idle');
       placeholderPanel.style.display = 'none';
       resultsPanel.style.display = 'flex';
 
     } catch (err) {
-      addLog(`[ERROR] Scoring engine error: ${err.message}`, 'warn');
-      showToast('ATS Scoring failed.', 'error');
+      updateStatus('Scoring encountered an error', 'idle');
+      showToast('ATS Scoring failed. Please check the resume format.', 'error');
       console.error(err);
     } finally {
-      // Cooldown to prevent multi-click flooding
-      setTimeout(() => {
-        runBtn.disabled = false;
-      }, 3000);
+      runBtn.disabled = false;
+      runBtn.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Analyze Compatibility</span>
+      `;
     }
-  }, 900);
+  }, 600);
 });
 
 // Transfer to Resume Builder Conversion Handler
