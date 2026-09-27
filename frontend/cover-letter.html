@@ -392,6 +392,294 @@ body::after {
   color: var(--primary);
 }
 
+/* Pre-Generation Intake Screen Styles */
+.cl-intake-screen {
+  flex: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18px;
+}
+.cl-intake-screen::-webkit-scrollbar { width: 6px; }
+.cl-intake-screen::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.2); border-radius: 3px; }
+
+.cl-intake-header {
+  text-align: center;
+  max-width: 640px;
+}
+.cl-intake-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(0, 243, 255, 0.08);
+  border: 1px solid rgba(0, 243, 255, 0.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.cl-intake-title {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.cl-intake-title em {
+  font-style: normal;
+  color: var(--primary);
+}
+.cl-intake-subtitle {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.cl-intake-card {
+  width: 100%;
+  background: rgba(16, 22, 35, 0.75);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 24px 28px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+.cl-intake-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 768px) {
+  .cl-intake-grid { grid-template-columns: 1fr; }
+}
+.cl-intake-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cl-intake-field.full {
+  grid-column: 1 / -1;
+}
+.cl-intake-field label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  justify-content: space-between;
+}
+.cl-intake-field label span.hint {
+  color: var(--primary);
+  font-size: 10px;
+}
+.cl-intake-field select,
+.cl-intake-field input,
+.cl-intake-field textarea {
+  background: rgba(10, 15, 30, 0.85);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  width: 100%;
+  outline: none;
+}
+.cl-intake-field select:focus,
+.cl-intake-field input:focus,
+.cl-intake-field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 14px rgba(0, 243, 255, 0.25);
+}
+.cl-intake-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(0, 243, 255, 0.12);
+  flex-wrap: wrap;
+}
+.cl-intake-btn-primary {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #020617;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  padding: 12px 28px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.35);
+}
+.cl-intake-btn-primary:hover {
+  background: #38f8ff;
+  box-shadow: 0 0 28px rgba(0, 243, 255, 0.55);
+  transform: translateY(-1px);
+}
+.cl-intake-btn-ghost {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.cl-intake-btn-ghost:hover {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Guided Generation Loading Modal */
+.cl-gen-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 11, 22, 0.88);
+  backdrop-filter: blur(18px);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.cl-gen-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cl-gen-modal-card {
+  background: #0B1020;
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  border-radius: 18px;
+  padding: 36px 32px 32px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 40px rgba(0,243,255,0.15);
+  position: relative;
+  overflow: hidden;
+}
+.cl-gen-modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: cl-sweep 2s linear infinite;
+}
+@keyframes cl-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.cl-loader-radar {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+}
+.cl-loader-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 243, 255, 0.15);
+}
+.cl-loader-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  border-top-color: var(--primary);
+  border-right-color: var(--primary);
+  animation: sync-spin 1s cubic-bezier(0.55, 0.085, 0.68, 0.53) infinite;
+}
+@keyframes sync-spin {
+  to { transform: rotate(360deg); }
+}
+.cl-loader-step-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.cl-loader-headline {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white);
+  margin-bottom: 14px;
+}
+.cl-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  border: 1px solid rgba(0, 243, 255, 0.12);
+}
+.cl-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00f3ff, #5b4fe8);
+  border-radius: 10px;
+  transition: width 0.35s ease;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+.cl-status-log {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  min-height: 20px;
+  line-height: 1.4;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.cl-status-log span.time {
+  color: var(--primary);
+  margin-right: 6px;
+}
+
 @media (max-width:850px) { .grid { grid-template-columns:1fr; } }
 
 @media print {
@@ -453,7 +741,113 @@ body::after {
 
 <div class="container">
 
-  <div class="grid">
+  <!-- 00 Intake / Pre-Generation Screen -->
+  <div id="cl-intake-screen" class="cl-intake-screen">
+    <div class="cl-intake-header">
+      <div class="cl-intake-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Tailored Cover Letter Engine</span>
+      </div>
+      <h1 class="cl-intake-title">Target Your <em>Cover Letter</em></h1>
+      <p class="cl-intake-subtitle">Specify your target company and role. Our engine synthesizes an impactful, recruiter-tailored narrative customized to your background and job requirements.</p>
+    </div>
+
+    <div class="cl-intake-card">
+      <div class="cl-intake-grid">
+        <div class="cl-intake-field">
+          <label for="intake-cl-company">Target Company <span class="hint">Required</span></label>
+          <input type="text" id="intake-cl-company" placeholder="e.g. Google India, Stripe, Amazon" maxlength="120">
+        </div>
+
+        <div class="cl-intake-field">
+          <label for="intake-cl-role">Target Role / Position <span class="hint">Discipline</span></label>
+          <select id="intake-cl-role" onchange="syncCoverLetterIntake()">
+            <option value="SDE">SDE</option>
+            <option value="Junior Developer">Junior Developer</option>
+            <option value="Java/Python/C/C++ Developer">Java/Python/C++ Dev</option>
+            <option value="Content Manager">Content Manager</option>
+            <option value="Video Editor">Video Editor</option>
+            <option value="Senior Developer">Senior Developer</option>
+            <option value="Marketing Specialist">Marketing Specialist</option>
+            <option value="Customer Care Executive">Customer Care</option>
+            <option value="Business Executive">Business Executive</option>
+          </select>
+        </div>
+
+        <div class="cl-intake-field">
+          <label for="intake-cl-experience">Experience Tier <span class="hint">Seniority</span></label>
+          <select id="intake-cl-experience" onchange="syncCoverLetterIntake()">
+            <option value="Student">Student (Academic / Intern)</option>
+            <option value="Fresher" selected>Fresher (0-1 yrs)</option>
+            <option value="Experienced">Experienced (2+ yrs)</option>
+          </select>
+        </div>
+
+        <div class="cl-intake-field">
+          <label for="intake-cl-template">Style & Typography <span class="hint">Visual Format</span></label>
+          <select id="intake-cl-template">
+            <option value="01">Classic Corporate (Palatino Serif)</option>
+            <option value="02">Modern Minimalist (Helvetica Sans)</option>
+            <option value="03">Narrative / Storyteller (Charter Serif)</option>
+            <option value="04">Executive Strategist (Times Serif)</option>
+            <option value="05">Technical / Developer (Monospace Headers)</option>
+            <option value="06">Bold & Impactful (Helvetica Bold)</option>
+            <option value="07">Academic Formal (Times Traditional)</option>
+            <option value="08">Startup Builder (Helvetica Compact)</option>
+            <option value="09">Career Pivot / Transition (Palatino Minimal)</option>
+            <option value="10">Referral-Based (Traditional Flush)</option>
+          </select>
+        </div>
+
+        <div class="cl-intake-field full">
+          <label for="intake-cl-pitch">Pitch Tone Preset <span class="hint">Narrative Angle</span></label>
+          <select id="intake-cl-pitch" onchange="syncCoverLetterIntake()">
+            <option value="technical">Technical Focus (React, Node, Cloud architecture)</option>
+            <option value="executive">Managerial & Executive Focus (Metrics, strategy, scaling)</option>
+            <option value="narrative">Storyteller Hook (Self-taught journey, user-centric engineering)</option>
+            <option value="pivot">Career Transition (Transferable skills, adaptability)</option>
+          </select>
+        </div>
+
+        <div class="cl-intake-field full">
+          <label for="intake-cl-jd">Target Job Description Keywords <span class="hint">Optional ATS Alignment</span></label>
+          <textarea id="intake-cl-jd" rows="3" placeholder="Paste job description or requirements to automatically score and align letter content with employer expectations..."></textarea>
+        </div>
+      </div>
+
+      <div class="cl-intake-actions">
+        <button type="button" class="cl-intake-btn-ghost" onclick="showCoverLetterEditor(false)">
+          Skip to Editor ->
+        </button>
+        <button type="button" class="cl-intake-btn-primary" onclick="triggerCoverLetterGeneration()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Generate Tailored Letter</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cover Letter Generation Loading Modal -->
+  <div id="cl-gen-loading-modal" class="cl-gen-modal-overlay">
+    <div class="cl-gen-modal-card">
+      <div class="cl-loader-radar">
+        <div class="cl-loader-circle"></div>
+        <div class="cl-loader-sweep"></div>
+      </div>
+      <div class="cl-loader-step-tag" id="cl-gen-step-tag">Step 1 of 4</div>
+      <div class="cl-loader-headline" id="cl-gen-step-headline">Synthesizing Recipient Context</div>
+      
+      <div class="cl-progress-track">
+        <div class="cl-progress-fill" id="cl-gen-progress-fill"></div>
+      </div>
+
+      <div class="cl-status-log" id="cl-gen-status-log">
+        <span class="time">[SYS]</span> Initializing Cover Letter Generator...
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" id="cl-workspace-grid" style="display:none;">
     <!-- Left: Inputs -->
     <div class="card" id="editor-card">
       <div id="profile-banner" style="display:none;" class="warn-banner">
@@ -612,6 +1006,9 @@ body::after {
       <div class="preview-toolbar" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--glass-border); padding-bottom:10px; flex-shrink:0; flex-wrap:wrap; gap:10px;">
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:0.1em; text-transform:uppercase;">Cover Letter Preview</span>
+          <button type="button" onclick="showCoverLetterIntake()" style="background:rgba(0,243,255,0.06);border:1px solid rgba(0,243,255,0.25);color:var(--primary);font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:4px;cursor:pointer;letter-spacing:0.06em;transition:all .15s;" title="Switch to Target Configurator">
+            RECONFIGURE
+          </button>
           <!-- ATS Score badge inline pill -->
           <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(91,79,232,0.12); border:1px solid rgba(91,79,232,0.3); border-radius:20px; padding:3px 10px;">
             <span style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:0.04em;">ATS MATCH</span>
@@ -901,6 +1298,17 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     }
   }
 
+  // Check URL parameters for mode or existing draft state
+  const urlParams = new URLSearchParams(window.location.search);
+  const mode = urlParams.get('mode');
+  const hasSavedLetter = userProfile?.coverLetter && (userProfile.coverLetter.companyName || userProfile.coverLetter.role || userProfile.coverLetter.richText);
+
+  if (mode === 'edit' || (hasSavedLetter && mode !== 'new')) {
+    showCoverLetterEditor(false);
+  } else {
+    showCoverLetterIntake();
+  }
+
   // Register real-time inputs auto-save handlers & live preview refresh
   const syncInputs = [
     'template-select', 'company-input', 'role-input', 'cl-experience-level',
@@ -933,6 +1341,169 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     }
   });
 })();
+
+// ── Screen Mode Controllers & Multi-Stage Generation Pipeline ──────
+function showCoverLetterIntake() {
+  const intake = document.getElementById("cl-intake-screen");
+  const workspace = document.getElementById("cl-workspace-grid");
+  if (intake) intake.style.display = "flex";
+  if (workspace) workspace.style.display = "none";
+
+  // Pre-fill intake fields from current editor state or user profile
+  const companyVal = document.getElementById("company-input")?.value || "";
+  const roleVal = document.getElementById("role-input")?.value || userProfile?.targetRole || "";
+  const expVal = document.getElementById("cl-experience-level")?.value || "Fresher";
+  const tmplVal = document.getElementById("template-select")?.value || "01";
+  const pitchVal = document.getElementById("summary-select")?.value || "technical";
+  const jdVal = document.getElementById("jd-input")?.value || "";
+
+  if (document.getElementById("intake-cl-company")) document.getElementById("intake-cl-company").value = companyVal;
+  if (document.getElementById("intake-cl-role") && roleVal) {
+    const roleEl = document.getElementById("intake-cl-role");
+    let exists = false;
+    for (const opt of roleEl.options) {
+      if (opt.value === roleVal) exists = true;
+    }
+    if (!exists && roleVal.trim()) {
+      roleEl.add(new Option(roleVal, roleVal, true, true));
+    }
+    roleEl.value = roleVal;
+  }
+  if (document.getElementById("intake-cl-experience")) document.getElementById("intake-cl-experience").value = expVal;
+  if (document.getElementById("intake-cl-template")) document.getElementById("intake-cl-template").value = tmplVal;
+  if (document.getElementById("intake-cl-pitch")) document.getElementById("intake-cl-pitch").value = pitchVal;
+  if (document.getElementById("intake-cl-jd")) document.getElementById("intake-cl-jd").value = jdVal;
+
+  try {
+    window.history.replaceState({}, '', '?mode=new');
+  } catch(e) {}
+}
+
+function showCoverLetterEditor(shouldFit = true) {
+  const intake = document.getElementById("cl-intake-screen");
+  const workspace = document.getElementById("cl-workspace-grid");
+  if (intake) intake.style.display = "none";
+  if (workspace) workspace.style.display = "grid";
+
+  if (shouldFit) {
+    setTimeout(fitPreview, 60);
+  }
+
+  try {
+    window.history.replaceState({}, '', '?mode=edit');
+  } catch(e) {}
+}
+
+function syncCoverLetterIntake() {
+  const company = document.getElementById("intake-cl-company")?.value?.trim() || "";
+  const role = document.getElementById("intake-cl-role")?.value?.trim() || "";
+  const exp = document.getElementById("intake-cl-experience")?.value || "Fresher";
+  const template = document.getElementById("intake-cl-template")?.value || "01";
+  const pitch = document.getElementById("intake-cl-pitch")?.value || "";
+  const jd = document.getElementById("intake-cl-jd")?.value?.trim() || "";
+
+  if (company && document.getElementById("company-input")) {
+    document.getElementById("company-input").value = company;
+  }
+  if (role && document.getElementById("role-input")) {
+    const rEl = document.getElementById("role-input");
+    let exists = false;
+    for (const opt of rEl.options) {
+      if (opt.value === role) exists = true;
+    }
+    if (!exists && role.trim()) {
+      rEl.add(new Option(role, role, true, true));
+    }
+    rEl.value = role;
+    if (document.getElementById("subject-input")) {
+      document.getElementById("subject-input").value = `RE: Application for ${role} role`;
+    }
+  }
+  if (exp && document.getElementById("cl-experience-level")) {
+    document.getElementById("cl-experience-level").value = exp;
+  }
+  if (template && document.getElementById("template-select")) {
+    document.getElementById("template-select").value = template;
+  }
+  if (pitch && document.getElementById("summary-select")) {
+    document.getElementById("summary-select").value = pitch;
+  }
+  if (jd && document.getElementById("jd-input")) {
+    document.getElementById("jd-input").value = jd;
+  }
+
+  handleCoverLetterRoleSelection();
+}
+
+async function triggerCoverLetterGeneration() {
+  syncCoverLetterIntake();
+
+  const company = document.getElementById("company-input")?.value?.trim();
+  const role = document.getElementById("role-input")?.value?.trim();
+
+  if (!company && !role) {
+    showToast("Please provide Target Company or Position", "error");
+    return;
+  }
+
+  const modal = document.getElementById("cl-gen-loading-modal");
+  const stepTag = document.getElementById("cl-gen-step-tag");
+  const stepHeadline = document.getElementById("cl-gen-step-headline");
+  const fill = document.getElementById("cl-gen-progress-fill");
+  const statusLog = document.getElementById("cl-gen-status-log");
+
+  if (!modal) {
+    showCoverLetterEditor(true);
+    return;
+  }
+
+  modal.classList.add("active");
+
+  const stages = [
+    {
+      pct: 25,
+      tag: "Step 1 of 4",
+      headline: "Analyzing Recipient Context",
+      log: `[AI_ALIGN] Reviewing target company profile and ${role || "job"} alignment...`
+    },
+    {
+      pct: 55,
+      tag: "Step 2 of 4",
+      headline: "Crafting Narrative Hook & Body",
+      log: "[SYNTHESIS] Structuring value proposition, technical achievements, and motivation..."
+    },
+    {
+      pct: 82,
+      tag: "Step 3 of 4",
+      headline: "Formatting Recruiter Typography",
+      log: "[TYPESET] Applying selected visual style and ATS formatting parameters..."
+    },
+    {
+      pct: 100,
+      tag: "Step 4 of 4",
+      headline: "Finalizing Live Workspace",
+      log: "[SYNC] Document compiled and synced to JobXApply Vault..."
+    }
+  ];
+
+  for (let i = 0; i < stages.length; i++) {
+    const s = stages[i];
+    if (stepTag) stepTag.textContent = s.tag;
+    if (stepHeadline) stepHeadline.textContent = s.headline;
+    if (fill) fill.style.width = s.pct + "%";
+    if (statusLog) statusLog.innerHTML = `<span class="time">[SYS]</span> ${s.log}`;
+    await new Promise(r => setTimeout(r, 420));
+  }
+
+  // Update live preview & auto-save
+  updateLivePreview();
+  triggerAutoSave();
+
+  // Brief moment on 100% completion then show workspace
+  await new Promise(r => setTimeout(r, 260));
+  modal.classList.remove("active");
+  showCoverLetterEditor(true);
+}
 
 // Debounced Cloud Sync Trigger
 function triggerAutoSave() {

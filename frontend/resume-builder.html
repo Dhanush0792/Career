@@ -664,6 +664,291 @@
     @keyframes sync-spin {
       to { transform: rotate(360deg); }
     }
+
+    /* Pre-Generation Intake Screen Styles */
+    .intake-screen {
+      flex: 1;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      height: 100%;
+      overflow-y: auto;
+      padding: 24px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 20px;
+    }
+    .intake-screen::-webkit-scrollbar { width: 6px; }
+    .intake-screen::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.2); border-radius: 3px; }
+
+    .intake-header {
+      text-align: center;
+      max-width: 640px;
+    }
+    .intake-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      border-radius: 20px;
+      padding: 4px 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .intake-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .intake-title em {
+      font-style: normal;
+      color: var(--primary);
+    }
+    .intake-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .intake-card {
+      width: 100%;
+      background: rgba(16, 22, 35, 0.75);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 26px 28px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+    .intake-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+    @media (max-width: 768px) {
+      .intake-grid { grid-template-columns: 1fr; }
+    }
+    .intake-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .intake-field.full {
+      grid-column: 1 / -1;
+    }
+    .intake-field label {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      justify-content: space-between;
+    }
+    .intake-field label span.hint {
+      color: var(--primary);
+      font-size: 10px;
+    }
+    .intake-field select,
+    .intake-field input,
+    .intake-field textarea {
+      background: rgba(10, 15, 30, 0.85);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      width: 100%;
+      outline: none;
+    }
+    .intake-field select:focus,
+    .intake-field input:focus,
+    .intake-field textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 14px var(--primary-glow);
+    }
+    .intake-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(0, 243, 255, 0.12);
+      flex-wrap: wrap;
+    }
+    .intake-btn-primary {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #020617;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 12px 28px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.35);
+    }
+    .intake-btn-primary:hover {
+      background: #38f8ff;
+      box-shadow: 0 0 28px rgba(0, 243, 255, 0.55);
+      transform: translateY(-1px);
+    }
+    .intake-btn-ghost {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .intake-btn-ghost:hover {
+      color: var(--white);
+      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* Guided Generation Loading Modal */
+    .gen-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 11, 22, 0.88);
+      backdrop-filter: blur(18px);
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .gen-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .gen-modal-card {
+      background: #0B1020;
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      border-radius: 18px;
+      padding: 36px 32px 32px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 40px rgba(0,243,255,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .gen-modal-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      animation: gen-sweep 2s linear infinite;
+    }
+    @keyframes gen-sweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .gen-loader-radar {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 20px;
+    }
+    .gen-loader-circle {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 243, 255, 0.15);
+    }
+    .gen-loader-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2.5px solid transparent;
+      border-top-color: var(--primary);
+      border-right-color: var(--primary);
+      animation: sync-spin 1s cubic-bezier(0.55, 0.085, 0.68, 0.53) infinite;
+    }
+    .gen-loader-step-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .gen-loader-headline {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--white);
+      margin-bottom: 14px;
+    }
+    .gen-progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 18px;
+      border: 1px solid rgba(0, 243, 255, 0.12);
+    }
+    .gen-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00f3ff, #0088ff);
+      border-radius: 10px;
+      transition: width 0.35s ease;
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+    }
+    .gen-status-log {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      min-height: 20px;
+      line-height: 1.4;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .gen-status-log span.time {
+      color: var(--primary);
+      margin-right: 6px;
+    }
     @media print {
       /* Hide everything except the preview sheet */
       body, html, #app-container, .main-content, .builder-grid, .preview-col, .sticky-preview, .preview-container {
@@ -717,7 +1002,96 @@
     <main class="main-content">
 
 
-      <div id="resume-builder-app" class="builder-grid">
+      <!-- 00 Intake / Pre-Generation Screen -->
+      <div id="resume-intake-screen" class="intake-screen">
+        <div class="intake-header">
+          <div class="intake-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>ATS Resume Generator</span>
+          </div>
+          <h1 class="intake-title">Target Your <em>ATS Resume</em></h1>
+          <p class="intake-subtitle">Configure your target trajectory below. Our engine synchronizes your career profile, optimizes skill taxonomy, and formats a recruiter-ready single-column ATS resume.</p>
+        </div>
+
+        <div class="intake-card">
+          <div class="intake-grid">
+            <div class="intake-field">
+              <label for="intake-role">Target Role / Discipline <span class="hint">ATS Taxonomy</span></label>
+              <select id="intake-role" onchange="syncIntakeToEditor()">
+                <option value="SDE">SDE (Software Dev)</option>
+                <option value="Junior Developer">Junior Developer</option>
+                <option value="Java/Python/C/C++ Developer">Java/Python/C++ Dev</option>
+                <option value="Content Manager">Content Manager</option>
+                <option value="Video Editor">Video Editor</option>
+                <option value="Senior Developer">Senior Developer</option>
+                <option value="Marketing Specialist">Marketing Specialist</option>
+                <option value="Customer Care Executive">Customer Care</option>
+                <option value="Business Executive">Business Executive</option>
+              </select>
+            </div>
+
+            <div class="intake-field">
+              <label for="intake-experience">Seniority / Career Level <span class="hint">Experience Tier</span></label>
+              <select id="intake-experience" onchange="syncIntakeToEditor()">
+                <option value="Student">Student (Academic / Intern)</option>
+                <option value="Fresher" selected>Fresher (0-1 yrs)</option>
+                <option value="Experienced">Experienced (2+ yrs)</option>
+              </select>
+            </div>
+
+            <div class="intake-field">
+              <label for="intake-template">Format Archetype <span class="hint">Single-Column Strict</span></label>
+              <select id="intake-template">
+                <option value="classic">Standard Corporate ATS (Helvetica / Clean Single Column)</option>
+                <option value="technical">Technical Focus (Monospace Meta / Skill Clustered)</option>
+                <option value="compact">Compact Dense (Maximum Content Density)</option>
+              </select>
+            </div>
+
+            <div class="intake-field">
+              <label for="intake-company">Target Company <span class="hint">Optional</span></label>
+              <input type="text" id="intake-company" placeholder="e.g. Google, Microsoft, Stripe" maxlength="100">
+            </div>
+
+            <div class="intake-field full">
+              <label for="intake-jd">Target Job Description Keywords <span class="hint">Optional ATS Matcher</span></label>
+              <textarea id="intake-jd" rows="3" placeholder="Paste job description snippets or required skills here to automatically prioritize matched keywords in your live resume..."></textarea>
+            </div>
+          </div>
+
+          <div class="intake-actions">
+            <button type="button" class="intake-btn-ghost" onclick="showEditorWorkspace(false)">
+              Skip to Editor ->
+            </button>
+            <button type="button" class="intake-btn-primary" onclick="triggerResumeGeneration()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Generate ATS Resume</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generation Loading Modal -->
+      <div id="gen-loading-modal" class="gen-modal-overlay">
+        <div class="gen-modal-card">
+          <div class="gen-loader-radar">
+            <div class="gen-loader-circle"></div>
+            <div class="gen-loader-sweep"></div>
+          </div>
+          <div class="gen-loader-step-tag" id="gen-step-tag">Step 1 of 4</div>
+          <div class="gen-loader-headline" id="gen-step-headline">Synthesizing Profile Data</div>
+          
+          <div class="gen-progress-track">
+            <div class="gen-progress-fill" id="gen-progress-fill"></div>
+          </div>
+
+          <div class="gen-status-log" id="gen-status-log">
+            <span class="time">[SYS]</span> Initializing ATS resume compiler...
+          </div>
+        </div>
+      </div>
+
+      <div id="resume-builder-app" class="builder-grid" style="display:none;">
         <!-- Left: Compact Accordion Editor -->
         <div class="editor-col">
 
@@ -874,7 +1248,12 @@
         <div class="preview-col">
           <div class="sticky-preview">
             <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px 8px; flex-shrink:0; border-bottom:1px solid var(--border-color); margin-bottom:6px;">
-              <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;">Live Resume Preview</span>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--primary);letter-spacing:.08em;text-transform:uppercase;">Live Resume Preview</span>
+                <button type="button" onclick="showIntakeScreen()" style="background:rgba(0,243,255,0.06);border:1px solid rgba(0,243,255,0.25);color:var(--primary);font-family:var(--mono);font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:4px;cursor:pointer;letter-spacing:0.06em;transition:all .15s;" title="Switch to Target Configurator">
+                  RECONFIGURE
+                </button>
+              </div>
               
               <div style="display:flex; align-items:center; gap:8px;">
                 <!-- Zoom Controls -->
@@ -933,31 +1312,149 @@
       const container = document.getElementById("resume-builder-app");
       if (!container) return;
       
-      // Check loading overlay
-      const overlay = document.createElement("div");
-      overlay.className = "sync-loading-overlay";
-      overlay.innerHTML = `
-        <div class="sync-loading-card">
-          <div class="sync-spinner"></div>
-          <div class="sync-loading-text">Accessing Sync Vault...</div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-      
       // Load profile data (centralized sync)
       try {
         const state = await window.CareerBridgeSync.loadProfile();
         populateFromProfile(state);
       } catch (e) {
         console.error("Failed to load profile:", e);
-      } finally {
-        overlay.remove();
-        setTimeout(fitPreview, 50); // Small timeout to ensure DOM is drawn
+      }
+
+      // Check URL parameters for mode or existing resume state
+      const urlParams = new URLSearchParams(window.location.search);
+      const mode = urlParams.get('mode');
+      const hasSavedResume = activeUserProfile && (activeUserProfile.resume || activeUserProfile.summary || activeUserProfile.targetRole);
+
+      if (mode === 'edit' || (hasSavedResume && mode !== 'new')) {
+        showEditorWorkspace(false);
+      } else {
+        showIntakeScreen();
       }
 
       // Add input event listener to all editor inputs to update preview dynamically
       document.addEventListener("input", updatePreview);
     });
+
+    // ── Screen Mode Controllers & Multi-Stage Generation Pipeline ──────
+    function showIntakeScreen() {
+      const intake = document.getElementById("resume-intake-screen");
+      const app = document.getElementById("resume-builder-app");
+      if (intake) intake.style.display = "flex";
+      if (app) app.style.display = "none";
+      
+      // Sync editor fields to intake card
+      const resTitle = document.getElementById("res-title")?.value;
+      const resExp = document.getElementById("res-experience-level")?.value;
+      if (resTitle && document.getElementById("intake-role")) {
+        document.getElementById("intake-role").value = resTitle;
+      }
+      if (resExp && document.getElementById("intake-experience")) {
+        document.getElementById("intake-experience").value = resExp;
+      }
+
+      try {
+        window.history.replaceState({}, '', '?mode=new');
+      } catch(e) {}
+    }
+
+    function showEditorWorkspace(shouldFit = true) {
+      const intake = document.getElementById("resume-intake-screen");
+      const app = document.getElementById("resume-builder-app");
+      if (intake) intake.style.display = "none";
+      if (app) app.style.display = "grid";
+
+      if (shouldFit) {
+        setTimeout(fitPreview, 60);
+      }
+
+      try {
+        window.history.replaceState({}, '', '?mode=edit');
+      } catch(e) {}
+    }
+
+    function syncIntakeToEditor() {
+      const role = document.getElementById("intake-role")?.value;
+      const exp = document.getElementById("intake-experience")?.value;
+
+      if (role && document.getElementById("res-title")) {
+        const titleEl = document.getElementById("res-title");
+        let exists = false;
+        for (const opt of titleEl.options) {
+          if (opt.value === role) exists = true;
+        }
+        if (!exists && role.trim()) {
+          titleEl.add(new Option(role, role, true, true));
+        }
+        titleEl.value = role;
+      }
+
+      if (exp && document.getElementById("res-experience-level")) {
+        document.getElementById("res-experience-level").value = exp;
+      }
+
+      handleRoleSelection();
+    }
+
+    async function triggerResumeGeneration() {
+      syncIntakeToEditor();
+
+      const modal = document.getElementById("gen-loading-modal");
+      const stepTag = document.getElementById("gen-step-tag");
+      const stepHeadline = document.getElementById("gen-step-headline");
+      const fill = document.getElementById("gen-progress-fill");
+      const statusLog = document.getElementById("gen-status-log");
+
+      if (!modal) {
+        showEditorWorkspace(true);
+        return;
+      }
+
+      modal.classList.add("active");
+
+      const stages = [
+        {
+          pct: 25,
+          tag: "Step 1 of 4",
+          headline: "Extracting Profile History",
+          log: "[VAULT] Synchronizing career records, education, and project assets..."
+        },
+        {
+          pct: 55,
+          tag: "Step 2 of 4",
+          headline: "Synthesizing ATS Taxonomy",
+          log: `[ATS_OPTIMIZER] Aligning skill taxonomy and impact verbs for target role...`
+        },
+        {
+          pct: 82,
+          tag: "Step 3 of 4",
+          headline: "Compiling High-Fidelity Typesetting",
+          log: "[LATEX_ENGINE] Building vector geometry and single-column ATS structure..."
+        },
+        {
+          pct: 100,
+          tag: "Step 4 of 4",
+          headline: "Finalizing Live Preview",
+          log: "[RENDER] Synchronizing draft to JobXApply Vault..."
+        }
+      ];
+
+      for (let i = 0; i < stages.length; i++) {
+        const s = stages[i];
+        if (stepTag) stepTag.textContent = s.tag;
+        if (stepHeadline) stepHeadline.textContent = s.headline;
+        if (fill) fill.style.width = s.pct + "%";
+        if (statusLog) statusLog.innerHTML = `<span class="time">[SYS]</span> ${s.log}`;
+        await new Promise(r => setTimeout(r, 420));
+      }
+
+      // Re-trigger live preview render
+      updatePreview();
+
+      // Brief moment on 100% completion then show workspace
+      await new Promise(r => setTimeout(r, 260));
+      modal.classList.remove("active");
+      showEditorWorkspace(true);
+    }
 
     let activeUserProfile = {};
 
