@@ -19,7 +19,14 @@ async function authenticatedFetch(url, options = {}) {
       }
       
       try {
-        const res = await fetch(url, options);
+        let res = await fetch(url, options);
+        // If JWT token expired or invalid, fall back to passcodeHash
+        if ((res.status === 401 || res.status === 403) && token && passcodeHash) {
+          console.warn("[JobXApply] Token unauthorized, falling back to passcode hash...");
+          chrome.storage.local.remove(["jobxapplyToken"]);
+          options.headers["Authorization"] = `Bearer ${passcodeHash}`;
+          res = await fetch(url, options);
+        }
         resolve(res);
       } catch (e) {
         reject(e);
@@ -355,8 +362,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.get(["jobxapplyState", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyProfile", "jobxapplyPasscode"], (result) => {
       const passcode = result.jobxapplyPasscode || "";
       
-      // If we already have cached profiles, return them immediately for fast UI response, and sync in background
-      if (result.jobxapplyProfiles && Object.keys(result.jobxapplyProfiles).length) {
+      // If we already have cached profiles and not forcing refresh, return them immediately for fast UI response, and sync in background
+      if (!message.force && result.jobxapplyProfiles && Object.keys(result.jobxapplyProfiles).length) {
         const activeProfile = result.jobxapplyProfiles[result.jobxapplyActiveProfileId] || result.jobxapplyProfile || {};
         sendResponse({ 
           profile: activeProfile, 

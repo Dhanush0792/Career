@@ -163,6 +163,14 @@ async function processSession(token, userEmail = "") {
       return;
     }
 
+    const nextTarget = urlParams.get("next") || sessionStorage.getItem("jxa_auth_next") || "";
+    if (nextTarget) {
+      sessionStorage.removeItem("jxa_auth_next");
+      statusText.textContent = "Redirecting to your target workspace...";
+      window.location.replace(nextTarget);
+      return;
+    }
+
     if (isExistingUser) {
       statusText.textContent = "Welcome back! Redirecting to dashboard...";
       window.location.replace("dashboard.html");

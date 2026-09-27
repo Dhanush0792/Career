@@ -423,9 +423,15 @@ mark.kw-miss {
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
-  <header class="page-header">
-    <div class="page-label">ATS SCORE ANALYSIS</div>
-    <h1 class="page-title">RESUME COMPATIBILITY <em>TESTING</em></h1>
+  <header class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div class="page-label">ATS SCORE ANALYSIS & KEYWORD GAP DETECTOR</div>
+      <h1 class="page-title">RESUME COMPATIBILITY <em>TESTING</em></h1>
+    </div>
+    <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(0,243,255,0.08); border:1px solid rgba(0,243,255,0.3); border-radius:20px; padding:6px 14px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:0.08em; text-transform:uppercase;">100% Free &bull; No Sign-Up Required</span>
+    </div>
   </header>
 
   <div class="grid">
@@ -552,28 +558,75 @@ mark.kw-miss {
                 </div>
               </div>
             </div>
+          <!-- 03: 4-Line Summary Diagnostic & Role Alignment Card -->
+          <div class="card" id="summary-diagnostic-card" style="border:1px solid rgba(0, 243, 255, 0.25); background: rgba(11, 16, 32, 0.65);">
+            <div class="card__title" style="display:flex; justify-content:space-between; align-items:center;">
+              <span>03 // 4-LINE SUMMARY & ROLE HOOK DIAGNOSIS</span>
+              <span id="summary-quality-score" style="color:var(--primary); font-size:10px; font-weight:700;">Score: -</span>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px;">
+              <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px;">
+                <div style="font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; letter-spacing:0.06em;">
+                  Detected in Your Resume
+                </div>
+                <div id="detected-summary-text" style="font-size:12px; color:rgba(255,255,255,0.85); line-height:1.5; min-height:80px; font-style:italic;">
+                  No distinct summary detected.
+                </div>
+                <div id="summary-criteria-pills" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+              </div>
+
+              <div style="background:rgba(0,243,255,0.03); border:1px solid rgba(0,243,255,0.2); border-radius:8px; padding:12px;">
+                <div style="font-family:var(--mono); font-size:10px; color:var(--primary); text-transform:uppercase; margin-bottom:6px; letter-spacing:0.06em;">
+                  Recommended 4-Line Role Formula
+                </div>
+                <div id="recommended-summary-text" style="font-size:12px; color:var(--white); line-height:1.55; display:flex; flex-direction:column; gap:4px;">
+                  <!-- Populated dynamically with 4-line formula -->
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Keywords & suggestions (gated for guests) -->
+          <!-- Keywords & suggestions (100% Free Public Access) -->
           <div id="gated-results" style="position: relative; display: flex; flex-direction: column; gap: 20px;">
             <div class="scanned-keywords">
               <div class="kw-box">
-                <div class="kw-title" style="color:var(--success);">MATCHED KEYWORDS</div>
+                <div class="kw-title" style="color:var(--success);">MATCHED KEYWORDS & SKILLS</div>
                 <div id="matched-tags"></div>
               </div>
               <div class="kw-box">
-                <div class="kw-title" style="color:var(--primary);">MISSING / UNMATCHED</div>
+                <div class="kw-title" style="color:var(--primary);">MISSING / UNMATCHED SKILLS GAP</div>
                 <div id="missing-tags"></div>
               </div>
             </div>
 
-            <div class="card" style="margin-bottom: 20px;">
-              <div class="card__title">03 // OPTIMIZATION SUGGESTIONS</div>
+            <div class="card" style="margin-bottom: 4px;">
+              <div class="card__title">04 // ATS DIAGNOSTIC RECOMMENDATIONS</div>
               <div class="suggestions-box">
                 <ul id="suggestions-list" style="margin-left: 20px; font-family: var(--body); font-size: 13px; color: var(--muted); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
                   <!-- Populated dynamically -->
                 </ul>
               </div>
+            </div>
+
+            <!-- High-Impact Conversion Callout: Fix in Resume Builder -->
+            <div class="card" style="border:1px solid var(--primary); background:linear-gradient(135deg, rgba(0,243,255,0.08), rgba(91,79,232,0.12)); padding:20px 24px; border-radius:12px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;">
+              <div style="max-width:580px;">
+                <div style="font-family:var(--mono); font-size:10px; font-weight:700; color:var(--primary); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px;">
+                  [ ONE-CLICK RESOLUTION ]
+                </div>
+                <div style="font-family:var(--display); font-size:20px; font-weight:900; color:var(--white); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">
+                  Fix Formatting & Add Missing Skills in Builder
+                </div>
+                <div style="font-size:12.5px; color:var(--muted); line-height:1.5;">
+                  We have extracted your resume details. Transfer this document into our live ATS Resume Builder to automatically format single-column typography, insert missing keywords, and export a recruiter-ready PDF.
+                </div>
+              </div>
+
+              <button type="button" onclick="transferToResumeBuilder()" style="background:var(--primary); color:#020617; border:none; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:12px 24px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 0 20px rgba(0,243,255,0.35); transition:all .2s; white-space:nowrap;">
+                <span>Fix in ATS Builder</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
             </div>
           </div>
         </div>
@@ -623,7 +676,7 @@ mark.kw-miss {
 // Configure pdf.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-requireAuth();
+// 100% Free Public Access: No requireAuth() gate required
 renderNav(document.getElementById('main-nav'), 'ats-checker.html');
 
 const consoleBox = document.getElementById('console');
@@ -639,6 +692,7 @@ const fileInfo = document.getElementById('file-info');
 let uploadedFileData = null;
 let uploadedFileName = "";
 let isDocx = false;
+let lastParsedResumePayload = null;
 
 // Handle drag and drop
 resumeDropzone.addEventListener('click', () => resumeFileInput.click());
@@ -686,9 +740,9 @@ let activeProfileData = {};
   try {
     const state = await loadProfile();
     activeProfileData = state?.profile || {};
-    addLog('[SYS_LOAD] Sync Vault connected and loaded.', 'info');
+    addLog('[SYS_LOAD] System ready. Free public scanner active.', 'info');
   } catch (e) {
-    addLog('[WARN] Profile loading bypass active.', 'warn');
+    addLog('[SYS_LOAD] Offline mode ready.', 'info');
   }
 })();
 
@@ -752,6 +806,39 @@ async function parseDocxText(arrayBuffer) {
   return result.value || "";
 }
 
+/**
+ * Extract summary snippet from raw resume text
+ */
+function extractSummaryFromText(rawText) {
+  if (!rawText) return "";
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+  let capturing = false;
+  let summaryLines = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^(summary|professional summary|profile|about me|executive summary)/i.test(l)) {
+      capturing = true;
+      continue;
+    }
+    if (capturing) {
+      if (/^(experience|work experience|employment|education|skills|projects|certifications)/i.test(l)) {
+        break;
+      }
+      summaryLines.push(l);
+      if (summaryLines.length >= 6) break;
+    }
+  }
+
+  if (summaryLines.length === 0) {
+    // Fallback: look at first 3 non-header paragraphs
+    const candidateLines = lines.slice(1, 5).filter(line => line.length > 30 && !/^(contact|phone|email|linkedin|github)/i.test(line));
+    return candidateLines.slice(0, 3).join(" ");
+  }
+
+  return summaryLines.join(" ");
+}
+
 runBtn.addEventListener('click', async () => {
   const jdText = document.getElementById('jd-input').value.trim();
   const role = document.getElementById('select-role').value;
@@ -766,31 +853,6 @@ runBtn.addEventListener('click', async () => {
     showToast('Please choose or drop a PDF/DOCX resume file first.', 'error');
     addLog('[WARN] Please choose or drop a resume file first.', 'warn');
     return;
-  }
-
-  const token = localStorage.getItem('jxa_token');
-  if (!token) {
-    // Local check
-    const todayStr = new Date().toISOString().split('T')[0];
-    const localScan = JSON.parse(localStorage.getItem('jxa_anon_scan') || '{}');
-    if (localScan.date === todayStr && localScan.count >= 1) {
-      showLimitModal();
-      return;
-    }
-    
-    // Server check
-    runBtn.disabled = true;
-    try {
-      const limitCheck = await fetch(`${SYNC_API}/ats/check-limit`);
-      const limitRes = await limitCheck.json();
-      if (!limitRes.allowed) {
-        showLimitModal();
-        runBtn.disabled = false;
-        return;
-      }
-    } catch (e) {
-      addLog('[WARN] Network offline, using offline rules.', 'warn');
-    }
   }
 
   runBtn.disabled = true;
@@ -833,20 +895,63 @@ runBtn.addEventListener('click', async () => {
       const score = result.score;
       const scoreEl = document.getElementById('score-number');
       scoreEl.textContent = score + '%';
-      scoreEl.style.color = score >= 85 ? 'var(--success)' : score >= 50 ? 'var(--alert)' : 'red';
+      scoreEl.style.color = score >= 85 ? 'var(--success)' : score >= 50 ? 'var(--alert)' : '#ef4444';
 
       document.getElementById('score-detail').textContent = 
-        `${result.matchedKeywords.length} keywords matched. Subcategory scoring complete.`;
+        `${result.matchedKeywords.length} keywords matched. Full diagnostic scoring complete.`;
 
       // Update Breakdown bars
       const breakdown = result.breakdown;
       const categories = ['parseability', 'title', 'keyword', 'density', 'achievement', 'completeness'];
       categories.forEach(cat => {
-        document.getElementById(`score-${cat}`).textContent = breakdown[cat] + '%';
-        document.getElementById(`bar-${cat}`).style.width = breakdown[cat] + '%';
+        if (document.getElementById(`score-${cat}`)) {
+          document.getElementById(`score-${cat}`).textContent = breakdown[cat] + '%';
+        }
+        if (document.getElementById(`bar-${cat}`)) {
+          document.getElementById(`bar-${cat}`).style.width = breakdown[cat] + '%';
+        }
       });
 
-      // Render tags
+      // ── Dedicated 4-Line Summary Diagnostic ────────────────────────
+      const detectedSummary = extractSummaryFromText(extractedText);
+      const summaryDiagnosis = typeof analyzeSummaryFourLines === "function" 
+        ? analyzeSummaryFourLines(detectedSummary, role) 
+        : { qualityScore: 70, detectedSummary: detectedSummary, idealSummary: [] };
+
+      const summaryScoreEl = document.getElementById('summary-quality-score');
+      if (summaryScoreEl) {
+        summaryScoreEl.textContent = `Quality Score: ${summaryDiagnosis.qualityScore}% (${summaryDiagnosis.lineCountAssessment || "Standard"})`;
+      }
+
+      const detSumEl = document.getElementById('detected-summary-text');
+      if (detSumEl) {
+        detSumEl.textContent = summaryDiagnosis.detectedSummary 
+          ? `"${summaryDiagnosis.detectedSummary}"` 
+          : "No distinct summary section detected. Recruiters and ATS scanners heavily prioritize a 3-5 line technical framing hook.";
+      }
+
+      const pillsEl = document.getElementById('summary-criteria-pills');
+      if (pillsEl && summaryDiagnosis.checks) {
+        const c = summaryDiagnosis.checks;
+        pillsEl.innerHTML = `
+          <span class="kw-tag ${c.hasSeniority ? 'match' : 'missing'}">${c.hasSeniority ? '[OK] Seniority Stated' : 'Missing Seniority'}</span>
+          <span class="kw-tag ${c.hasTechOrStack ? 'match' : 'missing'}">${c.hasTechOrStack ? '[OK] Stack Present' : 'Missing Stack'}</span>
+          <span class="kw-tag ${c.hasMetrics ? 'match' : 'missing'}">${c.hasMetrics ? '[OK] Metrics Included' : 'Missing Numbers'}</span>
+          <span class="kw-tag ${c.hasValueProp ? 'match' : 'missing'}">${c.hasValueProp ? '[OK] Value Prop' : 'Needs Hook'}</span>
+        `;
+      }
+
+      const recSumEl = document.getElementById('recommended-summary-text');
+      if (recSumEl) {
+        recSumEl.innerHTML = (summaryDiagnosis.idealSummary || []).map((line, idx) => `
+          <div style="display:flex; gap:8px;">
+            <span style="color:var(--primary); font-family:var(--mono); font-size:10px; font-weight:700;">L0${idx+1}:</span>
+            <span>${escapeHtml(line)}</span>
+          </div>
+        `).join("");
+      }
+
+      // Render tags (100% Free Public Access: completely unblurred)
       const matchedEl = document.getElementById('matched-tags');
       const missingEl = document.getElementById('missing-tags');
       matchedEl.innerHTML = '';
@@ -884,59 +989,51 @@ runBtn.addEventListener('click', async () => {
       // Render Visualizer data
       renderSideBySideVisualizer(jdText, extractedText, result.matchedKeywords, result.missingKeywords);
 
-      addLog(`[DONE] Compatibility score: ${score}%. Recommendations successfully generated.`, 'success');
+      // Package payload for 1-click transfer to Resume Builder
+      lastParsedResumePayload = {
+        role: role,
+        extractedText: extractedText,
+        detectedSummary: detectedSummary,
+        recommendedSummary: (summaryDiagnosis.idealSummary || []).join(" "),
+        matchedKeywords: result.matchedKeywords,
+        missingKeywords: result.missingKeywords,
+        score: score
+      };
+
+      addLog(`[DONE] Compatibility score: ${score}%. Free diagnostic complete.`, 'success');
       placeholderPanel.style.display = 'none';
       resultsPanel.style.display = 'flex';
 
-      if (!token) {
-        // Record scan
-        try {
-          await fetch(`${SYNC_API}/ats/record-scan`, { method: 'POST' });
-          const todayStr = new Date().toISOString().split('T')[0];
-          localStorage.setItem('jxa_anon_scan', JSON.stringify({ date: todayStr, count: 1 }));
-        } catch (e) {}
-
-        // Gated overlay
-        const gatedContainer = document.getElementById('gated-results');
-        gatedContainer.classList.add('blur-gate');
-        
-        const existingOverlay = document.getElementById('gate-overlay-el');
-        if (existingOverlay) existingOverlay.remove();
-        
-        const overlay = document.createElement('div');
-        overlay.id = 'gate-overlay-el';
-        overlay.className = 'gate-overlay';
-        overlay.innerHTML = `
-          <div style="background: rgba(18,22,43,0.96); border: 1px solid var(--glass-border); padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); max-width: 380px; text-align: center; backdrop-filter: blur(10px); z-index: 101;">
-            <div style="font-family: var(--display); font-size: 20px; font-weight: 900; color: var(--white); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 1px;">
-              Unlock suggestions & keywords
-            </div>
-            <div style="font-family: var(--body); font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;">
-              Create a free account to view missing keywords, detailed suggestions, and save unlimited scans to your dashboard.
-            </div>
-            <div style="display: flex; gap: 12px; justify-content: center;">
-              <a href="auth.html?signup=true" class="btn btn-primary" style="text-decoration: none; padding: 10px 20px; line-height: 20px; display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: bold; text-transform: uppercase;">Sign Up Free</a>
-              <a href="auth.html" class="btn btn-ghost" style="text-decoration: none; padding: 10px 20px; line-height: 20px; display: inline-block; font-family: var(--mono); font-size: 9px; font-weight: bold; text-transform: uppercase;">Log In</a>
-            </div>
-          </div>
-        `;
-        gatedContainer.appendChild(overlay);
-      } else {
-        const gatedContainer = document.getElementById('gated-results');
-        gatedContainer.classList.remove('blur-gate');
-        const existingOverlay = document.getElementById('gate-overlay-el');
-        if (existingOverlay) existingOverlay.remove();
-      }
-
     } catch (err) {
-      addLog(`[ERROR] Scoring engine collapsed: ${err.message}`, 'warn');
+      addLog(`[ERROR] Scoring engine error: ${err.message}`, 'warn');
       showToast('ATS Scoring failed.', 'error');
       console.error(err);
     } finally {
       runBtn.disabled = false;
     }
-  }, 1000);
+  }, 900);
 });
+
+// Transfer to Resume Builder Conversion Handler
+function transferToResumeBuilder() {
+  if (!lastParsedResumePayload) {
+    window.location.href = "resume-builder.html";
+    return;
+  }
+
+  // Stage draft payload into sessionStorage
+  try {
+    sessionStorage.setItem("jxa_import_draft", JSON.stringify(lastParsedResumePayload));
+  } catch (e) {}
+
+  const token = localStorage.getItem("jxa_token");
+  if (token) {
+    window.location.href = "resume-builder.html?mode=import";
+  } else {
+    // Route to sign-up with immediate return parameter
+    window.location.href = "auth.html?signup=true&next=resume-builder.html%3Fmode%3Dimport&reason=ats_fix";
+  }
+}
 
 function switchAtsView(view) {
   const summaryTab = document.getElementById('tab-btn-summary');

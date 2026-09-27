@@ -1366,11 +1366,17 @@ function showPasscodeModal() {
 const ATS_ROLE_PRESETS = {
   sde: {
     name: "Software Engineer / SDE (General)",
-    titles: ["software engineer", "software developer", "sde", "software development engineer"],
+    titles: ["software engineer", "software developer", "sde", "software development engineer", "full stack developer"],
     mustHave: ["data structures", "algorithms", "system design", "git", "rest api", "object-oriented programming", "debugging", "unit testing", "agile", "problem solving", "ci/cd", "cloud"],
     niceToHave: ["docker", "kubernetes", "microservices", "aws", "scalability", "design patterns"],
     verbs: ["built", "designed", "developed", "implemented", "optimized", "automated", "architected", "debugged", "deployed", "refactored"],
-    summaryDesc: "Leads with years of experience and core technical strengths (languages, systems), one measurable engineering outcome (performance, scale, or delivery speed), not soft skills."
+    summaryDesc: "Leads with years of experience and core technical strengths (languages, systems), one measurable engineering outcome (performance, scale, or delivery speed), not soft skills.",
+    fourLineSummary: [
+      "Software Development Engineer with solid foundation in scalable software systems, algorithms, and full-stack development.",
+      "Proficient in modern web frameworks, RESTful API architecture, Git workflows, and automated testing.",
+      "Track record of shipping production-grade features, optimizing execution latency, and improving system reliability.",
+      "Dedicated to clean architecture, collaborative agile sprints, and high-velocity engineering excellence."
+    ]
   },
   backend: {
     name: "Backend Developer",
@@ -1378,7 +1384,13 @@ const ATS_ROLE_PRESETS = {
     mustHave: ["rest api", "database design", "sql", "node.js", "python", "java", "microservices", "authentication", "api integration", "server-side logic", "caching", "docker"],
     niceToHave: ["graphql", "message queues", "redis", "kafka", "load balancing", "kubernetes"],
     verbs: ["built", "architected", "optimized", "integrated", "scaled", "deployed", "engineered", "automated"],
-    summaryDesc: "Emphasizes systems the candidate has built end-to-end and a concrete scale/performance number (requests/sec, latency reduction, uptime)."
+    summaryDesc: "Emphasizes systems the candidate has built end-to-end and a concrete scale/performance number (requests/sec, latency reduction, uptime).",
+    fourLineSummary: [
+      "Backend Software Engineer specializing in distributed system design, microservices, and secure API architectures.",
+      "Expertise in relational & NoSQL databases, caching layers (Redis), and asynchronous message brokers.",
+      "Proven success optimizing database queries, reducing API response times by 30%+, and scaling server throughput.",
+      "Committed to zero-downtime deployments, robust automated test coverage, and enterprise cloud reliability."
+    ]
   },
   java: {
     name: "Java Developer",
@@ -1386,15 +1398,27 @@ const ATS_ROLE_PRESETS = {
     mustHave: ["java", "spring boot", "spring framework", "hibernate", "rest api", "multithreading", "collections", "jvm", "maven", "microservices", "sql", "junit"],
     niceToHave: ["kafka", "docker", "kubernetes", "aws", "design patterns", "oop"],
     verbs: ["developed", "implemented", "optimized", "engineered", "built", "migrated", "debugged"],
-    summaryDesc: "Names the Java ecosystem stack explicitly (Spring, Hibernate, Maven) rather than just \"Java\" alone, since ecosystem terms are what most Java job descriptions actually filter on."
+    summaryDesc: "Names the Java ecosystem stack explicitly (Spring, Hibernate, Maven) rather than just \"Java\" alone, since ecosystem terms are what most Java job descriptions actually filter on.",
+    fourLineSummary: [
+      "Core Java & Spring Boot Developer with deep expertise in enterprise backend services and multithreaded systems.",
+      "Comprehensive mastery of Spring Cloud, Hibernate ORM, Maven/Gradle build systems, and JVM memory profiling.",
+      "Demonstrated ability to refactor legacy monoliths into resilient, high-concurrency microservices with JUnit test suites.",
+      "Eager to architect robust enterprise solutions adhering to strict SOLID design patterns and clean code principles."
+    ]
   },
   marketing: {
     name: "Marketing Specialist",
-    titles: ["marketing executive", "marketing associate", "digital marketing specialist", "marketing specialist"],
+    titles: ["marketing executive", "marketing associate", "digital marketing specialist", "marketing specialist", "growth marketer"],
     mustHave: ["seo", "content marketing", "social media marketing", "campaign management", "google analytics", "brand strategy", "email marketing", "market research", "a/b testing", "roi", "lead generation"],
     niceToHave: ["google ads", "meta ads manager", "crm", "marketing automation", "copywriting"],
     verbs: ["launched", "grew", "increased", "managed", "executed", "optimized", "drove", "generated"],
-    summaryDesc: "Leads with a quantified growth or campaign-performance result (traffic %, conversion rate, audience growth) rather than a list of responsibilities."
+    summaryDesc: "Leads with a quantified growth or campaign-performance result (traffic %, conversion rate, audience growth) rather than a list of responsibilities.",
+    fourLineSummary: [
+      "Results-oriented Digital Marketing Specialist skilled in multi-channel user acquisition, SEO, and brand storytelling.",
+      "Proficient in Google Analytics, content strategy, email marketing workflows, and conversion rate optimization (CRO).",
+      "Proven history of driving 35%+ organic traffic growth, scaling inbound leads, and optimizing marketing ROI.",
+      "Focused on data-driven growth experiments, high-converting creative messaging, and customer lifecycle retention."
+    ]
   },
   sales: {
     name: "Sales Representative",
@@ -1402,7 +1426,13 @@ const ATS_ROLE_PRESETS = {
     mustHave: ["lead generation", "client relationship management", "negotiation", "sales pipeline", "crm", "cold calling", "quota attainment", "prospecting", "closing deals", "revenue growth"],
     niceToHave: ["salesforce", "b2b sales", "account management", "upselling"],
     verbs: ["closed", "generated", "exceeded", "negotiated", "managed", "grew", "secured", "achieved"],
-    summaryDesc: "Leads with quota attainment or revenue figures explicitly (e.g. \"achieved 120% of quota\") -- this is the single highest-signal line for sales resumes across every source reviewed."
+    summaryDesc: "Leads with quota attainment or revenue figures explicitly (e.g. \"achieved 120% of quota\") -- this is the single highest-signal line for sales resumes across every source reviewed.",
+    fourLineSummary: [
+      "High-energy Business Development and Sales Executive with proven track record of pipeline expansion and deal closure.",
+      "Skilled in CRM pipeline management, B2B consultative selling, cold prospecting, and executive stakeholder negotiation.",
+      "Consistently achieved and exceeded sales quotas by 115%+, expanding regional market reach and client contract sizes.",
+      "Passionate about building enduring customer partnerships, client retention, and accelerating top-line revenue."
+    ]
   },
   customer_care: {
     name: "Customer Care Operator",
@@ -1410,7 +1440,13 @@ const ATS_ROLE_PRESETS = {
     mustHave: ["customer support", "query resolution", "sla compliance", "crm", "escalation handling", "communication skills", "ticketing system", "customer satisfaction", "chat support", "email support"],
     niceToHave: ["zendesk", "freshdesk", "salesforce service cloud", "multichannel support"],
     verbs: ["resolved", "handled", "assisted", "managed", "responded", "improved", "maintained"],
-    summaryDesc: "Leads with a resolution-rate, response-time, or CSAT figure if available; otherwise volume handled (e.g. tickets/day) is the strongest available signal."
+    summaryDesc: "Leads with a resolution-rate, response-time, or CSAT figure if available; otherwise volume handled (e.g. tickets/day) is the strongest available signal.",
+    fourLineSummary: [
+      "Empathetic Customer Support Specialist dedicated to providing first-contact resolution and exceptional user experiences.",
+      "Experienced managing ticketing workflows (Zendesk, Freshdesk, CRM), real-time live chat, and critical escalation triage.",
+      "Maintained 96%+ Customer Satisfaction (CSAT) rating while handling 60+ daily queries under strict SLA guidelines.",
+      "Committed to active customer listening, clear technical communication, and continuous support process improvement."
+    ]
   },
   default: {
     name: "Default / General",
@@ -1418,7 +1454,13 @@ const ATS_ROLE_PRESETS = {
     mustHave: ["communication", "teamwork", "problem solving", "time management", "documentation", "attention to detail"],
     niceToHave: ["project management", "leadership", "adaptability", "microsoft office"],
     verbs: ["managed", "coordinated", "assisted", "supported", "organized", "completed"],
-    summaryDesc: "Used when no specific role is selected, or for early-career profiles without a clear target yet -- scoring leans more heavily on formatting, achievement quantification, and section completeness."
+    summaryDesc: "Used when no specific role is selected, or for early-career profiles without a clear target yet -- scoring leans more heavily on formatting, achievement quantification, and section completeness.",
+    fourLineSummary: [
+      "Adaptable, detail-oriented professional with demonstrated competence in project coordination and team execution.",
+      "Skilled in cross-functional communication, process organization, research analysis, and technical documentation.",
+      "Proven record of delivering projects on schedule, resolving complex challenges, and elevating operational quality.",
+      "Committed to continuous professional growth, agile teamwork, and contributing immediate value to company objectives."
+    ]
   }
 };
 
@@ -1726,6 +1768,51 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     missingKeywords,
     suggestions,
     flags
+  };
+}
+
+/**
+ * Dedicated 4-Line Summary Diagnostic & Role Recommendation Engine
+ * Analyzes candidate's summary text against target role standards.
+ */
+function analyzeSummaryFourLines(candidateSummary, roleKey) {
+  const preset = ATS_ROLE_PRESETS[roleKey] || ATS_ROLE_PRESETS.default;
+  const cleanSummary = (candidateSummary || "").trim();
+  const sentences = cleanSummary.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 10);
+  const wordCount = cleanSummary ? cleanSummary.split(/\s+/).length : 0;
+
+  // Criteria checks
+  const hasSeniority = /\b(years|experienced|senior|junior|lead|graduate|student|intern|engineer|developer|specialist)\b/i.test(cleanSummary);
+  const hasTechOrStack = preset.mustHave.some(kw => new RegExp('\\b' + kw.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'i').test(cleanSummary));
+  const hasMetrics = /\b(\d+|%|\$|thousand|million|reduced|increased|improved|scaled|growth)\b/i.test(cleanSummary);
+  const hasValueProp = /\b(passionate|dedicated|seeking|aiming|committed|focus|collaborative)\b/i.test(cleanSummary);
+
+  let qualityScore = 0;
+  if (hasSeniority) qualityScore += 25;
+  if (hasTechOrStack) qualityScore += 30;
+  if (hasMetrics) qualityScore += 25;
+  if (hasValueProp) qualityScore += 20;
+
+  const lineCountAssessment = sentences.length >= 3 && sentences.length <= 5 ? "Optimal (3-5 lines)" : sentences.length < 3 ? "Too brief (< 3 lines)" : "Too verbose (> 5 lines)";
+
+  return {
+    qualityScore: Math.min(100, qualityScore),
+    detectedSummary: cleanSummary,
+    sentenceCount: sentences.length,
+    wordCount,
+    lineCountAssessment,
+    checks: {
+      hasSeniority,
+      hasTechOrStack,
+      hasMetrics,
+      hasValueProp
+    },
+    idealSummary: preset.fourLineSummary || [
+      "Target role headline emphasizing years of experience and core domain focus.",
+      "Primary technical stack and methodology highlights aligned with the target job.",
+      "Quantifiable engineering or business achievement with measurable outcome metrics.",
+      "Forward-looking commitment to engineering excellence, scalability, and teamwork."
+    ]
   };
 }
 

@@ -284,9 +284,13 @@ async function handleDirectLogin() {
   }
 
   setLoginStatus("Connecting and decrypting profile...", "warn");
+  // Clear any stale tokens or cached empty profiles
+  await new Promise((r) =>
+    chrome.storage.local.remove(["jobxapplyToken", "jobxapplyProfile", "jobxapplyProfiles", "jobxapplyState"], r)
+  );
   await new Promise((r) => chrome.storage.local.set({ jobxapplyPasscode: passcode }, r));
 
-  chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
+  chrome.runtime.sendMessage({ type: "jobxapply:getProfile", force: true }, async (res) => {
     if (chrome.runtime.lastError) {
       setLoginStatus("Sync error: " + chrome.runtime.lastError.message, "error");
       return;

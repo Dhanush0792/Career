@@ -252,7 +252,14 @@ function handleGoogleLogin() {
   
   const currentParams = new URLSearchParams(window.location.search);
   const source = currentParams.get('source') || currentParams.get('origin') || '';
-  const callbackUrl = window.location.origin + '/auth-callback.html' + (source ? `?source=${encodeURIComponent(source)}` : '');
+  const nextTarget = currentParams.get('next') || '';
+  if (nextTarget) {
+    sessionStorage.setItem('jxa_auth_next', nextTarget);
+  }
+  let queryPairs = [];
+  if (source) queryPairs.push(`source=${encodeURIComponent(source)}`);
+  if (nextTarget) queryPairs.push(`next=${encodeURIComponent(nextTarget)}`);
+  const callbackUrl = window.location.origin + '/auth-callback.html' + (queryPairs.length ? `?${queryPairs.join('&')}` : '');
   
   supabaseClient.auth.signInWithOAuth({
     provider: 'google',
@@ -308,6 +315,13 @@ if (logoutReason && logoutReason !== 'unauthenticated') {
     title.style.color = '#2FDDC4';
     title.textContent = 'Signed Out';
     desc.textContent = 'You have successfully signed out.';
+    box.style.display = 'block';
+  } else if (logoutReason === 'ats_fix') {
+    box.style.borderColor = 'rgba(0, 243, 255, 0.4)';
+    box.style.background = 'rgba(0, 243, 255, 0.08)';
+    title.style.color = '#00f3ff';
+    title.textContent = 'ATS Resume Ready for Optimization';
+    desc.textContent = 'Sign up free to auto-populate your parsed resume in our live ATS Builder and download your verified PDF.';
     box.style.display = 'block';
   }
 }

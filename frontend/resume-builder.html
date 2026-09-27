@@ -1325,7 +1325,37 @@
       const mode = urlParams.get('mode');
       const hasSavedResume = activeUserProfile && (activeUserProfile.resume || activeUserProfile.summary || activeUserProfile.targetRole);
 
-      if (mode === 'edit' || (hasSavedResume && mode !== 'new')) {
+      // Check if arriving from ATS Checker 1-click import transfer
+      const stagedImport = sessionStorage.getItem("jxa_import_draft");
+      if (stagedImport) {
+        try {
+          const importData = JSON.parse(stagedImport);
+          if (importData.recommendedSummary && document.getElementById("res-summary")) {
+            document.getElementById("res-summary").value = importData.recommendedSummary;
+          }
+          if (importData.role && document.getElementById("res-title")) {
+            const titleEl = document.getElementById("res-title");
+            let exists = false;
+            for (const opt of titleEl.options) {
+              if (opt.value === importData.role) exists = true;
+            }
+            if (!exists && importData.role.trim()) {
+              titleEl.add(new Option(importData.role, importData.role, true, true));
+            }
+            titleEl.value = importData.role;
+          }
+          if (importData.missingKeywords && importData.missingKeywords.length > 0 && document.getElementById("res-skills")) {
+            const currentSkills = document.getElementById("res-skills").value;
+            const toAdd = importData.missingKeywords.slice(0, 5).join(", ");
+            document.getElementById("res-skills").value = currentSkills ? `${currentSkills}, ${toAdd}` : toAdd;
+          }
+          sessionStorage.removeItem("jxa_import_draft");
+          updatePreview();
+          showToast("Imported ATS diagnostic & keywords into your resume!", "success");
+        } catch(e) {}
+      }
+
+      if (mode === 'edit' || mode === 'import' || (hasSavedResume && mode !== 'new')) {
         showEditorWorkspace(false);
       } else {
         showIntakeScreen();
