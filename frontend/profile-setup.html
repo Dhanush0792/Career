@@ -1117,6 +1117,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (allPersonas[currentPersonaId]) populateFormFields(allPersonas[currentPersonaId]);
     }
   } catch (e) {
+    console.error("Error loading profile:", e);
+  }
   toggleEmploymentFields();
 
   // Support direct deep-linking to specific tabs via URL hash (e.g. #tab-experience)

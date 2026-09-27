@@ -163,12 +163,9 @@ function requireAuth() {
           invalidReason = 'expired';
         } else {
           isValidToken = true;
-          const ADMIN_EMAILS = ['hidhanush07@gmail.com', 'dhanushsiddilingam@gmail.com', 'admin@jobxapply.app'];
-          const userEmail = (payload.email || localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
-          const isAdminByEmail = ADMIN_EMAILS.includes(userEmail);
           const storedRole = localStorage.getItem('jxa_role');
 
-          if (isAdminByEmail || storedRole === 'admin') {
+          if (storedRole === 'admin') {
             tokenRole = 'admin';
           } else if (payload.role && payload.role !== 'authenticated') {
             tokenRole = payload.role;
@@ -184,14 +181,7 @@ function requireAuth() {
       } else {
         // Opaque token / fallback token
         isValidToken = true;
-        const ADMIN_EMAILS = ['hidhanush07@gmail.com', 'dhanushsiddilingam@gmail.com', 'admin@jobxapply.app'];
-        const userEmail = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
-        if (ADMIN_EMAILS.includes(userEmail) || localStorage.getItem('jxa_role') === 'admin') {
-          tokenRole = 'admin';
-          localStorage.setItem('jxa_role', 'admin');
-        } else {
-          tokenRole = localStorage.getItem('jxa_role') || 'user';
-        }
+        tokenRole = localStorage.getItem('jxa_role') || 'user';
         recordUserActivity();
       }
     }
@@ -977,8 +967,7 @@ const NAV_ITEMS = [
 function renderNav(container, activePage) {
   const token = localStorage.getItem('jxa_token');
   const role = localStorage.getItem('jxa_role');
-  const ADMIN_EMAILS = ['hidhanush07@gmail.com', 'dhanushsiddilingam@gmail.com', 'admin@jobxapply.app'];
-  const isAdmin = role === 'admin' || ADMIN_EMAILS.includes(email);
+  const isAdmin = role === 'admin';
 
   let links = NAV_ITEMS.map(item => {
     let href = item.href;

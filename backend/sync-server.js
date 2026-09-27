@@ -1627,10 +1627,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && urlObj.pathname === "/api/admin/database/backup") {
     const backup = await db.getDatabaseBackup();
     logAdminActivity(`Generated full database snapshot backup`);
+    const allowedOrigin = res.getHeader("Access-Control-Allow-Origin") || (req.headers.origin || "null");
     res.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8",
       "Content-Disposition": `attachment; filename="jobxapply-backup-${Date.now()}.json"`,
-      "Access-Control-Allow-Origin": "*"
+      "Access-Control-Allow-Origin": allowedOrigin,
+      "Access-Control-Allow-Credentials": "true"
     });
     res.end(JSON.stringify(backup, null, 2));
     return;

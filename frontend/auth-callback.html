@@ -95,12 +95,8 @@ async function processSession(token, userEmail = "") {
     localStorage.setItem("jxa_last_active", String(Date.now()));
     if (email) localStorage.setItem("jxa_user_email", email);
 
-    // Immediate client-side check for super-admin / admin emails
-    const ADMIN_EMAILS = ["hidhanush07@gmail.com", "dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
-    let isAdmin = ADMIN_EMAILS.includes(email);
-    if (isAdmin) {
-      localStorage.setItem("jxa_role", "admin");
-    }
+    // Initial admin check based on previously verified role if session already known
+    let isAdmin = localStorage.getItem("jxa_role") === "admin";
 
     // Pair with browser extension via content script
     try {

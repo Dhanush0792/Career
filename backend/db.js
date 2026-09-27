@@ -187,7 +187,9 @@ function saveTelemetry(data) {
 }
 
 function getUserFilePath(userId) {
-  return path.join(USERS_DIR, `${userId}.json`);
+  const safeId = String(userId || "").replace(/[^a-zA-Z0-9_\-]/g, "");
+  if (!safeId) throw new Error("Invalid User ID");
+  return path.join(USERS_DIR, `${safeId}.json`);
 }
 
 function loadUserData(userId) {

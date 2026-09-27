@@ -95,22 +95,20 @@ async function verifyAdminAccess(onSuccess) {
     }
     return;
   }
-  var ADMIN_EMAILS = ['hidhanush07@gmail.com', 'dhanushsiddilingam@gmail.com', 'admin@jobxapply.app'];
-  var userEmail = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
-  var isAdminByEmail = ADMIN_EMAILS.includes(userEmail);
+  var storedRole = localStorage.getItem('jxa_role');
 
   try {
     var res = await adminFetch("/profile");
     if (res.ok) {
       var data = await res.json();
       var role = data.role || (data.user && data.user.role);
-      if (role === "admin" || isAdminByEmail) {
+      if (role === "admin") {
         localStorage.setItem("jxa_role", "admin");
         if (typeof onSuccess === "function") onSuccess();
         return;
       }
-    } else if (isAdminByEmail || localStorage.getItem('jxa_role') === 'admin') {
-      // Backend temporarily unreachable or syncing, but client holds verified admin email/role
+    } else if (storedRole === 'admin') {
+      // Backend temporarily unreachable or syncing, but client holds verified admin role
       if (typeof onSuccess === "function") onSuccess();
       return;
     }
@@ -120,7 +118,7 @@ async function verifyAdminAccess(onSuccess) {
       window.location.href = 'login.html';
     }
   } catch (e) {
-    if (isAdminByEmail || localStorage.getItem('jxa_role') === 'admin') {
+    if (storedRole === 'admin') {
       if (typeof onSuccess === "function") onSuccess();
       return;
     }
