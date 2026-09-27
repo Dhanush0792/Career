@@ -168,6 +168,32 @@
     </div>
   </div>
 
+  <!-- Rate Limiter & Security Shield Inspector -->
+  <div class="card">
+    <div class="card-header">
+      <span>Rate Limiters &amp; Security Defense Active Tracks</span>
+      <button class="btn-submit" style="padding:4px 10px;font-size:10px;" onclick="loadRateLimits()">Refresh Limits</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--alert);margin-bottom:8px;text-transform:uppercase;">
+          Monitored IP Addresses (Last 60s)
+        </div>
+        <div id="ip-limits-list" style="font-family:var(--mono);font-size:11px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+          <div style="color:var(--muted);">Loading IP tracks...</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--alert);margin-bottom:8px;text-transform:uppercase;">
+          Temporarily Locked Accounts
+        </div>
+        <div id="locked-accounts-list" style="font-family:var(--mono);font-size:11px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+          <div style="color:var(--muted);">Loading locked accounts...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Real Time Error Stream -->
   <div class="card">
     <div class="card-header">
@@ -182,7 +208,72 @@
 
 <script>
   renderAdminNav('system.html');
-  verifyAdminAccess(loadSystemHealth);
+  verifyAdminAccess(() => {
+    loadSystemHealth();
+    loadRateLimits();
+  });
+
+  async function loadRateLimits() {
+    try {
+      const res = await adminFetch('/admin/rate-limits');
+      if (res.ok) {
+        const data = await res.json();
+        const ipBox = document.getElementById('ip-limits-list');
+        ipBox.innerHTML = '';
+        const ips = data.activeIps || [];
+        if (ips.length === 0) {
+          ipBox.innerHTML = '<div style="color:var(--success);padding:6px;">All IP request velocities are normal. No abusive floods.</div>';
+        } else {
+          ips.forEach(item => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:4px;border:1px solid rgba(255,255,255,0.06);';
+            row.innerHTML = `
+              <span>${escHtml(item.ip)} (${item.attempts} reqs/min) ${item.isBlocked ? '<span style="color:var(--danger);font-weight:700;">[THROTTLED]</span>' : ''}</span>
+              <button onclick="unblockRateLimit({ ip: '${escHtml(item.ip)}' })" style="background:none;border:1px solid var(--alert);color:var(--alert);font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;">Reset</button>
+            `;
+            ipBox.appendChild(row);
+          });
+        }
+
+        const accBox = document.getElementById('locked-accounts-list');
+        accBox.innerHTML = '';
+        const accs = data.lockedAccounts || [];
+        if (accs.length === 0) {
+          accBox.innerHTML = '<div style="color:var(--success);padding:6px;">No user accounts currently locked out.</div>';
+        } else {
+          accs.forEach(item => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:rgba(245,90,35,0.08);padding:6px 10px;border-radius:4px;border:1px solid rgba(245,90,35,0.2);';
+            row.innerHTML = `
+              <span>${escHtml(item.email)} (${item.remainingSec}s left)</span>
+              <button onclick="unblockRateLimit({ email: '${escHtml(item.email)}' })" style="background:none;border:1px solid var(--success);color:var(--success);font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;">Unlock</button>
+            `;
+            accBox.appendChild(row);
+          });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function unblockRateLimit(payload) {
+    try {
+      const res = await adminFetch('/admin/rate-limits/unblock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showToast('Rate limit reset successfully', 'success');
+        loadRateLimits();
+      } else {
+        showToast('Failed to reset rate limit', 'error');
+      }
+    } catch (e) {
+      showToast('Error resetting rate limit', 'error');
+    }
+  }
 
   async function loadSystemHealth() {
     try {
