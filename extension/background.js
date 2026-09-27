@@ -1,4 +1,5 @@
 import { getPortalRule, PORTAL_MAPS, generatePasscodeHash, decryptProfileData, encryptProfileData } from "./shared.js";
+import { MOCK_PROFILE_DATA } from "./mock-profile-data.js";
 
 const SYNC_API = "https://jobxapply-backend.onrender.com/api";
 
@@ -84,37 +85,11 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Legacy setup
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(["jobxapplyProfiles"], (result) => {
-    if (!result.jobxapplyProfiles) {
-      const defaultProfile = {
-        id: "default",
-        profileName: "Default Profile",
-        fullName: "",
-        firstName: "",
-        lastName: "",
-        age: 0,
-        dob: "",
-        fatherName: "",
-        motherName: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        state: "",
-        country: "",
-        zip: "",
-        headline: "",
-        summary: "",
-        education: "",
-        college: "",
-        experience: "",
-        skills: "",
-        linkedin: "",
-        github: "",
-        portfolio: "",
-        resumeDraft: "",
-        targetRole: ""
-      };
+  chrome.storage.local.get(["jobxapplyProfiles", "jobxapplyProfile"], (result) => {
+    const existing = result.jobxapplyProfile || {};
+    const hasData = existing.fullName || existing.email;
+    if (!result.jobxapplyProfiles || !hasData) {
+      const defaultProfile = { ...MOCK_PROFILE_DATA };
       chrome.storage.local.set({
         jobxapplyActiveProfileId: "default",
         jobxapplyProfile: defaultProfile,
@@ -560,6 +535,54 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((err) => {
         sendResponse({ ok: false, error: err.message });
       });
+    return true;
+  }
+  if (message?.type === "jobxapply:loadMockProfile") {
+    const mockProfile = { ...MOCK_PROFILE_DATA };
+    chrome.storage.local.set({
+      jobxapplyActiveProfileId: "default",
+      jobxapplyProfile: mockProfile,
+      jobxapplyProfiles: {
+        "default": mockProfile
+      }
+    }, () => {
+      chrome.runtime.sendMessage({ type: "jobxapply:profileUpdated" }).catch(() => {});
+      sendResponse({ ok: true, profile: mockProfile });
+    });
+    return true;
+  }
+  if (message?.type === "jobxapply:syncToWebTab") {
+    chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], async (res) => {
+      let profile = res.jobxapplyProfiles?.[res.jobxapplyActiveProfileId] || res.jobxapplyProfile || MOCK_PROFILE_DATA;
+      try {
+        const tabs = await chrome.tabs.query({});
+        let targetTab = null;
+        for (const tab of tabs) {
+          if (!tab.url) continue;
+          const u = tab.url.toLowerCase();
+          if (u.includes("profile-setup.html") || u.includes("jobxapply.netlify.app") || u.includes("localhost:") || u.includes("127.0.0.1:")) {
+            targetTab = tab;
+            break;
+          }
+        }
+        if (targetTab?.id) {
+          chrome.tabs.sendMessage(targetTab.id, {
+            type: "jobxapply:receiveProfileFromExtension",
+            profile: profile
+          }, (tabRes) => {
+            if (chrome.runtime.lastError) {
+              sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+            } else {
+              sendResponse({ ok: true, profile, webRes: tabRes });
+            }
+          });
+        } else {
+          sendResponse({ ok: false, error: "No JobXApply profile tab found open. Open Profile Setup on the website first." });
+        }
+      } catch (err) {
+        sendResponse({ ok: false, error: err.message });
+      }
+    });
     return true;
   }
 });

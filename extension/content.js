@@ -1,45 +1,51 @@
 // Enhanced content script: heuristic field matching and floating autofill button
 
 const FIELD_ALIASES = {
-  fullname: ["fullname", "full name", "name"],
-  firstname: ["first", "firstname", "given name"],
-  lastname: ["last", "lastname", "surname", "family name"],
-  age: ["age"],
-  dob: ["dob", "date of birth", "birthdate", "birthday"],
-  fathername: ["father's name", "father name", "guardian name", "father"],
-  mothername: ["mother's name", "mother name", "mother"],
-  email: ["email", "email address", "e-mail"],
-  phone: ["phone", "phone number", "mobile", "mobile number", "telephone"],
-  phonecode: ["phone code", "country code", "country/region code", "dial code", "calling code", "phone prefix"],
-  address: ["address", "street", "address1"],
-  city: ["city", "town"],
-  state: ["state", "province", "region"],
-  country: ["country"],
-  zip: ["zip", "postal", "postal code", "zipcode"],
-  headline: ["headline", "title"],
-  summary: ["summary", "about", "about me", "bio", "description"],
-  education: ["education", "qualifications", "degree"],
-  college: ["college", "university", "institution"],
-  experience: ["experience", "work experience", "employment"],
-  skills: ["skills", "skillset"],
-  linkedin: ["linkedin", "linked in"],
-  github: ["github", "git hub"],
-  portfolio: ["portfolio", "website", "site"],
-  resume: ["resume", "cv"],
-  targetrole: ["role", "target role", "position", "designation"],
-  portalpassword: ["choose password", "password", "create password", "new password", "portal password"],
-  alternativeemail: ["alternative email", "alt email", "alternate email", "secondary email"],
-  pincode: ["pincode", "pin code", "postal code", "zip", "zip code"],
-  maritalstatus: ["marital status", "marital", "marriage status", "single/married"],
-  employmentstatus: ["employment status", "employment", "job status", "current status"],
-  expectedsalary: ["expected salary", "expected package", "salary expectation", "expected ctq", "expected ctc"],
-  handicapped: ["handicapped", "physically handicapped", "disability", "disabled", "special ability"],
-  healthissues: ["health issues", "medical history", "health status", "medical conditions"],
+  fullname: ["fullname", "full name", "applicant name", "candidate name", "candidate's name", "your name", "full_name", "applicant_name", "cand_name", "complete name", "name"],
+  firstname: ["first", "firstname", "given name", "first name", "fname", "first_name", "forename"],
+  middlename: ["middle", "middlename", "middle name", "mname", "middle_name"],
+  lastname: ["last", "lastname", "surname", "family name", "last name", "lname", "last_name"],
+  age: ["age", "current age", "age in years", "applicant age"],
+  dob: ["dob", "date of birth", "birthdate", "birthday", "birth date", "d.o.b", "d.o.b.", "date_of_birth"],
+  dob_day: ["birth day", "dob day", "day of birth", "day (dob)", "birthdate day", "dd", "dob_dd", "dob_day"],
+  dob_month: ["birth month", "dob month", "month of birth", "month (dob)", "birthdate month", "mm", "dob_mm", "dob_month"],
+  dob_year: ["birth year", "dob year", "year of birth", "year (dob)", "birthdate year", "yyyy", "dob_yyyy", "dob_year"],
+  gender: ["gender", "sex"],
+  fathername: ["father's name", "father name", "guardian name", "father", "parent name", "fathers name", "father_name"],
+  mothername: ["mother's name", "mother name", "mother", "mothers name", "mother_name"],
+  email: ["email", "email address", "e-mail", "e-mail address", "user email", "primary email", "email_address", "cand_email", "applicant email"],
+  phone: ["phone", "phone number", "mobile", "mobile number", "telephone", "cell", "cell phone", "contact number", "primary phone", "cand_phone", "applicant phone", "contact no", "mobile no"],
+  phonecode: ["phone code", "country code", "country/region code", "dial code", "calling code", "phone prefix", "isd code", "dialling code", "std code"],
+  address: ["address", "street", "address1", "address line 1", "residential address", "permanent address", "current address", "street address", "line 1"],
+  city: ["city", "town", "district", "current city"],
+  state: ["state", "province", "region", "state/province", "state / province"],
+  country: ["country", "nation", "citizenship country", "country/region"],
+  zip: ["zip", "postal", "postal code", "zipcode", "zip code", "pin", "pincode", "pin code", "area code"],
+  headline: ["headline", "professional headline", "title", "job title", "profile title"],
+  summary: ["summary", "about", "about me", "bio", "description", "profile summary", "personal summary", "executive summary", "career objective", "objective"],
+  education: ["education", "qualifications", "degree", "highest qualification", "academic background"],
+  college: ["college", "university", "institution", "institute name", "school/university", "college/university"],
+  experience: ["experience", "work experience", "employment", "professional experience", "past experience"],
+  skills: ["skills", "skillset", "key skills", "technical skills", "core skills", "competencies"],
+  linkedin: ["linkedin", "linked in", "linkedin profile", "linkedin url", "linkedin link"],
+  github: ["github", "git hub", "github url", "github profile", "github link"],
+  portfolio: ["portfolio", "website", "site", "personal website", "portfolio url", "portfolio link", "web site"],
+  resume: ["resume", "cv", "curriculum vitae", "upload resume", "attach resume", "upload cv"],
+  targetrole: ["role", "target role", "position", "designation", "desired role", "applied position", "job profile", "applying for"],
+  portalpassword: ["choose password", "password", "create password", "new password", "portal password", "account password"],
+  alternativeemail: ["alternative email", "alt email", "alternate email", "secondary email", "alt_email"],
+  pincode: ["pincode", "pin code", "postal code", "zip", "zip code", "area pincode"],
+  maritalstatus: ["marital status", "marital", "marriage status", "single/married", "marital_status"],
+  employmentstatus: ["employment status", "employment", "job status", "current status", "current employment status", "work status"],
+  expectedsalary: ["expected salary", "expected package", "salary expectation", "expected ctq", "expected ctc", "desired salary", "expected remuneration"],
+  currentsalary: ["current salary", "current package", "current ctc", "present salary", "present ctc"],
+  handicapped: ["handicapped", "physically handicapped", "disability", "disabled", "special ability", "pwd", "person with disability"],
+  healthissues: ["health issues", "medical history", "health status", "medical conditions", "major illness"],
   targetroles: ["target roles", "preferred roles", "desired roles"],
-  coverletterdraft: ["cover letter", "letter"],
-  otherdocuments: ["other documents", "supporting documents", "additional documents"],
-  noticeperiod: ["notice period", "notice", "days to join", "joining time"],
-  totalexperience: ["total experience", "years of experience", "work experience", "experience in years", "experience (years)"],
+  coverletterdraft: ["cover letter", "letter", "letter of intent", "cover_letter"],
+  otherdocuments: ["other documents", "supporting documents", "additional documents", "certificates"],
+  noticeperiod: ["notice period", "notice", "days to join", "joining time", "availability to join", "notice days"],
+  totalexperience: ["total experience", "years of experience", "work experience", "experience in years", "experience (years)", "total work experience", "relevant experience"],
   
   // Behavioral & Application Q&A Vault
   q_why_hire: ["why should we hire you", "why hire", "why are you a good fit", "why fit for this role", "what makes you a good fit", "why you are the best candidate", "why should you be considered", "why do you think you are suitable"],
@@ -115,14 +121,37 @@ function isJobPage() {
     "microsoft.com", "stripe.com", "paypal.com", "facebook.com", "instagram.com",
     "twitter.com", "x.com", "youtube.com", "wikipedia.org", "netflix.com",
     "amazon.com", "gmail.com", "outlook.com", "yahoo.com",
-    "localhost", "127.0.0.1", "onrender.com", "jobxapply", "careerbridge"
+    "onrender.com"
   ];
   
   if (BLACKLISTED.some(d => host.includes(d))) {
     return false;
   }
   
-  return KNOWN_PORTALS.some(p => host.includes(p));
+  // Whitelisted Tier 1 & 2 portals
+  if (KNOWN_PORTALS.some(p => host.includes(p))) {
+    return true;
+  }
+
+  // Universal Heuristic: Detect application forms on ANY website
+  // Check for common career/job keywords in URL path or title
+  const pathname = location.pathname.toLowerCase();
+  const title = (document.title || "").toLowerCase();
+  const urlKeywords = ["job", "career", "apply", "opening", "vacancy", "recruit", "position", "candidate", "internship", "employment", "hire", "work-with-us", "portal", "registration", "sandbox"];
+  const isJobContext = urlKeywords.some(kw => pathname.includes(kw) || title.includes(kw));
+
+  // Count candidate input fields (excluding hidden/buttons)
+  const inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select"));
+  const visibleInputs = inputs.filter(el => {
+    const style = window.getComputedStyle(el);
+    return style.display !== "none" && style.visibility !== "hidden" && el.type !== "hidden";
+  });
+
+  // If page is in job context with at least 1 input, or arbitrary page with >= 3 candidate fields
+  if (isJobContext && visibleInputs.length >= 1) {
+    return true;
+  }
+  return visibleInputs.length >= 3;
 }
 
 function normalize(s) {
@@ -301,16 +330,25 @@ function setValueRaw(el, value) {
     el.blur();
     return true;
   }
-  // Standard text inputs
+  // Standard text, textarea, and numeric inputs
   el.focus();
   try {
-    el.value = value;
+    const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+    const descriptor = Object.getOwnPropertyDescriptor(proto, "value");
+    if (descriptor && descriptor.set) {
+      descriptor.set.call(el, value);
+    } else {
+      el.value = value;
+    }
   } catch (e) {
-    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value") || Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value");
-    descriptor?.set?.call(el, value);
+    try { el.value = value; } catch (err) {}
   }
-  el.dispatchEvent(new Event("input", { bubbles: true }));
-  el.dispatchEvent(new Event("change", { bubbles: true }));
+  // Dispatch complete synthetic event cascade to satisfy React, Angular, Vue, and vanilla DOM listeners
+  el.dispatchEvent(new Event("keydown", { bubbles: true, composed: true }));
+  el.dispatchEvent(new Event("keypress", { bubbles: true, composed: true }));
+  el.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+  el.dispatchEvent(new Event("keyup", { bubbles: true, composed: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
   el.blur();
   return true;
 }
@@ -521,6 +559,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     try {
       const meta = extractJobMetadata();
       sendResponse({ ok: true, metadata: meta });
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
+  if (message?.type === "jobxapply:receiveProfileFromExtension") {
+    try {
+      window.dispatchEvent(new CustomEvent("jobxapply:populateWebProfile", {
+        detail: { profile: message.profile }
+      }));
+      sendResponse({ ok: true });
     } catch (e) {
       sendResponse({ ok: false, error: e.message });
     }
@@ -1067,5 +1116,30 @@ function handleShareAuth(e) {
   }
 }
 window.addEventListener("jobxapply:shareAuth", handleShareAuth);
+
+// Listen for profile request from web page
+window.addEventListener("jobxapply:requestExtensionProfile", () => {
+  if (!checkContext()) return;
+  chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => {
+    if (chrome.runtime.lastError) return;
+    const profile = res?.profile || {};
+    window.dispatchEvent(new CustomEvent("jobxapply:populateWebProfile", {
+      detail: { profile }
+    }));
+  });
+});
+
+// Listen for profile save event from web page to store directly into extension
+window.addEventListener("jobxapply:saveWebProfileToExtension", (e) => {
+  if (!checkContext()) return;
+  const incoming = e.detail?.profile;
+  if (!incoming) return;
+  chrome.runtime.sendMessage({
+    type: "jobxapply:setProfile",
+    profile: incoming
+  }, () => {
+    if (chrome.runtime.lastError) {}
+  });
+});
 
 

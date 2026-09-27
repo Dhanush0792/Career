@@ -89,9 +89,16 @@ body::after {
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
-  <header class="header" style="margin-bottom:24px; border-bottom:1px solid var(--glass-border); padding-bottom:16px;">
-    <div style="font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px;">PROFILE CONFIGURATION</div>
-    <h1 class="page-title" style="margin:0; font-family:var(--display); font-size:32px; text-transform:uppercase; color:var(--white);">Master Profile Setup</h1>
+  <header class="header" style="margin-bottom:24px; border-bottom:1px solid var(--glass-border); padding-bottom:16px; display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px;">PROFILE CONFIGURATION</div>
+      <h1 class="page-title" style="margin:0; font-family:var(--display); font-size:32px; text-transform:uppercase; color:var(--white);">Master Profile Setup</h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:rgba(7,10,24,0.6); border:1px solid var(--glass-border); padding:8px 12px; color:var(--white); font-family:var(--mono); font-size:11px; border-radius:8px; outline:none; max-width:200px;"></select>
+      <button type="button" class="btn btn-secondary" onclick="requestProfileFromExtension()" style="font-size:10px; padding:8px 14px; border-color:rgba(47,221,196,0.4); color:#2fddc4;" title="Sync profile data directly from JobXApply extension">Sync from Extension</button>
+      <button type="button" class="btn btn-secondary" onclick="loadMockTestData()" style="font-size:10px; padding:8px 14px; border-color:rgba(91,79,232,0.4); color:#a59bf7;" title="Load all random mock details for testing portal autofill">Seed Test Data</button>
+    </div>
   </header>
 
   <div class="profile-grid">
@@ -1128,6 +1135,109 @@ document.addEventListener("DOMContentLoaded", async () => {
     const targetBtn = document.querySelectorAll('.tabs-nav button')[tabIndex];
     if (targetBtn) switchTab(hash, targetBtn);
   }
+});
+
+// ── Web & Extension Real-Time Profile Sync ─────────────────────────────────
+const TEST_MOCK_PROFILE = {
+  fullName: "Alex R. Morgan",
+  firstName: "Alex",
+  lastName: "Morgan",
+  dob: "1998-05-14",
+  phoneCode: "1",
+  phone: "5550192834",
+  email: "alex.morgan.dev@gmail.com",
+  alternativeEmail: "alex.morgan.work@outlook.com",
+  city: "San Francisco",
+  state: "California",
+  country: "United States",
+  pincode: "94107",
+  maritalStatus: "Single",
+  edu10_school: "Westfield High School",
+  edu10_board: "State Board of Secondary Education",
+  edu10_year: "2014",
+  edu10_cgpa: "9.6 CGPA",
+  edu12_school: "Westfield Senior Secondary College",
+  edu12_board: "State Higher Secondary Board",
+  edu12_year: "2016",
+  edu12_cgpa: "94.5%",
+  eduGrad_college: "University of California, Berkeley",
+  eduGrad_degree: "Bachelor of Science",
+  eduGrad_stream: "Computer Science and Engineering",
+  eduGrad_year: "2020",
+  eduGrad_cgpa: "3.85 GPA",
+  eduGrad_pursuing: false,
+  eduPG_college: "Stanford University",
+  eduPG_degree: "Master of Science",
+  eduPG_stream: "Software Engineering & Distributed Systems",
+  eduPG_year: "2022",
+  eduPG_cgpa: "3.92 GPA",
+  eduPG_pursuing: false,
+  eduMasters_college: "Stanford University",
+  eduMasters_degree: "Master of Science",
+  eduMasters_stream: "Computer Science",
+  eduMasters_year: "2022",
+  eduMasters_cgpa: "3.92 GPA",
+  eduMasters_pursuing: false,
+  eduPhD_college: "Massachusetts Institute of Technology (Affiliate)",
+  eduPhD_degree: "Doctor of Philosophy (Hon. Candidate)",
+  eduPhD_stream: "Artificial Intelligence & Distributed Consensus",
+  eduPhD_year: "2026",
+  eduPhD_cgpa: "Honors",
+  eduPhD_pursuing: false,
+  employmentStatus: "Experienced",
+  expectedSalary: "$145,000 / year",
+  noticePeriod: "30",
+  totalExperience: "4",
+  targetRoles: "SDE, Full Stack Developer, Backend Developer, Frontend Developer",
+  headline: "Senior Full Stack Software Engineer | React, Node.js, TypeScript, Distributed Cloud Architecture",
+  skills: "JavaScript, TypeScript, React.js, Node.js, Python, PostgreSQL, MongoDB, Redis, Docker, Kubernetes, AWS, REST APIs, GraphQL, Git, CI/CD",
+  summary: "Results-driven Senior Full Stack Engineer with 4+ years of professional experience architecting scalable distributed systems and modern web applications. Proven track record leading product initiatives from concept to production, optimizing database queries by 45%, and building secure zero-knowledge encrypted applications.",
+  linkedin: "https://linkedin.com/in/alex-morgan-engineer",
+  github: "https://github.com/alexmorgan-dev",
+  portfolio: "https://alexmorgan-portfolio.io",
+  experience: `Senior Software Engineer @ TechMatrix Systems (2022 - Present)\n- Led frontend and backend architecture for enterprise SaaS platform serving 500k+ monthly active users using React, Node.js, and PostgreSQL.\n- Architected high-throughput microservices handling 25,000 requests per minute with Redis caching and distributed worker queues.\n- Reduced server latency by 42% through optimized database indexing and asynchronous batch processing.\n- Mentored 6 junior and mid-level software engineers across agile sprints and code review cycles.\n\nSoftware Engineer @ CloudWave Solutions (2020 - 2022)\n- Built and maintained customer-facing dashboards and billing integrations using React, Tailwind CSS, and Stripe API.\n- Implemented robust unit and integration testing pipelines with Jest and Playwright achieving 92% test coverage.\n- Collaborated cross-functionally with product managers and UX designers to roll out 12 major feature milestones on schedule.`,
+  resumeDraft: `ALEX R. MORGAN\nSan Francisco, CA | (555) 019-2834 | alex.morgan.dev@gmail.com\nLinkedIn: linkedin.com/in/alex-morgan-engineer | GitHub: github.com/alexmorgan-dev | Portfolio: alexmorgan-portfolio.io\n\nPROFESSIONAL SUMMARY\nSenior Full Stack Engineer with 4+ years of experience building mission-critical distributed systems and performant cloud web applications. Proficient in React, Node.js, TypeScript, Python, and cloud infrastructure.\n\nEDUCATION\nMaster of Science in Software Engineering - Stanford University (2022)\nBachelor of Science in Computer Science - University of California, Berkeley (2020)`,
+  coverLetterDraft: `Dear Hiring Team,\n\nI am writing to express my enthusiastic interest in the Software Engineering position. With over four years of experience designing and scaling web applications across high-growth technology companies, I have honed the technical expertise and leadership necessary to make an immediate impact on your team.\n\nSincerely,\nAlex R. Morgan`,
+  otherDocuments: "AWS Certified Solutions Architect (Associate), Certified Kubernetes Application Developer (CKAD)",
+  handicapped: "No",
+  healthIssues: "None. Fit for all employment conditions, on-site, hybrid, and remote responsibilities.",
+  q_why_hire: "You should hire me because I combine deep technical expertise across modern full-stack architectures with an owner's mindset. Over the past 4 years, I have repeatedly delivered high-uptime platforms, solved complex performance bottlenecks, and elevated team productivity through clear code design and proactive communication.",
+  q_why_company: "I am drawn to your company because of your high engineering standards, clear customer focus, and innovative approach to solving real-world challenges. Your mission and collaborative culture match exactly what I look for in an engineering organization.",
+  q_achievement: "My greatest professional achievement was architecting a zero-downtime database migration and caching layer for TechMatrix Systems. This overhaul handled over 25,000 requests per minute during a critical product surge, reduced P95 latency by 42%, and saved approximately $45,000 annually in cloud compute resources.",
+  q_challenge: "During a major release, an unpredicted third-party payment webhook latency caused intermittent checkout failures. I initiated an incident bridge, quickly implemented an idempotent queueing mechanism using Redis and exponential backoff retries, resolved the customer transactions, and established comprehensive automated monitors to prevent recurrence.",
+  q_strengths_weaknesses: "My core strengths include systems design, pragmatic problem-solving, and clean, maintainable code architecture. A continuous improvement area for me has been delegating earlier on large-scale tasks; I have actively refined this by establishing clear milestone reviews and pairing with team members early in the development sprint.",
+  q_leadership: "At TechMatrix Systems, I took initiative to establish an engineering onboarding playbook and weekly architectural review forum. I directly mentored 3 junior engineers who advanced into independent feature leads within six months, while standardizing our automated code quality checks.",
+  customSnippets: [
+    { id: "snip_relocation", title: "Willingness to Relocate", aliases: "relocate, relocation, willing to relocate, open to relocation", body: "Yes, I am fully open to relocating for this opportunity and can complete a smooth relocation within 30 days." },
+    { id: "snip_work_auth", title: "Work Authorization", aliases: "work authorization, legally authorized, sponsorship, visa, authorized to work", body: "I am legally authorized to work in the country and do not require employer visa sponsorship now or in the future." },
+    { id: "snip_remote_preference", title: "Remote / Hybrid Preference", aliases: "work arrangement, remote work, hybrid, on-site preference, remote or on-site", body: "I thrive in remote, hybrid, or on-site team environments and maintain dedicated home office infrastructure with high-speed fiber internet." },
+    { id: "snip_start_date", title: "Earliest Start Date", aliases: "start date, joining date, when can you start, availability, available from", body: "I can start within 2 to 3 weeks upon receipt of an offer, following completion of a standard handover period." }
+  ]
+};
+
+function loadMockTestData() {
+  populateFormFields(TEST_MOCK_PROFILE);
+  allPersonas[currentPersonaId] = extractCurrentFormProfile();
+  showToast("Mock test profile loaded successfully! Click 'Save Profile' to sync.", "success");
+  
+  // Forward to extension if installed
+  window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
+    detail: { profile: allPersonas[currentPersonaId] }
+  }));
+}
+
+function requestProfileFromExtension() {
+  showToast("Requesting profile from JobXApply extension...", "info");
+  window.dispatchEvent(new CustomEvent("jobxapply:requestExtensionProfile"));
+}
+
+window.addEventListener("jobxapply:populateWebProfile", (e) => {
+  const profile = e.detail?.profile;
+  if (!profile) return;
+  const p = profile.payload ? profile.payload : profile;
+  populateFormFields(p);
+  allPersonas[currentPersonaId] = extractCurrentFormProfile();
+  showToast("Profile received and populated from JobXApply extension!", "success");
 });
 </script>
 </body>

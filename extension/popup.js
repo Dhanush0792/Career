@@ -477,6 +477,38 @@ async function syncFromCloud() {
   });
 }
 
+// ── Sync to Web Tab / Test Profile Helpers ─────────────────────────────────
+async function syncToWebTab() {
+  setStatus("Syncing active profile to website tab...");
+  chrome.runtime.sendMessage({ type: "jobxapply:syncToWebTab" }, (res) => {
+    if (chrome.runtime.lastError) {
+      setStatus("Sync failed: " + chrome.runtime.lastError.message, "error");
+      return;
+    }
+    if (res?.ok) {
+      setStatus("Profile synced to website profile section!", "success");
+    } else {
+      setStatus(res?.error || "Could not sync to website tab.", "warn");
+    }
+  });
+}
+
+async function loadTestProfile() {
+  setLoginStatus("Loading full mock test dataset...", "warn");
+  chrome.runtime.sendMessage({ type: "jobxapply:loadMockProfile" }, async (res) => {
+    if (chrome.runtime.lastError) {
+      setLoginStatus("Error loading mock profile: " + chrome.runtime.lastError.message, "error");
+      return;
+    }
+    if (res?.ok) {
+      setLoginStatus("Mock profile loaded into extension!", "success");
+      await checkAuthState();
+      // Auto-trigger sync to open web tab if present
+      syncToWebTab();
+    }
+  });
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 (async function init() {
   setupTabs();
@@ -496,6 +528,7 @@ async function syncFromCloud() {
     if (e.key === "Enter") handleDirectLogin();
   });
   document.getElementById("loginGoogleBtn")?.addEventListener("click", handleGoogleWebLogin);
+  document.getElementById("loadTestProfileBtn")?.addEventListener("click", loadTestProfile);
 
   document.getElementById("apply")?.addEventListener("click", doAutofill);
   document.getElementById("quickLogBtn")?.addEventListener("click", () => logApplication());
@@ -525,6 +558,10 @@ async function syncFromCloud() {
       : chrome.tabs.create({ url: chrome.runtime.getURL("profile.html") });
   });
 
-  document.getElementById("syncCloud")?.addEventListener("click", syncFromCloud);
+  document.getElementById("syncCloud")?.addEventListener("click", async () => {
+    await syncFromCloud();
+    await syncToWebTab();
+  });
+  document.getElementById("syncWebTabBtn")?.addEventListener("click", syncToWebTab);
   document.getElementById("disconnectBtn")?.addEventListener("click", handleDisconnect);
 })();
