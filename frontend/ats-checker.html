@@ -1000,6 +1000,20 @@ runBtn.addEventListener('click', async () => {
         score: score
       };
 
+      // Record scan in backend telemetry (rate-limited and non-blocking)
+      try {
+        const syncUrl = getSyncUrl();
+        fetch(`${syncUrl}/api/telemetry/hit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ metric: "atsScans" })
+        }).then(res => {
+          if (res.status === 429) {
+            addLog("[RATE_LIMIT] Telemetry reporting throttled.", "warn");
+          }
+        }).catch(() => {});
+      } catch (e) {}
+
       addLog(`[DONE] Compatibility score: ${score}%. Free diagnostic complete.`, 'success');
       placeholderPanel.style.display = 'none';
       resultsPanel.style.display = 'flex';
@@ -1009,7 +1023,10 @@ runBtn.addEventListener('click', async () => {
       showToast('ATS Scoring failed.', 'error');
       console.error(err);
     } finally {
-      runBtn.disabled = false;
+      // Cooldown to prevent multi-click flooding
+      setTimeout(() => {
+        runBtn.disabled = false;
+      }, 3000);
     }
   }, 900);
 });

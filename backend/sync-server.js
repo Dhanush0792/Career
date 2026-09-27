@@ -470,6 +470,11 @@ function isRateLimited(key, limit, windowMs, trackerMap) {
   return false;
 }
 
+function getClientIp(req) {
+  const xfwd = req.headers["x-forwarded-for"];
+  return (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
+}
+
 // ── Account Lockout Helpers ────────────────────────────────────────────────
 function recordLoginFailure(email) {
   const key = email.toLowerCase();
@@ -639,6 +644,14 @@ function broadcastMaps(maps) {
 const server = http.createServer(async (req, res) => {
   writeCorsHeaders(req, res);
 
+  const clientIp = getClientIp(req);
+
+  // Global DDoS / flood protection: limit any single IP to 120 requests per minute
+  if (isRateLimited(clientIp + ":global", 120, 60000, ipRateLimits)) {
+    sendJson(res, 429, { ok: false, error: "Too many requests. Please slow down." });
+    return;
+  }
+
   // Increment apiRequests telemetry
   if (req.url && req.url.startsWith("/api/")) {
     db.recordTelemetryHit("apiRequests").catch(() => {});
@@ -676,6 +689,11 @@ const server = http.createServer(async (req, res) => {
 
   // POST Telemetry Hit
   if (req.method === "POST" && urlObj.pathname === "/api/telemetry/hit") {
+    // Limit telemetry hits to 30 per minute per IP to prevent storage & memory flooding
+    if (isRateLimited(clientIp + ":telemetry", 30, 60000, ipRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Too many telemetry requests." });
+      return;
+    }
     // HIGH-5: Whitelist metric names to prevent pollution of telemetry table
     const ALLOWED_METRICS = new Set(["pageViews", "apiRequests", "atsScans", "resumeBuilds", "coverLetters", "extensionDownloads"]);
     try {
@@ -706,10 +724,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET /api/ats/check-limit (Check anonymous daily scan limit)
+  // GET /api/ats/check-limit (Check anonymous scan limit)
   if (req.method === "GET" && urlObj.pathname === "/api/ats/check-limit") {
-    const xfwd = req.headers["x-forwarded-for"];
-    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
     const lastScan = anonAtsScans.get(clientIp);
     const dayMs = 24 * 60 * 60 * 1000;
     const isLimited = lastScan && (Date.now() - lastScan < dayMs);
@@ -719,12 +735,8 @@ const server = http.createServer(async (req, res) => {
 
   // POST /api/ats/record-scan (Record anonymous scan)
   if (req.method === "POST" && urlObj.pathname === "/api/ats/record-scan") {
-    const xfwd = req.headers["x-forwarded-for"];
-    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
-    const lastScan = anonAtsScans.get(clientIp);
-    const dayMs = 24 * 60 * 60 * 1000;
-    if (lastScan && (Date.now() - lastScan < dayMs)) {
-      sendJson(res, 429, { ok: false, error: "Daily free scan limit reached (1/1). Sign up to unlock unlimited scans." });
+    if (isRateLimited(clientIp + ":ats-record", 10, 3600000, ipRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Too many scan recording requests. Please wait." });
       return;
     }
     anonAtsScans.set(clientIp, Date.now());
@@ -734,10 +746,7 @@ const server = http.createServer(async (req, res) => {
 
   // Authentication routes
   if (req.method === "POST" && (urlObj.pathname === "/api/auth/register" || urlObj.pathname === "/api/auth/login" || urlObj.pathname === "/api/auth/forgot-password" || urlObj.pathname === "/api/auth/reset-password")) {
-    // Use only the first IP from X-Forwarded-For to prevent spoofing (trusting Render's proxy)
-    const xfwd = req.headers["x-forwarded-for"];
-    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
-    if (isRateLimited(clientIp, 10, 60000, ipRateLimits)) {
+    if (isRateLimited(clientIp + ":auth", 10, 60000, ipRateLimits)) {
       writeCorsHeaders(req, res);
       sendJson(res, 429, { ok: false, error: "Too many authentication attempts. Please wait a minute." });
       return;
@@ -768,9 +777,7 @@ const server = http.createServer(async (req, res) => {
 
   // Dedicated Admin Authentication Route
   if (req.method === "POST" && urlObj.pathname === "/api/admin/login") {
-    const xfwd = req.headers["x-forwarded-for"];
-    const clientIp = (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
-    if (isRateLimited(clientIp, 5, 60000, ipRateLimits)) {
+    if (isRateLimited(clientIp + ":admin-auth", 5, 60000, ipRateLimits)) {
       writeCorsHeaders(req, res);
       sendJson(res, 429, { ok: false, error: "Too many authentication attempts. Please wait 1 minute." });
       return;
@@ -1728,10 +1735,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // POST /api/ats/analyze — HIGH-3: Rate limited to 20 scans/hour per user
+  // POST /api/ats/analyze — Rate limited to protect backend from DoS / automated scraping
   if (req.method === "POST" && urlObj.pathname === "/api/ats/analyze") {
-    if (activeUser && isRateLimited(activeUser.id + ":ats", 20, 3600000, userRateLimits)) {
-      sendJson(res, 429, { ok: false, error: "Too many ATS scans. Limit is 20 per hour." });
+    // Authenticated users: 30 scans per hour
+    if (activeUser && isRateLimited(activeUser.id + ":ats", 30, 3600000, userRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Too many ATS scans. Limit is 30 per hour for signed-in accounts." });
+      return;
+    }
+    // Anonymous public users: 10 scans per 10 minutes per IP (sliding window)
+    if (!activeUser && isRateLimited(clientIp + ":ats-anon", 10, 600000, ipRateLimits)) {
+      sendJson(res, 429, { ok: false, error: "Public scan rate limit reached (10 scans per 10 minutes). Please wait a few minutes or sign in." });
       return;
     }
     let body;
@@ -1896,6 +1909,11 @@ const server = http.createServer(async (req, res) => {
       const limit = (activeUser.tier === "paid" || activeUser.tier === "premium") ? 50 : 5;
       if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
         sendJson(res, 429, { ok: false, error: `Too many resume generation attempts. Limit is ${limit} per hour.` });
+        return;
+      }
+    } else {
+      if (isRateLimited(clientIp + ":resume-anon", 10, 3600000, ipRateLimits)) {
+        sendJson(res, 429, { ok: false, error: "Too many resume generation attempts. Limit is 10 per hour for anonymous sessions. Please sign in." });
         return;
       }
     }
@@ -2126,6 +2144,11 @@ const server = http.createServer(async (req, res) => {
       const limit = (activeUser.tier === "paid" || activeUser.tier === "premium") ? 50 : 5;
       if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
         sendJson(res, 429, { ok: false, error: `Too many cover letter generation attempts. Limit is ${limit} per hour.` });
+        return;
+      }
+    } else {
+      if (isRateLimited(clientIp + ":cover-letter-anon", 10, 3600000, ipRateLimits)) {
+        sendJson(res, 429, { ok: false, error: "Too many cover letter generation attempts. Limit is 10 per hour for anonymous sessions. Please sign in." });
         return;
       }
     }

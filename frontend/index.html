@@ -239,8 +239,16 @@ button { cursor: none; border: none; background: none; font-family: inherit; col
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: bootOverlayAutoFade 1.2s cubic-bezier(.4,0,.2,1) 0.8s forwards;
 }
-#boot-overlay.done { opacity: 0; pointer-events: none; }
+@keyframes bootOverlayAutoFade {
+  to {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+}
+#boot-overlay.done { opacity: 0; pointer-events: none; visibility: hidden; }
 
 .loader-container {
   display: flex;
@@ -1268,6 +1276,13 @@ footer {
     </div>
   </div>
 </div>
+<script>
+  // Immediate failsafe to ensure boot-overlay dismisses even under degraded network/CDN latency
+  setTimeout(function() {
+    var b = document.getElementById('boot-overlay');
+    if (b) b.classList.add('done');
+  }, 700);
+</script>
 <div id="scanline"></div>
 
 <!-- Scroll progress -->
@@ -2619,7 +2634,6 @@ window.addEventListener('load', () => {
         rotateBanner(); // Reset banner rotation status
       }
     }
-  })
   });
 });
 
