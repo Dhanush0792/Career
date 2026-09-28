@@ -472,9 +472,40 @@ function buildAutofillPayload(profile, requestedFields) {
   activeFields.add("expectedsalary");
   activeFields.add("handicapped");
   activeFields.add("healthissues");
-  activeFields.add("targetroles");
-  activeFields.add("coverletterdraft");
-  activeFields.add("otherdocuments");
+  // Multi-part split fields: dob -> dob_day, dob_month, dob_year
+  activeFields.add("dob_day");
+  activeFields.add("dob_month");
+  activeFields.add("dob_year");
+  activeFields.add("firstname");
+  activeFields.add("lastname");
+
+  // Parse DOB into components if present
+  let dobDay = "", dobMonth = "", dobYear = "";
+  const rawDob = String(profileLower["dob"] || profile["dob"] || "").trim();
+  if (rawDob) {
+    const dobMatch = rawDob.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/) || rawDob.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (dobMatch) {
+      if (dobMatch[1].length === 4) {
+        dobYear = dobMatch[1];
+        dobMonth = String(parseInt(dobMatch[2], 10));
+        dobDay = String(parseInt(dobMatch[3], 10));
+      } else {
+        dobDay = String(parseInt(dobMatch[1], 10));
+        dobMonth = String(parseInt(dobMatch[2], 10));
+        dobYear = dobMatch[3];
+      }
+    }
+  }
+
+  // Parse Full Name into First / Last name fallbacks if not explicitly provided
+  let splitFirstName = profileLower["firstname"] || profile["firstName"] || "";
+  let splitLastName = profileLower["lastname"] || profile["lastName"] || "";
+  const rawFullName = String(profileLower["fullname"] || profile["fullName"] || profileLower["name"] || "").trim();
+  if ((!splitFirstName || !splitLastName) && rawFullName) {
+    const nameParts = rawFullName.split(/\s+/);
+    if (!splitFirstName && nameParts.length > 0) splitFirstName = nameParts[0];
+    if (!splitLastName && nameParts.length > 1) splitLastName = nameParts.slice(1).join(" ");
+  }
 
   for (const key of activeFields) {
     if (key === "resume") {
@@ -485,6 +516,16 @@ function buildAutofillPayload(profile, requestedFields) {
       payload[key] = getParsedLocationField(profile, key);
     } else if (key === "portalpassword") {
       payload[key] = getPortalPassword(profile);
+    } else if (key === "dob_day") {
+      payload[key] = dobDay;
+    } else if (key === "dob_month") {
+      payload[key] = dobMonth;
+    } else if (key === "dob_year") {
+      payload[key] = dobYear;
+    } else if (key === "firstname" && splitFirstName) {
+      payload[key] = splitFirstName;
+    } else if (key === "lastname" && splitLastName) {
+      payload[key] = splitLastName;
     } else if (profileLower[key] !== undefined) {
       payload[key] = profileLower[key];
     } else {
@@ -500,7 +541,7 @@ function cleanupOrphanedScript() {
     window.removeEventListener("jobxapply:shareAuth", handleShareAuth);
   } catch (e) {}
 
-  document.querySelectorAll(".jxa-knockout-tip, .jxa-mapper-hover, #jxa-mapper-banner, .jxa-mapper-mapped").forEach(el => {
+  document.querySelectorAll(".jxa-knockout-tip, .jxa-mapper-hover, #jxa-mapper-banner, .jxa-mapper-mapped, #jxa-floating-fill-pill").forEach(el => {
     try { el.remove(); } catch(err) {}
   });
 }
@@ -1141,5 +1182,131 @@ window.addEventListener("jobxapply:saveWebProfileToExtension", (e) => {
     if (chrome.runtime.lastError) {}
   });
 });
+
+// Floating Quick-Fill Action Pill
+function injectFloatingQuickFill() {
+  if (!checkContext()) return;
+  if (!extensionEnabled) return;
+  if (document.getElementById("jxa-floating-fill-pill")) return;
+  if (!isJobPage()) return;
+
+  const candidateInputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select"));
+  const visibleCandidateCount = candidateInputs.filter(el => {
+    const style = window.getComputedStyle(el);
+    return style.display !== "none" && style.visibility !== "hidden" && el.type !== "hidden";
+  }).length;
+
+  if (visibleCandidateCount < 2) return;
+
+  const pill = document.createElement("div");
+  pill.id = "jxa-floating-fill-pill";
+  pill.style.cssText = `
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2147483640;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0b1020;
+    color: #ffffff;
+    border: 1px solid #5b4fe8;
+    border-radius: 9999px;
+    padding: 8px 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(11, 16, 32, 0.45), 0 0 16px rgba(91, 79, 232, 0.25);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  `;
+
+  pill.innerHTML = `
+    <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2fddc4;box-shadow:0 0 6px #2fddc4;"></span>
+    <span style="letter-spacing:0.02em;">Autofill Form</span>
+    <button id="jxa-pill-close" style="background:none;border:none;color:#94a3b8;font-size:14px;cursor:pointer;padding:0 2px;margin-left:4px;line-height:1;" title="Dismiss">&times;</button>
+  `;
+
+  pill.addEventListener("mouseenter", () => {
+    pill.style.transform = "translateY(-2px)";
+    pill.style.borderColor = "#2fddc4";
+    pill.style.boxShadow = "0 12px 28px rgba(11, 16, 32, 0.55), 0 0 20px rgba(47, 221, 196, 0.35)";
+  });
+
+  pill.addEventListener("mouseleave", () => {
+    pill.style.transform = "translateY(0)";
+    pill.style.borderColor = "#5b4fe8";
+    pill.style.boxShadow = "0 8px 24px rgba(11, 16, 32, 0.45), 0 0 16px rgba(91, 79, 232, 0.25)";
+  });
+
+  const closeBtn = pill.querySelector("#jxa-pill-close");
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pill.remove();
+  });
+
+  pill.addEventListener("click", () => {
+    pill.style.pointerEvents = "none";
+    pill.querySelector("span:nth-child(2)").textContent = "Filling...";
+    chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => {
+      if (chrome.runtime.lastError || !res?.profile) {
+        pill.querySelector("span:nth-child(2)").textContent = "No profile saved";
+        setTimeout(() => { if (pill) pill.remove(); }, 2000);
+        return;
+      }
+      
+      const host = window.location.hostname.toLowerCase();
+      const baseDomain = getBaseDomain(host);
+      chrome.storage.local.get("portalMaps", (store) => {
+        const portalMaps = store.portalMaps || {};
+        const portalMap = portalMaps[baseDomain] || {};
+        
+        chrome.runtime.sendMessage({
+          type: "jobxapply:applyAutofill",
+          profile: res.profile,
+          portalMap
+        });
+
+        // Trigger fill directly in content script
+        const rawProfile = res.profile.payload ? res.profile.payload : res.profile;
+        const payload = buildAutofillPayload(rawProfile, Object.keys(rawProfile));
+        let filledCount = 0;
+
+        for (const [field, value] of Object.entries(payload.payload || {})) {
+          if (!value) continue;
+          const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
+          const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
+          if (el) {
+            setValue(el, value);
+            filledCount++;
+          }
+        }
+
+        pill.querySelector("span:nth-child(2)").textContent = `Filled ${filledCount} field${filledCount === 1 ? '' : 's'}`;
+        pill.style.borderColor = "#2fddc4";
+        setTimeout(() => {
+          if (pill) {
+            pill.style.opacity = "0";
+            pill.style.transform = "translateY(8px)";
+            setTimeout(() => pill.remove(), 300);
+          }
+        }, 2200);
+      });
+    });
+  });
+
+  document.body.appendChild(pill);
+}
+
+// Initialize floating button when DOM is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(injectFloatingQuickFill, 1200);
+  });
+} else {
+  setTimeout(injectFloatingQuickFill, 1200);
+}
+
 
 
