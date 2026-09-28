@@ -12,31 +12,149 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.8/mammoth.browser.min.js"></script>
 <script src="shared-shell.js?v=2"></script>
 <style>
-body { padding-top: 80px; }
+body { padding-top: 80px; padding-bottom: 90px; }
 body::after {
   content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
-.container { max-width:1100px; margin:0 auto; padding:0 20px; position:relative; z-index:10; padding-bottom:60px; }
-.page-header { border-bottom:1px solid var(--glass-border); padding-bottom:16px; margin-bottom:28px; display:flex; justify-content:space-between; align-items:flex-end; }
-.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; }
-.page-title { font-family:var(--display); font-size:32px; font-weight:900; text-transform:uppercase; color:var(--white); margin:0; }
-.page-title em { font-style:normal; color:var(--primary); }
+.container { max-width:1220px; margin:0 auto; padding:0 20px; position:relative; z-index:10; }
 
-/* Main Grid Layout */
-.profile-grid { display: grid; grid-template-columns: 240px 1fr; gap: 32px; }
-@media (max-width: 768px) { .profile-grid { grid-template-columns: 1fr; } }
+/* Executive Completeness Banner */
+.readiness-banner {
+  background: linear-gradient(135deg, rgba(91, 79, 232, 0.14) 0%, rgba(47, 221, 196, 0.08) 100%);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  backdrop-filter: blur(16px);
+}
+@media (max-width: 850px) { .readiness-banner { flex-direction: column; align-items: stretch; } }
 
-/* Sidebar Tabs */
-.tabs-nav { display: flex; flex-direction: column; gap: 8px; }
-.tab-btn { text-align: left; padding: 14px 18px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted); cursor: pointer; border-radius: 10px; transition: all 0.2s; display: flex; align-items: center; justify-content: space-between; }
-.tab-btn:hover { background: rgba(255,255,255,0.06); color: var(--white); }
-.tab-btn.active { background: rgba(91, 79, 232, 0.12); border-color: var(--primary); color: var(--white); }
+.readiness-info { display: flex; flex-direction: column; gap: 4px; }
+.readiness-title { font-family: var(--display); font-size: 20px; font-weight: 900; text-transform: uppercase; color: var(--white); display: flex; align-items: center; gap: 10px; }
+.readiness-sub { font-size: 11px; color: var(--dim); line-height: 1.5; }
+.readiness-meter-wrap { min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
+.meter-label-row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted); }
+.meter-track { height: 8px; background: rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; position: relative; }
+.meter-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #5B4FE8, #2FDDC4); border-radius: 6px; transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
-/* Card Content Area */
-.profile-card { border:1px solid var(--glass-border); background:rgba(255,255,255,.05); padding:28px; border-radius:16px; backdrop-filter:blur(16px); min-height: 480px; display: flex; flex-direction: column; }
-.section-title { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:.1em; text-transform:uppercase; border-bottom:1px solid var(--glass-border); padding-bottom:8px; margin-bottom:20px; }
+/* Main Single-Page Grid Layout */
+.profile-grid { display: grid; grid-template-columns: 260px 1fr; gap: 32px; align-items: start; }
+@media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
+
+/* Sticky Left Navigation Rail (TOC) */
+.toc-sidebar {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  padding: 16px 12px;
+  border-radius: 14px;
+  backdrop-filter: blur(16px);
+}
+@media (max-width: 900px) {
+  .toc-sidebar { position: static; margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+}
+@media (max-width: 600px) {
+  .toc-sidebar { grid-template-columns: 1fr; }
+}
+
+.toc-btn {
+  text-align: left;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-decoration: none;
+}
+.toc-btn:hover { background: rgba(255,255,255,0.06); color: var(--white); transform: translateX(2px); }
+.toc-btn.active {
+  background: rgba(91, 79, 232, 0.16);
+  border-color: rgba(91, 79, 232, 0.5);
+  color: var(--white);
+  box-shadow: 0 0 16px rgba(91, 79, 232, 0.2);
+}
+.toc-indicator { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.2); flex-shrink: 0; }
+.toc-indicator.complete { background: var(--success); box-shadow: 0 0 8px rgba(47,221,196,0.6); }
+
+/* Document Continuous Container */
+.profile-document-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Individual Section Cards */
+.profile-section-card {
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.04);
+  padding: 28px;
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  scroll-margin-top: 96px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.profile-section-card:hover {
+  border-color: rgba(255,255,255,0.22);
+}
+.profile-section-card.highlighted {
+  border-color: rgba(91, 79, 232, 0.5);
+  box-shadow: 0 0 24px rgba(91, 79, 232, 0.12);
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+.section-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-status-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  color: var(--dim);
+}
+.section-status-badge.complete {
+  background: rgba(47, 221, 196, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(47, 221, 196, 0.3);
+}
 
 /* Form Fields */
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
@@ -56,8 +174,7 @@ body::after {
 .form-group.locked input, .form-group.locked textarea { background: rgba(255, 255, 255, 0.02); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.05); cursor: not-allowed; }
 
 /* Buttons & Footer */
-.actions-footer { margin-top: auto; padding-top: 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.btn { padding: 12px 20px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; }
+.btn { padding: 10px 18px; font-family: var(--mono); font-size: 11px; font-weight: 700; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; }
 .btn-primary { background: var(--primary); color: var(--white); border-color: var(--primary); }
 .btn-primary:hover { background: rgba(91, 79, 232, 0.85); transform: translateY(-1px); }
 .btn-secondary { background: rgba(255, 255, 255, 0.08); color: var(--white); border-color: var(--glass-border); }
@@ -78,9 +195,29 @@ body::after {
 .console-line.success { color: var(--success); }
 .console-line.warn { color: var(--alert); }
 
-/* Tab Panes */
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
+/* Persistent Floating Action Footer */
+.floating-save-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 1220px;
+  background: rgba(11, 16, 32, 0.92);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(91, 79, 232, 0.15);
+  backdrop-filter: blur(20px);
+  border-radius: 14px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  gap: 16px;
+}
+.floating-status-wrap { display: flex; align-items: center; gap: 12px; }
+.status-pulsing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+.floating-actions { display: flex; align-items: center; gap: 10px; }
 </style>
 <link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
 </head>
@@ -94,33 +231,86 @@ body::after {
       <div style="font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px;">PROFILE CONFIGURATION</div>
       <h1 class="page-title" style="margin:0; font-family:var(--display); font-size:32px; text-transform:uppercase; color:var(--white);">Master Profile Setup</h1>
     </div>
-    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:rgba(7,10,24,0.6); border:1px solid var(--glass-border); padding:8px 12px; color:var(--white); font-family:var(--mono); font-size:11px; border-radius:8px; outline:none; max-width:200px;"></select>
-      <button type="button" class="btn btn-secondary" onclick="requestProfileFromExtension()" style="font-size:10px; padding:8px 14px; border-color:rgba(47,221,196,0.4); color:#2fddc4;" title="Sync profile data directly from JobXApply extension">Sync from Extension</button>
-      <button type="button" class="btn btn-secondary" onclick="loadMockTestData()" style="font-size:10px; padding:8px 14px; border-color:rgba(91,79,232,0.4); color:#a59bf7;" title="Load all random mock details for testing portal autofill">Seed Test Data</button>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:6px; background:rgba(7,10,24,0.6); border:1px solid var(--glass-border); padding:4px 8px; border-radius:8px;">
+        <span style="font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase;">Persona:</span>
+        <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:transparent; border:none; color:var(--white); font-family:var(--mono); font-size:11px; font-weight:700; outline:none; max-width:180px; cursor:pointer;"></select>
+      </div>
+      <button type="button" class="btn btn-secondary" onclick="createPersona()" style="font-size:10px; padding:7px 11px;" title="Create a new role persona">+ New</button>
+      <button type="button" class="btn btn-secondary" onclick="requestProfileFromExtension()" style="font-size:10px; padding:7px 12px; border-color:rgba(47,221,196,0.4); color:#2fddc4;" title="Sync profile data directly from JobXApply extension">Sync from Extension</button>
+      <button type="button" class="btn btn-secondary" onclick="loadMockTestData()" style="font-size:10px; padding:7px 12px; border-color:rgba(91,79,232,0.4); color:#a59bf7;" title="Load all random mock details for testing portal autofill">Seed Test Data</button>
     </div>
   </header>
 
-  <div class="profile-grid">
-    <!-- Left Navigation -->
-    <div class="tabs-nav">
-      <button class="tab-btn active" onclick="switchTab('tab-basics', this)">01 // BASICS <span>-></span></button>
-      <button class="tab-btn" onclick="switchTab('tab-academic', this)">02 // ACADEMIC <span>-></span></button>
-      <button class="tab-btn" onclick="switchTab('tab-professional', this)">03 // PROFESSIONAL <span>-></span></button>
-      <button class="tab-btn" onclick="switchTab('tab-experience', this)">04 // EXPERIENCE <span>-></span></button>
-      <button class="tab-btn" onclick="switchTab('tab-documents', this)">05 // DOCUMENTS <span>-></span></button>
-      <button class="tab-btn" onclick="switchTab('tab-additional', this)">06 // ADDITIONAL <span>-></span></button>
-      <button class="tab-btn" onclick="switchTab('tab-vault', this)">07 // Q&amp;A VAULT <span>-></span></button>
-      <button class="tab-btn" onclick="switchTab('tab-security', this)">08 // SYNC &amp; KEY <span>-></span></button>
+  <!-- Executive Profile Completeness Banner -->
+  <div class="readiness-banner" id="readiness-banner">
+    <div class="readiness-info">
+      <div class="readiness-title">
+        <span>Master Profile Readiness</span>
+        <span id="readiness-badge" class="section-status-badge">Calculating...</span>
+      </div>
+      <div class="readiness-sub">
+        Single-page unified document. All details sync automatically with your browser extension for 1-click application autofill across global job portals.
+      </div>
     </div>
+    <div class="readiness-meter-wrap">
+      <div class="meter-label-row">
+        <span>COMPLETION SCORE</span>
+        <span id="completeness-pct">0%</span>
+      </div>
+      <div class="meter-track">
+        <div class="meter-bar" id="completeness-bar"></div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Right Content Card -->
-    <div class="profile-card">
+  <div class="profile-grid">
+    <!-- Left Sticky Table of Contents Navigation -->
+    <aside class="toc-sidebar" id="toc-nav">
+      <a class="toc-btn active" href="#section-basics" onclick="scrollToSection(event, 'section-basics')">
+        <span>01 // IDENTITY</span>
+        <span class="toc-indicator" id="ind-basics"></span>
+      </a>
+      <a class="toc-btn" href="#section-academic" onclick="scrollToSection(event, 'section-academic')">
+        <span>02 // ACADEMICS</span>
+        <span class="toc-indicator" id="ind-academic"></span>
+      </a>
+      <a class="toc-btn" href="#section-professional" onclick="scrollToSection(event, 'section-professional')">
+        <span>03 // PROFESSIONAL</span>
+        <span class="toc-indicator" id="ind-professional"></span>
+      </a>
+      <a class="toc-btn" href="#section-experience" onclick="scrollToSection(event, 'section-experience')">
+        <span>04 // EXPERIENCE</span>
+        <span class="toc-indicator" id="ind-experience"></span>
+      </a>
+      <a class="toc-btn" href="#section-documents" onclick="scrollToSection(event, 'section-documents')">
+        <span>05 // DOCUMENTS</span>
+        <span class="toc-indicator" id="ind-documents"></span>
+      </a>
+      <a class="toc-btn" href="#section-additional" onclick="scrollToSection(event, 'section-additional')">
+        <span>06 // DECLARATIONS</span>
+        <span class="toc-indicator" id="ind-additional"></span>
+      </a>
+      <a class="toc-btn" href="#section-vault" onclick="scrollToSection(event, 'section-vault')">
+        <span>07 // Q&amp;A VAULT</span>
+        <span class="toc-indicator" id="ind-vault"></span>
+      </a>
+      <a class="toc-btn" href="#section-security" onclick="scrollToSection(event, 'section-security')">
+        <span>08 // SYNC &amp; KEY</span>
+        <span class="toc-indicator" id="ind-security"></span>
+      </a>
+    </aside>
+
+    <!-- Right Continuous Document Stream -->
+    <main class="profile-document-stream">
       <form id="profile-form" onsubmit="event.preventDefault();">
         
-        <!-- Tab 1: Basics -->
-        <div class="tab-pane active" id="tab-basics">
-          <div class="section-title">01 / Personal & Contact Details</div>
+        <!-- Section 1: Basics -->
+        <section class="profile-section-card" id="section-basics">
+          <div class="section-header-row">
+            <h2 class="section-title">01 / Personal &amp; Contact Details</h2>
+            <span class="section-status-badge" id="badge-basics">Required</span>
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label for="f-fullName">Full Name *</label>
@@ -194,11 +384,14 @@ body::after {
               </select>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 2: Academic Background -->
-        <div class="tab-pane" id="tab-academic">
-          <div class="section-title">02 / Academic History & Qualifications</div>
+        <!-- Section 2: Academic Background -->
+        <section class="profile-section-card" id="section-academic">
+          <div class="section-header-row">
+            <h2 class="section-title">02 / Academic History &amp; Qualifications</h2>
+            <span class="section-status-badge" id="badge-academic">Academics</span>
+          </div>
           
           <!-- 10th -->
           <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
@@ -389,11 +582,14 @@ body::after {
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 3: Professional & Employment -->
-        <div class="tab-pane" id="tab-professional">
-          <div class="section-title">03 / Employment & Target Roles</div>
+        <!-- Section 3: Professional & Employment -->
+        <section class="profile-section-card" id="section-professional">
+          <div class="section-header-row">
+            <h2 class="section-title">03 / Employment &amp; Target Roles</h2>
+            <span class="section-status-badge" id="badge-professional">Career Info</span>
+          </div>
           
           <div class="form-row">
             <div class="form-group">
@@ -507,20 +703,26 @@ body::after {
             <label for="f-portfolio">Portfolio / Personal Website</label>
             <input type="url" id="f-portfolio" placeholder="https://yourwebsite.com">
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 4: Experience -->
-        <div class="tab-pane" id="tab-experience">
-          <div class="section-title">04 / Work History & Projects</div>
+        <!-- Section 4: Experience -->
+        <section class="profile-section-card" id="section-experience">
+          <div class="section-header-row">
+            <h2 class="section-title">04 / Work History &amp; Projects</h2>
+            <span class="section-status-badge" id="badge-experience">Experience</span>
+          </div>
           <div class="form-group full" style="margin-bottom: 16px;">
             <label for="f-experience">Detailed Work Experience</label>
             <textarea id="f-experience" style="min-height: 250px;" placeholder="Format: Job Title @ Company (Start - End)&#10;- Bullet points detailing responsibilities..."></textarea>
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 5: Documents -->
-        <div class="tab-pane" id="tab-documents">
-          <div class="section-title">05 / Resume, Cover Letter & Documents</div>
+        <!-- Section 5: Documents -->
+        <section class="profile-section-card" id="section-documents">
+          <div class="section-header-row">
+            <h2 class="section-title">05 / Resume, Cover Letter &amp; Documents</h2>
+            <span class="section-status-badge" id="badge-documents">Documents</span>
+          </div>
           
           <div class="dropzone" id="resume-dropzone">
             <div class="dropzone-title">Drag & Drop Resume Here to Parse</div>
@@ -543,11 +745,14 @@ body::after {
             <label for="f-otherDocuments">Other Documents / Certifications</label>
             <textarea id="f-otherDocuments" style="min-height: 100px;" placeholder="List other certificates or drive links to documents..."></textarea>
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 6: Additional -->
-        <div class="tab-pane" id="tab-additional">
-          <div class="section-title">06 / Additional Personal & Medical History</div>
+        <!-- Section 6: Additional -->
+        <section class="profile-section-card" id="section-additional">
+          <div class="section-header-row">
+            <h2 class="section-title">06 / Additional Personal &amp; Medical Declarations</h2>
+            <span class="section-status-badge" id="badge-additional">Declarations</span>
+          </div>
           <div class="form-row">
             <div class="form-group full">
               <label for="f-handicapped">Physically or Mentally Challenged / Handicapped?</label>
@@ -561,11 +766,14 @@ body::after {
             <label for="f-healthIssues">Declare any major health issues (that jobs might ask about)</label>
             <textarea id="f-healthIssues" style="min-height: 150px;" placeholder="e.g. None, or specify any relevant medical declarations..."></textarea>
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 7: Q&A Vault & Saved Snippets -->
-        <div class="tab-pane" id="tab-vault">
-          <div class="section-title">07 / Behavioral Q&amp;A Vault &amp; Saved Application Snippets</div>
+        <!-- Section 7: Q&A Vault & Saved Snippets -->
+        <section class="profile-section-card" id="section-vault">
+          <div class="section-header-row">
+            <h2 class="section-title">07 / Behavioral Q&amp;A Vault &amp; Saved Application Snippets</h2>
+            <span class="section-status-badge" id="badge-vault">Interview Vault</span>
+          </div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
             Store your authentic, human-written responses for common application prompts. The JobXApply browser extension will automatically match and fill these fields on Workday, Greenhouse, Lever, Naukri, and other job portals.
           </p>
@@ -612,37 +820,45 @@ body::after {
               <!-- Rendered dynamically -->
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 8: Security & Sync -->
-        <div class="tab-pane" id="tab-security">
-          <div class="section-title">08 / Optional Client-Side Vault Encryption</div>
+        <!-- Section 8: Security & Sync -->
+        <section class="profile-section-card" id="section-security">
+          <div class="section-header-row">
+            <h2 class="section-title">08 / Optional Client-Side Vault Encryption</h2>
+            <span class="section-status-badge" id="badge-security">Security &amp; Sync</span>
+          </div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
             Your profile is securely linked to your authenticated account. Optionally, you can set a custom Client-Side Vault Passcode to encrypt your profile fields end-to-end before transmitting them to the server.
           </p>
-          <div class="form-group full" style="margin-bottom: 16px;">
-            <label for="f-passcode">Vault Passcode (Optional)</label>
-            <input type="password" id="f-passcode" placeholder="Leave empty for standard account sync, or enter custom encryption key">
-            <div style="font-size: 10px; color: var(--muted); margin-top: 6px;">
-              Tip: Standard Google OAuth and Email accounts sync automatically without requiring a passcode.
+          <div class="form-row">
+            <div class="form-group full" style="margin-bottom: 16px;">
+              <label for="f-passcode">Vault Passcode (Optional)</label>
+              <input type="password" id="f-passcode" placeholder="Leave empty for standard account sync, or enter custom encryption key">
+              <div style="font-size: 10px; color: var(--muted); margin-top: 6px;">
+                Tip: Standard Google OAuth and Email accounts sync automatically without requiring a passcode.
+              </div>
             </div>
           </div>
-        </div>
-
-        <!-- Shared Action Footer with Next / Previous & Direct Save -->
-        <div class="actions-footer">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <button type="button" class="btn btn-secondary" id="btn-prev-tab" onclick="navigateTab(-1)" style="display:none;">&larr; Previous</button>
-            <button type="button" class="btn btn-secondary" id="btn-next-tab" onclick="navigateTab(1)">Next Section &rarr;</button>
-          </div>
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div id="save-status" style="font-family: var(--mono); font-size: 11px; color: var(--muted);">Ready</div>
-            <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save Profile</button>
-          </div>
-        </div>
+        </section>
 
       </form>
+    </main>
+  </div>
+</div>
+
+<!-- Persistent Floating Global Save Bar -->
+<div class="floating-save-bar">
+  <div class="floating-status-wrap">
+    <div class="status-pulsing-dot" id="save-indicator"></div>
+    <div>
+      <div id="save-status" style="font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--white);">All changes saved</div>
+      <div style="font-size: 10px; color: var(--dim);">Ready for 1-click autofill across job portals</div>
     </div>
+  </div>
+  <div class="floating-actions">
+    <button type="button" class="btn btn-secondary" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" style="font-size:10px;">Top &uarr;</button>
+    <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save Profile &amp; Sync</button>
   </div>
 </div>
 
@@ -651,52 +867,44 @@ body::after {
 if (typeof requireAuth === 'function') requireAuth();
 if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'profile-setup.html');
 
-// Tab Switching
-const TAB_ORDER = [
-  'tab-basics',
-  'tab-academic',
-  'tab-professional',
-  'tab-experience',
-  'tab-documents',
-  'tab-additional',
-  'tab-vault',
-  'tab-security'
+// Section Navigation & Scroll-Spy Engine
+const SECTION_IDS = [
+  'section-basics',
+  'section-academic',
+  'section-professional',
+  'section-experience',
+  'section-documents',
+  'section-additional',
+  'section-vault',
+  'section-security'
 ];
 
-function switchTab(tabId, btn) {
-  document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  
-  const pane = document.getElementById(tabId);
-  if (pane) pane.classList.add('active');
-  if (btn) btn.classList.add('active');
-
-  const currentIndex = TAB_ORDER.indexOf(tabId);
-  const prevBtn = document.getElementById('btn-prev-tab');
-  const nextBtn = document.getElementById('btn-next-tab');
-  if (prevBtn) prevBtn.style.display = currentIndex > 0 ? 'inline-flex' : 'none';
-  if (nextBtn) {
-    nextBtn.textContent = currentIndex === TAB_ORDER.length - 1 ? 'Finish & Save' : 'Next Section \u2192';
+function scrollToSection(e, sectionId) {
+  if (e) e.preventDefault();
+  const el = document.getElementById(sectionId);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updateActiveTocItem(sectionId);
   }
 }
 
-function navigateTab(direction) {
-  const currentPane = document.querySelector('.tab-pane.active');
-  const currentId = currentPane ? currentPane.id : 'tab-basics';
-  const currentIndex = TAB_ORDER.indexOf(currentId);
-  const targetIndex = currentIndex + direction;
-
-  if (targetIndex >= TAB_ORDER.length) {
-    saveCloudProfile();
-    return;
-  }
-  if (targetIndex >= 0 && targetIndex < TAB_ORDER.length) {
-    const targetId = TAB_ORDER[targetIndex];
-    const targetBtn = document.querySelectorAll('.tabs-nav button')[targetIndex];
-    switchTab(targetId, targetBtn);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+function updateActiveTocItem(activeId) {
+  document.querySelectorAll('.toc-btn').forEach(btn => {
+    const href = btn.getAttribute('href') || '';
+    if (href === '#' + activeId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
 }
+
+// Backward-compatible switchTab proxy so any residual callers smoothly scroll to target
+function switchTab(tabId) {
+  const mapped = tabId.replace('tab-', 'section-');
+  scrollToSection(null, mapped);
+}
+
 
 // Logging
 const consoleLog = document.getElementById('console-log');
@@ -826,7 +1034,8 @@ function parseResume(text) {
   });
 
   addLog('Resume parsed successfully! Fields loaded & locked for review.', 'success');
-  switchTab('tab-basics', document.querySelector('.tabs-nav button'));
+  updateProfileCompleteness();
+  scrollToSection(null, 'section-basics');
 }
 
 // Employment Status UI behavior
@@ -1052,7 +1261,7 @@ async function saveCloudProfile() {
   const currentProfile = extractCurrentFormProfile();
   if (!currentProfile.fullName || !currentProfile.email) {
     showToast('Full Name and Email are required.', 'error');
-    switchTab('tab-basics', document.querySelectorAll('.tabs-nav button')[0]);
+    scrollToSection(null, 'section-basics');
     return;
   }
 
@@ -1065,23 +1274,29 @@ async function saveCloudProfile() {
   allPersonas[currentPersonaId] = currentProfile;
 
   const statusEl = document.getElementById('save-status');
+  const indicatorEl = document.getElementById('save-indicator');
   if (statusEl) {
     statusEl.textContent = 'Saving profile to cloud...';
     statusEl.style.color = 'var(--primary)';
   }
+  if (indicatorEl) indicatorEl.style.background = '#5B4FE8';
 
   const res = await saveProfile(currentProfile);
   if (res.ok) {
     if (statusEl) {
-      statusEl.textContent = 'Synced with Cloud';
-      statusEl.style.color = 'var(--success)';
+      statusEl.textContent = 'All changes synced with cloud';
+      statusEl.style.color = 'var(--white)';
     }
+    if (indicatorEl) indicatorEl.style.background = 'var(--success)';
+    updateProfileCompleteness();
     showToast('Profile updated & synchronized successfully!', 'success');
   } else {
     if (statusEl) {
-      statusEl.textContent = 'Cloud sync pending (saved locally)';
+      statusEl.textContent = 'Saved locally (cloud sync pending)';
       statusEl.style.color = 'var(--alert)';
     }
+    if (indicatorEl) indicatorEl.style.background = '#F5A623';
+    updateProfileCompleteness();
     showToast(res.errors ? res.errors.join('; ') : 'Saved locally. Cloud sync pending.', 'info');
   }
 }
@@ -1127,15 +1342,112 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Error loading profile:", e);
   }
   toggleEmploymentFields();
+  updateProfileCompleteness();
 
-  // Support direct deep-linking to specific tabs via URL hash (e.g. #tab-experience)
+  // Real-time recalculation of completeness on input
+  document.getElementById('profile-form')?.addEventListener('input', () => {
+    updateProfileCompleteness();
+    const saveInd = document.getElementById('save-indicator');
+    const saveTxt = document.getElementById('save-status');
+    if (saveInd) saveInd.style.background = '#F5A623';
+    if (saveTxt) saveTxt.textContent = 'Unsaved changes';
+  });
+
+  // Support direct deep-linking to specific sections via URL hash (e.g. #section-experience)
   const hash = window.location.hash.replace('#', '');
-  if (hash && TAB_ORDER.includes(hash)) {
-    const tabIndex = TAB_ORDER.indexOf(hash);
-    const targetBtn = document.querySelectorAll('.tabs-nav button')[tabIndex];
-    if (targetBtn) switchTab(hash, targetBtn);
+  if (hash) {
+    const targetSection = hash.startsWith('tab-') ? hash.replace('tab-', 'section-') : hash;
+    const targetEl = document.getElementById(targetSection);
+    if (targetEl) {
+      setTimeout(() => targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+    }
   }
+
+  // IntersectionObserver for scroll-spy highlighting
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        updateActiveTocItem(entry.target.id);
+      }
+    });
+  }, {
+    rootMargin: "-20% 0px -70% 0px",
+    threshold: 0
+  });
+
+  SECTION_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
 });
+
+// ── Profile Completeness Meter & Section Indicators ─────────────────────────
+function updateProfileCompleteness() {
+  const p = extractCurrentFormProfile();
+  
+  // Section checks
+  const hasBasics = Boolean(p.fullName && p.email && p.phone && p.city);
+  const hasAcademics = Boolean(p.eduGrad_college || p.edu12_school || p.edu10_school);
+  const hasProfessional = Boolean(p.skills && p.headline && p.summary);
+  const hasExperience = Boolean(p.experience && p.experience.trim().length > 30);
+  const hasDocuments = Boolean(p.resumeDraft && p.resumeDraft.trim().length > 50);
+  const hasAdditional = Boolean(p.handicapped);
+  const hasVault = Boolean(p.q_why_hire || p.q_why_company || (p.customSnippets && p.customSnippets.length > 0));
+  const hasSecurity = true;
+
+  // Indicators
+  setIndicatorStatus('basics', hasBasics);
+  setIndicatorStatus('academic', hasAcademics);
+  setIndicatorStatus('professional', hasProfessional);
+  setIndicatorStatus('experience', hasExperience);
+  setIndicatorStatus('documents', hasDocuments);
+  setIndicatorStatus('additional', hasAdditional);
+  setIndicatorStatus('vault', hasVault);
+  setIndicatorStatus('security', hasSecurity);
+
+  // Overall score
+  const checks = [hasBasics, hasAcademics, hasProfessional, hasExperience, hasDocuments, hasAdditional, hasVault, hasSecurity];
+  const passed = checks.filter(Boolean).length;
+  const pct = Math.round((passed / checks.length) * 100);
+
+  const bar = document.getElementById('completeness-bar');
+  const txt = document.getElementById('completeness-pct');
+  const badge = document.getElementById('readiness-badge');
+
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = pct + '%';
+
+  if (badge) {
+    if (pct >= 85) {
+      badge.textContent = 'Autofill Ready (High)';
+      badge.className = 'section-status-badge complete';
+    } else if (pct >= 50) {
+      badge.textContent = 'Partially Complete';
+      badge.className = 'section-status-badge';
+    } else {
+      badge.textContent = 'Profile Setup Needed';
+      badge.className = 'section-status-badge';
+    }
+  }
+}
+
+function setIndicatorStatus(key, isComplete) {
+  const ind = document.getElementById('ind-' + key);
+  const badge = document.getElementById('badge-' + key);
+  if (ind) {
+    if (isComplete) ind.classList.add('complete');
+    else ind.classList.remove('complete');
+  }
+  if (badge && key !== 'basics') {
+    if (isComplete) {
+      badge.classList.add('complete');
+      badge.textContent = 'Completed';
+    } else {
+      badge.classList.remove('complete');
+      badge.textContent = 'Pending';
+    }
+  }
+}
 
 // ── Web & Extension Real-Time Profile Sync ─────────────────────────────────
 const TEST_MOCK_PROFILE = {
@@ -1218,7 +1530,8 @@ const TEST_MOCK_PROFILE = {
 function loadMockTestData() {
   populateFormFields(TEST_MOCK_PROFILE);
   allPersonas[currentPersonaId] = extractCurrentFormProfile();
-  showToast("Mock test profile loaded successfully! Click 'Save Profile' to sync.", "success");
+  updateProfileCompleteness();
+  showToast("Mock test profile loaded successfully! Click 'Save Profile & Sync' to sync.", "success");
   
   // Forward to extension if installed
   window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
@@ -1237,6 +1550,7 @@ window.addEventListener("jobxapply:populateWebProfile", (e) => {
   const p = profile.payload ? profile.payload : profile;
   populateFormFields(p);
   allPersonas[currentPersonaId] = extractCurrentFormProfile();
+  updateProfileCompleteness();
   showToast("Profile received and populated from JobXApply extension!", "success");
 });
 </script>
