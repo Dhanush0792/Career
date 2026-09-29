@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -398,22 +398,38 @@
       document.getElementById('server-badge').className = 'health-badge offline';
     }
 
-    // 2. Stats
-    try {
-      const sRes = await adminFetch('/admin/stats');
-      if (sRes.ok) {
-        const data = await sRes.json();
-        const s = data.stats || {};
-        document.getElementById('stat-total-users').textContent = fmtNum(s.totalUsers);
-        document.getElementById('stat-tier-ratio').textContent = `${fmtNum(s.freeUsers)} Free / ${fmtNum(s.paidUsers)} Paid`;
-        document.getElementById('stat-page-views').textContent = fmtNum(s.pageViews);
-        document.getElementById('stat-api-requests').textContent = fmtNum(s.apiRequests);
-        document.getElementById('stat-profiles').textContent = fmtNum(s.totalProfiles);
-        document.getElementById('stat-apps').textContent = fmtNum(s.totalApplications);
-        document.getElementById('stat-pending-reports').textContent = fmtNum(s.pendingReports);
+    // 2. Stats — retry up to 3x for cold-start tolerance (Render free tier sleeps after 15min)
+    let statsLoaded = false;
+    for (let attempt = 1; attempt <= 3 && !statsLoaded; attempt++) {
+      try {
+        if (attempt > 1) {
+          const hBadge = document.getElementById('server-badge');
+          hBadge.textContent = 'WAKING UP...';
+          hBadge.className = 'health-badge offline';
+          await new Promise(r => setTimeout(r, 5000));
+        }
+        const sRes = await adminFetch('/admin/stats');
+        if (sRes.ok) {
+          const data = await sRes.json();
+          const s = data.stats || {};
+          document.getElementById('stat-total-users').textContent = fmtNum(s.totalUsers);
+          document.getElementById('stat-tier-ratio').textContent = `${fmtNum(s.freeUsers)} Free / ${fmtNum(s.paidUsers)} Paid`;
+          document.getElementById('stat-page-views').textContent = fmtNum(s.pageViews);
+          document.getElementById('stat-api-requests').textContent = fmtNum(s.apiRequests);
+          document.getElementById('stat-profiles').textContent = fmtNum(s.totalProfiles);
+          document.getElementById('stat-apps').textContent = fmtNum(s.totalApplications);
+          document.getElementById('stat-pending-reports').textContent = fmtNum(s.pendingReports);
+          const hBadge = document.getElementById('server-badge');
+          hBadge.textContent = 'ONLINE';
+          hBadge.className = 'health-badge';
+          statsLoaded = true;
+        }
+      } catch(e) {
+        console.warn(`Stats load attempt ${attempt} failed:`, e);
       }
-    } catch(e) {
-      console.error('Stats error:', e);
+    }
+    if (!statsLoaded) {
+      console.error('Stats failed after 3 attempts');
     }
 
     // 3. Tool Usage

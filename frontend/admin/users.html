@@ -232,18 +232,36 @@
 
   let allUsers = [];
 
-  async function loadUsers() {
+  async function loadUsers(attempt) {
+    if (!attempt) attempt = 1;
+    const tbody = document.getElementById('users-tbody');
+    if (attempt === 1) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">Loading user registry...</td></tr>';
+    } else {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--alert);padding:40px;font-family:var(--mono);">Reconnecting to backend... attempt ${attempt}/3</td></tr>`;
+    }
     try {
       const res = await adminFetch('/admin/users');
       if (res.ok) {
         const data = await res.json();
         allUsers = data.users || [];
         renderTable(allUsers);
+      } else if (res.status === 403) {
+        showToast('Access denied: Admin role required', 'error');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">403 Forbidden — token may be expired. Please log out and log back in.</td></tr>';
+      } else if (attempt < 3) {
+        setTimeout(() => loadUsers(attempt + 1), 4000);
       } else {
         showToast('Failed to load user list', 'error');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">Could not reach backend after 3 attempts. Check that the server is running.</td></tr>';
       }
     } catch(e) {
-      showToast('Network error loading users', 'error');
+      if (attempt < 3) {
+        setTimeout(() => loadUsers(attempt + 1), 4000);
+      } else {
+        showToast('Network error loading users', 'error');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">Network error — backend may be offline or still starting up.</td></tr>';
+      }
     }
   }
 

@@ -874,8 +874,7 @@ const server = http.createServer(async (req, res) => {
   // ── Protected Authenticated Routes ────────────────────────────────────────
 
   let activeUser = await getRequestUser(req);
-  const usersList = await db.getUsersList();
-  const isUninitialized = usersList.length === 0;
+  const isUninitialized = !(await db.hasAnyUsers());
 
   let isUnauthProfileRequest = false;
 

@@ -41,6 +41,9 @@ async function initializeDatabase(p) {
   await p.query(`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expiry BIGINT;
   `);
+  await p.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+  `);
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS userdata (
@@ -475,13 +478,14 @@ module.exports = {
 
   async getUsersList() {
     if (usePg) {
-      const res = await pool.query("SELECT id, email, name, role, tier, created_at, last_sync, passcode_hash FROM users");
+      const res = await pool.query("SELECT id, email, name, role, tier, status, created_at, last_sync, passcode_hash FROM users ORDER BY created_at DESC");
       return res.rows.map(u => ({
         id: u.id,
         email: u.email,
         name: u.name,
         role: u.role,
         tier: u.tier,
+        status: u.status || "active",
         createdAt: Number(u.created_at),
         lastSync: Number(u.last_sync),
         passcodeHash: u.passcode_hash
@@ -490,6 +494,15 @@ module.exports = {
 
     const registry = loadRegistry();
     return registry.map(({ passwordHash, ...rest }) => rest);
+  },
+
+  // Lightweight initialization check — avoids full getUsersList scan on every request
+  async hasAnyUsers() {
+    if (usePg) {
+      const res = await pool.query("SELECT 1 FROM users LIMIT 1");
+      return res.rows.length > 0;
+    }
+    return loadRegistry().length > 0;
   },
 
   async deleteUser(userId) {
