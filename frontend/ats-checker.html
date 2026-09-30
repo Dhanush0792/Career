@@ -81,13 +81,35 @@ body::after {
 }
 .page-header {
   border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 8px;
-  margin-bottom: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
   flex-shrink: 0;
 }
-.page-label { font-family:var(--mono); font-size:10px; color:var(--primary); letter-spacing:.14em; text-transform:uppercase; margin-bottom:2px; }
-.page-title { font-family:var(--display); font-size:26px; font-weight:900; text-transform:uppercase; color:var(--white); margin: 0; line-height: 1.1; }
-.page-title em { font-style:normal; color:var(--primary); }
+.page-label { 
+  font-family: var(--mono); 
+  font-size: 11px; 
+  font-weight: 700;
+  color: #2FDDC4; 
+  letter-spacing: .12em; 
+  text-transform: uppercase; 
+  margin-bottom: 4px; 
+}
+.page-title { 
+  font-family: var(--display); 
+  font-size: 32px; 
+  font-weight: 900; 
+  letter-spacing: 0.03em;
+  text-transform: uppercase; 
+  color: var(--white); 
+  margin: 0; 
+  line-height: 1.12; 
+}
+.page-title span.title-accent { 
+  font-style: normal; 
+  background: linear-gradient(135deg, #5B4FE8 0%, #2FDDC4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
 /* Widescreen 2-column layout */
 .grid {
@@ -180,19 +202,38 @@ body::after {
 
 .select-input {
   width: 100%;
-  height: 38px;
-  background: rgba(7,10,24,.6);
-  border: 1px solid var(--glass-border);
-  color: var(--white);
+  height: 42px;
+  background-color: #0b1124;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff !important;
   font-family: var(--body);
-  font-size: 12.5px;
-  padding: 0 10px;
-  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 36px 0 12px;
+  border-radius: 8px;
   outline: none;
   cursor: pointer;
   box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232FDDC4' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  transition: border-color 0.2s, background-color 0.2s;
 }
-.select-input:focus { border-color: var(--primary); }
+.select-input:focus { 
+  border-color: #2FDDC4; 
+  background-color: #0e1630;
+  box-shadow: 0 0 0 1px rgba(47, 221, 196, 0.25);
+}
+.select-input option {
+  background-color: #0b1124 !important;
+  color: #ffffff !important;
+  padding: 10px 12px;
+  font-family: var(--body);
+  font-size: 13px;
+}
 
 .action-bar-container {
   display: flex;
@@ -514,12 +555,12 @@ mark.kw-miss {
 <div class="container">
   <header class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px;">
     <div>
-      <div class="page-label">ATS SCORE ANALYSIS & KEYWORD GAP DETECTOR</div>
-      <h1 class="page-title">RESUME COMPATIBILITY <em>TESTING</em></h1>
+      <div class="page-label">ATS SCORE ANALYSIS &amp; KEYWORD GAP DETECTOR</div>
+      <h1 class="page-title">RESUME COMPATIBILITY <span class="title-accent">TESTING</span></h1>
     </div>
-    <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(0,243,255,0.08); border:1px solid rgba(0,243,255,0.3); border-radius:20px; padding:6px 14px;">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--primary); letter-spacing:0.08em; text-transform:uppercase;">100% Free &bull; No Sign-Up Required</span>
+    <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(47,221,196,0.08); border:1px solid rgba(47,221,196,0.3); border-radius:20px; padding:6px 14px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2FDDC4" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:#2FDDC4; letter-spacing:0.08em; text-transform:uppercase;">100% Free &bull; No Sign-Up Required</span>
     </div>
   </header>
 

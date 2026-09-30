@@ -54,7 +54,8 @@ function parseJwtPayload(token) {
 }
 
 // ─── Session Lifecycle & Inactivity Management ──────────────────────────────
-const INACTIVITY_TIMEOUT_MS = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+// Strictly 3 consecutive days of inactivity timeout (72 hours)
+const INACTIVITY_TIMEOUT_MS = 3 * 24 * 60 * 60 * 1000;
 let _activeSSE = null;
 let _lastActivityUpdate = 0;
 
@@ -68,7 +69,7 @@ function recordUserActivity() {
   }
 }
 
-// Attach user activity listeners
+// Attach user activity listeners & lifecycle events
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   ['mousedown', 'keydown', 'scroll', 'touchstart', 'visibilitychange'].forEach(evt => {
     window.addEventListener(evt, recordUserActivity, { passive: true });
@@ -81,7 +82,15 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     }
   });
 
-  // Periodically check inactivity in background
+  // Handle browser Back-Forward Cache (bfcache).
+  // When a user logs out and presses the browser's Back button, bfcache restores the page in memory
+  // without firing DOMContentLoaded or re-executing inline scripts.
+  // The 'pageshow' event ALWAYS fires on bfcache restoration; if persisted, re-validate authorization.
+  window.addEventListener('pageshow', (event) => {
+    requireAuth();
+  });
+
+  // Periodically check inactivity in background (every 60s)
   setInterval(() => {
     if (localStorage.getItem('jxa_token')) {
       const lastActive = Number(localStorage.getItem('jxa_last_active') || Date.now());
@@ -99,28 +108,46 @@ function triggerSessionLogout(reason = 'logged_out', navigate = true) {
     _activeSSE = null;
   }
 
-  // 2. Clear all local application keys
-  const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
-  keys.forEach(k => localStorage.removeItem(k));
+  // 2. Clear all local application keys from localStorage & sessionStorage
+  try {
+    const localKeys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
+    localKeys.forEach(k => localStorage.removeItem(k));
+    const sessionKeys = Object.keys(sessionStorage).filter(k => k.startsWith('jxa_'));
+    sessionKeys.forEach(k => sessionStorage.removeItem(k));
+  } catch(e) {}
 
-  // 3. Notify extension of signed-out state
+  // 3. Clear in-memory profile and runtime references
+  if (typeof _currentProfileCache !== 'undefined') {
+    _currentProfileCache = null;
+  }
+  _lastActivityUpdate = 0;
+
+  // 4. Notify extension of signed-out state
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
-      detail: { paired: false, email: "" }
-    }));
+    try {
+      window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
+        detail: { paired: false, email: "" }
+      }));
+      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+        detail: { token: "", email: "", passcode: "" }
+      }));
+    } catch(e) {}
   }
 
-  // 4. Navigate to authentication gateway with reason
+  // 5. Navigate to authentication gateway using location.replace to eliminate back-button cache retention
   if (navigate && typeof window !== 'undefined') {
     const isInAdmin = window.location.pathname.includes('/admin/');
     const prefix = isInAdmin ? '../' : '';
     const safeReason = encodeURIComponent(reason);
-    window.location.href = `${prefix}auth.html?reason=${safeReason}`;
+    if (document.documentElement) {
+      document.documentElement.style.display = 'none';
+    }
+    window.location.replace(`${prefix}auth.html?reason=${safeReason}`);
   }
 }
 
 /**
- * Redirect to auth.html if no session token exists, if token is expired, or if inactive for 2+ days.
+ * Redirect to auth.html if no session token exists, if token is expired, or if inactive for 3+ consecutive days.
  * Call this at the top of every inner page.
  */
 function requireAuth() {
@@ -147,11 +174,17 @@ function requireAuth() {
   let invalidReason = 'expired';
 
   if (token) {
-    const lastActive = Number(localStorage.getItem('jxa_last_active') || 0);
+    let lastActive = Number(localStorage.getItem('jxa_last_active') || 0);
     const now = Date.now();
 
-    // Check Case 1: Inactivity >= 2 days
-    if (lastActive && (now - lastActive >= INACTIVITY_TIMEOUT_MS)) {
+    // If no lastActive was stored, initialize it now so it is tracked going forward
+    if (!lastActive) {
+      lastActive = now;
+      localStorage.setItem('jxa_last_active', String(now));
+    }
+
+    // Check Case 1: Inactivity >= 3 consecutive days (72h)
+    if (now - lastActive >= INACTIVITY_TIMEOUT_MS) {
       isValidToken = false;
       invalidReason = 'inactivity';
     } else {
@@ -192,13 +225,13 @@ function requireAuth() {
       document.documentElement.style.display = 'none';
     }
     if (page.includes('resume-builder')) {
-      window.location.href = prefix + 'tools.html#resume-builder';
+      window.location.replace(prefix + 'tools.html#resume-builder');
     } else if (page.includes('ats-checker')) {
-      window.location.href = prefix + 'tools.html#ats-checker';
+      window.location.replace(prefix + 'tools.html#ats-checker');
     } else if (page.includes('cover-letter')) {
-      window.location.href = prefix + 'tools.html#cover-letter';
+      window.location.replace(prefix + 'tools.html#cover-letter');
     } else if (page.includes('autofill-lab')) {
-      window.location.href = prefix + 'tools.html#autofill-lab';
+      window.location.replace(prefix + 'tools.html#autofill-lab');
     } else {
       triggerSessionLogout(token ? invalidReason : 'unauthenticated');
     }
@@ -208,7 +241,7 @@ function requireAuth() {
       if (document.documentElement) {
         document.documentElement.style.display = 'none';
       }
-      window.location.href = '../dashboard.html';
+      window.location.replace('../dashboard.html');
       return;
     }
     // Background pull tracker data from server on startup
@@ -972,13 +1005,13 @@ function renderNav(container, activePage) {
   let links = NAV_ITEMS.map(item => {
     let href = item.href;
     if (item.label === 'Extension') {
-      href = token ? 'extension-setup.html' : 'extension-landing.html';
+      href = 'extension-setup.html';
     }
     // If not logged in, only show ATS, Extension
-    const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html', 'extension-setup.html'].includes(href);
+    const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html'].includes(href);
     if (!token && isPrivate) return '';
 
-    const isActive = href === activePage;
+    const isActive = (href === activePage) || (item.label === 'Extension' && (activePage === 'extension-setup.html' || activePage === 'extension-landing.html'));
     return `<a href="${href}" class="nav__link${isActive ? ' nav__link--active' : ''}">${item.label}</a>`;
   }).join('');
 
@@ -1015,11 +1048,13 @@ function renderNav(container, activePage) {
  */
 function requireAdmin() {
   if (!localStorage.getItem('jxa_token')) {
-    window.location.href = '../auth.html';
+    if (document.documentElement) document.documentElement.style.display = 'none';
+    window.location.replace('../auth.html');
     return;
   }
   if (localStorage.getItem('jxa_role') !== 'admin') {
-    window.location.href = '../dashboard.html';
+    if (document.documentElement) document.documentElement.style.display = 'none';
+    window.location.replace('../dashboard.html');
   }
 }
 

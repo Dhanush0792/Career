@@ -65,12 +65,12 @@
 /* Dropdown panel */
 .ch-nav__dropdown {
   position: absolute; top: calc(100% + 10px); left: 0;
-  min-width: 230px;
-  background: rgba(8,12,28,0.98);
-  border: 1px solid rgba(255,255,255,0.14);
-  border-radius: 14px; padding: 8px 6px;
+  min-width: 240px;
+  background: #090e20;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 14px; padding: 10px 8px;
   backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-  box-shadow: 0 24px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(91,79,232,0.08);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(91,79,232,0.15);
   opacity: 0; pointer-events: none;
   transform: translateY(-8px) scale(.98);
   transform-origin: top left;
@@ -85,29 +85,49 @@
 
 /* Dropdown items */
 .ch-nav__dd-label {
-  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700;
   letter-spacing: .12em; text-transform: uppercase;
-  color: rgba(244,247,255,0.3); padding: 8px 10px 4px;
+  color: #2FDDC4; padding: 8px 12px 6px;
 }
 .ch-nav__dd-link {
   display: flex; align-items: center; gap: 10px;
-  padding: 9px 10px; border-radius: 9px;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
-  color: rgba(244,247,255,0.78); text-decoration: none;
+  padding: 10px 12px; border-radius: 8px;
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+  color: rgba(244,247,255,0.92); text-decoration: none;
   transition: background .14s, color .14s;
   white-space: nowrap;
 }
 .ch-nav__dd-link:hover {
-  background: rgba(91,79,232,0.13); color: #fff;
+  background: rgba(91,79,232,0.22); color: #ffffff;
 }
 .ch-nav__dd-icon {
   width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
   display: flex; align-items: center; justify-content: center;
   font-size: 12px;
 }
 .ch-nav__dd-divider {
-  height: 1px; background: rgba(255,255,255,0.08); margin: 6px 8px;
+  height: 1px; background: rgba(255,255,255,0.12); margin: 6px 8px;
+}
+
+/* Extension CTA Button (prominent) */
+.ch-nav__ext-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 16px; margin-right: 8px;
+  background: rgba(47,221,196,0.12); color: #2FDDC4;
+  border: 1px solid rgba(47,221,196,0.45);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; text-decoration: none;
+  border-radius: 10px; cursor: pointer;
+  box-shadow: 0 0 16px rgba(47,221,196,0.15);
+  transition: all .2s ease;
+  white-space: nowrap;
+}
+.ch-nav__ext-btn:hover {
+  background: #2FDDC4; color: #080C1C;
+  border-color: #2FDDC4;
+  box-shadow: 0 0 24px rgba(47,221,196,0.45);
+  transform: translateY(-1px);
 }
 
 /* Get Started CTA (right side) */
@@ -248,6 +268,12 @@
 
     </div><!-- end groups -->
 
+    <!-- Extension Button -->
+    <a href="extension-setup.html" class="ch-nav__ext-btn" aria-label="Add to Edge">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-13l7 5-7 5V7z"/></svg>
+      ADD TO EDGE
+    </a>
+
     <!-- ④ GET STARTED (CTA dropdown) -->
     <div class="ch-nav__cta" role="menuitem">
       <button class="ch-nav__cta-btn" aria-haspopup="true" aria-expanded="false" id="ch-cta-btn">
@@ -284,7 +310,8 @@
     <a href="ats-checker.html"     class="ch-nav__drawer-link">ATS Checker</a>
     <a href="cover-letter.html"    class="ch-nav__drawer-link">Cover Letter</a>
     <a href="autofill-lab.html"    class="ch-nav__drawer-link">Autofill Lab</a>
-    <a href="extension-landing.html" class="ch-nav__drawer-link">Browser Extension</a>
+    <a href="extension-setup.html" class="ch-nav__drawer-link">Browser Extension (Install Guide)</a>
+    <a href="extension-landing.html" class="ch-nav__drawer-link">Extension Overview</a>
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Company</div>
@@ -298,6 +325,7 @@
     <a href="auth.html"            class="ch-nav__drawer-link">Sign In</a>
     <a href="auth.html#signup"     class="ch-nav__drawer-link">Create Account</a>
   </div>
+  <a href="extension-setup.html" class="ch-nav__drawer-cta" style="background:rgba(47,221,196,0.15);color:#2FDDC4;border:1px solid rgba(47,221,196,0.4);margin-bottom:8px;">ADD TO EDGE &mdash; FREE</a>
   <a href="auth.html" class="ch-nav__drawer-cta">GET STARTED</a>
 </div>
 `;
