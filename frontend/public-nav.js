@@ -110,26 +110,6 @@
   height: 1px; background: rgba(255,255,255,0.12); margin: 6px 8px;
 }
 
-/* Extension CTA Button (prominent) */
-.ch-nav__ext-btn {
-  display: inline-flex; align-items: center; gap: 7px;
-  height: 38px; padding: 0 16px; margin-right: 8px;
-  background: rgba(47,221,196,0.12); color: #2FDDC4;
-  border: 1px solid rgba(47,221,196,0.45);
-  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase; text-decoration: none;
-  border-radius: 10px; cursor: pointer;
-  box-shadow: 0 0 16px rgba(47,221,196,0.15);
-  transition: all .2s ease;
-  white-space: nowrap;
-}
-.ch-nav__ext-btn:hover {
-  background: #2FDDC4; color: #080C1C;
-  border-color: #2FDDC4;
-  box-shadow: 0 0 24px rgba(47,221,196,0.45);
-  transform: translateY(-1px);
-}
-
 /* Get Started CTA (right side) */
 .ch-nav__cta { position: relative; flex-shrink: 0; }
 .ch-nav__cta-btn {
@@ -242,13 +222,11 @@
         <div class="ch-nav__dropdown" role="menu">
           <div class="ch-nav__dd-label">Career Tools</div>
           <a href="resume-builder.html"  class="ch-nav__dd-link">Resume Builder</a>
-          <a href="ats-checker.html"     class="ch-nav__dd-link">ATS Checker</a>
           <a href="cover-letter.html"    class="ch-nav__dd-link">Cover Letter</a>
           <div class="ch-nav__dd-divider"></div>
           <div class="ch-nav__dd-label">Automation</div>
           <a href="autofill-lab.html"    class="ch-nav__dd-link">Autofill Lab</a>
           <a href="extension-landing.html" class="ch-nav__dd-link">Browser Extension</a>
-          <a href="extension-setup.html" class="ch-nav__dd-link">Install Guide</a>
         </div>
       </div>
 
@@ -267,12 +245,6 @@
       </div>
 
     </div><!-- end groups -->
-
-    <!-- Extension Button -->
-    <a href="extension-setup.html" class="ch-nav__ext-btn" aria-label="Add to Edge">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-13l7 5-7 5V7z"/></svg>
-      ADD TO EDGE
-    </a>
 
     <!-- ④ GET STARTED (CTA dropdown) -->
     <div class="ch-nav__cta" role="menuitem">
@@ -307,11 +279,9 @@
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Tools</div>
     <a href="resume-builder.html"  class="ch-nav__drawer-link">Resume Builder</a>
-    <a href="ats-checker.html"     class="ch-nav__drawer-link">ATS Checker</a>
     <a href="cover-letter.html"    class="ch-nav__drawer-link">Cover Letter</a>
     <a href="autofill-lab.html"    class="ch-nav__drawer-link">Autofill Lab</a>
-    <a href="extension-setup.html" class="ch-nav__drawer-link">Browser Extension (Install Guide)</a>
-    <a href="extension-landing.html" class="ch-nav__drawer-link">Extension Overview</a>
+    <a href="extension-landing.html" class="ch-nav__drawer-link">Browser Extension</a>
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Company</div>
@@ -325,7 +295,6 @@
     <a href="auth.html"            class="ch-nav__drawer-link">Sign In</a>
     <a href="auth.html#signup"     class="ch-nav__drawer-link">Create Account</a>
   </div>
-  <a href="extension-setup.html" class="ch-nav__drawer-cta" style="background:rgba(47,221,196,0.15);color:#2FDDC4;border:1px solid rgba(47,221,196,0.4);margin-bottom:8px;">ADD TO EDGE &mdash; FREE</a>
   <a href="auth.html" class="ch-nav__drawer-cta">GET STARTED</a>
 </div>
 `;

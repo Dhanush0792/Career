@@ -1005,7 +1005,7 @@ function renderNav(container, activePage) {
   let links = NAV_ITEMS.map(item => {
     let href = item.href;
     if (item.label === 'Extension') {
-      href = 'extension-setup.html';
+      href = token ? 'extension-setup.html' : 'extension-landing.html';
     }
     // If not logged in, only show ATS, Extension
     const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html'].includes(href);

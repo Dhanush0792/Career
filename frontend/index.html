@@ -1336,110 +1336,261 @@ footer {
 
       <!-- Text -->
       <div>
-        <div class="hero__tag reveal">Mission-class career automation</div>
+        <div class="hero__tag reveal">The extension that fills any job form in 1 click</div>
 
         <h1 class="hero__title">
-          <span class="reveal d1" id="hero-l1">CAREER</span><br>
-          <span class="reveal d2 line-orange" id="hero-l2">HUB_</span><br>
-          <span class="reveal d3 line-dim" id="hero-l3">ACTIVATED.</span>
+          <span class="reveal d1" id="hero-l1">INSTALL</span><br>
+          <span class="reveal d2 line-orange" id="hero-l2">ONCE_</span><br>
+          <span class="reveal d3 line-dim" id="hero-l3">APPLY ANYWHERE.</span>
         </h1>
 
         <p class="hero__sub reveal d4">
-          Automate your job applications. Instantly autofill complex forms across 50+ major portals using your secure, client-side encrypted master profile.
+          The JobXApply extension lives in your browser. Open any job portal &mdash; LinkedIn, Naukri, Workday, or any company career page &mdash; and a single button fills every field in under 3 seconds.
         </p>
 
-        <div class="hero__actions reveal d5">
-          <a href="auth.html" class="btn btn-primary" id="hero-cta">
-            &rsaquo; INITIATE MISSION
+        <div class="hero__actions reveal d5" style="flex-wrap:wrap;gap:10px;">
+          <a href="auth.html" class="btn btn--primary" id="hero-cta" style="display:inline-flex;align-items:center;gap:10px;">
+            GET STARTED &mdash; FREE &rsaquo;
           </a>
-          <a href="#protocol" class="btn btn-ghost">VIEW PROTOCOL</a>
+          <a href="auth.html" class="btn btn--ghost">SIGN IN &rsaquo;</a>
         </div>
 
         <div class="hero__stats reveal d6">
           <div class="hstat">
             <div class="hstat__val live-counter" data-count="50" data-suf="+">50+</div>
-            <div class="hstat__label">Portals mapped</div>
+            <div class="hstat__label">Portals covered</div>
           </div>
           <div class="hstat">
-            <div class="hstat__val live-counter" data-count="90" data-suf="%">90%</div>
-            <div class="hstat__label">Time eliminated</div>
+            <div class="hstat__val" style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--white);line-height:1;margin-bottom:4px;letter-spacing:-.02em">&lt;3<span style="font-size:14px">sec</span></div>
+            <div class="hstat__label">Per form fill</div>
           </div>
           <div class="hstat">
-            <div class="hstat__val" style="font-family:var(--mono);font-size:26px;font-weight:700;color:var(--white);line-height:1;margin-bottom:4px;letter-spacing:-.02em">+29<span style="font-size:16px">pts</span></div>
-            <div class="hstat__label">Avg ATS lift</div>
+            <div class="hstat__val" style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--white);line-height:1;margin-bottom:4px;letter-spacing:-.02em">Any</div>
+            <div class="hstat__label">Portal. Any form.</div>
           </div>
         </div>
       </div>
 
-      <!-- Interactive 3D Globe Showcase -->
+      <!-- Animated Autofill Mockup -->
       <style>
-      .resume-card-wrap {
+      .hero-ext-mock {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        align-self: center;
-        margin-top: 0;
-        /* Prevent globe from escaping its grid column */
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 14px;
+        position: relative;
         min-width: 0;
-        overflow: visible;
+        width: 100%;
+        max-width: 460px;
+        margin: 0 auto;
       }
-      .globe-wrap {
-        width: 440px;
-        height: 440px;
-        max-width: 100%;
-        aspect-ratio: 1 / 1;
-        position: relative;
-        cursor: grab;
-        flex-shrink: 0;
-        /* Clip badge and any overflows to the box bounds */
+      .hero-browser {
+        width: 100%;
+        background: #0d1220;
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 12px;
         overflow: hidden;
-        border-radius: 50%;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(91,79,232,0.12);
       }
-      .globe-wrap:active {
-        cursor: grabbing;
+      .hero-browser__bar {
+        display: flex; align-items: center; gap: 8px;
+        padding: 10px 14px;
+        background: rgba(255,255,255,0.04);
+        border-bottom: 1px solid rgba(255,255,255,0.07);
       }
-      .globe-status-badge {
-        position: relative;
-        background: rgba(8, 12, 28, 0.88);
-        border: 1px solid rgba(47, 221, 196, 0.30);
-        border-radius: 20px;
-        padding: 5px 14px;
-        font-family: var(--mono);
-        font-size: 10px;
-        color: var(--muted);
-        white-space: nowrap;
-        pointer-events: none;
-        z-index: 20;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      .hero-browser__dot {
+        width: 10px; height: 10px; border-radius: 50%;
       }
-      .pulse-green {
-        color: #2FDDC4;
-        animation: blink-pulse 1.5s infinite;
+      .hero-browser__dot:nth-child(1){ background:#FF5F57; }
+      .hero-browser__dot:nth-child(2){ background:#FFBD2E; }
+      .hero-browser__dot:nth-child(3){ background:#28C840; }
+      .hero-browser__url {
+        flex: 1; background: rgba(255,255,255,0.06); border-radius: 6px;
+        padding: 4px 10px; font-family: var(--mono); font-size: 10px;
+        color: rgba(255,255,255,0.4); letter-spacing:.02em; margin-left:8px;
       }
-      @keyframes blink-pulse {
-        0%, 100% { opacity: 0.3; }
-        50% { opacity: 1; }
+      .hero-browser__body {
+        padding: 18px 20px 20px;
       }
+      .hero-form-label {
+        font-family: var(--mono); font-size: 9px; font-weight: 700;
+        color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing:.1em;
+        margin-bottom: 5px;
+      }
+      .hero-form-field {
+        width: 100%; background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.10); border-radius: 6px;
+        padding: 8px 12px; font-family: var(--mono); font-size: 11px;
+        color: rgba(255,255,255,0.25); margin-bottom: 12px;
+        transition: color .4s, border-color .4s, background .4s;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .hero-form-field.filled {
+        color: #2FDDC4; border-color: rgba(47,221,196,0.35);
+        background: rgba(47,221,196,0.05);
+      }
+      .hero-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      /* Floating pill */
+      .hero-pill {
+        position: absolute;
+        bottom: -10px; right: 12px;
+        display: flex; align-items: center; gap: 10px;
+        background: rgba(8,12,28,0.96);
+        border: 1px solid rgba(47,221,196,0.5);
+        border-radius: 50px;
+        padding: 10px 18px;
+        font-family: var(--mono); font-size: 11px; font-weight: 700;
+        color: #fff; letter-spacing:.06em; text-transform: uppercase;
+        box-shadow: 0 8px 28px rgba(0,0,0,0.6), 0 0 0 1px rgba(47,221,196,0.15);
+        cursor: pointer;
+        transition: border-color .2s, box-shadow .2s;
+        z-index: 10;
+        opacity: 0;
+        transform: translateY(10px);
+        animation: pillAppear 0.5s ease 0.9s forwards;
+      }
+      .hero-pill__dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #2FDDC4;
+        animation: pillDot 1.4s ease-in-out infinite;
+      }
+      @keyframes pillDot { 0%,100%{opacity:.4;transform:scale(.85)} 50%{opacity:1;transform:scale(1)} }
+      @keyframes pillAppear { to { opacity:1; transform:translateY(0); } }
+      .hero-pill__count {
+        font-size:9px; color:rgba(255,255,255,0.45); font-weight:500;
+        letter-spacing:.04em; text-transform:none;
+      }
+      /* Portal cycle badge */
+      .hero-portal-badge {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+        border-radius: 50px; padding: 5px 12px;
+        font-family: var(--mono); font-size: 9px; font-weight: 600;
+        color: rgba(255,255,255,0.5); letter-spacing:.07em; text-transform:uppercase;
+        transition: all .4s ease;
+      }
+      .hero-portal-badge__pip { width:6px;height:6px;border-radius:50%; background:#5B4FE8; }
+      @media(max-width:640px){ .hero-ext-mock{ max-width:100%; } }
       </style>
 
-      <div class="resume-card-wrap">
-        <div style="display:flex; flex-direction:column; align-items:center; gap:16px; width:100%;">
-          <div class="globe-wrap">
-            <canvas id="globe-canvas" width="440" height="440" style="width:100%;height:100%;display:block;"></canvas>
+      <div class="hero-ext-mock reveal d3">
+        <div class="hero-portal-badge" id="hero-portal-badge">
+          <div class="hero-portal-badge__pip"></div>
+          <span id="hero-portal-name">linkedin.com/jobs/apply</span>
+        </div>
+        <div class="hero-browser">
+          <div class="hero-browser__bar">
+            <div class="hero-browser__dot"></div>
+            <div class="hero-browser__dot"></div>
+            <div class="hero-browser__dot"></div>
+            <div class="hero-browser__url" id="hero-browser-url">linkedin.com/jobs/apply/12345678</div>
           </div>
-          <div class="globe-status-badge">
-            <span class="pulse-green">-</span>
-            <span id="globe-banner-stat">Initializing vector maps...</span>
+          <div class="hero-browser__body">
+            <div class="hero-form-label">Full Name</div>
+            <div class="hero-form-field" id="hf-name">Waiting for autofill...</div>
+
+            <div class="hero-form-label">Email Address</div>
+            <div class="hero-form-field" id="hf-email">Waiting for autofill...</div>
+
+            <div class="hero-form-row">
+              <div>
+                <div class="hero-form-label">Phone</div>
+                <div class="hero-form-field" id="hf-phone">Waiting...</div>
+              </div>
+              <div>
+                <div class="hero-form-label">Location</div>
+                <div class="hero-form-field" id="hf-location">Waiting...</div>
+              </div>
+            </div>
+
+            <div class="hero-form-label">Current Role / Title</div>
+            <div class="hero-form-field" id="hf-role">Waiting for autofill...</div>
+
+            <div class="hero-form-label">Years of Experience</div>
+            <div class="hero-form-field" id="hf-exp">Waiting...</div>
           </div>
+        </div>
+        <div class="hero-pill" id="hero-pill">
+          <div class="hero-pill__dot"></div>
+          <span>Autofill Form</span>
+          <span class="hero-pill__count" id="hero-pill-count">6 fields</span>
         </div>
       </div>
 
     </div>
   </div>
 </section>
+
+<script>
+/* Hero autofill mockup animation */
+(function() {
+  const PORTALS = [
+    { name: 'LinkedIn Easy Apply',      url: 'linkedin.com/jobs/apply/12345678',       profile: { name:'Arjun Sharma', email:'arjun.sharma@gmail.com', phone:'+91 98765 43210', location:'Bengaluru, IN', role:'Senior Software Engineer', exp:'5 Years' }},
+    { name: 'Naukri.com',               url: 'naukri.com/job-listings/apply?id=98234', profile: { name:'Arjun Sharma', email:'arjun.sharma@gmail.com', phone:'+91 98765 43210', location:'Bengaluru, IN', role:'Senior Software Engineer', exp:'5 Years' }},
+    { name: 'Workday ATS',              url: 'careers.company.com/wd5/apply/12345',    profile: { name:'Arjun Sharma', email:'arjun.sharma@gmail.com', phone:'+91 98765 43210', location:'Bengaluru, IN', role:'Senior Software Engineer', exp:'5 Years' }},
+    { name: 'Greenhouse ATS',           url: 'boards.greenhouse.io/acme/jobs/99123',   profile: { name:'Arjun Sharma', email:'arjun.sharma@gmail.com', phone:'+91 98765 43210', location:'Bengaluru, IN', role:'Senior Software Engineer', exp:'5 Years' }},
+  ];
+  const FIELDS = ['hf-name','hf-email','hf-phone','hf-location','hf-role','hf-exp'];
+
+  let portalIdx = 0;
+  let animating = false;
+
+  function resetFields() {
+    const placeholders = ['Waiting for autofill...','Waiting for autofill...','Waiting...','Waiting...','Waiting for autofill...','Waiting...'];
+    FIELDS.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = placeholders[i]; el.classList.remove('filled'); }
+    });
+  }
+
+  function fillFields(profile) {
+    const vals = [profile.name, profile.email, profile.phone, profile.location, profile.role, profile.exp];
+    FIELDS.forEach((id, i) => {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = vals[i]; el.classList.add('filled'); }
+      }, i * 180);
+    });
+  }
+
+  function switchPortal() {
+    if (animating) return;
+    animating = true;
+    const portal = PORTALS[portalIdx % PORTALS.length];
+    const badge  = document.getElementById('hero-portal-badge');
+    const urlEl  = document.getElementById('hero-browser-url');
+    const countEl= document.getElementById('hero-pill-count');
+
+    if (badge) {
+      const pName = badge.querySelector('#hero-portal-name');
+      if (pName) pName.textContent = portal.url;
+    }
+    if (urlEl)   urlEl.textContent = portal.url;
+    if (countEl) countEl.textContent = '6 fields';
+
+    resetFields();
+
+    setTimeout(() => {
+      fillFields(portal.profile);
+      setTimeout(() => {
+        portalIdx++;
+        animating = false;
+      }, 2200);
+    }, 1200);
+  }
+
+  function startCycle() {
+    switchPortal();
+    setInterval(switchPortal, 4800);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startCycle);
+  } else {
+    setTimeout(startCycle, 400);
+  }
+})();
+</script>
 
 <!-- •••••••••••••••••••••••••••••••••••••••
      MISSION BRIEFING
@@ -1564,6 +1715,20 @@ footer {
 
     <div class="feat-grid reveal d2">
 
+      <div class="tcard" style="grid-column: 1 / -1; border-color: rgba(47,221,196,0.4); background: linear-gradient(135deg, rgba(8,12,28,0.9), rgba(47,221,196,0.06)); padding: 32px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div>
+            <div class="tcard__id" style="color:#2FDDC4;">FLAGSHIP ENGINE &nbsp;&bull;&nbsp; CORE TECHNOLOGY</div>
+            <div class="tcard__title" style="font-size:24px; margin: 6px 0 10px;">Universal Browser Extension</div>
+            <div class="tcard__desc" style="max-width:700px; font-size:14px; line-height:1.6;">The power engine living directly inside Edge. Detects job applications instantly across LinkedIn, Naukri, Workday, Greenhouse, Lever, and custom company portals. Injects the one-click autofill pill with heuristic DOM intelligence.</div>
+          </div>
+          <a href="extension-landing.html" class="btn btn--primary" style="margin-top:4px;">
+            EXPLORE EXTENSION &rsaquo;
+          </a>
+        </div>
+        <div class="tcard__stat" style="margin-top:16px; color:#2FDDC4;">Active on 50+ portals &bull; Client-side encrypted &bull; Zero configuration required</div>
+      </div>
+
       <div class="tcard">
         <div class="tcard__id">CAPABILITY-01 &nbsp; PROFILE</div>
         <div class="tcard__title">Profile Sync</div>
@@ -1634,7 +1799,7 @@ footer {
             <div class="protocol-step__title">Install the extension</div>
             <div class="protocol-step__desc">
               Add JobXApply to Chrome or Edge in under 60 seconds. Manifest V3, local-first. No account required to start. Firefox supported as temporary add-on.<br>
-              <a href="extension-setup.html" class="btn btn-primary" style="height:34px; padding:0 16px; font-size:9px; margin-top:12px; display:inline-flex; width:auto; text-decoration:none; align-items:center; justify-content:center;">DEPLOY EXTENSION &rsaquo;</a>
+              <a href="extension-landing.html" class="btn btn-primary" style="height:34px; padding:0 16px; font-size:9px; margin-top:12px; display:inline-flex; width:auto; text-decoration:none; align-items:center; justify-content:center;">DEPLOY EXTENSION &rsaquo;</a>
             </div>
           </div>
         </div>
@@ -1887,6 +2052,7 @@ footer {
         <h2 class="section__title" style="font-size:clamp(3.5rem,8vw,7rem)">YOUR NEXT ROLE<br>IS <em>ONE PROFILE</em><br>AWAY_</h2>
       </div>
       <p class="section__desc reveal d2" style="margin-top:20px;max-width:480px">Set up in under 10 minutes. Apply to your first role with JobXApply in under 5 seconds.</p>
+
       <form class="cta-form reveal d3" onsubmit="window.location.href='auth.html?email=' + encodeURIComponent(document.getElementById('cta-email').value); return false;" aria-label="Early access">
         <input type="email" class="cta-input" id="cta-email" placeholder="ENTER OPERATIVE EMAIL" autocomplete="email">
         <button type="submit" class="btn btn--primary">&rsaquo; INITIATE</button>
