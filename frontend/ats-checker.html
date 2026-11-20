@@ -1068,8 +1068,8 @@ runBtn.addEventListener('click', async () => {
 
       updateStatus('Computing ATS keyword match score...', 'working');
       
-      // Calculate score using shared-shell logic
-      const result = scoreResumeData(activeProfileData, role, extractedText, fileType, layoutData);
+      // Calculate score using shared-shell logic with custom pasted JD text
+      const result = scoreResumeData(activeProfileData, role, extractedText, fileType, layoutData, jdText);
       
       const score = result.score;
       const scoreEl = document.getElementById('score-number');

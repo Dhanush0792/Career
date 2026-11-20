@@ -1517,6 +1517,8 @@ const ATS_KEYWORD_SYNONYMS = {
 };
 
 function extractKeywordsFromJD(jdText) {
+  if (!jdText || typeof jdText !== "string") return { mustHave: [], niceToHave: [] };
+
   const stopWords = new Set([
     'the','and','or','to','a','an','in','for','of','with','is','are','be',
     'that','this','will','have','on','at','by','from','as','we','you','our',
@@ -1524,10 +1526,37 @@ function extractKeywordsFromJD(jdText) {
     'any','one','also','its','but','has','was','were','they','who','what',
     'when','how','into','than','then','so','up','out','them','these','those',
     'should','would','could','may','must','shall','do','does','did','get',
-    'per','role','work','team','job','experience','position','company'
+    'per','role','work','team','job','experience','position','company','years',
+    'looking','join','ideal','candidate','responsibilities','requirements','opportunity',
+    'working','including','across','strong','ability','knowledge','plus','environment'
   ]);
   
-  const tokens = jdText.toLowerCase()
+  const cleanJD = jdText.toLowerCase();
+
+  // Curated High-Value Tech Skills & Credentials Dictionary for exact n-gram matching
+  const TECH_SKILLS_CATALOG = [
+    "javascript", "typescript", "python", "java", "c++", "c#", "go", "golang", "rust", "ruby", "php", "swift", "kotlin", "scala",
+    "react", "react.js", "next.js", "vue", "vue.js", "angular", "node.js", "nodejs", "express", "fastapi", "django", "flask", "spring boot",
+    "html", "html5", "css", "css3", "tailwind", "tailwind css", "sass", "bootstrap", "redux", "graphql", "rest api", "rest apis", "restful", "grpc", "websockets",
+    "postgresql", "postgres", "mysql", "mongodb", "redis", "sqlite", "elasticsearch", "dynamodb", "cassandra", "supabase", "firebase", "sql", "nosql",
+    "aws", "amazon web services", "azure", "google cloud", "gcp", "docker", "kubernetes", "k8s", "terraform", "ci/cd", "github actions", "jenkins", "gitlab",
+    "git", "linux", "bash", "shell", "webpack", "vite", "jest", "playwright", "cypress", "mocha", "pytest", "unit testing", "integration testing",
+    "pytorch", "tensorflow", "pandas", "numpy", "scikit-learn", "machine learning", "deep learning", "nlp", "computer vision", "llm", "etl", "data pipelines",
+    "microservices", "distributed systems", "system design", "agile", "scrum", "kanban", "devops", "cloud computing", "serverless", "lambda",
+    "kafka", "rabbitmq", "sqs", "sns", "event-driven", "mvc", "clean architecture", "domain-driven design", "ddd", "tdd", "bdd",
+    "security", "oauth", "jwt", "sso", "rbac", "encryption", "https", "owasp", "api gateway", "load balancer", "reverse proxy", "nginx",
+    "performance optimization", "caching", "monitoring", "datadog", "prometheus", "grafana", "sentry", "cloudwatch"
+  ];
+
+  const catalogMatches = [];
+  TECH_SKILLS_CATALOG.forEach(skill => {
+    const rx = new RegExp('(^|[^a-zA-Z0-9])' + skill.replace(/[.+]/g, '\\$&') + '(?![a-zA-Z0-9])', 'i');
+    if (rx.test(cleanJD) && !catalogMatches.includes(skill)) {
+      catalogMatches.push(skill);
+    }
+  });
+
+  const tokens = cleanJD
     .replace(/[^a-z0-9\s.+#-]/g, ' ')
     .split(/\s+/)
     .filter(w => w.length > 2 && !stopWords.has(w));
@@ -1538,17 +1567,21 @@ function extractKeywordsFromJD(jdText) {
   });
   
   const sortedTerms = Object.keys(freqs).sort((a, b) => freqs[b] - freqs[a]);
+  const tokenSkills = sortedTerms.filter(t => !stopWords.has(t));
+
+  const allMust = Array.from(new Set([...catalogMatches.slice(0, 15), ...tokenSkills.slice(0, 8)]));
+  const allNice = Array.from(new Set([...catalogMatches.slice(15, 25), ...tokenSkills.slice(8, 16)]));
   
   return {
-    mustHave: sortedTerms.slice(0, 15),
-    niceToHave: sortedTerms.slice(15, 23)
+    mustHave: allMust.slice(0, 18),
+    niceToHave: allNice.slice(0, 10)
   };
 }
 
 /**
  * Centrally calculates the 0-100 ATS compatibility score.
  */
-function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'profile', layoutData = {}) {
+function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'profile', layoutData = {}, jdText = "") {
   const preset = ATS_ROLE_PRESETS[targetRole] || ATS_ROLE_PRESETS.default;
   const isProfile = fileType === 'profile';
   
@@ -1640,6 +1673,20 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
   let keywordEarned = 0;
   let keywordTotal = 0;
 
+  // Merge static preset with dynamic keywords extracted from custom pasted JD if available
+  let targetMustHave = [...(preset.mustHave || [])];
+  let targetNiceToHave = [...(preset.niceToHave || [])];
+
+  if (jdText && typeof jdText === 'string' && jdText.trim().length > 25) {
+    const jdKeywords = extractKeywordsFromJD(jdText);
+    if (jdKeywords.mustHave.length > 0) {
+      // Prioritize dynamically extracted JD terms
+      const uniqueCombined = new Set([...jdKeywords.mustHave, ...targetMustHave]);
+      targetMustHave = Array.from(uniqueCombined).slice(0, 20);
+      targetNiceToHave = jdKeywords.niceToHave.slice(0, 10);
+    }
+  }
+
   // Synonyms variant search helper
   function checkKeyword(kw) {
     const kwLow = kw.toLowerCase();
@@ -1666,7 +1713,7 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     return 0.0;
   }
 
-  preset.mustHave.forEach(kw => {
+  targetMustHave.forEach(kw => {
     const credit = checkKeyword(kw);
     keywordTotal += 1.0;
     keywordEarned += credit;
@@ -1677,16 +1724,16 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     }
   });
 
-  preset.niceToHave.forEach(kw => {
+  targetNiceToHave.forEach(kw => {
     const credit = checkKeyword(kw);
-    // niceToHaves are bonus: they contribute to earned but not to the baseline total
+    // niceToHaves contribute bonus earned
     keywordEarned += credit * 0.5;
   });
 
-  const keywordCoverageScore = Math.min(100, Math.round((keywordEarned / keywordTotal) * 100));
+  const keywordCoverageScore = Math.min(100, Math.round((keywordEarned / Math.max(1, keywordTotal)) * 100));
 
   if (keywordCoverageScore < 80 && missingKeywords.length > 0) {
-    suggestions.push(`**Keyword Coverage low**: Missing key technical or role terms. Integrate standard keywords like: ${missingKeywords.slice(0, 5).join(", ")}.`);
+    suggestions.push(`**Keyword Coverage alert**: Missing key technical or role requirements. Integrate target keywords like: ${missingKeywords.slice(0, 6).join(", ")}.`);
   }
 
   // --- Category D: Keyword Placement & Density (10%) ---
@@ -1694,7 +1741,6 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
   
   matchedKeywords.forEach(kw => {
     const kwLow = kw.toLowerCase();
-    // count occurrences
     const matches = cleanText.match(new RegExp(kwLow.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'));
     const count = matches ? matches.length : 0;
     
@@ -1702,39 +1748,76 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
       densityScore -= 10;
       suggestions.push(`**Keyword Stuffing Warning**: "${kw}" appears ${count} times, which may trigger spam filters. Aim for 2-3 natural repetitions instead.`);
     } else if (count === 1) {
-      // isolated check - is it only in one place?
       densityScore -= 3;
     }
   });
 
   densityScore = Math.max(0, densityScore);
 
-  // --- Category E: Achievement Quality (15%) ---
+  // --- Category E: Achievement Quality & Action Verbs (15%) ---
   let achievementScore = 0;
   let totalBullets = 0;
   let quantifiedBullets = 0;
 
+  const ACTION_VERBS = {
+    strong: [
+      "architected", "spearheaded", "engineered", "overhauled", "optimized", "benchmarked",
+      "scaled", "automated", "reduced", "accelerated", "eliminated", "orchestrated",
+      "deployed", "mentored", "championed", "streamlined", "centralized", "designed",
+      "implemented", "executed", "formulated", "delivered", "negotiated", "surpassed", "pioneered"
+    ],
+    moderate: [
+      "developed", "built", "created", "maintained", "analyzed", "configured",
+      "tested", "refactored", "integrated", "produced", "monitored", "established",
+      "collaborated", "managed", "coordinated", "resolved", "improved", "launched"
+    ],
+    weak: [
+      "assisted", "helped", "worked", "handled", "participated", "contributed",
+      "responsible", "tasked", "supported", "attempted", "attended"
+    ]
+  };
+
+  const METRIC_REGEX = /(?:\b\d+(?:\.\d+)?(?:%|k|m|b|\$|₹|x|\+)?\b|\b[1-9]\d*\b)/i;
+
+  let strongVerbCount = 0;
+  let moderateVerbCount = 0;
+  let weakVerbCount = 0;
+  const weakVerbExamples = [];
+
   // Split text by standard bullet point characters or line breaks
   const bulletLines = resumeText.split(/[\n•\-\*]/).map(line => line.trim()).filter(line => line.length > 15);
-  
-  const actionVerbRegex = new RegExp('\\b(' + preset.verbs.join('|') + ')\\w*\\b', 'i');
-  // Look for percentages, dollar figures, number ranges, or scale words like thousand, million, billion
-  const quantityRegex = /\b(\d+|%|\$|thousand|million|billion|increase|decrease|growth|scale|revenue|users)\b/i;
 
   bulletLines.forEach(line => {
     totalBullets++;
-    if (actionVerbRegex.test(line) && quantityRegex.test(line)) {
+    const words = line.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+    const firstWord = words[0] || "";
+
+    if (ACTION_VERBS.strong.some(v => firstWord.startsWith(v) || v.startsWith(firstWord))) {
+      strongVerbCount++;
+    } else if (ACTION_VERBS.moderate.some(v => firstWord.startsWith(v) || v.startsWith(firstWord))) {
+      moderateVerbCount++;
+    } else if (ACTION_VERBS.weak.some(v => firstWord.startsWith(v) || v.startsWith(firstWord))) {
+      weakVerbCount++;
+      if (weakVerbExamples.length < 3) weakVerbExamples.push(`"${firstWord}"`);
+    }
+
+    if (METRIC_REGEX.test(line)) {
       quantifiedBullets++;
     }
   });
 
-  if (totalBullets > 0) {
-    achievementScore = Math.round((quantifiedBullets / totalBullets) * 100);
-  }
+  const metricDensity = totalBullets > 0 ? Math.round((quantifiedBullets / totalBullets) * 100) : 50;
+  const verbQualityRatio = totalBullets > 0 
+    ? Math.min(1.0, (strongVerbCount * 1.0 + moderateVerbCount * 0.7) / totalBullets)
+    : 0.7;
 
-  if (achievementScore < 60) {
-    const unquantifiedCount = totalBullets - quantifiedBullets;
-    suggestions.push(`**Unquantified accomplishments**: ${unquantifiedCount} bullet points lack measurable metrics. Add statistics (percentage, dollar, scale) to demonstrate impact, e.g. "Optimized code to reduce execution latency by 20%".`);
+  achievementScore = Math.min(100, Math.round((metricDensity * 0.55) + (verbQualityRatio * 45)));
+
+  if (weakVerbCount > 0) {
+    suggestions.push(`**Passive / Weak Action Verbs Flagged**: Found ${weakVerbCount} bullet points using passive opening verbs (${weakVerbExamples.join(", ")}). Upgrade to high-impact verbs like *Architected*, *Overhauled*, *Engineered*, or *Streamlined*.`);
+  }
+  if (metricDensity < 50 && totalBullets > 0) {
+    suggestions.push(`**Low Metric Density (${metricDensity}%)**: Only ${quantifiedBullets} of ${totalBullets} bullet points contain hard numbers or metrics. Top recruiters recommend the Google X-Y-Z formula ("Accomplished [X], as measured by [Y], by doing [Z]").`);
   }
 
   // --- Category F: Section Completeness & Hygiene (15%) ---
@@ -1801,6 +1884,14 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     },
     matchedKeywords,
     missingKeywords,
+    verbAnalysis: {
+      totalBullets,
+      quantifiedBullets,
+      metricDensity,
+      strongVerbs: strongVerbCount,
+      moderateVerbs: moderateVerbCount,
+      weakVerbs: weakVerbCount
+    },
     suggestions,
     flags
   };
