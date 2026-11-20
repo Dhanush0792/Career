@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobXApply Workspace</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="sp-header">
+    <div class="sp-brand">
+      <img src="icon.png" class="sp-logo" alt="JobXApply Logo">
+      <div class="sp-title">Job<span>X</span>Apply</div>
+    </div>
+    <div class="sp-header-actions">
+      <select id="spPersonaSelect" class="sp-persona-select" title="Active Persona"></select>
+      <button class="sp-btn-icon" id="spSyncBtn" title="Sync Profile Cloud">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+      </button>
+      <button class="sp-btn-icon" id="spOpenFullTabBtn" title="Open Full Screen in New Tab">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Live Detected Portal Banner -->
+  <div class="sp-portal-banner">
+    <div class="sp-portal-info">
+      <div class="sp-portal-dot" id="spPortalDot"></div>
+      <div class="sp-portal-name" id="spPortalName">Detecting active portal...</div>
+      <span class="sp-portal-badge" id="spPortalTier">Checking</span>
+    </div>
+    <button class="sp-autofill-btn" id="spAutofillActiveBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Autofill Tab</span>
+    </button>
+  </div>
+
+  <!-- Navigation Bar Tabs -->
+  <nav class="sp-nav">
+    <button class="sp-nav-tab active" data-view="dashboardView">Dashboard</button>
+    <button class="sp-nav-tab" data-view="profileView">Profile</button>
+    <button class="sp-nav-tab" data-view="resumeView">Resume</button>
+    <button class="sp-nav-tab" data-view="atsView">ATS Checker</button>
+    <button class="sp-nav-tab" data-view="coverView">Cover Letter</button>
+    <button class="sp-nav-tab" data-view="trackerView">Tracker</button>
+    <button class="sp-nav-tab" data-view="settingsView">Settings</button>
+  </nav>
+
+  <!-- Main Viewports -->
+  <main class="sp-main">
+
+    <!-- 1. DASHBOARD VIEW -->
+    <section class="sp-view active" id="dashboardView">
+      <div class="sp-card">
+        <div class="sp-card-title">
+          <span>Executive Readiness</span>
+          <span id="dashReadinessPercent" style="color:var(--success); font-weight:800;">0%</span>
+        </div>
+        <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:10px;">
+          <div id="dashReadinessBar" style="height:100%; width:0%; background:linear-gradient(90deg, #5B4FE8, #2FDDC4); transition:width 0.4s;"></div>
+        </div>
+        <div style="font-size:11px; color:var(--muted); line-height:1.5;">
+          Keep your master career profile complete so the extension can automatically map all custom hiring questions.
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">Quick Actions</div>
+        <div class="sp-grid-2">
+          <button class="sp-btn sp-btn-teal" id="dashFillBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Autofill Page
+          </button>
+          <button class="sp-btn sp-btn-primary" id="dashLogAppBtn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Track Job
+          </button>
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">Quick Copy Snippets</div>
+        <div id="dashSnippetList" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;">
+          <!-- Dynamically populated from active profile -->
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">Recent Applications</div>
+        <div id="dashRecentApps" style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--muted);">
+          Loading tracker data...
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MASTER PROFILE VIEW -->
+    <section class="sp-view" id="profileView">
+      <div class="sp-card">
+        <div class="sp-card-title">
+          <span>01 // Primary Identity</span>
+          <button class="sp-btn sp-btn-teal" id="saveProfileBtn" style="padding:4px 8px; font-size:10px;">Save Profile</button>
+        </div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Full Name</label>
+            <input type="text" id="profFullName" class="sp-input" placeholder="e.g. Alex Morgan">
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Email Address</label>
+            <input type="email" id="profEmail" class="sp-input" placeholder="e.g. alex@example.com">
+          </div>
+        </div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Phone</label>
+            <input type="text" id="profPhone" class="sp-input" placeholder="+1 (555) 000-0000">
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Current Location / City</label>
+            <input type="text" id="profCity" class="sp-input" placeholder="San Francisco, CA">
+          </div>
+        </div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">LinkedIn Profile URL</label>
+          <input type="url" id="profLinkedIn" class="sp-input" placeholder="https://linkedin.com/in/username">
+        </div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">GitHub / Portfolio URL</label>
+          <input type="url" id="profGitHub" class="sp-input" placeholder="https://github.com/username">
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">02 // Professional Experience & Role</div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Target Role / Title</label>
+            <input type="text" id="profTitle" class="sp-input" placeholder="Software Engineer">
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Years of Experience</label>
+            <input type="number" id="profExperienceYears" class="sp-input" placeholder="5">
+          </div>
+        </div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Current Company</label>
+            <input type="text" id="profCurrentCompany" class="sp-input" placeholder="Current Employer">
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Notice Period (Days)</label>
+            <input type="text" id="profNoticePeriod" class="sp-input" placeholder="Immediate / 30">
+          </div>
+        </div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">Executive 4-Line Bio / Summary</label>
+          <textarea id="profSummary" class="sp-textarea" placeholder="Passionate engineer with experience building scalable systems..."></textarea>
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">03 // Technical & Soft Skills</div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">Key Skills (Comma Separated)</label>
+          <textarea id="profSkills" class="sp-textarea" style="min-height:60px;" placeholder="JavaScript, React, Node.js, Python, PostgreSQL, System Design"></textarea>
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">04 // Equal Employment & Work Authorization</div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Authorized to work in US/Country?</label>
+            <select id="profAuthWork" class="sp-select">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Require Visa Sponsorship?</label>
+            <select id="profRequireVisa" class="sp-select">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="sp-btn sp-btn-teal" id="saveProfileBottomBtn" style="width:100%; padding:12px;">
+        Save Changes &amp; Sync to Autofill Engine
+      </button>
+    </section>
+
+    <!-- 3. RESUME BUILDER VIEW -->
+    <section class="sp-view" id="resumeView">
+      <div class="sp-card">
+        <div class="sp-card-title">Resume Generator &amp; Live View</div>
+        <div style="font-size:11px; color:var(--muted); line-height:1.5; margin-bottom:12px;">
+          Automatically compile a single-column, recruiter-friendly ATS resume from your active profile details.
+        </div>
+        <div class="sp-grid-2">
+          <button class="sp-btn sp-btn-primary" id="generateResumeBtn">Compile Resume</button>
+          <button class="sp-btn sp-btn-secondary" id="copyResumeTextBtn">Copy Text</button>
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">Resume Preview</div>
+        <div id="resumePreviewContainer" style="background:#fff; color:#111; padding:16px; border-radius:6px; font-size:10px; line-height:1.45; font-family:var(--body); max-height:360px; overflow-y:auto; white-space:pre-wrap;">
+Click "Compile Resume" above to generate your live resume view based on your profile information.
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. ATS CHECKER VIEW -->
+    <section class="sp-view" id="atsView">
+      <div class="sp-card">
+        <div class="sp-card-title">
+          <span>Target Job Description</span>
+          <button class="sp-btn sp-btn-teal" id="atsExtractFromTabBtn" style="padding:3px 7px; font-size:9.5px;">Extract from Tab</button>
+        </div>
+        <div class="sp-form-group">
+          <textarea id="atsJdInput" class="sp-textarea" placeholder="Paste target job description or requirements here..."></textarea>
+        </div>
+        <button class="sp-btn sp-btn-primary" id="atsRunCheckBtn" style="width:100%;">Analyze Resume Against Job</button>
+      </div>
+
+      <div class="sp-card" id="atsResultsCard" style="display:none;">
+        <div class="sp-card-title">
+          <span>ATS Compatibility Score</span>
+          <span id="atsScoreValue" style="color:var(--success); font-size:16px; font-weight:800;">0%</span>
+        </div>
+        <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:12px;">
+          <div id="atsScoreBar" style="height:100%; width:0%; background:linear-gradient(90deg, #5B4FE8, #2FDDC4); transition:width 0.4s;"></div>
+        </div>
+
+        <div style="font-size:10.5px; font-weight:700; color:var(--success); margin-bottom:4px; text-transform:uppercase;">Matched Keywords</div>
+        <div id="atsMatchedList" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;"></div>
+
+        <div style="font-size:10.5px; font-weight:700; color:var(--alert); margin-bottom:4px; text-transform:uppercase;">Missing Keywords Gap</div>
+        <div id="atsMissingList" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;"></div>
+
+        <div style="font-size:10.5px; font-weight:700; color:var(--white); margin-bottom:4px; text-transform:uppercase;">Recommendations</div>
+        <ul id="atsSuggestionsList" style="padding-left:16px; font-size:11px; color:var(--muted); line-height:1.5;"></ul>
+      </div>
+    </section>
+
+    <!-- 5. COVER LETTER VIEW -->
+    <section class="sp-view" id="coverView">
+      <div class="sp-card">
+        <div class="sp-card-title">Cover Letter Generator</div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">Target Company</label>
+          <input type="text" id="clCompanyInput" class="sp-input" placeholder="e.g. Stripe">
+        </div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">Target Role Title</label>
+          <input type="text" id="clRoleInput" class="sp-input" placeholder="e.g. Senior Frontend Engineer">
+        </div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">Key Strengths to Highlight</label>
+          <input type="text" id="clKeyStrengths" class="sp-input" placeholder="React architecture, performance optimization, team leadership">
+        </div>
+        <button class="sp-btn sp-btn-primary" id="clGenerateBtn" style="width:100%;">Draft Tailored Cover Letter</button>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">
+          <span>Generated Letter</span>
+          <button class="sp-btn sp-btn-teal" id="clCopyBtn" style="padding:3px 7px; font-size:9.5px;">Copy</button>
+        </div>
+        <textarea id="clOutput" class="sp-textarea" style="min-height:220px; font-family:var(--body); line-height:1.5;" placeholder="Generated cover letter draft will appear here..."></textarea>
+      </div>
+    </section>
+
+    <!-- 6. TRACKER VIEW -->
+    <section class="sp-view" id="trackerView">
+      <div class="sp-card">
+        <div class="sp-card-title">Log New Application</div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Company</label>
+            <input type="text" id="trCompany" class="sp-input" placeholder="Company Name">
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Job Title</label>
+            <input type="text" id="trRole" class="sp-input" placeholder="Role Title">
+          </div>
+        </div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Status</label>
+            <select id="trStatus" class="sp-select">
+              <option value="Applied">Applied</option>
+              <option value="Screening">Screening</option>
+              <option value="Interview">Interview</option>
+              <option value="Offer">Offer</option>
+              <option value="Archived">Archived</option>
+            </select>
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Job URL</label>
+            <input type="url" id="trUrl" class="sp-input" placeholder="https://...">
+          </div>
+        </div>
+        <button class="sp-btn sp-btn-primary" id="trSaveBtn" style="width:100%;">Save to Tracker</button>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">Application Pipeline</div>
+        <div id="trackerList" style="display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. SETTINGS & SYNC VIEW -->
+    <section class="sp-view" id="settingsView">
+      <div class="sp-card">
+        <div class="sp-card-title">Cloud Vault &amp; Sync Key</div>
+        <div class="sp-form-group">
+          <label class="sp-form-label">Vault Passcode / Sync Key</label>
+          <input type="password" id="setPasscode" class="sp-input" placeholder="Enter your secret sync key">
+        </div>
+        <div class="sp-grid-2">
+          <button class="sp-btn sp-btn-primary" id="setSavePasscodeBtn">Save Key</button>
+          <button class="sp-btn sp-btn-secondary" id="setSyncNowBtn">Sync Vault Now</button>
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">Multi-Persona Management</div>
+        <div class="sp-grid-2">
+          <button class="sp-btn sp-btn-teal" id="setNewPersonaBtn">+ Add Persona</button>
+          <button class="sp-btn sp-btn-secondary" id="setLoadMockBtn">Load Sample Profile</button>
+        </div>
+      </div>
+
+      <div class="sp-card">
+        <div class="sp-card-title">About JobXApply Extension</div>
+        <div style="font-size:11px; color:var(--muted); line-height:1.5;">
+          Version: 0.2.0 (Full Browser App)<br>
+          Engine: Client-Side Sandbox &bull; Zero plaintext stored without encryption.<br>
+          Supported Portals: 50+ hiring platforms including LinkedIn, Workday, Greenhouse, Lever, and Naukri.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div class="sp-toast" id="spToast">Notification</div>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

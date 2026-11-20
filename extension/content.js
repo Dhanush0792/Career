@@ -605,6 +605,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     return true;
   }
+  if (message?.type === "jobxapply:extractJobText") {
+    try {
+      const clone = document.body.cloneNode(true);
+      const removals = clone.querySelectorAll("script, style, head, iframe, noscript, svg, nav, footer, header");
+      removals.forEach(el => el.remove());
+      const bodyText = (clone.innerText || clone.textContent || "").slice(0, 8000);
+      sendResponse({ ok: true, text: bodyText });
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
   if (message?.type === "jobxapply:receiveProfileFromExtension") {
     try {
       window.dispatchEvent(new CustomEvent("jobxapply:populateWebProfile", {
