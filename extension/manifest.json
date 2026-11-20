@@ -17,7 +17,8 @@
     "activeTab",
     "scripting",
     "tabs",
-    "sidePanel"
+    "sidePanel",
+    "contextMenus"
   ],
   "side_panel": {
     "default_path": "sidepanel.html"

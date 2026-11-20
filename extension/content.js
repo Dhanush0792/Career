@@ -648,6 +648,44 @@ function checkContext() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "jobxapply:autofill") {
+    try {
+      const rawProfile = message.payload?.payload ? message.payload.payload : (message.payload || {});
+      const host = window.location.hostname.toLowerCase();
+      const baseDomain = getBaseDomain(host);
+      
+      chrome.storage.local.get("portalMaps", (store) => {
+        const portalMaps = store.portalMaps || {};
+        const portalMap = portalMaps[baseDomain] || {};
+        const payload = buildAutofillPayload(rawProfile, Object.keys(rawProfile));
+        let filledCount = 0;
+
+        for (const [field, value] of Object.entries(payload.payload || {})) {
+          if (!value) continue;
+          const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
+          const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
+          if (el) {
+            setValue(el, value);
+            try {
+              const origOutline = el.style.outline;
+              el.style.outline = "2px solid #2FDDC4";
+              el.style.boxShadow = "0 0 10px rgba(47, 221, 196, 0.4)";
+              setTimeout(() => {
+                el.style.outline = origOutline;
+                el.style.boxShadow = "";
+              }, 2500);
+            } catch (err) {}
+            filledCount++;
+          }
+        }
+        showToastNotification(`JobXApply filled ${filledCount} field${filledCount === 1 ? '' : 's'}!`);
+        sendResponse({ ok: true, filledCount });
+      });
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
   if (message?.type === "jobxapply:insertText") {
     try {
       const activeEl = document.activeElement;
@@ -1380,6 +1418,15 @@ function injectFloatingQuickFill() {
           const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
           if (el) {
             setValue(el, value);
+            try {
+              const origOutline = el.style.outline;
+              el.style.outline = "2px solid #2FDDC4";
+              el.style.boxShadow = "0 0 10px rgba(47, 221, 196, 0.4)";
+              setTimeout(() => {
+                el.style.outline = origOutline;
+                el.style.boxShadow = "";
+              }, 2500);
+            } catch (err) {}
             filledCount++;
           }
         }

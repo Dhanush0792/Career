@@ -602,3 +602,72 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 });
+
+// ── Context Menus for 1-Click Operations ────────────────────────────────────
+chrome.runtime.onInstalled.addListener(() => {
+  if (chrome.contextMenus) {
+    chrome.contextMenus.removeAll(() => {
+      chrome.contextMenus.create({
+        id: "jxa_autofill",
+        title: "⚡ Autofill Application with JobXApply",
+        contexts: ["page", "editable"]
+      });
+      chrome.contextMenus.create({
+        id: "jxa_track",
+        title: "📌 Track this Job in Application Tracker",
+        contexts: ["page"]
+      });
+      chrome.contextMenus.create({
+        id: "jxa_open_panel",
+        title: "🚀 Open JobXApply Side Panel",
+        contexts: ["action", "page"]
+      });
+    });
+  }
+});
+
+if (chrome.contextMenus && chrome.contextMenus.onClicked) {
+  chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    if (!tab || !tab.id) return;
+    if (info.menuItemId === "jxa_autofill") {
+      chrome.storage.local.get(["jobxapplyProfile"], (res) => {
+        const profile = res.jobxapplyProfile || {};
+        chrome.tabs.sendMessage(tab.id, {
+          type: "jobxapply:autofill",
+          payload: profile
+        });
+      });
+    } else if (info.menuItemId === "jxa_track") {
+      chrome.tabs.sendMessage(tab.id, { type: "jobxapply:getJobMetadata" }, (metaRes) => {
+        const meta = metaRes?.metadata || {
+          title: tab.title || "Software Engineer",
+          company: "Target Company",
+          url: tab.url
+        };
+        chrome.storage.local.get(["jobxapplyApplications"], (appRes) => {
+          const apps = appRes.jobxapplyApplications || [];
+          apps.unshift({
+            id: "app_" + Date.now().toString(36),
+            company: meta.company || "Target Company",
+            role: meta.title || "Target Role",
+            portal: meta.host ? meta.host.replace("www.", "") : "Online Portal",
+            status: "Applied",
+            date: new Date().toISOString().split("T")[0],
+            appliedAt: Date.now(),
+            url: meta.url || tab.url,
+            notes: "Logged via right-click context menu."
+          });
+          chrome.storage.local.set({ jobxapplyApplications: apps });
+        });
+      });
+    } else if (info.menuItemId === "jxa_open_panel") {
+      if (chrome.sidePanel && chrome.sidePanel.open) {
+        chrome.sidePanel.open({ windowId: tab.windowId }).catch(() => {
+          chrome.tabs.create({ url: chrome.runtime.getURL("sidepanel.html") });
+        });
+      } else {
+        chrome.tabs.create({ url: chrome.runtime.getURL("sidepanel.html") });
+      }
+    }
+  });
+}
