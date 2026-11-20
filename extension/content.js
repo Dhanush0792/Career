@@ -91,7 +91,29 @@ const FIELD_ALIASES = {
   eduphd_stream: ["phd stream", "phd branch", "phd discipline", "phd major", "doctorate major"],
   eduphd_year: ["phd passing year", "phd year", "doctorate passing year"],
   eduphd_cgpa: ["phd cgpa", "phd percentage", "phd marks", "doctorate cgpa"],
-  eduphd_pursuing: ["phd pursuing"]
+  eduphd_pursuing: ["phd pursuing"],
+
+  // Master Screening & Compliance Vault Aliases
+  workauthstatus: ["work authorization", "authorized to work", "legally authorized to work", "work eligibility", "are you legally authorized", "right to work"],
+  requiresponsorship: ["require sponsorship", "visa sponsorship", "future sponsorship", "require visa sponsorship", "sponsorship now or in the future", "will you require sponsorship", "immigration sponsorship"],
+  visatype: ["visa type", "current visa", "citizenship status", "visa status", "immigration status", "work permit"],
+  noticeperioddays: ["notice period in days", "days of notice", "notice period", "joining time", "availability to join", "how many days notice"],
+  willingtorelocate: ["willing to relocate", "relocation", "open to relocation", "relocate", "are you willing to relocate"],
+  willingtotravel: ["willing to travel", "travel percentage", "travel willingness", "open to travel", "ability to travel"],
+  earlieststartdate: ["earliest start date", "available start date", "start date", "availability date", "when can you start"],
+  currentfixedsalary: ["current fixed salary", "current base salary", "current fixed", "current fixed ctc", "base salary"],
+  currentsalarycurrency: ["current salary currency", "currency"],
+  expectedfixedsalary: ["expected fixed salary", "expected base salary", "expected fixed", "expected fixed ctc"],
+  expectedsalarycurrency: ["expected salary currency", "target currency"],
+  salarynegotiable: ["salary negotiable", "compensation flexible", "negotiable", "salary expectation flexible"],
+  genderidentity: ["gender identity", "gender", "self-identify gender", "what is your gender"],
+  veteranstatus: ["veteran status", "veteran", "military status", "protected veteran status", "are you a veteran"],
+  disabilitystatus: ["disability status", "disability", "voluntary self-identification of disability", "do you have a disability"],
+  raceethnicity: ["race", "ethnicity", "race/ethnicity", "hispanic or latino", "ethnic background"],
+  legallyauthorized: ["legally authorized", "authorized to work in", "eligible to work in"],
+  previouslyemployedhere: ["previously employed", "worked here before", "former employee", "ever worked for", "previous employment at"],
+  hasrelativeshere: ["relatives employed", "relatives working", "family member at company", "any relatives working here"],
+  securityclearance: ["security clearance", "clearance level", "active clearance", "government clearance"]
 };
 
 let extensionEnabled = true;
@@ -323,15 +345,78 @@ function setValueRaw(el, value) {
     }
     return false;
   }
-  if (type === "checkbox" || type === "radio") {
+  if (type === "radio") {
+    const normVal = normalize(String(value));
+    const isAffirmative = normVal === "yes" || normVal === "true" || normVal === "authorized" || normVal === "1";
+    const isNegative = normVal === "no" || normVal === "false" || normVal === "not authorized" || normVal === "0";
+    
+    // Find all radios in the same group or fieldset
+    let radios = [];
+    if (el.name) {
+      try {
+        radios = Array.from(document.querySelectorAll(`input[type="radio"][name="${CSS.escape(el.name)}"]`));
+      } catch (e) {}
+    }
+    if (!radios.length) {
+      const fieldset = el.closest("fieldset, [role='radiogroup'], .form-group, .field, div");
+      if (fieldset) {
+        radios = Array.from(fieldset.querySelectorAll('input[type="radio"]'));
+      }
+    }
+    if (!radios.length) radios = [el];
+
+    let chosenRadio = null;
+    for (const r of radios) {
+      const rVal = normalize(r.value || "");
+      let lText = "";
+      try {
+        const rId = r.id ? CSS.escape(r.id) : null;
+        const label = (rId ? document.querySelector(`label[for="${rId}"]`) : null) || r.closest("label") || r.parentElement;
+        lText = normalize(label?.textContent || "");
+      } catch (e) {}
+
+      if (rVal === normVal || lText === normVal || (normVal.length > 2 && (lText.includes(normVal) || rVal.includes(normVal)))) {
+        chosenRadio = r;
+        break;
+      }
+      if (isAffirmative && (rVal === "yes" || lText === "yes" || lText.startsWith("yes") || rVal === "1" || lText.includes("authorized") || lText.includes("agree"))) {
+        chosenRadio = r;
+        break;
+      }
+      if (isNegative && (rVal === "no" || lText === "no" || lText.startsWith("no") || rVal === "0" || lText.includes("decline") || lText.includes("do not") || lText.includes("not authorized"))) {
+        chosenRadio = r;
+        break;
+      }
+    }
+
+    const targetRadio = chosenRadio || el;
+    targetRadio.focus();
+    targetRadio.checked = true;
+    targetRadio.dispatchEvent(new Event("pointerdown", { bubbles: true, composed: true }));
+    targetRadio.dispatchEvent(new Event("mousedown", { bubbles: true, composed: true }));
+    targetRadio.dispatchEvent(new Event("click", { bubbles: true, composed: true }));
+    targetRadio.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+    targetRadio.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    targetRadio.blur();
+    return true;
+  }
+
+  if (type === "checkbox") {
+    const boolVal = Boolean(value) && String(value).toLowerCase() !== "false" && String(value).toLowerCase() !== "no";
     el.focus();
-    el.checked = Boolean(value);
-    el.dispatchEvent(new Event("change", { bubbles: true }));
+    if (el.checked !== boolVal) {
+      el.click();
+    }
+    el.checked = boolVal;
+    el.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
     el.blur();
     return true;
   }
+
   // Standard text, textarea, and numeric inputs
   el.focus();
+  el.dispatchEvent(new Event("pointerdown", { bubbles: true, composed: true }));
+  el.dispatchEvent(new Event("mousedown", { bubbles: true, composed: true }));
   try {
     const proto = el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
     const descriptor = Object.getOwnPropertyDescriptor(proto, "value");
@@ -359,21 +444,25 @@ function setValue(el, value) {
   const role = el.getAttribute("role");
   const cls = String(el.className || "");
   
-  if (tag !== "select" && (role === "combobox" || role === "listbox" || cls.includes("select") || cls.includes("dropdown"))) {
+  if (tag !== "select" && (role === "combobox" || role === "listbox" || cls.includes("select") || cls.includes("dropdown") || cls.includes("control"))) {
     el.focus();
+    el.dispatchEvent(new Event("pointerdown", { bubbles: true, composed: true }));
+    el.dispatchEvent(new Event("mousedown", { bubbles: true, composed: true }));
     el.click();
     setTimeout(() => {
-      const optionItems = Array.from(document.querySelectorAll("li, [role='option'], .sapMSelectItem, .dropdown-item, [class*='option']"));
+      const optionItems = Array.from(document.querySelectorAll("li, [role='option'], .sapMSelectItem, .dropdown-item, [class*='option'], div[id*='react-select']"));
       const normVal = normalize(value);
       let matchedOpt = null;
       for (const opt of optionItems) {
         const text = normalize(opt.textContent);
-        if (text === normVal || text.startsWith(normVal) || text.includes(normVal)) {
+        if (text === normVal || text.startsWith(normVal) || (normVal.length > 2 && text.includes(normVal))) {
           matchedOpt = opt;
           break;
         }
       }
       if (matchedOpt) {
+        matchedOpt.dispatchEvent(new Event("pointerdown", { bubbles: true, composed: true }));
+        matchedOpt.dispatchEvent(new Event("mousedown", { bubbles: true, composed: true }));
         matchedOpt.click();
       } else {
         el.click();

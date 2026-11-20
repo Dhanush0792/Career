@@ -148,6 +148,28 @@ Alex R. Morgan`,
   handicapped: "No",
   healthIssues: "None. Fit for all employment conditions, on-site, hybrid, and remote responsibilities.",
 
+  // Master Screening & Compliance Vault
+  workAuthStatus: "Authorized",
+  requireSponsorship: "No",
+  visaType: "Citizen",
+  noticePeriodDays: "30 days",
+  willingToRelocate: "Yes",
+  willingToTravel: "25%",
+  earliestStartDate: "Immediately",
+  currentFixedSalary: "1800000",
+  currentSalaryCurrency: "INR",
+  expectedFixedSalary: "2400000",
+  expectedSalaryCurrency: "INR",
+  salaryNegotiable: "Flexible",
+  genderIdentity: "Decline to self-identify",
+  veteranStatus: "I am not a protected veteran",
+  disabilityStatus: "No, I do not have a disability",
+  raceEthnicity: "Decline to specify",
+  legallyAuthorized: "Yes",
+  previouslyEmployedHere: "No",
+  hasRelativesHere: "No",
+  securityClearance: "None",
+
   // ── Behavioral Q&A Vault ────────────────────────────────────────────────
   q_why_hire: "You should hire me because I combine deep technical expertise across modern full-stack architectures with an owner's mindset. Over the past 4 years, I have repeatedly delivered high-uptime platforms, solved complex performance bottlenecks, and elevated team productivity through clear code design and proactive communication.",
 

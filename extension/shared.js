@@ -14,6 +14,10 @@ export const DEFAULT_PROFILE_FIELDS = [
   "eduPG_college", "eduPG_degree", "eduPG_stream", "eduPG_year", "eduPG_cgpa", "eduPG_pursuing",
   "eduMasters_college", "eduMasters_degree", "eduMasters_stream", "eduMasters_year", "eduMasters_cgpa", "eduMasters_pursuing",
   "eduPhD_college", "eduPhD_degree", "eduPhD_stream", "eduPhD_year", "eduPhD_cgpa", "eduPhD_pursuing",
+  "workAuthStatus", "requireSponsorship", "visaType", "noticePeriodDays", "willingToRelocate", "willingToTravel",
+  "earliestStartDate", "currentFixedSalary", "currentSalaryCurrency", "expectedFixedSalary", "expectedSalaryCurrency",
+  "salaryNegotiable", "genderIdentity", "veteranStatus", "disabilityStatus", "raceEthnicity", "legallyAuthorized",
+  "previouslyEmployedHere", "hasRelativesHere", "securityClearance",
   "experienceList", "projectsList", "certificationsList"
 ];
 
@@ -108,7 +112,29 @@ export const FIELD_ALIASES = {
   eduPhD_stream: ["phd stream", "phd branch", "phd discipline", "phd major", "doctorate major"],
   eduPhD_year: ["phd passing year", "phd year", "doctorate passing year"],
   eduPhD_cgpa: ["phd cgpa", "phd percentage", "phd marks", "doctorate cgpa"],
-  eduPhD_pursuing: ["phd pursuing"]
+  eduPhD_pursuing: ["phd pursuing"],
+
+  // Master Screening & Compliance Vault Aliases
+  workAuthStatus: ["work authorization", "authorized to work", "legally authorized to work", "work eligibility", "are you legally authorized", "right to work"],
+  requireSponsorship: ["require sponsorship", "visa sponsorship", "future sponsorship", "require visa sponsorship", "sponsorship now or in the future", "will you require sponsorship", "immigration sponsorship"],
+  visaType: ["visa type", "current visa", "citizenship status", "visa status", "immigration status", "work permit"],
+  noticePeriodDays: ["notice period in days", "days of notice", "notice period", "joining time", "availability to join", "how many days notice"],
+  willingToRelocate: ["willing to relocate", "relocation", "open to relocation", "relocate", "are you willing to relocate"],
+  willingToTravel: ["willing to travel", "travel percentage", "travel willingness", "open to travel", "ability to travel"],
+  earliestStartDate: ["earliest start date", "available start date", "start date", "availability date", "when can you start"],
+  currentFixedSalary: ["current fixed salary", "current base salary", "current fixed", "current fixed ctc", "base salary"],
+  currentSalaryCurrency: ["current salary currency", "currency"],
+  expectedFixedSalary: ["expected fixed salary", "expected base salary", "expected fixed", "expected fixed ctc"],
+  expectedSalaryCurrency: ["expected salary currency", "target currency"],
+  salaryNegotiable: ["salary negotiable", "compensation flexible", "negotiable", "salary expectation flexible"],
+  genderIdentity: ["gender identity", "gender", "self-identify gender", "what is your gender"],
+  veteranStatus: ["veteran status", "veteran", "military status", "protected veteran status", "are you a veteran"],
+  disabilityStatus: ["disability status", "disability", "voluntary self-identification of disability", "do you have a disability"],
+  raceEthnicity: ["race", "ethnicity", "race/ethnicity", "hispanic or latino", "ethnic background"],
+  legallyAuthorized: ["legally authorized", "authorized to work in", "eligible to work in"],
+  previouslyEmployedHere: ["previously employed", "worked here before", "former employee", "ever worked for", "previous employment at"],
+  hasRelativesHere: ["relatives employed", "relatives working", "family member at company", "any relatives working here"],
+  securityClearance: ["security clearance", "clearance level", "active clearance", "government clearance"]
 };
 
 export const PORTAL_RULES = [

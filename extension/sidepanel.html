@@ -170,20 +170,74 @@
       </div>
 
       <div class="sp-card">
-        <div class="sp-card-title">04 // Equal Employment & Work Authorization</div>
+        <div class="sp-card-title">04 // Universal Screening &amp; Compliance Vault</div>
         <div class="sp-grid-2">
           <div class="sp-form-group">
-            <label class="sp-form-label">Authorized to work in US/Country?</label>
+            <label class="sp-form-label">Authorized to work?</label>
             <select id="profAuthWork" class="sp-select">
               <option value="Yes">Yes</option>
               <option value="No">No</option>
             </select>
           </div>
           <div class="sp-form-group">
-            <label class="sp-form-label">Require Visa Sponsorship?</label>
+            <label class="sp-form-label">Require Sponsorship?</label>
             <select id="profRequireVisa" class="sp-select">
               <option value="No">No</option>
               <option value="Yes">Yes</option>
+            </select>
+          </div>
+        </div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Visa / Status</label>
+            <select id="profVisaType" class="sp-select">
+              <option value="Citizen">Citizen</option>
+              <option value="Permanent Resident">Green Card / PR</option>
+              <option value="H-1B">H-1B</option>
+              <option value="F-1 OPT/CPT">F-1 OPT/CPT</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Willing to Relocate?</label>
+            <select id="profWillingRelocate" class="sp-select">
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Remote Only">Remote Only</option>
+            </select>
+          </div>
+        </div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Expected Compensation</label>
+            <input type="text" id="profExpectedSalary" class="sp-input" placeholder="e.g. 2400000 or 145000">
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Currency</label>
+            <select id="profSalaryCurrency" class="sp-select">
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+        </div>
+        <div class="sp-grid-2">
+          <div class="sp-form-group">
+            <label class="sp-form-label">Gender</label>
+            <select id="profGender" class="sp-select">
+              <option value="Decline to self-identify">Decline to state</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-binary">Non-binary</option>
+            </select>
+          </div>
+          <div class="sp-form-group">
+            <label class="sp-form-label">Disability</label>
+            <select id="profDisability" class="sp-select">
+              <option value="No, I do not have a disability">No</option>
+              <option value="Yes, I have a disability">Yes</option>
+              <option value="I do not wish to answer">Decline</option>
             </select>
           </div>
         </div>

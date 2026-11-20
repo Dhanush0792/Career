@@ -373,8 +373,12 @@ body::after {
         <span>07 // Q&amp;A VAULT</span>
         <span class="toc-indicator" id="ind-vault"></span>
       </a>
+      <a class="toc-btn" href="#section-screening" onclick="scrollToSection(event, 'section-screening')">
+        <span>08 // SCREENING VAULT</span>
+        <span class="toc-indicator" id="ind-screening"></span>
+      </a>
       <a class="toc-btn" href="#section-security" onclick="scrollToSection(event, 'section-security')">
-        <span>08 // SYNC &amp; KEY</span>
+        <span>09 // SYNC &amp; KEY</span>
         <span class="toc-indicator" id="ind-security"></span>
       </a>
     </aside>
@@ -900,10 +904,230 @@ body::after {
           </div>
         </section>
 
-        <!-- Section 8: Security & Sync -->
+        <!-- Section 8: Universal Screening & Compliance Vault -->
+        <section class="profile-section-card" id="section-screening">
+          <div class="section-header-row">
+            <h2 class="section-title">08 / Universal Screening &amp; Compliance Vault</h2>
+            <span class="section-status-badge" id="badge-screening">Screening Ready</span>
+          </div>
+          <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
+            Workday, Greenhouse, Lever, and Naukri ask these exact questions on nearly every job application. Configure your answers once, and the JobXApply browser extension will automatically select and autofill them across all hiring portals.
+          </p>
+
+          <!-- Group A: Work Authorization & Immigration -->
+          <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700; margin-bottom: 12px; border-bottom: 1px dashed var(--glass-border); padding-bottom: 6px;">
+            A // Work Authorization &amp; Sponsorship
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-workAuthStatus">Work Authorization Status</label>
+              <select id="f-workAuthStatus">
+                <option value="Authorized">Legally authorized to work</option>
+                <option value="Require Sponsorship">Require visa sponsorship</option>
+                <option value="Not Authorized">Not currently authorized</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="f-requireSponsorship">Will you now or in future require sponsorship?</label>
+              <select id="f-requireSponsorship">
+                <option value="No">No (I do not require sponsorship)</option>
+                <option value="Yes">Yes (I require visa sponsorship)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-visaType">Current Visa / Citizenship Status</label>
+              <select id="f-visaType">
+                <option value="Citizen">Citizen (Native / Naturalized)</option>
+                <option value="Permanent Resident">Permanent Resident / Green Card</option>
+                <option value="H-1B">H-1B Specialty Occupation</option>
+                <option value="F-1 OPT/CPT">F-1 Student (OPT / STEM OPT / CPT)</option>
+                <option value="L-1">L-1 Intra-company Transferee</option>
+                <option value="TN">TN NAFTA Professional</option>
+                <option value="Other">Other Work Permit / Employment Pass</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="f-legallyAuthorized">Legally authorized for target country?</label>
+              <select id="f-legallyAuthorized">
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Group B: Availability & Relocation -->
+          <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700; margin: 20px 0 12px; border-bottom: 1px dashed var(--glass-border); padding-bottom: 6px;">
+            B // Availability, Notice Period &amp; Mobility
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-noticePeriodDays">Notice Period</label>
+              <select id="f-noticePeriodDays">
+                <option value="Immediate">Immediate / Serving Notice</option>
+                <option value="15 days">15 Days</option>
+                <option value="30 days" selected>30 Days (1 Month)</option>
+                <option value="45 days">45 Days</option>
+                <option value="60 days">60 Days (2 Months)</option>
+                <option value="90 days">90 Days (3 Months)</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="f-willingToRelocate">Willingness to Relocate</label>
+              <select id="f-willingToRelocate">
+                <option value="Yes">Yes (Open to relocation)</option>
+                <option value="No">No (Not open to relocation)</option>
+                <option value="Remote Only">Remote Only</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-willingToTravel">Willingness to Travel</label>
+              <select id="f-willingToTravel">
+                <option value="0%">0% (No travel required)</option>
+                <option value="25%" selected>Up to 25% travel</option>
+                <option value="50%">Up to 50% travel</option>
+                <option value="75%+">75%+ frequent travel</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="f-earliestStartDate">Earliest Available Start Date</label>
+              <input type="text" id="f-earliestStartDate" placeholder="e.g. Immediately, or 2 weeks after offer">
+            </div>
+          </div>
+
+          <!-- Group C: Compensation & Flexibility -->
+          <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700; margin: 20px 0 12px; border-bottom: 1px dashed var(--glass-border); padding-bottom: 6px;">
+            C // Compensation Vault
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-currentFixedSalary">Current Fixed Annual Compensation</label>
+              <input type="text" id="f-currentFixedSalary" placeholder="e.g. 1500000 or 120000">
+            </div>
+            <div class="form-group half">
+              <label for="f-currentSalaryCurrency">Currency (Current)</label>
+              <select id="f-currentSalaryCurrency">
+                <option value="INR" selected>INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="SGD">SGD ($)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-expectedFixedSalary">Expected Annual Compensation (CTC/Base)</label>
+              <input type="text" id="f-expectedFixedSalary" placeholder="e.g. 2000000 or 145000">
+            </div>
+            <div class="form-group half">
+              <label for="f-expectedSalaryCurrency">Currency (Expected)</label>
+              <select id="f-expectedSalaryCurrency">
+                <option value="INR" selected>INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="CAD">CAD ($)</option>
+                <option value="SGD">SGD ($)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="f-salaryNegotiable">Salary Flexibility</label>
+              <select id="f-salaryNegotiable">
+                <option value="Flexible" selected>Flexible depending on overall package, equity &amp; perks</option>
+                <option value="Non-negotiable">Strictly non-negotiable</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Group D: Demographics & Universal Compliance (EEOC) -->
+          <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700; margin: 20px 0 12px; border-bottom: 1px dashed var(--glass-border); padding-bottom: 6px;">
+            D // Voluntary Self-Identification &amp; EEOC Compliance
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-genderIdentity">Gender Identity</label>
+              <select id="f-genderIdentity">
+                <option value="Decline to self-identify" selected>I do not wish to self-identify</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-binary">Non-binary</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="f-veteranStatus">Veteran Status</label>
+              <select id="f-veteranStatus">
+                <option value="I am not a protected veteran" selected>I am not a protected veteran</option>
+                <option value="I identify as one or more of the classifications of protected veteran">I identify as a protected veteran</option>
+                <option value="I decline to self-identify">I decline to self-identify</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-disabilityStatus">Disability Status</label>
+              <select id="f-disabilityStatus">
+                <option value="No, I do not have a disability" selected>No, I do not have a disability</option>
+                <option value="Yes, I have a disability">Yes, I have a disability (or previously had a disability)</option>
+                <option value="I do not wish to answer">I do not wish to answer</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="f-raceEthnicity">Race / Ethnicity</label>
+              <select id="f-raceEthnicity">
+                <option value="Decline to specify" selected>Decline to specify</option>
+                <option value="Asian">Asian (Indian, Chinese, Japanese, etc.)</option>
+                <option value="White">White / Caucasian</option>
+                <option value="Black or African American">Black or African American</option>
+                <option value="Hispanic or Latino">Hispanic or Latino</option>
+                <option value="Two or More Races">Two or More Races</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Group E: Background & Conflicts -->
+          <div style="font-family: var(--mono); font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700; margin: 20px 0 12px; border-bottom: 1px dashed var(--glass-border); padding-bottom: 6px;">
+            E // Background &amp; Company Affiliation
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="f-previouslyEmployedHere">Previously employed by applying organization?</label>
+              <select id="f-previouslyEmployedHere">
+                <option value="No" selected>No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+            <div class="form-group half">
+              <label for="f-hasRelativesHere">Any relatives or family currently working here?</label>
+              <select id="f-hasRelativesHere">
+                <option value="No" selected>No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="f-securityClearance">Government / Defense Security Clearance</label>
+              <select id="f-securityClearance">
+                <option value="None" selected>None</option>
+                <option value="Confidential">Confidential</option>
+                <option value="Secret">Secret</option>
+                <option value="Top Secret">Top Secret / SCI</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 9: Security & Sync -->
         <section class="profile-section-card" id="section-security">
           <div class="section-header-row">
-            <h2 class="section-title">08 / Optional Client-Side Vault Encryption</h2>
+            <h2 class="section-title">09 / Optional Client-Side Vault Encryption</h2>
             <span class="section-status-badge" id="badge-security">Security &amp; Sync</span>
           </div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
@@ -954,6 +1178,7 @@ const SECTION_IDS = [
   'section-documents',
   'section-additional',
   'section-vault',
+  'section-screening',
   'section-security'
 ];
 
@@ -1367,7 +1592,11 @@ const FIELDS = [
   'eduGrad_college', 'eduGrad_degree', 'eduGrad_stream', 'eduGrad_year', 'eduGrad_cgpa',
   'eduPG_college', 'eduPG_degree', 'eduPG_stream', 'eduPG_year', 'eduPG_cgpa',
   'eduMasters_college', 'eduMasters_degree', 'eduMasters_stream', 'eduMasters_year', 'eduMasters_cgpa',
-  'eduPhD_college', 'eduPhD_degree', 'eduPhD_stream', 'eduPhD_year', 'eduPhD_cgpa'
+  'eduPhD_college', 'eduPhD_degree', 'eduPhD_stream', 'eduPhD_year', 'eduPhD_cgpa',
+  'workAuthStatus', 'requireSponsorship', 'visaType', 'noticePeriodDays', 'willingToRelocate', 'willingToTravel',
+  'earliestStartDate', 'currentFixedSalary', 'currentSalaryCurrency', 'expectedFixedSalary', 'expectedSalaryCurrency',
+  'salaryNegotiable', 'genderIdentity', 'veteranStatus', 'disabilityStatus', 'raceEthnicity', 'legallyAuthorized',
+  'previouslyEmployedHere', 'hasRelativesHere', 'securityClearance'
 ];
 
 let allPersonas = { "default": { profileName: "Primary Profile" } };
@@ -1822,6 +2051,29 @@ const TEST_MOCK_PROFILE = {
   otherDocuments: "AWS Certified Solutions Architect (Associate), Certified Kubernetes Application Developer (CKAD)",
   handicapped: "No",
   healthIssues: "None. Fit for all employment conditions, on-site, hybrid, and remote responsibilities.",
+  
+  // Master Screening & Compliance Vault
+  workAuthStatus: "Authorized",
+  requireSponsorship: "No",
+  visaType: "Citizen",
+  noticePeriodDays: "30 days",
+  willingToRelocate: "Yes",
+  willingToTravel: "25%",
+  earliestStartDate: "Immediately",
+  currentFixedSalary: "1800000",
+  currentSalaryCurrency: "INR",
+  expectedFixedSalary: "2400000",
+  expectedSalaryCurrency: "INR",
+  salaryNegotiable: "Flexible",
+  genderIdentity: "Decline to self-identify",
+  veteranStatus: "I am not a protected veteran",
+  disabilityStatus: "No, I do not have a disability",
+  raceEthnicity: "Decline to specify",
+  legallyAuthorized: "Yes",
+  previouslyEmployedHere: "No",
+  hasRelativesHere: "No",
+  securityClearance: "None",
+
   q_why_hire: "You should hire me because I combine deep technical expertise across modern full-stack architectures with an owner's mindset. Over the past 4 years, I have repeatedly delivered high-uptime platforms, solved complex performance bottlenecks, and elevated team productivity through clear code design and proactive communication.",
   q_why_company: "I am drawn to your company because of your high engineering standards, clear customer focus, and innovative approach to solving real-world challenges. Your mission and collaborative culture match exactly what I look for in an engineering organization.",
   q_achievement: "My greatest professional achievement was architecting a zero-downtime database migration and caching layer for TechMatrix Systems. This overhaul handled over 25,000 requests per minute during a critical product surge, reduced P95 latency by 42%, and saved approximately $45,000 annually in cloud compute resources.",

@@ -96,6 +96,28 @@ const DEFAULT_PROFILE = {
   eduPhD_cgpa: "",
   eduPhD_pursuing: false,
   
+  // Master Screening & Compliance Vault
+  workAuthStatus: "Authorized",
+  requireSponsorship: "No",
+  visaType: "Citizen",
+  noticePeriodDays: "30 days",
+  willingToRelocate: "Yes",
+  willingToTravel: "25%",
+  earliestStartDate: "Immediately",
+  currentFixedSalary: "",
+  currentSalaryCurrency: "INR",
+  expectedFixedSalary: "",
+  expectedSalaryCurrency: "INR",
+  salaryNegotiable: "Flexible",
+  genderIdentity: "Decline to self-identify",
+  veteranStatus: "I am not a protected veteran",
+  disabilityStatus: "No, I do not have a disability",
+  raceEthnicity: "Decline to specify",
+  legallyAuthorized: "Yes",
+  previouslyEmployedHere: "No",
+  hasRelativesHere: "No",
+  securityClearance: "None",
+  
   experienceList: [],
   projectsList: [],
   certificationsList: []

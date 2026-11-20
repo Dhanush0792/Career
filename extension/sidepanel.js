@@ -129,15 +129,29 @@ function populateProfileForm() {
   setVal("profNoticePeriod", p.noticePeriodDays || p.noticePeriod);
   setVal("profSummary", p.summary || p.bio);
   setVal("profSkills", Array.isArray(p.skills) ? p.skills.join(", ") : (p.skills || ""));
+  setVal("profExpectedSalary", p.expectedFixedSalary || p.expectedSalary);
+  setVal("profSalaryCurrency", p.expectedSalaryCurrency || "INR");
 
-  if (p.authorizedUs !== undefined) {
+  if (p.workAuthStatus) {
+    const el = document.getElementById("profAuthWork");
+    if (el) el.value = p.workAuthStatus === "Authorized" || p.workAuthStatus === "Yes" ? "Yes" : "No";
+  } else if (p.authorizedUs !== undefined) {
     const el = document.getElementById("profAuthWork");
     if (el) el.value = p.authorizedUs ? "Yes" : "No";
   }
-  if (p.sponsorshipRequired !== undefined) {
+
+  if (p.requireSponsorship !== undefined) {
+    const el = document.getElementById("profRequireVisa");
+    if (el) el.value = p.requireSponsorship === "Yes" ? "Yes" : "No";
+  } else if (p.sponsorshipRequired !== undefined) {
     const el = document.getElementById("profRequireVisa");
     if (el) el.value = p.sponsorshipRequired ? "Yes" : "No";
   }
+
+  if (p.visaType) setVal("profVisaType", p.visaType);
+  if (p.willingToRelocate) setVal("profWillingRelocate", p.willingToRelocate);
+  if (p.genderIdentity) setVal("profGender", p.genderIdentity);
+  if (p.disabilityStatus) setVal("profDisability", p.disabilityStatus);
 }
 
 async function saveProfileFromForm() {
@@ -162,8 +176,20 @@ async function saveProfileFromForm() {
   const skillsRaw = getVal("profSkills");
   activeProfile.skills = skillsRaw ? skillsRaw.split(",").map((s) => s.trim()).filter(Boolean) : [];
 
-  activeProfile.authorizedUs = document.getElementById("profAuthWork")?.value === "Yes";
-  activeProfile.sponsorshipRequired = document.getElementById("profRequireVisa")?.value === "Yes";
+  const isAuth = document.getElementById("profAuthWork")?.value === "Yes";
+  const reqSponsor = document.getElementById("profRequireVisa")?.value === "Yes";
+  activeProfile.authorizedUs = isAuth;
+  activeProfile.workAuthStatus = isAuth ? "Authorized" : "Not Authorized";
+  activeProfile.legallyAuthorized = isAuth ? "Yes" : "No";
+  activeProfile.sponsorshipRequired = reqSponsor;
+  activeProfile.requireSponsorship = reqSponsor ? "Yes" : "No";
+  activeProfile.visaType = getVal("profVisaType");
+  activeProfile.willingToRelocate = getVal("profWillingRelocate");
+  activeProfile.expectedFixedSalary = getVal("profExpectedSalary");
+  activeProfile.expectedSalary = getVal("profExpectedSalary");
+  activeProfile.expectedSalaryCurrency = getVal("profSalaryCurrency");
+  activeProfile.genderIdentity = getVal("profGender");
+  activeProfile.disabilityStatus = getVal("profDisability");
   activeProfile.updatedAt = Date.now();
 
   allProfiles[activeProfileId] = activeProfile;
