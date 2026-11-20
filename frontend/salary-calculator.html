@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply // Salary Benchmarker &amp; Offer Negotiation</title>
-<meta name="description" content="Calculate real market compensation percentiles and generate tailored counter-offer negotiation scripts.">
+<title>JobXApply // Salary Benchmarker, In-Hand CTC &amp; Offer Showdown</title>
+<meta name="description" content="Calculate real market compensation percentiles, exact monthly in-hand cash-in-bank breakdowns with tax regimes, and compare competing offers side-by-side.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@ body::after {
   background-size: 160px 160px;
 }
 .container {
-  max-width: 1240px;
+  max-width: 1260px;
   margin: 0 auto;
   padding: 0 24px 60px;
   position: relative;
@@ -30,11 +30,52 @@ body::after {
 .page-header {
   border-bottom: 1px solid var(--glass-border);
   padding-bottom: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 .page-label { font-family: var(--mono); font-size: 10px; color: var(--primary); letter-spacing: .14em; text-transform: uppercase; }
 .page-title { font-family: var(--display); font-size: 32px; font-weight: 900; text-transform: uppercase; color: var(--white); margin: 0; }
 .page-title em { font-style: normal; color: var(--primary); }
+
+/* Main Mode Navigation Tabs */
+.mode-nav {
+  display: flex;
+  gap: 8px;
+  background: rgba(7, 10, 24, 0.7);
+  border: 1px solid var(--glass-border);
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.mode-tab {
+  flex: 1;
+  min-width: 180px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 10px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.mode-tab.active {
+  background: var(--primary);
+  color: var(--white);
+  box-shadow: 0 2px 10px rgba(91, 79, 232, 0.35);
+}
+
+.view-section { display: none; }
+.view-section.active { display: block; }
 
 .grid {
   display: grid;
@@ -64,6 +105,7 @@ body::after {
   margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
 .form-group {
@@ -92,10 +134,11 @@ body::after {
   box-sizing: border-box;
 }
 .form-input:focus, .select-input:focus { border-color: var(--primary); }
+.select-input option { background: #070a18; color: #fff; }
 
 .calc-btn {
   width: 100%;
-  height: 48px;
+  height: 46px;
   background: var(--primary);
   color: var(--white);
   font-family: var(--mono);
@@ -104,7 +147,7 @@ body::after {
   letter-spacing: .1em;
   text-transform: uppercase;
   border: 1px solid var(--primary);
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all .2s;
   margin-top: 8px;
@@ -179,7 +222,7 @@ body::after {
   text-transform: uppercase;
 }
 
-/* Script Strategy Switcher */
+/* Strategy Tabs */
 .strategy-tabs {
   display: flex;
   gap: 8px;
@@ -240,8 +283,75 @@ body::after {
 }
 .btn-primary { background: var(--primary); color: var(--white); border-color: var(--primary); }
 .btn-primary:hover { background: rgba(91, 79, 232, 0.85); }
-.btn-ghost { background: transparent; color: var(--muted); border-color: var(--glass-border); }
-.btn-ghost:hover { color: var(--white); border-color: var(--white); }
+.btn-secondary { background: rgba(255,255,255,0.04); color: var(--white); border: 1px solid var(--glass-border); }
+
+/* In-Hand Table Styling */
+.inhand-hero {
+  background: linear-gradient(135deg, rgba(91, 79, 232, 0.2), rgba(47, 221, 196, 0.15));
+  border: 1px solid rgba(47, 221, 196, 0.35);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.inhand-hero-val {
+  font-family: var(--display);
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--success);
+  line-height: 1;
+}
+.inhand-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  font-size: 12px;
+}
+.inhand-table th {
+  text-align: left;
+  padding: 10px;
+  background: rgba(255,255,255,0.03);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--glass-border);
+}
+.inhand-table td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--white);
+}
+.inhand-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+/* Offer Comparison Grid */
+.showdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-top: 20px;
+}
+@media (max-width: 800px) {
+  .showdown-grid { grid-template-columns: 1fr; }
+}
+.winner-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(47, 221, 196, 0.18);
+  border: 1px solid var(--success);
+  color: var(--success);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
 </style>
 <link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
 </head>
@@ -251,136 +361,361 @@ body::after {
 
 <div class="container">
   <header class="page-header">
-    <div class="page-label">COMPENSATION INTELLIGENCE</div>
-    <h1 class="page-title">SALARY BENCHMARKER &amp; <em>NEGOTIATOR</em></h1>
+    <div>
+      <div class="page-label">COMPENSATION INTELLIGENCE &amp; WEALTH ARCHITECTURE</div>
+      <h1 class="page-title">SALARY BENCHMARKER &amp; <em>OFFER ENGINE</em></h1>
+    </div>
+    <div style="font-family:var(--mono); font-size:11px; color:var(--muted);">
+      Pure Algorithmic Slabs &bull; Zero AI Hallucinations
+    </div>
   </header>
 
-  <div class="grid">
-    <!-- Left Column: Inputs -->
-    <div class="card">
-      <div class="card__title">01 // TARGET PARAMETERS</div>
+  <!-- Top Navigation Modes -->
+  <div class="mode-nav">
+    <button class="mode-tab active" onclick="switchMode('benchmarker')">01 // Market Percentile &amp; Rebuttals</button>
+    <button class="mode-tab" onclick="switchMode('inhand')">02 // Real In-Hand Take-Home Cash</button>
+    <button class="mode-tab" onclick="switchMode('showdown')">03 // Offer Showdown (A vs B)</button>
+  </div>
 
-      <div class="form-group">
-        <label class="form-label">Role Category</label>
-        <select class="select-input" id="inp-role">
-          <option value="swe_junior">Software Engineer (Entry / 0-2 yrs)</option>
-          <option value="swe_mid" selected>Software Engineer (Mid-Level / 3-5 yrs)</option>
-          <option value="swe_senior">Senior Software Engineer (5-8+ yrs)</option>
-          <option value="frontend">Frontend / UI Engineer</option>
-          <option value="backend">Backend / Distributed Systems Engineer</option>
-          <option value="fullstack">Full-Stack Web Developer</option>
-          <option value="devops">DevOps / Cloud / Platform Engineer</option>
-          <option value="data">Data Scientist / Machine Learning Engineer</option>
-          <option value="pm">Product Manager</option>
-          <option value="qa">QA / Automation Test Engineer</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Location / Market Tier</label>
-        <select class="select-input" id="inp-location">
-          <option value="us_tier1">US - Tier 1 (SF Bay, NYC, Seattle)</option>
-          <option value="us_tier2">US - Tier 2 (Austin, Boston, Denver, LA)</option>
-          <option value="us_remote">US - Remote / National Avg</option>
-          <option value="in_tier1">India - Tier 1 (Bangalore, Hyderabad, NCR)</option>
-          <option value="in_tier2">India - Tier 2 (Pune, Chennai, Mumbai)</option>
-          <option value="uk_eu">UK &amp; Western Europe (London, Berlin, Amsterdam)</option>
-          <option value="global_remote">Global Remote (USD Equivalent)</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Company Tier / Funding Stage</label>
-        <select class="select-input" id="inp-company-tier">
-          <option value="faang">Tier 1 Big Tech / FAANG / Late Stage Unicorn</option>
-          <option value="series_bc" selected>Series B-C High Growth Startup</option>
-          <option value="seed_a">Seed / Series A Early Stage Startup</option>
-          <option value="enterprise">Established Enterprise / Non-Tech Industry</option>
-          <option value="agency">Agency / IT Services Provider</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Offered Base Salary ($ or ‚¹ in LPA)</label>
-        <input type="number" class="form-input" id="inp-offer" placeholder="e.g. 135000 or 18" value="130000">
-      </div>
-
-      <button class="calc-btn" onclick="calculateSalaryBenchmark()">> Calculate Benchmark</button>
-    </div>
-
-    <!-- Right Column: Results & Negotiation Scripts -->
-    <div style="display:flex; flex-direction:column; gap:24px;">
-      <!-- Benchmark Analysis -->
+  <!-- ========================================================================= -->
+  <!-- MODE 1: MARKET PERCENTILE BENCHMARK & NEGOTIATION -->
+  <!-- ========================================================================= -->
+  <div id="view-benchmarker" class="view-section active">
+    <div class="grid">
+      <!-- Left Column: Inputs -->
       <div class="card">
-        <div class="card__title">
-          <span>02 // MARKET PERCENTILE BENCHMARK</span>
-          <span id="benchmark-standing" style="color:var(--success); font-size:10px;"></span>
+        <div class="card__title">01 // TARGET PARAMETERS</div>
+
+        <div class="form-group">
+          <label class="form-label">Role Category</label>
+          <select class="select-input" id="inp-role">
+            <option value="swe_junior">Software Engineer (Entry / 0-2 yrs)</option>
+            <option value="swe_mid" selected>Software Engineer (Mid-Level / 3-5 yrs)</option>
+            <option value="swe_senior">Senior Software Engineer (5-8+ yrs)</option>
+            <option value="frontend">Frontend / UI Engineer</option>
+            <option value="backend">Backend / Distributed Systems Engineer</option>
+            <option value="fullstack">Full-Stack Web Developer</option>
+            <option value="devops">DevOps / Cloud / Platform Engineer</option>
+            <option value="data">Data Scientist / Machine Learning Engineer</option>
+            <option value="pm">Product Manager</option>
+            <option value="qa">QA / Automation Test Engineer</option>
+          </select>
         </div>
 
-        <div class="percentile-box">
-          <div class="percentile-labels">
-            <span>25th Pct (Entry Range)</span>
-            <span>50th Pct (Median)</span>
-            <span>75th Pct (Top Tier)</span>
-            <span>90th Pct (Staff/Lead)</span>
-          </div>
-          <div class="percentile-track">
-            <div class="percentile-fill" id="p-fill" style="width: 50%;"></div>
-            <div class="percentile-marker" id="p-marker" style="left: 50%;"></div>
-          </div>
-          <div id="position-summary" style="font-family:var(--body); font-size:13px; color:var(--white); line-height:1.5; text-align:center;">
-            Calculating market standing...
-          </div>
+        <div class="form-group">
+          <label class="form-label">Location / Market Tier</label>
+          <select class="select-input" id="inp-location">
+            <option value="us_tier1">US - Tier 1 (SF Bay, NYC, Seattle)</option>
+            <option value="us_tier2">US - Tier 2 (Austin, Boston, Denver, LA)</option>
+            <option value="us_remote">US - Remote / National Avg</option>
+            <option value="in_tier1">India - Tier 1 (Bangalore, Hyderabad, NCR)</option>
+            <option value="in_tier2">India - Tier 2 (Pune, Chennai, Mumbai)</option>
+            <option value="uk_eu">UK &amp; Western Europe (London, Berlin, Amsterdam)</option>
+            <option value="global_remote">Global Remote (USD Equivalent)</option>
+          </select>
         </div>
 
-        <div class="market-stats">
-          <div class="market-stat-card">
-            <div class="market-stat-val" id="val-low">-</div>
-            <div class="market-stat-lbl">Market Minimum (25th)</div>
-          </div>
-          <div class="market-stat-card">
-            <div class="market-stat-val" id="val-median" style="color:var(--primary);">-</div>
-            <div class="market-stat-lbl">Market Median (50th)</div>
-          </div>
-          <div class="market-stat-card">
-            <div class="market-stat-val" id="val-high" style="color:var(--success);">-</div>
-            <div class="market-stat-lbl">Market High (90th)</div>
-          </div>
+        <div class="form-group">
+          <label class="form-label">Company Tier / Funding Stage</label>
+          <select class="select-input" id="inp-company-tier">
+            <option value="faang">Tier 1 Big Tech / FAANG / Late Stage Unicorn</option>
+            <option value="series_bc" selected>Series B-C High Growth Startup</option>
+            <option value="seed_a">Seed / Series A Early Stage Startup</option>
+            <option value="enterprise">Established Enterprise / Non-Tech Industry</option>
+            <option value="agency">Agency / IT Services Provider</option>
+          </select>
         </div>
+
+        <div class="form-group">
+          <label class="form-label">Offered Base Salary ($ or ₹ in LPA)</label>
+          <input type="number" class="form-input" id="inp-offer" placeholder="e.g. 135000 or 18" value="130000">
+        </div>
+
+        <button class="calc-btn" onclick="calculateSalaryBenchmark()">&gt; Calculate Benchmark</button>
       </div>
 
-      <!-- Counter-Offer Script Generator -->
-      <div class="card">
-        <div class="card__title">
-          <span>03 // NEGOTIATION &amp; COUNTER-OFFER SCRIPTS</span>
-          <span style="color:var(--muted); font-size:9px; font-weight:normal;">HUMAN-TONED REBUTTALS</span>
+      <!-- Right Column: Results & Negotiation Scripts -->
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        <!-- Benchmark Analysis -->
+        <div class="card">
+          <div class="card__title">
+            <span>02 // MARKET PERCENTILE BENCHMARK</span>
+            <span id="benchmark-standing" style="color:var(--success); font-size:10px;"></span>
+          </div>
+
+          <div class="percentile-box">
+            <div class="percentile-labels">
+              <span>25th Pct (Entry Range)</span>
+              <span>50th Pct (Median)</span>
+              <span>75th Pct (Top Tier)</span>
+              <span>90th Pct (Staff/Lead)</span>
+            </div>
+            <div class="percentile-track">
+              <div class="percentile-fill" id="p-fill" style="width: 50%;"></div>
+              <div class="percentile-marker" id="p-marker" style="left: 50%;"></div>
+            </div>
+            <div id="position-summary" style="font-family:var(--body); font-size:13px; color:var(--white); line-height:1.5; text-align:center;">
+              Calculating market standing...
+            </div>
+          </div>
+
+          <div class="market-stats">
+            <div class="market-stat-card">
+              <div class="market-stat-val" id="val-low">-</div>
+              <div class="market-stat-lbl">Market Minimum (25th)</div>
+            </div>
+            <div class="market-stat-card">
+              <div class="market-stat-val" id="val-median" style="color:var(--primary);">-</div>
+              <div class="market-stat-lbl">Market Median (50th)</div>
+            </div>
+            <div class="market-stat-card">
+              <div class="market-stat-val" id="val-high" style="color:var(--success);">-</div>
+              <div class="market-stat-lbl">Market High (90th)</div>
+            </div>
+          </div>
         </div>
 
-        <div class="strategy-tabs">
-          <button class="strategy-btn active" id="btn-strat-polite" onclick="setStrategy('polite')">Standard Counter-Offer (10-15% bump)</button>
-          <button class="strategy-btn" id="btn-strat-competing" onclick="setStrategy('competing')">Leveraging Competing Offer</button>
-          <button class="strategy-btn" id="btn-strat-equity" onclick="setStrategy('equity')">Base vs Equity Re-balancing</button>
-          <button class="strategy-btn" id="btn-strat-remote" onclick="setStrategy('remote')">Remote / Sign-on Bonus Focus</button>
-        </div>
+        <!-- Counter-Offer Script Generator -->
+        <div class="card">
+          <div class="card__title">
+            <span>03 // NEGOTIATION &amp; COUNTER-OFFER SCRIPTS</span>
+            <span style="color:var(--muted); font-size:9px; font-weight:normal;">HUMAN-TONED REBUTTALS</span>
+          </div>
 
-        <textarea class="script-output" id="script-output" readonly></textarea>
+          <div class="strategy-tabs">
+            <button class="strategy-btn active" id="btn-strat-polite" onclick="setStrategy('polite')">Standard Counter-Offer (10-15% bump)</button>
+            <button class="strategy-btn" id="btn-strat-competing" onclick="setStrategy('competing')">Leveraging Competing Offer</button>
+            <button class="strategy-btn" id="btn-strat-equity" onclick="setStrategy('equity')">Base vs Equity Re-balancing</button>
+            <button class="strategy-btn" id="btn-strat-remote" onclick="setStrategy('remote')">Remote / Sign-on Bonus Focus</button>
+          </div>
 
-        <div class="script-actions">
-          <span id="copy-status" style="font-family:var(--mono); font-size:11px; color:var(--success);"></span>
-          <div style="display:flex; gap:10px;">
-            <button class="btn btn-primary" onclick="copyNegotiationScript()">Copy Script</button>
+          <textarea class="script-output" id="script-output" readonly></textarea>
+
+          <div class="script-actions">
+            <span id="copy-status" style="font-family:var(--mono); font-size:11px; color:var(--success);"></span>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-primary" onclick="copyNegotiationScript()">Copy Script</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODE 2: REAL IN-HAND (TAKE-HOME) CASH BREAKDOWN -->
+  <!-- ========================================================================= -->
+  <div id="view-inhand" class="view-section">
+    <div class="grid">
+      <!-- Input Parameters -->
+      <div class="card">
+        <div class="card__title">01 // COMPENSATION &amp; TAX REGIME</div>
+
+        <div class="form-group">
+          <label class="form-label">Country &amp; Tax Structure</label>
+          <select class="select-input" id="ih-regime" onchange="calculateInHandSalary()">
+            <option value="india_new" selected>India (FY 2024-25 New Tax Regime - ₹75k Standard Ded.)</option>
+            <option value="india_old">India (Old Tax Regime - 80C/HRA Deductions)</option>
+            <option value="us_single">USA (Federal + CA/NY Avg State + FICA Single)</option>
+            <option value="global_flat">Global Remote / Flat Contractor (No local TDS)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Annual Gross CTC / Base Salary</label>
+          <input type="number" class="form-input" id="ih-ctc" value="1800000" placeholder="e.g. 1800000 or 120000" oninput="calculateInHandSalary()">
+          <span style="font-size:10px; color:var(--dim);">For India, enter total annual CTC (e.g. 1800000 for 18 LPA).</span>
+        </div>
+
+        <div class="form-group" id="ih-pf-toggle-wrap">
+          <label class="form-label">Employee Provident Fund (PF)</label>
+          <select class="select-input" id="ih-pf-opt" onchange="calculateInHandSalary()">
+            <option value="standard" selected>12% of Basic (Standard Statutory PF)</option>
+            <option value="capped">Capped at ₹1,800/month (Statutory Minimum)</option>
+            <option value="none">Zero PF (Contractor / Retainer)</option>
+          </select>
+        </div>
+
+        <button class="calc-btn" onclick="calculateInHandSalary()">&gt; Recompute In-Hand Cash</button>
+      </div>
+
+      <!-- In-Hand Statement Output -->
+      <div class="card">
+        <div class="card__title">
+          <span>02 // ESTIMATED MONTHLY CASH-IN-BANK</span>
+          <span style="color:var(--success); font-size:10px;">REAL TAKE-HOME</span>
+        </div>
+
+        <div class="inhand-hero">
+          <div>
+            <div style="font-family:var(--mono); font-size:11px; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">
+              Net Monthly Cash in Bank
+            </div>
+            <div class="inhand-hero-val" id="ih-monthly-hero">₹1,24,350</div>
+            <div style="font-size:11px; color:var(--dim); margin-top:4px;">
+              Post TDS Income Tax, Employee PF, and Professional Tax
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--mono); font-size:11px; color:var(--muted);">Annual Take-Home</div>
+            <div style="font-family:var(--mono); font-size:20px; font-weight:700; color:#fff;" id="ih-annual-hero">₹14,92,200</div>
+          </div>
+        </div>
+
+        <div class="market-stats" style="margin-bottom:20px;">
+          <div class="market-stat-card">
+            <div class="market-stat-val" id="ih-stat-gross">₹1,50,000</div>
+            <div class="market-stat-lbl">Monthly Gross CTC</div>
+          </div>
+          <div class="market-stat-card">
+            <div class="market-stat-val" id="ih-stat-tax" style="color:#ff8585;">₹18,450</div>
+            <div class="market-stat-lbl">Monthly Income Tax (TDS)</div>
+          </div>
+          <div class="market-stat-card">
+            <div class="market-stat-val" id="ih-stat-deductions" style="color:var(--alert);">₹7,200</div>
+            <div class="market-stat-lbl">Monthly PF &amp; Benefits</div>
+          </div>
+        </div>
+
+        <div style="font-family:var(--mono); font-size:11px; color:var(--primary); font-weight:700; text-transform:uppercase; margin-bottom:8px;">
+          Detailed Monthly Salary Slip Breakdown
+        </div>
+        <table class="inhand-table">
+          <thead>
+            <tr>
+              <th>Salary Component</th>
+              <th>Monthly Amount</th>
+              <th>Annual Amount</th>
+              <th>Component Type</th>
+            </tr>
+          </thead>
+          <tbody id="ih-breakdown-body">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODE 3: OFFER SHOWDOWN (A VS B COMPARISON) -->
+  <!-- ========================================================================= -->
+  <div id="view-showdown" class="view-section">
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card__title">
+        <span>OFFER SHOWDOWN MATRIX</span>
+        <span class="winner-pill" id="showdown-winner-pill">COMPARING OFFERS</span>
+      </div>
+      <p style="font-size:12px; color:var(--muted); line-height:1.6; margin:0;">
+        Direct side-by-side financial evaluation. Compare base salary, joining bonuses, annual performance targets, and 4-year equity vesting schedules to determine the true financial winner.
+      </p>
+    </div>
+
+    <div class="showdown-grid">
+      <!-- Offer A -->
+      <div class="card" style="border-top:3px solid var(--primary);">
+        <div class="card__title">
+          <span>OFFER A</span>
+          <span style="font-size:10px; color:var(--primary);">PRIMARY OPTION</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" class="form-input" id="oa-company" value="Stripe" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role Title</label>
+          <input type="text" class="form-input" id="oa-role" value="Senior Backend Engineer" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Annual Base Salary</label>
+          <input type="number" class="form-input" id="oa-base" value="2400000" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">One-Time Joining Bonus</label>
+          <input type="number" class="form-input" id="oa-bonus" value="300000" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Annual Variable Bonus (%)</label>
+          <input type="number" class="form-input" id="oa-var" value="10" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total 4-Year Equity / ESOPs</label>
+          <input type="number" class="form-input" id="oa-stock" value="1600000" oninput="runOfferShowdown()">
+        </div>
+      </div>
+
+      <!-- Offer B -->
+      <div class="card" style="border-top:3px solid var(--success);">
+        <div class="card__title">
+          <span>OFFER B</span>
+          <span style="font-size:10px; color:var(--success);">COMPETING OPTION</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company Name</label>
+          <input type="text" class="form-input" id="ob-company" value="Google" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role Title</label>
+          <input type="text" class="form-input" id="ob-role" value="Software Engineer III" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Annual Base Salary</label>
+          <input type="number" class="form-input" id="ob-base" value="2800000" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">One-Time Joining Bonus</label>
+          <input type="number" class="form-input" id="ob-bonus" value="200000" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Annual Variable Bonus (%)</label>
+          <input type="number" class="form-input" id="ob-var" value="15" oninput="runOfferShowdown()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Total 4-Year Equity / ESOPs</label>
+          <input type="number" class="form-input" id="ob-stock" value="2400000" oninput="runOfferShowdown()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparative Scorecard -->
+    <div class="card" style="margin-top:20px;">
+      <div class="card__title">SIDE-BY-SIDE TOTAL REWARDS COMPARISON</div>
+      <table class="inhand-table">
+        <thead>
+          <tr>
+            <th>Reward Metric</th>
+            <th id="th-comp-a">Stripe (Offer A)</th>
+            <th id="th-comp-b">Google (Offer B)</th>
+            <th>Variance / Advantage</th>
+          </tr>
+        </thead>
+        <tbody id="showdown-results-body">
+          <!-- Rendered dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <script>
 requireAuth();
 renderNav(document.getElementById('main-nav'), 'salary-calculator.html');
 
-// Salary Baseline Matrix (Base compensation in USD standard, calibrated for INR when location is India)
+function switchMode(mode) {
+  document.querySelectorAll('.mode-tab').forEach((tab, idx) => {
+    tab.classList.toggle('active', ['benchmarker', 'inhand', 'showdown'][idx] === mode);
+  });
+  document.querySelectorAll('.view-section').forEach(sec => {
+    sec.classList.toggle('active', sec.id === `view-${mode}`);
+  });
+  if (mode === 'inhand') calculateInHandSalary();
+  if (mode === 'showdown') runOfferShowdown();
+}
+
+// -----------------------------------------------------------------------------
+// 1. BENCHMARKER DATA & ENGINE
+// -----------------------------------------------------------------------------
 const SALARY_BENCHMARKS = {
   swe_junior: { baseUsd: [95000, 115000, 135000, 150000], baseInr: [7, 10, 14, 18] },
   swe_mid:    { baseUsd: [125000, 145000, 170000, 195000], baseInr: [14, 18, 26, 35] },
@@ -422,7 +757,7 @@ function calculateSalaryBenchmark() {
   const rawOffer = parseFloat(document.getElementById('inp-offer').value) || 0;
 
   const isIndia = location.startsWith('in_');
-  const currencySymbol = isIndia ? '‚¹' : '$';
+  const currencySymbol = isIndia ? '₹' : '$';
   const currencySuffix = isIndia ? ' LPA' : '';
 
   const roleData = SALARY_BENCHMARKS[role] || SALARY_BENCHMARKS.swe_mid;
@@ -441,7 +776,6 @@ function calculateSalaryBenchmark() {
   document.getElementById('val-median').textContent = `${currencySymbol}${p50.toLocaleString()}${currencySuffix}`;
   document.getElementById('val-high').textContent = `${currencySymbol}${p90.toLocaleString()}${currencySuffix}`;
 
-  // Calculate offered standing percentage
   let pct = 50;
   if (rawOffer <= p25) {
     pct = Math.max(5, Math.round((rawOffer / p25) * 25));
@@ -496,7 +830,7 @@ function setStrategy(strategy) {
 
 function renderNegotiationScript() {
   if (!currentBenchmarkData) return;
-  const { offer, currencySymbol, currencySuffix, targetCounter, p50, p75 } = currentBenchmarkData;
+  const { offer, currencySymbol, currencySuffix, targetCounter } = currentBenchmarkData;
   const profile = JSON.parse(localStorage.getItem('jxa_local_profile') || '{}');
   const candidateName = profile.fullName || 'Candidate';
 
@@ -528,8 +862,232 @@ async function copyNegotiationScript() {
   }
 }
 
-// Initial calculation on page load
+// -----------------------------------------------------------------------------
+// 2. REAL IN-HAND (TAKE-HOME) CASH CALCULATOR ENGINE
+// -----------------------------------------------------------------------------
+function calculateInHandSalary() {
+  const regime = document.getElementById('ih-regime')?.value || 'india_new';
+  const ctc = parseFloat(document.getElementById('ih-ctc')?.value) || 0;
+  const pfOpt = document.getElementById('ih-pf-opt')?.value || 'standard';
+
+  let currency = '₹';
+  let basicAnnual = 0;
+  let hraAnnual = 0;
+  let specialAnnual = 0;
+  let employeePfAnnual = 0;
+  let employerPfAnnual = 0;
+  let gratuityAnnual = 0;
+  let ptAnnual = 0;
+  let annualTax = 0;
+
+  if (regime === 'india_new' || regime === 'india_old') {
+    currency = '₹';
+    // India Standard CTC Structure
+    basicAnnual = Math.round(ctc * 0.40);
+    hraAnnual = Math.round(basicAnnual * 0.50);
+    
+    // PF Calculation
+    if (pfOpt === 'standard') {
+      employeePfAnnual = Math.round(basicAnnual * 0.12);
+      employerPfAnnual = employeePfAnnual;
+    } else if (pfOpt === 'capped') {
+      employeePfAnnual = 1800 * 12;
+      employerPfAnnual = employeePfAnnual;
+    } else {
+      employeePfAnnual = 0;
+      employerPfAnnual = 0;
+    }
+
+    // Gratuity ~ 4.81% of basic
+    gratuityAnnual = Math.round((15 * basicAnnual) / 26 / 12);
+    specialAnnual = Math.max(0, ctc - basicAnnual - hraAnnual - employerPfAnnual - gratuityAnnual);
+    ptAnnual = 2400; // Professional tax standard
+
+    const grossSalaryAnnual = ctc - employerPfAnnual - gratuityAnnual;
+    const stdDeduction = regime === 'india_new' ? 75000 : 50000;
+    const taxableIncome = Math.max(0, grossSalaryAnnual - stdDeduction);
+
+    // Compute Income Tax (FY 2024-25 New Tax Regime)
+    if (regime === 'india_new') {
+      if (taxableIncome <= 700000) {
+        annualTax = 0; // Section 87A rebate makes it zero up to ₹7.75L CTC
+      } else {
+        let tax = 0;
+        let rem = taxableIncome;
+        if (rem > 1500000) { tax += (rem - 1500000) * 0.30; rem = 1500000; }
+        if (rem > 1200000) { tax += (rem - 1200000) * 0.20; rem = 1200000; }
+        if (rem > 1000000) { tax += (rem - 1000000) * 0.15; rem = 1000000; }
+        if (rem > 700000)  { tax += (rem - 700000) * 0.10; rem = 700000; }
+        if (rem > 300000)  { tax += (rem - 300000) * 0.05; rem = 300000; }
+        annualTax = Math.round(tax * 1.04); // 4% Health & Edu Cess
+      }
+    } else {
+      // Old Regime
+      let tax = 0;
+      let rem = taxableIncome;
+      if (rem > 1000000) { tax += (rem - 1000000) * 0.30; rem = 1000000; }
+      if (rem > 500000)  { tax += (rem - 500000) * 0.20; rem = 500000; }
+      if (rem > 250000)  { tax += (rem - 250000) * 0.05; rem = 250000; }
+      annualTax = Math.round(tax * 1.04);
+    }
+
+  } else if (regime === 'us_single') {
+    currency = '$';
+    basicAnnual = ctc;
+    const stdDeduction = 14600;
+    const taxableIncome = Math.max(0, ctc - stdDeduction);
+
+    // US Federal brackets 2024 single
+    let fedTax = 0;
+    let rem = taxableIncome;
+    if (rem > 609350) { fedTax += (rem - 609350) * 0.37; rem = 609350; }
+    if (rem > 243725) { fedTax += (rem - 243725) * 0.35; rem = 243725; }
+    if (rem > 191950) { fedTax += (rem - 191950) * 0.32; rem = 191950; }
+    if (rem > 100525) { fedTax += (rem - 100525) * 0.24; rem = 100525; }
+    if (rem > 47150)  { fedTax += (rem - 47150) * 0.22; rem = 47150; }
+    if (rem > 11600)  { fedTax += (rem - 11600) * 0.12; rem = 11600; }
+    fedTax += rem * 0.10;
+
+    // FICA: 6.2% Social Security (cap $168,600) + 1.45% Medicare
+    const ficaSocial = Math.min(ctc, 168600) * 0.062;
+    const ficaMedicare = ctc * 0.0145;
+    const stateTax = ctc * 0.06; // ~6% average state income tax
+    annualTax = Math.round(fedTax + stateTax);
+    employeePfAnnual = Math.round(ficaSocial + ficaMedicare);
+  } else {
+    // Global flat contractor
+    currency = '$';
+    annualTax = 0;
+    employeePfAnnual = 0;
+  }
+
+  const grossMonthly = Math.round(ctc / 12);
+  const monthlyTax = Math.round(annualTax / 12);
+  const monthlyPf = Math.round(employeePfAnnual / 12);
+  const monthlyPt = Math.round(ptAnnual / 12);
+
+  const annualInHand = Math.max(0, ctc - employerPfAnnual - employeePfAnnual - gratuityAnnual - ptAnnual - annualTax);
+  const monthlyInHand = Math.round(annualInHand / 12);
+
+  // Update UI Elements
+  document.getElementById('ih-monthly-hero').textContent = `${currency}${monthlyInHand.toLocaleString()}`;
+  document.getElementById('ih-annual-hero').textContent = `${currency}${annualInHand.toLocaleString()}`;
+  document.getElementById('ih-stat-gross').textContent = `${currency}${grossMonthly.toLocaleString()}`;
+  document.getElementById('ih-stat-tax').textContent = `${currency}${monthlyTax.toLocaleString()}`;
+  document.getElementById('ih-stat-deductions').textContent = `${currency}${(monthlyPf + monthlyPt).toLocaleString()}`;
+
+  // Populate Table
+  const tbody = document.getElementById('ih-breakdown-body');
+  if (tbody) {
+    const rows = [
+      { name: "Basic Salary", m: Math.round(basicAnnual / 12), a: basicAnnual, type: "Earnings" },
+      { name: "House Rent Allowance (HRA)", m: Math.round(hraAnnual / 12), a: hraAnnual, type: "Earnings" },
+      { name: "Special / Flexible Allowance", m: Math.round(specialAnnual / 12), a: specialAnnual, type: "Earnings" },
+      { name: "Employee Provident Fund (PF)", m: -monthlyPf, a: -employeePfAnnual, type: "Deduction" },
+      { name: "Professional Tax (PT)", m: -monthlyPt, a: -ptAnnual, type: "Deduction" },
+      { name: "Income Tax (TDS Estimate)", m: -monthlyTax, a: -annualTax, type: "Tax Deduction" },
+      { name: "NET TAKE-HOME IN BANK", m: monthlyInHand, a: annualInHand, type: "Net Cash", bold: true }
+    ];
+
+    tbody.innerHTML = rows.map(r => `
+      <tr style="${r.bold ? 'font-weight:700; background:rgba(47,221,196,0.08);' : ''}">
+        <td style="${r.bold ? 'color:var(--success);' : ''}">${r.name}</td>
+        <td style="${r.m < 0 ? 'color:#ff8585;' : (r.bold ? 'color:var(--success);' : '')}">${currency}${Math.abs(r.m).toLocaleString()}</td>
+        <td style="${r.a < 0 ? 'color:#ff8585;' : (r.bold ? 'color:var(--success);' : '')}">${currency}${Math.abs(r.a).toLocaleString()}</td>
+        <td><span style="font-family:var(--mono); font-size:10px; color:${r.type.includes('Deduction') ? '#ff8585' : 'var(--primary)'}">${r.type}</span></td>
+      </tr>
+    `).join("");
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 3. OFFER SHOWDOWN (COMPARE A VS B)
+// -----------------------------------------------------------------------------
+function runOfferShowdown() {
+  const getVal = (id, def = 0) => parseFloat(document.getElementById(id)?.value) || def;
+  const getText = (id, def = '') => document.getElementById(id)?.value?.trim() || def;
+
+  const compA = getText('oa-company', 'Offer A');
+  const roleA = getText('oa-role', 'Role A');
+  const baseA = getVal('oa-base', 0);
+  const bonusA = getVal('oa-bonus', 0);
+  const varPctA = getVal('oa-var', 0);
+  const stockA = getVal('oa-stock', 0);
+
+  const compB = getText('ob-company', 'Offer B');
+  const roleB = getText('ob-role', 'Role B');
+  const baseB = getVal('ob-base', 0);
+  const bonusB = getVal('ob-bonus', 0);
+  const varPctB = getVal('ob-var', 0);
+  const stockB = getVal('ob-stock', 0);
+
+  document.getElementById('th-comp-a').textContent = `${compA} (${roleA})`;
+  document.getElementById('th-comp-b').textContent = `${compB} (${roleB})`;
+
+  const varValA = Math.round(baseA * (varPctA / 100));
+  const varValB = Math.round(baseB * (varPctB / 100));
+
+  const year1CashA = baseA + bonusA + varValA;
+  const year1CashB = baseB + bonusB + varValB;
+
+  const year1StockA = Math.round(stockA / 4);
+  const year1StockB = Math.round(stockB / 4);
+
+  const year1TotalA = year1CashA + year1StockA;
+  const year1TotalB = year1CashB + year1StockB;
+
+  const monthlyEstA = Math.round((baseA * 0.72) / 12);
+  const monthlyEstB = Math.round((baseB * 0.72) / 12);
+
+  const diffYear1Total = year1TotalB - year1TotalA;
+  const diffCash = year1CashB - year1CashA;
+
+  const pill = document.getElementById('showdown-winner-pill');
+  if (pill) {
+    if (year1TotalB > year1TotalA) {
+      pill.textContent = `WINNER: ${compB} (+₹${diffYear1Total.toLocaleString()} Y1 Total)`;
+      pill.style.borderColor = 'var(--success)';
+      pill.style.color = 'var(--success)';
+    } else if (year1TotalA > year1TotalB) {
+      pill.textContent = `WINNER: ${compA} (+₹${Math.abs(diffYear1Total).toLocaleString()} Y1 Total)`;
+      pill.style.borderColor = 'var(--primary)';
+      pill.style.color = 'var(--primary)';
+    } else {
+      pill.textContent = `OFFERS ARE FINANCIALLY EQUIVALENT`;
+      pill.style.borderColor = 'var(--muted)';
+      pill.style.color = 'var(--white)';
+    }
+  }
+
+  const tbody = document.getElementById('showdown-results-body');
+  if (tbody) {
+    const rows = [
+      { metric: "Annual Fixed Base Salary", a: baseA, b: baseB, diff: baseB - baseA },
+      { metric: "1st Year Guaranteed Cash (Base + Joining)", a: baseA + bonusA, b: baseB + bonusB, diff: (baseB + bonusB) - (baseA + bonusA) },
+      { metric: "Annual Performance Variable Target", a: varValA, b: varValB, diff: varValB - varValA },
+      { metric: "Total 1st Year Cash (Guaranteed + Target)", a: year1CashA, b: year1CashB, diff: diffCash, highlight: true },
+      { metric: "Annual Equity Vest (25% of 4-yr Grant)", a: year1StockA, b: year1StockB, diff: year1StockB - year1StockA },
+      { metric: "TOTAL YEAR 1 VALUE (Cash + Equity)", a: year1TotalA, b: year1TotalB, diff: diffYear1Total, bold: true },
+      { metric: "Est. Net Monthly In-Hand Cash", a: monthlyEstA, b: monthlyEstB, diff: monthlyEstB - monthlyEstA }
+    ];
+
+    tbody.innerHTML = rows.map(r => `
+      <tr style="${r.bold ? 'background:rgba(47,221,196,0.1); font-weight:700;' : (r.highlight ? 'background:rgba(91,79,232,0.1);' : '')}">
+        <td style="${r.bold ? 'color:var(--success);' : ''}">${r.metric}</td>
+        <td>₹${r.a.toLocaleString()}</td>
+        <td>₹${r.b.toLocaleString()}</td>
+        <td style="color:${r.diff > 0 ? 'var(--success)' : (r.diff < 0 ? 'var(--primary)' : 'var(--muted)')};">
+          ${r.diff > 0 ? `+₹${r.diff.toLocaleString()} (${compB})` : (r.diff < 0 ? `+₹${Math.abs(r.diff).toLocaleString()} (${compA})` : 'Equal')}
+        </td>
+      </tr>
+    `).join("");
+  }
+}
+
+// Initial Calculation
 calculateSalaryBenchmark();
+calculateInHandSalary();
+runOfferShowdown();
 </script>
 </body>
 </html>
