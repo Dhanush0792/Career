@@ -585,4 +585,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+  if (message?.type === "jobxapply:openSidePanel") {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
+      if (tab?.windowId && chrome.sidePanel && chrome.sidePanel.open) {
+        chrome.sidePanel.open({ windowId: tab.windowId })
+          .then(() => sendResponse({ ok: true }))
+          .catch((err) => sendResponse({ ok: false, error: err.message }));
+      } else {
+        // Fallback for browsers or tabs where sidePanel.open is not supported
+        chrome.tabs.create({ url: chrome.runtime.getURL("sidepanel.html") }, (newTab) => {
+          sendResponse({ ok: true, tabId: newTab?.id });
+        });
+      }
+    });
+    return true;
+  }
 });

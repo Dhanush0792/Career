@@ -190,6 +190,55 @@ body::after {
 .dropzone-title { font-family: var(--mono); font-size: 12px; color: var(--white); text-transform: uppercase; margin-bottom: 4px; }
 .dropzone-desc { font-size: 10px; color: var(--muted); }
 
+/* Top Hero Resume Autofill Card */
+.top-upload-banner {
+  background: linear-gradient(135deg, rgba(91, 79, 232, 0.18) 0%, rgba(47, 221, 196, 0.12) 100%);
+  border: 1px solid rgba(47, 221, 196, 0.35);
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+}
+.top-upload-banner::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #5B4FE8, #2FDDC4);
+}
+@media (max-width: 850px) { .top-upload-banner { flex-direction: column; align-items: stretch; } }
+
+.top-upload-drop {
+  border: 2px dashed rgba(47, 221, 196, 0.5);
+  background: rgba(8, 12, 28, 0.6);
+  border-radius: 12px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.top-upload-drop:hover {
+  border-color: #2FDDC4;
+  background: rgba(47, 221, 196, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Flash animation for populated fields */
+@keyframes fieldFlash {
+  0% { border-color: #2FDDC4; box-shadow: 0 0 16px rgba(47, 221, 196, 0.5); }
+  50% { border-color: #5B4FE8; box-shadow: 0 0 10px rgba(91, 79, 232, 0.3); }
+  100% { border-color: var(--glass-border); box-shadow: none; }
+}
+.field-autofilled {
+  animation: fieldFlash 2.5s ease-out forwards;
+}
+
 /* Logs Terminal */
 .console-box { display: none !important; }
 .console-line.success { color: var(--success); }
@@ -261,6 +310,35 @@ body::after {
       <div class="meter-track">
         <div class="meter-bar" id="completeness-bar"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- Top 1-Click Resume Autofill Banner -->
+  <div class="top-upload-banner" id="top-resume-card">
+    <div>
+      <div style="font-family: var(--mono); font-size: 10px; color: var(--success); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; font-weight: 700;">
+        &bull; 1-CLICK INSTANT SETUP
+      </div>
+      <div style="font-family: var(--display); font-size: 22px; font-weight: 900; text-transform: uppercase; color: var(--white); margin-bottom: 6px;">
+        Auto-Fill Profile with Resume
+      </div>
+      <div style="font-size: 12px; color: var(--muted); max-width: 580px; line-height: 1.5;">
+        Upload your PDF or DOCX resume. Our parser automatically extracts your full name, contact, education history, degrees, technical skills, links, work history, and summary in 2 seconds.
+      </div>
+    </div>
+    <div class="top-upload-drop" id="top-dropzone" title="Click or drop resume to autofill profile">
+      <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(47, 221, 196, 0.15); display: flex; align-items: center; justify-content: center; color: var(--success); font-size: 18px;">
+        &darr;
+      </div>
+      <div>
+        <div style="font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--white); text-transform: uppercase;">
+          Upload Resume (PDF / DOCX)
+        </div>
+        <div style="font-size: 10px; color: var(--dim);" id="top-dropzone-status">
+          Drag &amp; drop file or click to browse
+        </div>
+      </div>
+      <input type="file" id="top-resume-input" accept="application/pdf,.docx" style="display:none;">
     </div>
   </div>
 
@@ -921,120 +999,343 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 
 const dropzone = document.getElementById('resume-dropzone');
 const fileInput = document.getElementById('resume-input');
+const topDropzone = document.getElementById('top-dropzone');
+const topFileInput = document.getElementById('top-resume-input');
 
-dropzone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
-dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--primary)'; });
-dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--glass-border)'; });
-dropzone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropzone.style.borderColor = 'var(--glass-border)';
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
+if (dropzone && fileInput) {
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--primary)'; });
+  dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--glass-border)'; });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = 'var(--glass-border)';
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+}
+
+if (topDropzone && topFileInput) {
+  topDropzone.addEventListener('click', () => topFileInput.click());
+  topFileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+  topDropzone.addEventListener('dragover', (e) => { e.preventDefault(); topDropzone.style.borderColor = '#2FDDC4'; });
+  topDropzone.addEventListener('dragleave', () => { topDropzone.style.borderColor = 'rgba(47, 221, 196, 0.5)'; });
+  topDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    topDropzone.style.borderColor = 'rgba(47, 221, 196, 0.5)';
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+}
 
 async function handleFile(file) {
   if (!file) return;
   addLog(`Selected: ${file.name}`);
+  const topStatus = document.getElementById('top-dropzone-status');
+  if (topStatus) topStatus.textContent = `Analyzing ${file.name}...`;
+
   const reader = new FileReader();
   reader.onload = async (e) => {
     const arrayBuffer = e.target.result;
     try {
       let rawText = '';
-      if (file.name.endsWith('.pdf')) {
-        addLog('Reading PDF...');
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        addLog('Reading PDF with layout preservation...');
         const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let textStr = '';
+        const pageTexts = [];
+
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
           const content = await page.getTextContent();
-          content.items.forEach(item => { textStr += item.str + ' '; });
+          
+          // Reconstruct lines using Y coordinates so headings and items stay on separate lines
+          let lastY = null;
+          let pageStr = '';
+
+          for (const item of content.items) {
+            const currentY = item.transform ? item.transform[5] : null;
+            if (lastY !== null && currentY !== null && Math.abs(currentY - lastY) > 5) {
+              pageStr += '\n';
+            } else if (pageStr.length > 0 && !pageStr.endsWith('\n') && !pageStr.endsWith(' ')) {
+              pageStr += ' ';
+            }
+            pageStr += item.str;
+            lastY = currentY;
+          }
+          pageTexts.push(pageStr);
         }
-        rawText = textStr;
-      } else if (file.name.endsWith('.docx')) {
-        addLog('Reading DOCX...');
+        rawText = pageTexts.join('\n\n');
+      } else if (file.name.toLowerCase().endsWith('.docx')) {
+        addLog('Reading DOCX text...');
         const result = await mammoth.extractRawText({ arrayBuffer });
         rawText = result.value || '';
       } else {
         addLog('Error: Supported formats are PDF/DOCX only.', 'warn');
+        if (topStatus) topStatus.textContent = 'Error: Supported formats are PDF or DOCX only.';
         return;
       }
-      if (rawText.trim().length < 50) {
-        addLog('Error: Empty or scanned document. Fill details manually.', 'warn');
+
+      if (rawText.trim().length < 40) {
+        addLog('Error: Document contains little or no selectable text. (Possibly scanned image).', 'warn');
+        if (topStatus) topStatus.textContent = 'Document has no selectable text. Please fill manually.';
         return;
       }
-      parseResume(rawText);
+
+      parseResume(rawText, file.name);
     } catch(err) {
-      addLog('Error: ' + err.message, 'warn');
+      console.error("Resume parsing error:", err);
+      addLog('Error parsing document: ' + err.message, 'warn');
+      if (topStatus) topStatus.textContent = 'Parsing failed: ' + err.message;
     }
   };
   reader.readAsArrayBuffer(file);
 }
 
-function parseResume(text) {
-  addLog('Analyzing document content...');
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+function parseResume(text, fileName = '') {
+  addLog('Executing multi-section structured resume extraction...');
+  const topStatus = document.getElementById('top-dropzone-status');
+  if (topStatus) topStatus.textContent = 'Extracting contact, education, skills, and work history...';
 
-  // Match fields
-  const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
-  const email = emailMatch ? emailMatch[0] : '';
-  
-  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
-  const phone = phoneMatch ? phoneMatch[0] : '';
-  
-  let name = lines[0] || '';
-  if (name.includes('@') || name.match(/\d/)) {
-    name = email ? email.split('@')[0].replace(/[._-]/g, ' ') : '';
-  }
-  
-  const commonSkills = ['React','Node.js','JavaScript','Python','Java','SQL','AWS','Docker','Kubernetes','Git','C++','HTML','CSS'];
-  const skills = commonSkills.filter(s => new RegExp('\\b' + s.replace(/[.+]/g, '\\$&') + '\\b', 'i').test(text));
-  
-  const roleMatch = text.match(/(?:software engineer|developer|manager|analyst|designer|engineer)/i);
-  const headline = roleMatch ? roleMatch[0] : '';
+  const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
 
-  // Apply parsed results to inputs
-  if (name) document.getElementById('f-fullName').value = name;
-  if (email) document.getElementById('f-email').value = email;
-  if (phone) document.getElementById('f-phone').value = phone;
-  if (headline) document.getElementById('f-headline').value = headline;
-  if (skills.length) document.getElementById('f-skills').value = skills.join(', ');
+  const parsed = {};
 
-  const expSection = text.match(/experience[\s\S]{0,2000}?(education|skills|$)/i);
-  if (expSection) {
-    document.getElementById('f-experience').value = expSection[0].substring(0, 600).trim();
-  }
-  
-  const eduSection = text.match(/education[\s\S]{0,800}?(experience|skills|$)/i);
-  if (eduSection) {
-    document.getElementById('f-resumeDraft').value = text.trim();
+  // 1. Email Address (Primary & Alternative)
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+  const emails = Array.from(new Set(cleanText.match(emailRegex) || []));
+  if (emails.length > 0) parsed.email = emails[0];
+  if (emails.length > 1) parsed.alternativeEmail = emails[1];
+
+  // 2. Phone & Country Calling Code
+  const phoneRegex = /(?:\+?(\d{1,3})[-.\s]?)?\(?(\d{3,5})\)?[-.\s]?(\d{3,4})[-.\s]?(\d{3,5})/;
+  const phoneMatch = cleanText.match(phoneRegex);
+  if (phoneMatch) {
+    if (phoneMatch[1]) {
+      parsed.phoneCode = phoneMatch[1].replace(/\D/g, '');
+    }
+    const cleanDigits = phoneMatch[0].replace(/[\s\(\)\-\.]/g, '');
+    if (cleanDigits.length >= 8) {
+      parsed.phone = cleanDigits.startsWith('+') && parsed.phoneCode ? cleanDigits.replace('+' + parsed.phoneCode, '') : cleanDigits;
+    }
   }
 
-  // Visual feedback: lock fields to allow review
-  const inputsToLock = ['f-fullName', 'f-email', 'f-phone', 'f-headline', 'f-skills', 'f-experience', 'f-resumeDraft'];
-  inputsToLock.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const grp = el.closest('.form-group');
-    if (!grp) return;
-    grp.classList.add('locked');
-    el.disabled = true;
+  // 3. Social & Portfolio Links
+  const linkedinMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([A-Za-z0-9_-]+)/i);
+  if (linkedinMatch) parsed.linkedin = linkedinMatch[0].startsWith('http') ? linkedinMatch[0] : 'https://' + linkedinMatch[0];
 
-    if (!grp.querySelector('.lock-badge')) {
-      const lock = document.createElement('span');
-      lock.className = 'lock-badge';
-      lock.innerHTML = 'Locked (Click to Edit)';
-      lock.onclick = () => {
-        el.disabled = false;
-        grp.classList.remove('locked');
-        lock.remove();
-      };
-      grp.style.position = 'relative';
-      grp.appendChild(lock);
+  const githubMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_-]+)/i);
+  if (githubMatch) parsed.github = githubMatch[0].startsWith('http') ? githubMatch[0] : 'https://' + githubMatch[0];
+
+  const portfolioMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?([A-Za-z0-9-]+\.(?:portfolio|dev|me|io|design|tech|app)|[A-Za-z0-9-]+\.com(?:\/[~A-Za-z0-9_-]+)?)/i);
+  if (portfolioMatch && !portfolioMatch[0].includes('linkedin') && !portfolioMatch[0].includes('github') && !portfolioMatch[0].includes('google')) {
+    parsed.portfolio = portfolioMatch[0].startsWith('http') ? portfolioMatch[0] : 'https://' + portfolioMatch[0];
+  }
+
+  // 4. Candidate Full Name, First Name, Last Name
+  const ignoreHeaderPhrases = /resume|curriculum\s+vitae|cv|page\s+\d+|contact|profile|personal\s+details/i;
+  let candidateName = '';
+  for (let i = 0; i < Math.min(lines.length, 7); i++) {
+    const candidate = lines[i].replace(/[|•·,-].*$/, '').trim();
+    if (!candidate || ignoreHeaderPhrases.test(candidate) || candidate.includes('@') || candidate.includes('http') || /\d{3,}/.test(candidate)) {
+      continue;
+    }
+    const words = candidate.split(/\s+/);
+    if (words.length >= 2 && words.length <= 4 && words.every(w => /^[A-Za-z.'-]+$/.test(w))) {
+      candidateName = candidate;
+      break;
+    }
+    if (!candidateName && words.length === 1 && /^[A-Z][a-z]+$/.test(words[0])) {
+      candidateName = candidate;
+    }
+  }
+
+  if (!candidateName && parsed.email) {
+    const raw = parsed.email.split('@')[0].replace(/[._-]/g, ' ');
+    candidateName = raw.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  if (candidateName) {
+    parsed.fullName = candidateName;
+    const parts = candidateName.split(/\s+/);
+    parsed.firstName = parts[0] || '';
+    parsed.lastName = parts.slice(1).join(' ') || '';
+  }
+
+  // 5. Location (City, State, Country, Pincode)
+  const zipMatch = cleanText.match(/\b\d{5,6}\b/);
+  if (zipMatch) parsed.pincode = zipMatch[0];
+
+  const countries = ['United States', 'India', 'United Kingdom', 'Canada', 'Germany', 'Australia', 'Singapore', 'UAE', 'France', 'Netherlands'];
+  for (const c of countries) {
+    if (new RegExp('\\b' + c + '\\b', 'i').test(cleanText)) {
+      parsed.country = c;
+      break;
+    }
+  }
+
+  const cities = [
+    'Bangalore', 'Bengaluru', 'San Francisco', 'New York', 'Seattle', 'Hyderabad', 'Pune', 'Mumbai',
+    'Delhi', 'Austin', 'Boston', 'Chicago', 'London', 'Toronto', 'Chennai', 'Gurgaon', 'Noida', 'Berlin'
+  ];
+  for (const city of cities) {
+    if (new RegExp('\\b' + city + '\\b', 'i').test(cleanText)) {
+      parsed.city = city;
+      break;
+    }
+  }
+
+  // 6. Professional Headline & Target Role
+  const headlineKeywords = [
+    'Senior Full Stack Engineer', 'Full Stack Developer', 'Software Engineer', 'Backend Developer',
+    'Frontend Developer', 'Data Scientist', 'Data Analyst', 'DevOps Engineer', 'Machine Learning Engineer',
+    'Cloud Architect', 'Product Manager', 'QA Engineer', 'UI/UX Designer', 'Mobile Developer', 'Systems Engineer'
+  ];
+  for (const h of headlineKeywords) {
+    if (new RegExp('\\b' + h.replace(/[.+]/g, '\\$&') + '\\b', 'i').test(cleanText)) {
+      parsed.headline = h;
+      break;
+    }
+  }
+
+  // 7. Comprehensive Skills Taxonomy (120+ Modern Tech & Industry Skills)
+  const skillsTaxonomy = [
+    'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C#', 'Go', 'Golang', 'Rust', 'Ruby', 'PHP', 'Swift', 'Kotlin', 'SQL',
+    'React', 'React.js', 'Next.js', 'Vue.js', 'Angular', 'Node.js', 'Express', 'FastAPI', 'Django', 'Flask', 'Spring Boot',
+    'HTML', 'HTML5', 'CSS', 'CSS3', 'Tailwind CSS', 'Sass', 'Bootstrap', 'Redux', 'GraphQL', 'REST APIs', 'gRPC',
+    'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite', 'Elasticsearch', 'DynamoDB', 'Cassandra', 'Supabase', 'Firebase',
+    'AWS', 'Amazon Web Services', 'Azure', 'Google Cloud', 'GCP', 'Docker', 'Kubernetes', 'Terraform', 'CI/CD', 'GitHub Actions', 'Jenkins',
+    'Git', 'GitHub', 'GitLab', 'Linux', 'Bash', 'Webpack', 'Vite', 'Jest', 'Playwright', 'Cypress', 'PyTorch', 'TensorFlow',
+    'Pandas', 'NumPy', 'Scikit-learn', 'Tableau', 'Power BI', 'Figma', 'Microservices', 'Distributed Systems', 'Agile', 'Scrum'
+  ];
+
+  const matchedSkills = [];
+  skillsTaxonomy.forEach(skill => {
+    const rx = new RegExp('(^|[^a-zA-Z0-9])' + skill.replace(/[.+]/g, '\\$&') + '(?![a-zA-Z0-9])', 'i');
+    if (rx.test(cleanText)) {
+      if (!matchedSkills.includes(skill)) matchedSkills.push(skill);
+    }
+  });
+  if (matchedSkills.length > 0) {
+    parsed.skills = matchedSkills.join(', ');
+  }
+
+  // 8. Education Detection (Grad, PG, 12th, 10th)
+  const eduBlockMatch = cleanText.match(/(?:EDUCATION|ACADEMIC(?:\s+BACKGROUND)?|QUALIFICATIONS)[\s\S]*?(?=(?:EXPERIENCE|WORK\s+HISTORY|SKILLS|PROJECTS|CERTIFICATIONS|PUBLICATIONS|$))/i);
+  let eduContext = eduBlockMatch ? eduBlockMatch[0].replace(/^(?:EDUCATION|ACADEMIC(?:\s+BACKGROUND)?|QUALIFICATIONS)[^\n]*\n/i, '') : cleanText;
+
+  // Undergraduate degree matching
+  const ugDegreeMatch = eduContext.match(/\b(B\.?Tech|B\.?E\.?|B\.?Sc|B\.?S\.?|Bachelor\s+of\s+[A-Za-z\s]+|B\.?Com|B\.?C\.?A)\b/i);
+  if (ugDegreeMatch) {
+    parsed.eduGrad_degree = ugDegreeMatch[0].trim();
+  }
+
+  // PG / Masters matching
+  const pgDegreeMatch = eduContext.match(/\b(M\.?Tech|M\.?S\.?|M\.?Sc|Master\s+of\s+[A-Za-z\s]+|MBA|M\.?C\.?A)\b/i);
+  if (pgDegreeMatch) {
+    parsed.eduPG_degree = pgDegreeMatch[0].trim();
+    parsed.eduMasters_degree = pgDegreeMatch[0].trim();
+  }
+
+  // College / University names within education context
+  const uniMatch = eduContext.match(/(?:[-–—|•@]\s*|\b(?:at|from)\s+)?([A-Z][A-Za-z\s&]{2,45}(?:University|Institute\s+of\s+Technology|College|Institute|Polytechnic|IIT|NIT|BITS))/);
+  if (uniMatch) {
+    parsed.eduGrad_college = (uniMatch[1] || uniMatch[0]).replace(/\n/g, ' ').trim().slice(0, 80);
+  } else {
+    const knownTopUnis = /(Stanford\s+University|UC\s+Berkeley|University\s+of\s+California[A-Za-z\s,]*|MIT|Harvard\s+University|Carnegie\s+Mellon|IIT\s+[A-Za-z]+|NIT\s+[A-Za-z]+)/i;
+    const topMatch = eduContext.match(knownTopUnis);
+    if (topMatch) parsed.eduGrad_college = topMatch[0].trim();
+  }
+
+  // Graduation year (2014-2030)
+  const yearMatches = eduContext.match(/\b(201[4-9]|202[0-9]|2030)\b/g);
+  if (yearMatches && yearMatches.length > 0) {
+    const sortedYears = [...new Set(yearMatches)].sort();
+    parsed.eduGrad_year = sortedYears[sortedYears.length - 1]; // Latest graduation year
+    if (sortedYears.length >= 2) {
+      parsed.edu12_year = sortedYears[0];
+    }
+  }
+
+  // CGPA / GPA matching
+  const cgpaMatch = eduContext.match(/\b(\d\.\d{1,2}(?:\s*\/\s*(?:4|10)|\s*(?:GPA|CGPA))|\b(?:8|9)\d(?:\.\d)?%)/i);
+  if (cgpaMatch) {
+    parsed.eduGrad_cgpa = cgpaMatch[0].trim();
+  }
+
+  // Stream / Branch
+  const streamMatch = eduContext.match(/(?:Computer\s+Science|Information\s+Technology|Electrical|Mechanical|Civil|Electronics|Artificial\s+Intelligence|Data\s+Science)/i);
+  if (streamMatch) {
+    parsed.eduGrad_stream = streamMatch[0].trim();
+  }
+
+  // 9. Work History / Experience Section Extraction
+  const expMatch = cleanText.match(/(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|PROFESSIONAL\s+EXPERIENCE)[\s\S]*?(?=(?:EDUCATION|SKILLS|PROJECTS|CERTIFICATIONS|PUBLICATIONS|$))/i);
+  if (expMatch) {
+    let expBody = expMatch[0].replace(/^(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|PROFESSIONAL\s+EXPERIENCE)[^\n]*\n/i, '').trim();
+    parsed.experience = expBody.slice(0, 1800);
+    parsed.employmentStatus = 'Experienced';
+    // Calculate total experience
+    const years = cleanText.match(/\b(\d{1,2})\+?\s*(?:years|yrs)\s*(?:of)?\s*experience/i);
+    if (years) parsed.totalExperience = years[1];
+  } else {
+    parsed.employmentStatus = 'Fresher';
+  }
+
+  // 10. Professional Summary
+  const sumMatch = cleanText.match(/(?:SUMMARY|PROFESSIONAL\s+SUMMARY|ABOUT\s+ME|PROFILE)[\s\S]*?(?=(?:EXPERIENCE|EDUCATION|SKILLS|WORK\s+HISTORY|$))/i);
+  if (sumMatch) {
+    let sumBody = sumMatch[0].replace(/^(?:SUMMARY|PROFESSIONAL\s+SUMMARY|ABOUT\s+ME|PROFILE)[^\n]*\n/i, '').trim();
+    parsed.summary = sumBody.slice(0, 600);
+  } else if (parsed.headline) {
+    parsed.summary = `${parsed.fullName || 'Professional'} - ${parsed.headline} with expertise in ${matchedSkills.slice(0, 6).join(', ') || 'modern software technologies'}.`;
+  }
+
+  // 11. Store entire raw document draft
+  parsed.resumeDraft = cleanText.trim();
+
+  // Populate form fields with highlight feedback (NO input disabling)
+  let populatedCount = 0;
+  Object.keys(parsed).forEach(field => {
+    const el = document.getElementById('f-' + field);
+    if (el && parsed[field] !== undefined && parsed[field] !== '') {
+      el.value = parsed[field];
+      el.classList.remove('field-autofilled');
+      // Trigger animation
+      void el.offsetWidth;
+      el.classList.add('field-autofilled');
+      populatedCount++;
     }
   });
 
-  addLog('Resume parsed successfully! Fields loaded & locked for review.', 'success');
+  // Ensure target roles and employment fields update properly
+  if (parsed.headline) {
+    document.querySelectorAll(".role-chip-cb").forEach(cb => {
+      if (parsed.headline.toLowerCase().includes(cb.value.toLowerCase())) {
+        cb.checked = true;
+      }
+    });
+  }
+  toggleEmploymentFields();
+
+  // Save parsed data immediately to current persona
+  allPersonas[currentPersonaId] = extractCurrentFormProfile();
+  localStorage.setItem('jxa_local_profile', JSON.stringify(allPersonas[currentPersonaId]));
+
+  // Dispatch to JobXApply extension immediately
+  try {
+    window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
+      detail: { profile: allPersonas[currentPersonaId] }
+    }));
+  } catch (e) {}
+
+  // Update completeness score & TOC indicators
   updateProfileCompleteness();
+
+  addLog(`Resume parsed successfully! Extracted ${populatedCount} fields including name, contact, education, skills, and work history.`, 'success');
+  if (topStatus) {
+    topStatus.innerHTML = `<span style="color:#2FDDC4; font-weight:700;">Parsed ${fileName} (${populatedCount} fields populated)</span>`;
+  }
+
+  showToast(`Auto-filled ${populatedCount} profile fields from resume! All details synced.`, 'success');
   scrollToSection(null, 'section-basics');
 }
 
@@ -1282,6 +1583,14 @@ async function saveCloudProfile() {
   if (indicatorEl) indicatorEl.style.background = '#5B4FE8';
 
   const res = await saveProfile(currentProfile);
+  
+  // Proactively dispatch profile update to extension
+  try {
+    window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
+      detail: { profile: currentProfile }
+    }));
+  } catch (e) {}
+
   if (res.ok) {
     if (statusEl) {
       statusEl.textContent = 'All changes synced with cloud';

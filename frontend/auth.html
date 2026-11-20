@@ -300,7 +300,7 @@ if (logoutReason && logoutReason !== 'unauthenticated') {
     box.style.background = 'rgba(245, 166, 35, 0.08)';
     title.style.color = '#F5A623';
     title.textContent = 'Session Inactive';
-    desc.textContent = 'You were signed out after 2 days of inactivity. Please sign in again.';
+    desc.textContent = 'You were signed out after 3 days of inactivity. Please sign in again to continue.';
     box.style.display = 'block';
   } else if (logoutReason === 'expired') {
     box.style.borderColor = 'rgba(245, 90, 35, 0.4)';

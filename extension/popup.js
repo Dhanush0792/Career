@@ -552,6 +552,17 @@ async function loadTestProfile() {
     chrome.tabs.create({ url: `${base}/tracker.html` });
   });
 
+  const triggerSidePanel = () => {
+    chrome.runtime.sendMessage({ type: "jobxapply:openSidePanel" }, (res) => {
+      if (res?.ok) {
+        window.close();
+      }
+    });
+  };
+
+  document.getElementById("openSidePanelBtn")?.addEventListener("click", triggerSidePanel);
+  document.getElementById("openWorkspaceBtn")?.addEventListener("click", triggerSidePanel);
+
   document.getElementById("editProfile")?.addEventListener("click", () => {
     chrome.runtime.openOptionsPage
       ? chrome.runtime.openOptionsPage()
