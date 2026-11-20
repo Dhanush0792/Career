@@ -601,6 +601,29 @@ function switchView(mode) {
 
 function loadData() {
   apps = loadApplications() || [];
+  
+  // Synchronize with extension storage if accessible
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+    try {
+      chrome.storage.local.get(["jobxapplyApplications"], (res) => {
+        if (res?.jobxapplyApplications && Array.isArray(res.jobxapplyApplications)) {
+          const extApps = res.jobxapplyApplications;
+          let changed = false;
+          extApps.forEach(ea => {
+            if (!apps.some(ma => (ma.url && ea.url && ma.url === ea.url) || String(ma.id) === String(ea.id))) {
+              apps.unshift(ea);
+              changed = true;
+            }
+          });
+          if (changed) {
+            saveApplications(apps);
+            updateStats();
+            renderActiveView();
+          }
+        }
+      });
+    } catch (e) {}
+  }
 }
 
 function isStalledApp(app) {

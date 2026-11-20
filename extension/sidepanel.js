@@ -318,6 +318,61 @@ function renderTrackerList() {
   });
 }
 
+async function trackCurrentJobFromActiveTab() {
+  try {
+    const tab = await getActiveTab();
+    if (!tab || !tab.id) {
+      showToast("No active browser tab found.");
+      return;
+    }
+    
+    showToast("Extracting job details from tab...");
+    chrome.tabs.sendMessage(tab.id, { type: "jobxapply:getJobMetadata" }, (res) => {
+      let meta = res?.metadata;
+      if (!meta || !meta.title) {
+        const titleParts = (tab.title || "").split(/[-|–—:]/);
+        meta = {
+          title: titleParts[0]?.trim() || "Software Engineer",
+          company: titleParts[1]?.trim() || "Company",
+          url: tab.url || "",
+          host: new URL(tab.url || "https://example.com").hostname
+        };
+      }
+
+      const p = activeProfile || {};
+      const newApp = {
+        id: "app_" + Date.now().toString(36),
+        company: meta.company || "Target Company",
+        role: meta.title || "Target Role",
+        portal: meta.host ? meta.host.replace("www.", "") : "Online Portal",
+        status: "Applied",
+        date: new Date().toISOString().split("T")[0],
+        appliedAt: Date.now(),
+        salary: p.expectedFixedSalary ? `${p.expectedSalaryCurrency || 'INR'} ${p.expectedFixedSalary}` : "Market Standard",
+        location: p.city || "Remote",
+        url: meta.url || tab.url || "",
+        notes: `Captured in 1-click from ${meta.portal || meta.host || "active page"}.`
+      };
+
+      const exists = applications.find(a => (a.url && a.url === newApp.url) || (a.company.toLowerCase() === newApp.company.toLowerCase() && a.role.toLowerCase() === newApp.role.toLowerCase()));
+      if (exists) {
+        showToast(`Already tracked: ${newApp.role} @ ${newApp.company}`);
+        return;
+      }
+
+      applications.unshift(newApp);
+      chrome.storage.local.set({ jobxapplyApplications: applications }, () => {
+        renderTrackerList();
+        updateDashboardUI();
+        showToast(`Tracked: ${newApp.role} @ ${newApp.company}!`, 3000);
+      });
+    });
+  } catch (err) {
+    console.error("Track error", err);
+    showToast("Could not track current tab.");
+  }
+}
+
 function saveNewApplication() {
   const company = document.getElementById("trCompany")?.value?.trim();
   const role = document.getElementById("trRole")?.value?.trim();
@@ -564,10 +619,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Tracker Actions
+  document.getElementById("spTrackJobBannerBtn")?.addEventListener("click", trackCurrentJobFromActiveTab);
+  document.getElementById("dashLogAppBtn")?.addEventListener("click", trackCurrentJobFromActiveTab);
   document.getElementById("trSaveBtn")?.addEventListener("click", saveNewApplication);
-  document.getElementById("dashLogAppBtn")?.addEventListener("click", () => {
-    document.querySelector('.sp-nav-tab[data-view="trackerView"]')?.click();
-  });
 
   // Settings Actions
   document.getElementById("setSavePasscodeBtn")?.addEventListener("click", () => {

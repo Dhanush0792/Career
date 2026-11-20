@@ -32,10 +32,16 @@
       <div class="sp-portal-name" id="spPortalName">Detecting active portal...</div>
       <span class="sp-portal-badge" id="spPortalTier">Checking</span>
     </div>
-    <button class="sp-autofill-btn" id="spAutofillActiveBtn">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <span>Autofill Tab</span>
-    </button>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button class="sp-autofill-btn" id="spTrackJobBannerBtn" style="background:var(--primary); border-color:var(--primary);" title="1-Click track this job into your Application Tracker">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Track</span>
+      </button>
+      <button class="sp-autofill-btn" id="spAutofillActiveBtn" title="Autofill form fields on active page">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>Autofill</span>
+      </button>
+    </div>
   </div>
 
   <!-- Navigation Bar Tabs -->
