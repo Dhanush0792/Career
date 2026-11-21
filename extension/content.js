@@ -648,6 +648,19 @@ function checkContext() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.type === "jobxapply:getFieldStats") {
+    try {
+      const inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select"));
+      const visible = inputs.filter(el => {
+        const style = window.getComputedStyle(el);
+        return style.display !== "none" && style.visibility !== "hidden" && el.type !== "hidden";
+      }).length;
+      sendResponse({ ok: true, count: visible });
+    } catch (err) {
+      sendResponse({ ok: true, count: 0 });
+    }
+    return true;
+  }
   if (message?.type === "jobxapply:autofill") {
     try {
       const rawProfile = message.payload?.payload ? message.payload.payload : (message.payload || {});
@@ -1458,39 +1471,45 @@ function injectFloatingQuickFill() {
     bottom: 24px;
     right: 24px;
     z-index: 2147483640;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    background: #0b1020;
+    gap: 10px;
+    background: rgba(7, 10, 24, 0.94);
     color: #ffffff;
-    border: 1px solid #5b4fe8;
+    border: 1px solid rgba(91, 79, 232, 0.45);
     border-radius: 9999px;
-    padding: 8px 14px;
+    padding: 8px 14px 8px 16px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 12px;
     font-weight: 600;
-    box-shadow: 0 8px 24px rgba(11, 16, 32, 0.45), 0 0 16px rgba(91, 79, 232, 0.25);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(91, 79, 232, 0.25);
+    backdrop-filter: blur(16px);
     cursor: pointer;
     user-select: none;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   `;
 
   pill.innerHTML = `
-    <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2fddc4;box-shadow:0 0 6px #2fddc4;"></span>
-    <span style="letter-spacing:0.02em;">Autofill Form</span>
-    <button id="jxa-pill-close" style="background:none;border:none;color:#94a3b8;font-size:14px;cursor:pointer;padding:0 2px;margin-left:4px;line-height:1;" title="Dismiss">&times;</button>
+    <span style="display:flex;align-items:center;gap:7px;">
+      <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#2fddc4;box-shadow:0 0 8px #2fddc4;"></span>
+      <strong style="font-weight:800;letter-spacing:-0.01em;">Job<span style="color:#2fddc4;">X</span>Apply</strong>
+    </span>
+    <span style="width:1px;height:12px;background:rgba(255,255,255,0.15);"></span>
+    <span id="jxa-pill-text" style="color:rgba(244,247,255,0.75);font-size:11.5px;">${visibleCandidateCount} fields ready</span>
+    <button id="jxa-pill-btn" style="background:linear-gradient(135deg,#5b4fe8,#2fddc4);border:none;border-radius:9999px;color:#fff;font-weight:700;font-size:11px;padding:4px 10px;cursor:pointer;margin-left:2px;box-shadow:0 2px 8px rgba(91,79,232,0.4);">Fill</button>
+    <button id="jxa-pill-close" style="background:none;border:none;color:rgba(255,255,255,0.45);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;display:flex;align-items:center;" title="Dismiss">&times;</button>
   `;
 
   pill.addEventListener("mouseenter", () => {
     pill.style.transform = "translateY(-2px)";
     pill.style.borderColor = "#2fddc4";
-    pill.style.boxShadow = "0 12px 28px rgba(11, 16, 32, 0.55), 0 0 20px rgba(47, 221, 196, 0.35)";
+    pill.style.boxShadow = "0 16px 40px rgba(0, 0, 0, 0.75), 0 0 24px rgba(47, 221, 196, 0.35)";
   });
 
   pill.addEventListener("mouseleave", () => {
     pill.style.transform = "translateY(0)";
-    pill.style.borderColor = "#5b4fe8";
-    pill.style.boxShadow = "0 8px 24px rgba(11, 16, 32, 0.45), 0 0 16px rgba(91, 79, 232, 0.25)";
+    pill.style.borderColor = "rgba(91, 79, 232, 0.45)";
+    pill.style.boxShadow = "0 12px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(91, 79, 232, 0.25)";
   });
 
   const closeBtn = pill.querySelector("#jxa-pill-close");
@@ -1500,11 +1519,15 @@ function injectFloatingQuickFill() {
   });
 
   pill.addEventListener("click", () => {
+    const textSpan = pill.querySelector("#jxa-pill-text");
+    const fillBtn = pill.querySelector("#jxa-pill-btn");
     pill.style.pointerEvents = "none";
-    pill.querySelector("span:nth-child(2)").textContent = "Filling...";
+    if (textSpan) textSpan.textContent = "Autofilling...";
+    if (fillBtn) fillBtn.style.opacity = "0.5";
+
     chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => {
       if (chrome.runtime.lastError || !res?.profile) {
-        pill.querySelector("span:nth-child(2)").textContent = "No profile saved";
+        if (textSpan) textSpan.textContent = "No profile synced";
         setTimeout(() => { if (pill) pill.remove(); }, 2000);
         return;
       }
@@ -1545,15 +1568,15 @@ function injectFloatingQuickFill() {
           }
         }
 
-        pill.querySelector("span:nth-child(2)").textContent = `Filled ${filledCount} field${filledCount === 1 ? '' : 's'}`;
+        if (textSpan) textSpan.textContent = `Filled ${filledCount} field${filledCount === 1 ? '' : 's'}!`;
         pill.style.borderColor = "#2fddc4";
         setTimeout(() => {
           if (pill) {
             pill.style.opacity = "0";
-            pill.style.transform = "translateY(8px)";
-            setTimeout(() => pill.remove(), 300);
+            pill.style.transform = "translateY(10px)";
+            setTimeout(() => pill.remove(), 400);
           }
-        }, 2200);
+        }, 2500);
       });
     });
   });

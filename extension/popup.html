@@ -4,403 +4,779 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JobXApply</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --bg-base: #070a18;
+        --bg-surface: #0d1226;
+        --bg-card: rgba(255, 255, 255, 0.04);
+        --bg-card-hover: rgba(255, 255, 255, 0.07);
+        --border-glass: rgba(255, 255, 255, 0.09);
+        --border-glow: rgba(91, 79, 232, 0.45);
+        --primary: #5b4fe8;
+        --primary-hover: #6d62f7;
+        --teal: #2fddc4;
+        --teal-glow: rgba(47, 221, 196, 0.25);
+        --text-main: #f4f7ff;
+        --text-muted: rgba(244, 247, 255, 0.65);
+        --text-dim: rgba(244, 247, 255, 0.4);
+        --font-mono: 'JetBrains Mono', monospace;
+        --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+      }
+
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        width: 350px;
-        font-family: Inter, system-ui, -apple-system, sans-serif;
-        background: #0b1020;
-        color: #f4f7ff;
+        width: 385px;
+        min-height: 490px;
+        font-family: var(--font-body);
+        background: var(--bg-base);
+        color: var(--text-main);
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
       }
+
+      /* Subtle noise & glow overlay */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at 85% 5%, rgba(91, 79, 232, 0.15), transparent 45%),
+                    radial-gradient(circle at 10% 90%, rgba(47, 221, 196, 0.08), transparent 40%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Top Header */
       .header {
+        position: relative;
+        z-index: 10;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 12px 16px;
-        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border-glass);
+        background: rgba(11, 16, 32, 0.85);
+        backdrop-filter: blur(16px);
       }
-      .header-left {
+      .brand-group {
         display: flex;
         align-items: center;
         gap: 10px;
       }
-      .logo-img {
-        width: 24px; height: 24px;
-        border-radius: 6px;
+      .brand-logo {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
         object-fit: contain;
-        flex-shrink: 0;
+        box-shadow: 0 0 12px rgba(91, 79, 232, 0.35);
       }
-      .header-title { font-weight: 700; font-size: 13px; letter-spacing: 0.02em; }
-      .header-sub { font-size: 10px; color: rgba(244,247,255,0.45); }
+      .brand-title {
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #fff;
+        line-height: 1.1;
+      }
+      .brand-title span {
+        background: linear-gradient(135deg, #5b4fe8, #2fddc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .brand-version {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        font-weight: 700;
+        color: var(--teal);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
 
-      /* Tab Navigation */
-      .nav-tabs {
+      .header-actions {
         display: flex;
-        background: rgba(255,255,255,0.03);
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        padding: 4px 12px 0;
-        gap: 4px;
+        align-items: center;
+        gap: 6px;
       }
-      .nav-tab {
-        flex: 1;
-        padding: 8px 4px;
-        background: none;
-        border: none;
-        border-bottom: 2px solid transparent;
-        color: rgba(244,247,255,0.55);
+      .icon-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-glass);
+        color: var(--text-main);
+        padding: 6px 10px;
+        border-radius: 8px;
         font-size: 11px;
         font-weight: 600;
         cursor: pointer;
-        text-align: center;
-        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       }
-      .nav-tab:hover { color: #f4f7ff; }
-      .nav-tab.active {
-        color: #5b4fe8;
-        border-bottom-color: #5b4fe8;
-      }
-
-      .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
-
-      /* Cards & Containers */
-      .card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 10px;
-        padding: 10px 12px;
-      }
-
-      .portal-card {
-        display: flex; align-items: center; gap: 10px;
-      }
-      .portal-dot { width: 8px; height: 8px; border-radius: 50%; background: #2fddc4; flex-shrink: 0; }
-      .portal-dot.unknown { background: rgba(255,255,255,0.25); }
-      .portal-name { font-size: 12px; font-weight: 600; }
-      .portal-tier { font-size: 10px; color: rgba(244,247,255,0.5); margin-top: 1px; }
-
-      /* Profile connected card */
-      .profile-card {
-        display: flex; align-items: center; gap: 10px;
-        background: rgba(91,79,232,0.08);
-        border: 1px solid rgba(91,79,232,0.22);
-      }
-      .profile-avatar {
-        width: 32px; height: 32px; border-radius: 50%;
-        background: linear-gradient(135deg, #5b4fe8, #2fddc4);
-        display: flex; align-items: center; justify-content: center;
-        font-size: 12px; font-weight: 700; flex-shrink: 0; color: white;
-      }
-      .profile-info { flex: 1; min-width: 0; }
-      .profile-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f4f7ff; }
-      .profile-email { font-size: 10px; color: rgba(244,247,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-      /* Form inputs */
-      .input-group { display: flex; flex-direction: column; gap: 5px; }
-      .input-label { font-size: 10px; font-weight: 700; color: rgba(244,247,255,0.65); text-transform: uppercase; letter-spacing: 0.05em; }
-      .input-field {
-        width: 100%;
-        background: rgba(7,10,24,0.75);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 8px;
-        padding: 8px 10px;
-        font-size: 12px;
+      .icon-btn:hover {
+        background: rgba(91, 79, 232, 0.2);
+        border-color: var(--primary);
         color: #fff;
-        outline: none;
+        box-shadow: 0 0 10px rgba(91, 79, 232, 0.25);
+      }
+
+      /* Navigation Tabs */
+      .nav-tabs {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        background: rgba(13, 18, 38, 0.95);
+        border-bottom: 1px solid var(--border-glass);
+        padding: 6px 14px 0;
+        gap: 6px;
+      }
+      .nav-tab {
+        flex: 1;
+        padding: 9px 4px 10px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted);
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.18s ease;
+      }
+      .nav-tab:hover { color: #fff; }
+      .nav-tab.active {
+        color: var(--text-main);
+        border-bottom-color: var(--teal);
+        font-weight: 700;
+      }
+      .nav-tab.active svg { stroke: var(--teal); }
+
+      /* Main Body Container */
+      .content-body {
+        position: relative;
+        z-index: 5;
+        padding: 16px 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      /* Universal Cards */
+      .glass-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-glass);
+        border-radius: 12px;
+        padding: 12px 14px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
         transition: border-color 0.2s;
       }
-      .input-field:focus { border-color: #5b4fe8; }
-      .input-field::placeholder { color: rgba(244,247,255,0.3); }
-
-      /* Buttons */
-      .btn-primary {
-        width: 100%; padding: 10px;
-        background: #5b4fe8;
-        border: none; border-radius: 8px; color: white;
-        font-size: 12px; font-weight: 700; cursor: pointer;
-        letter-spacing: 0.02em; transition: background 0.15s, opacity 0.15s;
-        display: flex; align-items: center; justify-content: center; gap: 6px;
-      }
-      .btn-primary:hover { background: #6c61ee; }
-      .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-      .btn-success {
-        width: 100%; padding: 9px;
-        background: rgba(47,221,196,0.12);
-        border: 1px solid rgba(47,221,196,0.35);
-        border-radius: 8px; color: #2fddc4;
-        font-size: 11px; font-weight: 700; cursor: pointer;
-        transition: background 0.15s;
-        text-align: center;
-      }
-      .btn-success:hover { background: rgba(47,221,196,0.22); }
-
-      .btn-google {
-        width: 100%; padding: 10px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 8px; color: #f4f7ff;
-        font-size: 12px; font-weight: 600; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        transition: background 0.15s, border-color 0.15s;
-      }
-      .btn-google:hover {
-        background: rgba(255,255,255,0.1);
-        border-color: rgba(255,255,255,0.3);
+      .glass-card:hover {
+        border-color: rgba(255, 255, 255, 0.14);
       }
 
-      .btn-secondary {
-        flex: 1; padding: 7px;
-        background: transparent;
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 8px; color: rgba(244,247,255,0.8);
-        font-size: 11px; font-weight: 600; cursor: pointer;
-        transition: border-color 0.15s, color 0.15s;
-        text-align: center;
+      /* Portal Detection Banner */
+      .portal-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, rgba(91, 79, 232, 0.10) 0%, rgba(47, 221, 196, 0.06) 100%);
+        border: 1px solid rgba(91, 79, 232, 0.25);
+        border-radius: 12px;
+        padding: 10px 14px;
       }
-      .btn-secondary:hover { border-color: rgba(91,79,232,0.6); color: #f4f7ff; }
-
-      .btn-danger-link {
-        background: none; border: none; color: rgba(235,87,87,0.75);
-        font-size: 10px; cursor: pointer; text-decoration: underline;
-        padding: 4px 0; text-align: center; display: block; margin: 0 auto;
+      .portal-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
       }
-      .btn-danger-link:hover { color: #ff7878; }
-
-      .btn-row { display: flex; gap: 8px; }
-      .status { font-size: 11px; color: rgba(244,247,255,0.55); text-align: center; min-height: 16px; line-height: 1.4; word-break: break-word; }
-      .status.success { color: #2fddc4; }
-      .status.error { color: #e8547b; }
-      .status.warn { color: #ff9800; }
-
-      .divider {
-        display: flex; align-items: center; text-align: center;
-        color: rgba(244,247,255,0.3); font-size: 10px; text-transform: uppercase;
-        margin: 2px 0;
+      .portal-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--teal);
+        box-shadow: 0 0 10px var(--teal);
+        flex-shrink: 0;
+        animation: pulseBeacon 2.2s infinite;
       }
-      .divider::before, .divider::after {
-        content: ''; flex: 1; border-bottom: 1px solid rgba(255,255,255,0.08);
+      .portal-dot.unknown {
+        background: #f5a623;
+        box-shadow: 0 0 8px #f5a623;
+        animation: none;
       }
-      .divider:not(:empty)::before { margin-right: 8px; }
-      .divider:not(:empty)::after { margin-left: 8px; }
+      @keyframes pulseBeacon {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.55; transform: scale(0.92); }
+      }
+      .portal-title {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .portal-sub {
+        font-size: 10px;
+        font-family: var(--font-mono);
+        color: var(--teal);
+        font-weight: 500;
+      }
+      .portal-sub.unknown {
+        color: var(--text-dim);
+      }
 
-      /* Snippets items list */
-      .snippet-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
-      .snippet-item {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 8px;
-        padding: 8px 10px;
+      /* Hero Autofill Action Card */
+      .hero-action-card {
+        background: linear-gradient(180deg, rgba(91, 79, 232, 0.14) 0%, rgba(13, 18, 38, 0.6) 100%);
+        border: 1px solid var(--border-glow);
+        border-radius: 14px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 8px 30px rgba(91, 79, 232, 0.18), inset 0 1px 0 rgba(255,255,255,0.12);
+      }
+
+      .btn-hero-fill {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #5b4fe8 0%, #4739dc 50%, #2fddc4 120%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        color: #fff;
+        font-family: var(--font-body);
+        font-size: 13.5px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
         cursor: pointer;
         display: flex;
         flex-direction: column;
-        gap: 2px;
-        transition: background 0.15s, border-color 0.15s;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        box-shadow: 0 6px 20px rgba(91, 79, 232, 0.45);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       }
-      .snippet-item:hover {
-        background: rgba(91,79,232,0.1);
-        border-color: rgba(91,79,232,0.3);
+      .btn-hero-fill:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 26px rgba(91, 79, 232, 0.6);
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+      .btn-hero-fill:active {
+        transform: translateY(1px);
+      }
+      .btn-hero-fill:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .btn-hero-sub {
+        font-size: 10px;
+        font-weight: 500;
+        opacity: 0.85;
+        letter-spacing: 0.02em;
+      }
+
+      .action-pill-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .btn-pill {
+        padding: 9px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-glass);
+        border-radius: 8px;
+        color: var(--text-main);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.16s ease;
+      }
+      .btn-pill:hover {
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(255, 255, 255, 0.18);
+        color: #fff;
+      }
+      .btn-pill.highlight {
+        color: var(--teal);
+        border-color: rgba(47, 221, 196, 0.3);
+        background: rgba(47, 221, 196, 0.07);
+      }
+      .btn-pill.highlight:hover {
+        background: rgba(47, 221, 196, 0.14);
+        border-color: var(--teal);
+      }
+
+      /* Profile Synced Badge */
+      .profile-strip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-glass);
+        border-radius: 10px;
+        padding: 9px 12px;
+      }
+      .profile-left {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+      }
+      .profile-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #5b4fe8, #2fddc4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 12px;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .profile-text {
+        min-width: 0;
+      }
+      .profile-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .profile-email {
+        font-size: 10px;
+        color: var(--text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .profile-tools {
+        display: flex;
+        gap: 4px;
+      }
+      .tiny-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: color 0.15s, background 0.15s;
+      }
+      .tiny-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      /* Persona Selector Chip */
+      .persona-chip-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-glass);
+        border-radius: 8px;
+        padding: 4px 8px;
+      }
+      .persona-chip-label {
+        font-family: var(--font-mono);
+        font-size: 9.5px;
+        font-weight: 700;
+        color: var(--teal);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .persona-select-custom {
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-family: var(--font-body);
+        font-size: 11px;
+        font-weight: 600;
+        outline: none;
+        cursor: pointer;
+        flex: 1;
+      }
+      .persona-select-custom option {
+        background: #0d1226;
+        color: #fff;
+      }
+
+      /* Quick-Copy Snippets View */
+      .snippets-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .snippet-list {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        max-height: 290px;
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+      .snippet-list::-webkit-scrollbar { width: 4px; }
+      .snippet-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 2px;
+      }
+      .snippet-card {
+        background: rgba(255, 255, 255, 0.035);
+        border: 1px solid var(--border-glass);
+        border-radius: 8px;
+        padding: 9px 12px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        transition: all 0.15s ease;
+      }
+      .snippet-card:hover {
+        background: rgba(91, 79, 232, 0.12);
+        border-color: rgba(91, 79, 232, 0.35);
       }
       .snippet-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
       }
-      .snippet-title { font-size: 11px; font-weight: 600; color: #f4f7ff; }
-      .snippet-action { font-size: 9px; color: rgba(244,247,255,0.4); text-transform: uppercase; }
-      .snippet-val {
+      .snippet-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #fff;
+      }
+      .snippet-tag {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: var(--teal);
+        text-transform: uppercase;
+      }
+      .snippet-value {
+        font-family: var(--font-mono);
         font-size: 10px;
-        color: rgba(244,247,255,0.55);
+        color: var(--text-muted);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-family: monospace;
       }
+
+      /* Tracker Tab Form */
+      .input-field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .field-label {
+        font-size: 9.5px;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .form-input-dark {
+        width: 100%;
+        background: rgba(7, 10, 24, 0.8);
+        border: 1px solid var(--border-glass);
+        border-radius: 7px;
+        padding: 8px 10px;
+        font-family: var(--font-body);
+        font-size: 11.5px;
+        color: #fff;
+        outline: none;
+        transition: border-color 0.18s;
+      }
+      .form-input-dark:focus {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 1px rgba(47, 221, 196, 0.25);
+      }
+
+      /* Clean Auth Screen */
+      .auth-container {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding-top: 8px;
+      }
+      .auth-heading {
+        text-align: center;
+        margin-bottom: 4px;
+      }
+      .auth-heading h3 {
+        font-size: 15px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .auth-heading p {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-top: 3px;
+      }
+
+      .btn-web-pair {
+        width: 100%;
+        padding: 11px;
+        background: linear-gradient(135deg, rgba(47,221,196,0.15), rgba(91,79,232,0.15));
+        border: 1px solid var(--teal);
+        border-radius: 9px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 16px rgba(47,221,196,0.15);
+        transition: all 0.2s ease;
+      }
+      .btn-web-pair:hover {
+        background: linear-gradient(135deg, rgba(47,221,196,0.25), rgba(91,79,232,0.25));
+        box-shadow: 0 6px 20px rgba(47,221,196,0.3);
+      }
+
+      .divider-text {
+        display: flex;
+        align-items: center;
+        font-family: var(--font-mono);
+        font-size: 9px;
+        font-weight: 700;
+        color: var(--text-dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .divider-text::before, .divider-text::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid var(--border-glass);
+      }
+      .divider-text::before { margin-right: 8px; }
+      .divider-text::after { margin-left: 8px; }
+
+      /* Footer status bar */
+      .footer-status {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-dim);
+        text-align: center;
+        min-height: 14px;
+        letter-spacing: 0.02em;
+      }
+      .footer-status.success { color: var(--teal); }
+      .footer-status.error { color: #ff5c5c; }
     </style>
   </head>
   <body>
-    <div class="header">
-      <div class="header-left">
-        <img src="icon.png" class="logo-img" alt="Logo">
+    <!-- Top Bar -->
+    <header class="header">
+      <div class="brand-group">
+        <img src="icon.png" class="brand-logo" alt="Logo">
         <div>
-          <div class="header-title">JobXApply</div>
-          <div class="header-sub">Career Productivity Engine</div>
+          <div class="brand-title">Job<span>X</span>Apply</div>
+          <div class="brand-version">Engine 2.0</div>
         </div>
       </div>
-      <button id="openSidePanelBtn" title="Open Full Workspace in Side Panel" style="background: rgba(91,79,232,0.18); border: 1px solid rgba(91,79,232,0.45); color: #f4f7ff; padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-        <span>Workspace</span>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      <div class="header-actions">
+        <button id="openSidePanelBtn" class="icon-btn" title="Open Workspace in Side Panel">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <span>Workspace</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs (Visible when paired/logged in) -->
+    <nav class="nav-tabs" id="navTabs" style="display:none;">
+      <button class="nav-tab active" data-tab="autofillTab">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Autofill</span>
       </button>
-    </div>
+      <button class="nav-tab" data-tab="snippetsTab">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Vault</span>
+      </button>
+      <button class="nav-tab" data-tab="trackerTab">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Tracker</span>
+      </button>
+    </nav>
 
-    <!-- TAB NAVIGATION (Visible when logged in) -->
-    <div class="nav-tabs" id="navTabs" style="display:none;">
-      <button class="nav-tab active" data-tab="autofillTab">Autofill</button>
-      <button class="nav-tab" data-tab="aiResumeTab" style="color:#2fddc4;">AI Resume</button>
-      <button class="nav-tab" data-tab="snippetsTab">Snippets</button>
-      <button class="nav-tab" data-tab="trackerTab">Tracker</button>
-    </div>
+    <!-- Main Viewport Area -->
+    <main class="content-body">
 
-    <div class="body">
-      <!-- VIEW 1: AUTHENTICATION / LOGIN VIEW -->
-      <div id="loginView" style="display:none; flex-direction:column; gap:12px;">
-        <div style="text-align:center; padding: 4px 0;">
-          <div style="font-size:13px; font-weight:700; color:#f4f7ff;">Sign in to JobXApply</div>
-          <div style="font-size:11px; color:rgba(244,247,255,0.5); margin-top:2px;">Sync your decrypted profile for 1-click autofill</div>
+      <!-- ================= VIEW 1: AUTHENTICATION / PAIRING ================= -->
+      <section id="loginView" class="auth-container" style="display:none;">
+        <div class="auth-heading">
+          <h3>Connect Your Profile</h3>
+          <p>Sync your verified master profile to enable 1-click autofill.</p>
         </div>
 
-        <button class="btn-google" id="loginGoogleBtn">
+        <button class="btn-web-pair" id="syncActiveWebBtn" style="display:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Connect Active Web Session</span>
+        </button>
+
+        <button class="btn-pill" id="loginGoogleBtn" style="width:100%; padding:10px; font-weight:600; justify-content:center;">
           <svg width="14" height="14" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
             <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.36 24 12 24z"/>
             <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
             <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.36 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
           </svg>
-          Continue with Google
+          <span>Sign In on JobXApply</span>
         </button>
 
-        <button class="btn-success" id="syncActiveWebBtn" style="display:none; font-size:11px; padding:9px;">
-          Pair with Active Web App Session
-        </button>
+        <div class="divider-text">OR ENTER SYNC KEY</div>
 
-        <div class="divider">OR USE SYNC KEY</div>
-
-        <div class="card" style="display:flex; flex-direction:column; gap:10px; background:rgba(255,255,255,0.03);">
-          <div class="input-group">
-            <label class="input-label" for="loginPasscodeInput">Sync Key (Passcode)</label>
-            <input type="password" id="loginPasscodeInput" class="input-field" placeholder="Enter your Vault Sync Key">
+        <div class="glass-card" style="display:flex; flex-direction:column; gap:9px;">
+          <div class="input-field-group">
+            <label class="field-label" for="loginPasscodeInput">Sync Passcode</label>
+            <input type="password" id="loginPasscodeInput" class="form-input-dark" placeholder="Enter your 6-digit sync key">
           </div>
-          <button class="btn-primary" id="loginPasscodeBtn">Login &amp; Sync Profile</button>
+          <button class="btn-pill highlight" id="loginPasscodeBtn" style="justify-content:center; padding:9px; font-weight:700;">
+            Verify &amp; Link Profile
+          </button>
         </div>
 
-        <button class="btn-secondary" id="loadTestProfileBtn" style="font-size:11px; padding:8px; border-color:rgba(47,221,196,0.3); color:#2fddc4;">
-          Load Test Profile &amp; Sync to Web
+        <button class="btn-pill" id="loadTestProfileBtn" style="font-size:10.5px; opacity:0.8; justify-content:center;">
+          Load Demo Profile (Evaluation)
         </button>
 
-        <div class="status" id="loginStatus">Enter your Sync Key or sign in via Google</div>
-      </div>
+        <div class="footer-status" id="loginStatus">Ready to connect</div>
+      </section>
 
-      <!-- VIEW 2: AUTHENTICATED TABS VIEW -->
-      <div id="autofillView" style="display:none; flex-direction:column; gap:12px;">
-        
-        <!-- TAB CONTENT 1: AUTOFILL TAB -->
-        <div id="autofillTab" class="tab-pane" style="display:flex; flex-direction:column; gap:10px;">
-          <!-- Persona Selector -->
-          <div class="input-group" id="personaGroup" style="display:none;">
-            <label class="input-label" for="personaSelect">Active Role Persona</label>
-            <select id="personaSelect" class="input-field" style="background:#0e1328; cursor:pointer; font-weight:600;"></select>
-          </div>
+      <!-- ================= VIEW 2: AUTHENTICATED TABS ================= -->
+      <section id="autofillView" style="display:none; flex-direction:column; gap:12px;">
 
-          <div class="card portal-card">
-            <div class="portal-dot" id="portalDot"></div>
-            <div>
-              <div class="portal-name" id="portalName">Detecting portal...</div>
-              <div class="portal-tier" id="portalTier"></div>
-            </div>
-          </div>
-
-          <div class="card profile-card">
-            <div class="profile-avatar" id="profileAvatar">U</div>
-            <div class="profile-info">
-              <div class="profile-name" id="profileName">Loading profile...</div>
-              <div class="profile-email" id="profileEmail">Syncing...</div>
-            </div>
-          </div>
-
-          <button class="btn-primary" id="apply">Apply Autofill</button>
+        <!-- TAB 1: AUTOFILL HERO VIEW -->
+        <div id="autofillTab" class="tab-pane" style="display:flex; flex-direction:column; gap:11px;">
           
-          <button class="btn-success" id="quickLogBtn">Log Application to Tracker</button>
-
-          <div class="btn-row">
-            <button class="btn-secondary" id="editProfile">Edit Profile</button>
-            <button class="btn-secondary" id="syncCloud">Sync Now</button>
+          <!-- Optional Persona Selector Chip -->
+          <div class="persona-chip-group" id="personaGroup" style="display:none;">
+            <span class="persona-chip-label">Role:</span>
+            <select id="personaSelect" class="persona-select-custom"></select>
           </div>
-          <button class="btn-primary" id="openWorkspaceBtn" style="background: linear-gradient(135deg, #5b4fe8 0%, #2fddc4 100%); font-weight: 700; color: #0b1020; margin-top: 2px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-            Open App in Side Panel
-          </button>
-          <button class="btn-secondary" id="syncWebTabBtn" style="width:100%; border-color:rgba(91,79,232,0.4); color:#a59bf7;">Sync Profile to Website Tab</button>
-        </div>
 
-        <!-- TAB CONTENT 1.5: AI RESUME & COVER LETTER TAB -->
-        <div id="aiResumeTab" class="tab-pane" style="display:none; flex-direction:column; gap:10px;">
-          <!-- Active detected job card -->
-          <div class="card" style="border-left:3px solid #2fddc4; display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-              <div style="flex:1; min-width:0;">
-                <div id="popupAiJobTitle" style="font-size:12px; font-weight:700; color:#f4f7ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Detecting job...</div>
-                <div id="popupAiJobCompany" style="font-size:10px; color:rgba(244,247,255,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Target Company</div>
+          <!-- Active Detected Portal Card -->
+          <div class="portal-banner">
+            <div class="portal-left">
+              <div class="portal-dot" id="portalDot"></div>
+              <div style="min-width:0;">
+                <div class="portal-title" id="portalName">Detecting portal...</div>
+                <div class="portal-sub" id="portalTier">Checking form selectors</div>
               </div>
-              <span id="popupAiAtsBadge" style="font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; background:rgba(47,221,196,0.15); border:1px solid #2fddc4; color:#2fddc4; white-space:nowrap;">ATS --%</span>
             </div>
-            <div style="height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;">
-              <div id="popupAiScoreBar" style="height:100%; width:0%; background:linear-gradient(90deg, #5b4fe8, #2fddc4); transition:width 0.4s;"></div>
-            </div>
-            <div id="popupAiKeywordPills" style="display:flex; gap:4px; flex-wrap:wrap; font-size:9.5px;">
-              <span style="color:rgba(244,247,255,0.4);">Analyzing job keywords...</span>
+            <span class="brand-version" style="font-size:9px;">READY</span>
+          </div>
+
+          <!-- Hero Action Card -->
+          <div class="hero-action-card">
+            <button class="btn-hero-fill" id="apply">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>AUTOFILL FORM</span>
+              </div>
+              <span class="btn-hero-sub" id="applyFieldSubtext">Instant 1-Click Form Filling</span>
+            </button>
+
+            <div class="action-pill-row">
+              <button class="btn-pill highlight" id="quickLogBtn" title="Log this job into your tracker">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                <span>Track Job</span>
+              </button>
+              <button class="btn-pill" id="openWorkspaceBtn" title="Open full side panel">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                <span>Workspace</span>
+              </button>
             </div>
           </div>
 
-          <!-- Tailor & Download PDF -->
-          <button class="btn-primary" id="popupAiDownloadResumeBtn" style="background:rgba(47,221,196,0.15); border:1px solid rgba(47,221,196,0.4); color:#2fddc4; padding:8px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Tailor &amp; Download Resume PDF
-          </button>
-
-          <!-- Auto-Attach to Form -->
-          <button class="btn-primary" id="popupAiAttachResumeBtn" style="padding:8px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            Auto-Attach Tailored Resume to Form
-          </button>
-          <div id="popupAiAttachStatus" style="font-size:10px; color:rgba(244,247,255,0.5); text-align:center; min-height:14px;"></div>
-
-          <div class="divider">Cover Letter</div>
-
-          <!-- Cover Letter controls -->
-          <div class="btn-row">
-            <button class="btn-primary" id="popupAiGenCoverBtn" style="flex:2; padding:7px; font-size:11px;">Generate Cover Letter</button>
-            <button class="btn-secondary" id="popupAiCopyCoverBtn" style="flex:1; padding:7px; font-size:11px;">Copy</button>
-            <button class="btn-secondary" id="popupAiDownloadCoverBtn" style="flex:1; padding:7px; font-size:11px;">Save</button>
+          <!-- Bottom Profile Bar -->
+          <div class="profile-strip">
+            <div class="profile-left">
+              <div class="profile-avatar" id="profileAvatar">U</div>
+              <div class="profile-text">
+                <div class="profile-name" id="profileName">Loading Profile...</div>
+                <div class="profile-email" id="profileEmail">Syncing...</div>
+              </div>
+            </div>
+            <div class="profile-tools">
+              <button class="tiny-btn" id="editProfile" title="Edit Master Profile">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="tiny-btn" id="syncCloud" title="Sync from Cloud">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              </button>
+              <button class="tiny-btn" id="syncWebTabBtn" title="Sync Profile to Active Web Tab">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
           </div>
-          <textarea id="popupAiCoverOutput" class="input-field" style="min-height:90px; font-size:10.5px; line-height:1.4; resize:vertical;" placeholder="Cover letter will generate here..."></textarea>
         </div>
 
-        <!-- TAB CONTENT 2: SNIPPETS TAB -->
+        <!-- TAB 2: VAULT & SNIPPETS VIEW -->
         <div id="snippetsTab" class="tab-pane" style="display:none; flex-direction:column; gap:10px;">
-          <div style="font-size:11px; color:rgba(244,247,255,0.6);">Click any item to copy and paste into focused field:</div>
-          <div class="snippet-list" id="snippetList">
-            <!-- Dynamically populated from active profile -->
+          <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">
+            1-Click copy your verified answers for custom portal questions:
+          </div>
+          <div class="snippets-wrap">
+            <div class="snippet-list" id="snippetList">
+              <!-- Dynamically populated -->
+            </div>
           </div>
         </div>
 
-        <!-- TAB CONTENT 3: TRACKER QUICK-LOG TAB -->
+        <!-- TAB 3: APPLICATION TRACKER VIEW -->
         <div id="trackerTab" class="tab-pane" style="display:none; flex-direction:column; gap:10px;">
-          <div class="card" style="display:flex; flex-direction:column; gap:8px;">
-            <div class="input-group">
-              <label class="input-label" for="trackerCompanyInput">Company Name</label>
-              <input type="text" id="trackerCompanyInput" class="input-field" placeholder="e.g. Stripe">
+          <div class="glass-card" style="display:flex; flex-direction:column; gap:9px;">
+            <div class="input-field-group">
+              <label class="field-label" for="trackerCompanyInput">Company Name</label>
+              <input type="text" id="trackerCompanyInput" class="form-input-dark" placeholder="e.g. Stripe">
             </div>
-            <div class="input-group">
-              <label class="input-label" for="trackerRoleInput">Job Title</label>
-              <input type="text" id="trackerRoleInput" class="input-field" placeholder="e.g. Frontend Engineer">
+            <div class="input-field-group">
+              <label class="field-label" for="trackerRoleInput">Job Title</label>
+              <input type="text" id="trackerRoleInput" class="form-input-dark" placeholder="e.g. Senior Software Engineer">
             </div>
-            <div class="input-group">
-              <label class="input-label" for="trackerStatusSelect">Application Status</label>
-              <select id="trackerStatusSelect" class="input-field" style="background:#0e1328; cursor:pointer;">
+            <div class="input-field-group">
+              <label class="field-label" for="trackerStatusSelect">Application Stage</label>
+              <select id="trackerStatusSelect" class="form-input-dark" style="cursor:pointer;">
                 <option value="Applied">Applied</option>
-                <option value="Screening">Screening</option>
-                <option value="Interview">Interview</option>
-                <option value="Offer">Offer</option>
+                <option value="Screening">Screening / HR</option>
+                <option value="Interview">Technical Interview</option>
+                <option value="Offer">Offer Received</option>
               </select>
             </div>
-            <button class="btn-primary" id="manualLogBtn">Save Application</button>
+            <button class="btn-pill highlight" id="manualLogBtn" style="justify-content:center; padding:10px; font-weight:700;">
+              Save to Tracker
+            </button>
           </div>
-          <button class="btn-secondary" id="openTrackerBtn" style="width:100%;">Open Application Dashboard</button>
+          <button class="btn-pill" id="openTrackerBtn" style="width:100%; justify-content:center;">
+            Open Web Application Pipeline &rsaquo;
+          </button>
         </div>
 
-        <button class="btn-danger-link" id="disconnectBtn">Disconnect / Log Out</button>
-        <div class="status" id="status">Ready</div>
-      </div>
-    </div>
+        <button id="disconnectBtn" style="background:none; border:none; color:var(--text-dim); font-size:10px; cursor:pointer; text-align:center; padding-top:4px;">
+          Disconnect Extension
+        </button>
+        <div class="footer-status" id="status">Ready</div>
+      </section>
+    </main>
 
     <script type="module" src="popup.js"></script>
   </body>

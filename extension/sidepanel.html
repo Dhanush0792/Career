@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JobXApply Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="sidepanel.css">
 </head>
 <body>
@@ -12,15 +15,15 @@
   <header class="sp-header">
     <div class="sp-brand">
       <img src="icon.png" class="sp-logo" alt="JobXApply Logo">
-      <div class="sp-title">Job<span>X</span>Apply</div>
+      <div class="sp-title">Job<span>X</span>Apply <span style="font-size:10px; font-weight:700; color:var(--success); font-family:var(--mono); margin-left:4px;">PRO</span></div>
     </div>
     <div class="sp-header-actions">
       <select id="spPersonaSelect" class="sp-persona-select" title="Active Persona"></select>
       <button class="sp-btn-icon" id="spSyncBtn" title="Sync Profile Cloud">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
       </button>
-      <button class="sp-btn-icon" id="spOpenFullTabBtn" title="Open Full Screen in New Tab">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      <button class="sp-btn-icon" id="spOpenFullTabBtn" title="Open Dashboard in Web Tab">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </button>
     </div>
   </header>
@@ -29,31 +32,41 @@
   <div class="sp-portal-banner">
     <div class="sp-portal-info">
       <div class="sp-portal-dot" id="spPortalDot"></div>
-      <div class="sp-portal-name" id="spPortalName">Detecting active portal...</div>
-      <span class="sp-portal-badge" id="spPortalTier">Checking</span>
+      <div style="min-width:0;">
+        <div class="sp-portal-name" id="spPortalName">Detecting portal...</div>
+        <div style="font-size:9.5px; font-family:var(--mono); color:var(--success);" id="spPortalTier">Checking active form</div>
+      </div>
     </div>
     <div style="display:flex; gap:6px; align-items:center;">
-      <button class="sp-autofill-btn" id="spTrackJobBannerBtn" style="background:var(--primary); border-color:var(--primary);" title="1-Click track this job into your Application Tracker">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      <button class="sp-autofill-btn" id="spTrackJobBannerBtn" style="background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--text);" title="1-Click track this job into your Application Tracker">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         <span>Track</span>
       </button>
       <button class="sp-autofill-btn" id="spAutofillActiveBtn" title="Autofill form fields on active page">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         <span>Autofill</span>
       </button>
     </div>
   </div>
 
-  <!-- Navigation Bar Tabs -->
+  <!-- Streamlined 4-Tab Navigation Bar -->
   <nav class="sp-nav">
-    <button class="sp-nav-tab active" data-view="dashboardView">Dashboard</button>
-    <button class="sp-nav-tab" data-view="aiResumeCoverView" style="color:var(--success); border-bottom-color:transparent;" title="AI Tailored Resume & Cover Letter Engine">AI Resume &amp; Cover</button>
-    <button class="sp-nav-tab" data-view="profileView">Profile</button>
-    <button class="sp-nav-tab" data-view="resumeView">Resume</button>
-    <button class="sp-nav-tab" data-view="atsView">ATS Checker</button>
-    <button class="sp-nav-tab" data-view="coverView">Cover Letter</button>
-    <button class="sp-nav-tab" data-view="trackerView">Tracker</button>
-    <button class="sp-nav-tab" data-view="settingsView">Settings</button>
+    <button class="sp-nav-tab active" data-view="dashboardView">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="sp-nav-tab" data-view="profileView">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Vault</span>
+    </button>
+    <button class="sp-nav-tab" data-view="trackerView">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span>Tracker</span>
+    </button>
+    <button class="sp-nav-tab" data-view="settingsView">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
   </nav>
 
   <!-- Main Viewports -->
@@ -63,14 +76,14 @@
     <section class="sp-view active" id="dashboardView">
       <div class="sp-card">
         <div class="sp-card-title">
-          <span>Executive Readiness</span>
+          <span>Profile Readiness Score</span>
           <span id="dashReadinessPercent" style="color:var(--success); font-weight:800;">0%</span>
         </div>
         <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:10px;">
           <div id="dashReadinessBar" style="height:100%; width:0%; background:linear-gradient(90deg, #5B4FE8, #2FDDC4); transition:width 0.4s;"></div>
         </div>
         <div style="font-size:11px; color:var(--muted); line-height:1.5;">
-          Keep your master career profile complete so the extension can automatically map all custom hiring questions.
+          A complete master profile ensures 100% autofill coverage on complex portal questionnaires (work authorization, notice period, compensation).
         </div>
       </div>
 
@@ -78,18 +91,18 @@
         <div class="sp-card-title">Quick Actions</div>
         <div class="sp-grid-2">
           <button class="sp-btn sp-btn-teal" id="dashFillBtn">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             Autofill Page
           </button>
           <button class="sp-btn sp-btn-primary" id="dashLogAppBtn">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Track Job
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Track Active Job
           </button>
         </div>
       </div>
 
       <div class="sp-card">
-        <div class="sp-card-title">Quick Copy Snippets</div>
+        <div class="sp-card-title">Quick Copy Vault Answers</div>
         <div id="dashSnippetList" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;">
           <!-- Dynamically populated from active profile -->
         </div>
@@ -103,86 +116,7 @@
       </div>
     </section>
 
-    <!-- 1.5 AI RESUME & COVER LETTER VIEW -->
-    <section class="sp-view" id="aiResumeCoverView">
-      <!-- Active Detected Job Header & ATS Match Badge -->
-      <div class="sp-card" style="border-left: 3px solid var(--success);">
-        <div class="sp-card-title">
-          <span>Active Detected Job</span>
-          <button class="sp-btn sp-btn-teal" id="spAiRefreshJobBtn" style="padding:3px 8px; font-size:10px;">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-            Re-detect
-          </button>
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px;">
-          <div>
-            <div id="spAiJobTitle" style="font-weight:700; font-size:13px; color:var(--white);">Detecting active job...</div>
-            <div id="spAiJobCompany" style="font-size:11px; color:var(--muted); margin-top:2px;">Target Company</div>
-          </div>
-          <span class="sp-portal-badge" id="spAiAtsBadge" style="font-size:11px; padding:3px 8px; border-radius:12px; font-weight:700; background:rgba(47,221,196,0.15); border:1px solid #2fddc4; color:#2fddc4;">ATS --%</span>
-        </div>
-
-        <div style="height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:8px;">
-          <div id="spAiScoreBar" style="height:100%; width:0%; background:linear-gradient(90deg, #5B4FE8, #2FDDC4); transition:width 0.4s;"></div>
-        </div>
-
-        <div style="display:flex; gap:6px; flex-wrap:wrap; font-size:10px;" id="spAiKeywordPills">
-          <span style="color:var(--muted);">Analyzing keywords from active page...</span>
-        </div>
-      </div>
-
-      <!-- Action Panel: Tailor Resume PDF & Auto-Attach -->
-      <div class="sp-card">
-        <div class="sp-card-title">Tailored ATS Resume (Vector PDF)</div>
-        <div style="font-size:11px; color:var(--muted); line-height:1.45; margin-bottom:10px;">
-          Zero-dependency client-side vector PDF compiled specifically against active job keywords.
-        </div>
-        <div class="sp-grid-2" style="margin-bottom:8px;">
-          <button class="sp-btn sp-btn-teal" id="spAiDownloadResumeBtn" style="font-weight:700;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Tailor &amp; Download PDF
-          </button>
-          <button class="sp-btn sp-btn-primary" id="spAiAttachResumeBtn" style="font-weight:700;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            Auto-Attach to Form
-          </button>
-        </div>
-        <div id="spAiAttachStatus" style="font-size:10.5px; color:var(--muted); text-align:center; min-height:16px;"></div>
-      </div>
-
-      <!-- Action Panel: Cover Letter Engine -->
-      <div class="sp-card">
-        <div class="sp-card-title">
-          <span>AI Tailored Cover Letter</span>
-          <select id="spAiCoverTemplateSelect" class="sp-select" style="width:auto; padding:2px 6px; font-size:10px;">
-            <option value="classic">Classic ATS</option>
-            <option value="minimal">Minimal</option>
-            <option value="technical" selected>Technical</option>
-            <option value="executive">Executive</option>
-            <option value="startup">Startup</option>
-          </select>
-        </div>
-        <div class="sp-grid-2" style="margin-bottom:8px;">
-          <button class="sp-btn sp-btn-primary" id="spAiGenCoverBtn">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Generate Cover Letter
-          </button>
-          <div style="display:flex; gap:6px;">
-            <button class="sp-btn sp-btn-teal" id="spAiCopyCoverBtn" style="flex:1;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copy
-            </button>
-            <button class="sp-btn sp-btn-secondary" id="spAiDownloadCoverBtn" style="flex:1;" title="Download Cover Letter text">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download
-            </button>
-          </div>
-        </div>
-        <textarea id="spAiCoverOutput" class="sp-textarea" style="min-height:180px; font-size:11px; font-family:var(--body); line-height:1.5;" placeholder="Click 'Generate Cover Letter' to dynamically draft an ATS-tailored cover letter based on active job keywords and your profile..."></textarea>
-      </div>
-    </section>
-
-    <!-- 2. MASTER PROFILE VIEW -->
+    <!-- 2. MASTER PROFILE & SCREENING VAULT VIEW -->
     <section class="sp-view" id="profileView">
       <div class="sp-card">
         <div class="sp-card-title">
@@ -329,94 +263,12 @@
         </div>
       </div>
 
-      <button class="sp-btn sp-btn-teal" id="saveProfileBottomBtn" style="width:100%; padding:12px;">
+      <button class="sp-btn sp-btn-teal" id="saveProfileBottomBtn" style="width:100%; padding:12px; font-weight:700;">
         Save Changes &amp; Sync to Autofill Engine
       </button>
     </section>
 
-    <!-- 3. RESUME BUILDER VIEW -->
-    <section class="sp-view" id="resumeView">
-      <div class="sp-card">
-        <div class="sp-card-title">Resume Generator &amp; Live View</div>
-        <div style="font-size:11px; color:var(--muted); line-height:1.5; margin-bottom:12px;">
-          Automatically compile a single-column, recruiter-friendly ATS resume from your active profile details.
-        </div>
-        <div class="sp-grid-2">
-          <button class="sp-btn sp-btn-primary" id="generateResumeBtn">Compile Resume</button>
-          <button class="sp-btn sp-btn-secondary" id="copyResumeTextBtn">Copy Text</button>
-        </div>
-      </div>
-
-      <div class="sp-card">
-        <div class="sp-card-title">Resume Preview</div>
-        <div id="resumePreviewContainer" style="background:#fff; color:#111; padding:16px; border-radius:6px; font-size:10px; line-height:1.45; font-family:var(--body); max-height:360px; overflow-y:auto; white-space:pre-wrap;">
-Click "Compile Resume" above to generate your live resume view based on your profile information.
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. ATS CHECKER VIEW -->
-    <section class="sp-view" id="atsView">
-      <div class="sp-card">
-        <div class="sp-card-title">
-          <span>Target Job Description</span>
-          <button class="sp-btn sp-btn-teal" id="atsExtractFromTabBtn" style="padding:3px 7px; font-size:9.5px;">Extract from Tab</button>
-        </div>
-        <div class="sp-form-group">
-          <textarea id="atsJdInput" class="sp-textarea" placeholder="Paste target job description or requirements here..."></textarea>
-        </div>
-        <button class="sp-btn sp-btn-primary" id="atsRunCheckBtn" style="width:100%;">Analyze Resume Against Job</button>
-      </div>
-
-      <div class="sp-card" id="atsResultsCard" style="display:none;">
-        <div class="sp-card-title">
-          <span>ATS Compatibility Score</span>
-          <span id="atsScoreValue" style="color:var(--success); font-size:16px; font-weight:800;">0%</span>
-        </div>
-        <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:12px;">
-          <div id="atsScoreBar" style="height:100%; width:0%; background:linear-gradient(90deg, #5B4FE8, #2FDDC4); transition:width 0.4s;"></div>
-        </div>
-
-        <div style="font-size:10.5px; font-weight:700; color:var(--success); margin-bottom:4px; text-transform:uppercase;">Matched Keywords</div>
-        <div id="atsMatchedList" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;"></div>
-
-        <div style="font-size:10.5px; font-weight:700; color:var(--alert); margin-bottom:4px; text-transform:uppercase;">Missing Keywords Gap</div>
-        <div id="atsMissingList" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;"></div>
-
-        <div style="font-size:10.5px; font-weight:700; color:var(--white); margin-bottom:4px; text-transform:uppercase;">Recommendations</div>
-        <ul id="atsSuggestionsList" style="padding-left:16px; font-size:11px; color:var(--muted); line-height:1.5;"></ul>
-      </div>
-    </section>
-
-    <!-- 5. COVER LETTER VIEW -->
-    <section class="sp-view" id="coverView">
-      <div class="sp-card">
-        <div class="sp-card-title">Cover Letter Generator</div>
-        <div class="sp-form-group">
-          <label class="sp-form-label">Target Company</label>
-          <input type="text" id="clCompanyInput" class="sp-input" placeholder="e.g. Stripe">
-        </div>
-        <div class="sp-form-group">
-          <label class="sp-form-label">Target Role Title</label>
-          <input type="text" id="clRoleInput" class="sp-input" placeholder="e.g. Senior Frontend Engineer">
-        </div>
-        <div class="sp-form-group">
-          <label class="sp-form-label">Key Strengths to Highlight</label>
-          <input type="text" id="clKeyStrengths" class="sp-input" placeholder="React architecture, performance optimization, team leadership">
-        </div>
-        <button class="sp-btn sp-btn-primary" id="clGenerateBtn" style="width:100%;">Draft Tailored Cover Letter</button>
-      </div>
-
-      <div class="sp-card">
-        <div class="sp-card-title">
-          <span>Generated Letter</span>
-          <button class="sp-btn sp-btn-teal" id="clCopyBtn" style="padding:3px 7px; font-size:9.5px;">Copy</button>
-        </div>
-        <textarea id="clOutput" class="sp-textarea" style="min-height:220px; font-family:var(--body); line-height:1.5;" placeholder="Generated cover letter draft will appear here..."></textarea>
-      </div>
-    </section>
-
-    <!-- 6. TRACKER VIEW -->
+    <!-- 3. TRACKER VIEW -->
     <section class="sp-view" id="trackerView">
       <div class="sp-card">
         <div class="sp-card-title">Log New Application</div>
@@ -446,18 +298,18 @@ Click "Compile Resume" above to generate your live resume view based on your pro
             <input type="url" id="trUrl" class="sp-input" placeholder="https://...">
           </div>
         </div>
-        <button class="sp-btn sp-btn-primary" id="trSaveBtn" style="width:100%;">Save to Tracker</button>
+        <button class="sp-btn sp-btn-primary" id="trSaveBtn" style="width:100%; font-weight:700;">Save to Tracker</button>
       </div>
 
       <div class="sp-card">
         <div class="sp-card-title">Application Pipeline</div>
-        <div id="trackerList" style="display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto;">
+        <div id="trackerList" style="display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto;">
           <!-- Dynamically populated -->
         </div>
       </div>
     </section>
 
-    <!-- 7. SETTINGS & SYNC VIEW -->
+    <!-- 4. SETTINGS & SYNC VIEW -->
     <section class="sp-view" id="settingsView">
       <div class="sp-card">
         <div class="sp-card-title">Cloud Vault &amp; Sync Key</div>
@@ -475,15 +327,15 @@ Click "Compile Resume" above to generate your live resume view based on your pro
         <div class="sp-card-title">Multi-Persona Management</div>
         <div class="sp-grid-2">
           <button class="sp-btn sp-btn-teal" id="setNewPersonaBtn">+ Add Persona</button>
-          <button class="sp-btn sp-btn-secondary" id="setLoadMockBtn">Load Sample Profile</button>
+          <button class="sp-btn sp-btn-secondary" id="setLoadMockBtn">Load Demo Profile</button>
         </div>
       </div>
 
       <div class="sp-card">
         <div class="sp-card-title">About JobXApply Extension</div>
         <div style="font-size:11px; color:var(--muted); line-height:1.5;">
-          Version: 0.2.0 (Full Browser App)<br>
-          Engine: Client-Side Sandbox &bull; Zero plaintext stored without encryption.<br>
+          Version: 2.0.0 (Autofill Workspace)<br>
+          Engine: Deterministic Client-Side Matching &bull; Zero AI / 100% Privacy-Preserving.<br>
           Supported Portals: 50+ hiring platforms including LinkedIn, Workday, Greenhouse, Lever, and Naukri.
         </div>
       </div>

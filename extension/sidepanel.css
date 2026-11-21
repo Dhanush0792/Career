@@ -196,41 +196,40 @@ body {
 /* Nav Bar Tabs */
 .sp-nav {
   display: flex;
-  background: rgba(7, 10, 24, 0.9);
+  background: rgba(7, 10, 24, 0.95);
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-  scrollbar-width: none;
   flex-shrink: 0;
 }
-.sp-nav::-webkit-scrollbar {
-  display: none;
-}
 .sp-nav-tab {
-  padding: 10px 14px;
+  flex: 1;
+  padding: 11px 4px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--muted);
-  font-family: var(--mono);
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.15s ease;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.16s ease;
 }
 .sp-nav-tab:hover {
   color: var(--white);
   background: rgba(255,255,255,0.03);
 }
 .sp-nav-tab.active {
-  color: #2FDDC4;
-  border-bottom-color: #2FDDC4;
-  background: rgba(47,221,196,0.05);
+  color: #fff;
+  font-weight: 700;
+  border-bottom-color: var(--success);
+  background: rgba(47,221,196,0.06);
+}
+.sp-nav-tab.active svg {
+  stroke: var(--success);
 }
 
 /* Main Content Area */
