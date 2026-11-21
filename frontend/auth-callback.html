@@ -152,7 +152,7 @@ async function processSession(token, userEmail = "") {
       setTimeout(() => {
         if (isAdmin) window.location.replace("admin/index.html");
         else if (isExistingUser) window.location.replace("dashboard.html");
-        else window.location.replace("onboarding.html");
+        else window.location.replace("profile-setup.html?onboarding=1");
       }, 1500);
       return;
     }
@@ -175,15 +175,15 @@ async function processSession(token, userEmail = "") {
       statusText.textContent = "Welcome back! Redirecting to dashboard...";
       window.location.replace("dashboard.html");
     } else {
-      statusText.textContent = "New account detected! Starting onboarding...";
-      window.location.replace("onboarding.html");
+      statusText.textContent = "New account detected! Opening Master Profile Setup...";
+      window.location.replace("profile-setup.html?onboarding=1");
     }
   } catch (err) {
     console.error("Callback processing error:", err);
     if (localStorage.getItem("jxa_role") === "admin") {
       window.location.replace("admin/index.html");
     } else {
-      window.location.replace("onboarding.html");
+      window.location.replace("profile-setup.html?onboarding=1");
     }
   }
 }

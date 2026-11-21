@@ -295,6 +295,24 @@ body::after {
     </div>
   </header>
 
+  <!-- New User Onboarding Welcome Banner (Shows when onboarding query param is present) -->
+  <div id="onboarding-welcome-card" style="display:none; background: linear-gradient(135deg, rgba(91, 79, 232, 0.22) 0%, rgba(47, 221, 196, 0.15) 100%); border: 1px solid rgba(47, 221, 196, 0.4); border-radius: 16px; padding: 22px 26px; margin-bottom: 24px; backdrop-filter: blur(16px);">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
+      <div>
+        <div style="font-family: var(--mono); font-size: 10px; color: var(--success); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; font-weight: 700;">
+          STEP 01 // ONBOARDING PROFILE SETUP
+        </div>
+        <h2 style="font-family: var(--display); font-size: 24px; font-weight: 900; text-transform: uppercase; color: var(--white); margin: 0 0 6px 0;">
+          Welcome to JobXApply
+        </h2>
+        <p style="font-size: 13px; color: var(--muted); line-height: 1.5; margin: 0; max-width: 680px;">
+          Set up your master profile once. You can <strong>upload your resume below for 2-second autofill</strong> or fill out the sections directly. Everything encrypts in your client vault and syncs in real-time with your extension.
+        </p>
+      </div>
+      <button onclick="document.getElementById('onboarding-welcome-card').style.display='none'" style="background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px;" title="Dismiss">&times;</button>
+    </div>
+  </div>
+
   <!-- Executive Profile Completeness Banner -->
   <div class="readiness-banner" id="readiness-banner">
     <div class="readiness-info">
@@ -1849,6 +1867,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   renderNav(document.getElementById('main-nav'), 'profile-setup.html');
   
+  // Check if landing from onboarding redirect
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('onboarding') === '1') {
+    const welcomeCard = document.getElementById('onboarding-welcome-card');
+    if (welcomeCard) welcomeCard.style.display = 'block';
+  }
+
   const savedPasscode = localStorage.getItem('jxa_passcode') || "";
   document.getElementById('f-passcode').value = savedPasscode;
 
