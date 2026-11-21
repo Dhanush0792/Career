@@ -1315,9 +1315,28 @@
       if (stagedImport) {
         try {
           const importData = JSON.parse(stagedImport);
+          
+          if (importData.fullName && document.getElementById("res-name")) {
+            document.getElementById("res-name").value = importData.fullName;
+          }
+          if (importData.email && document.getElementById("res-email")) {
+            document.getElementById("res-email").value = importData.email;
+          }
+          if (importData.phone && document.getElementById("res-phone")) {
+            document.getElementById("res-phone").value = importData.phone;
+          }
+          if (importData.location && document.getElementById("res-location")) {
+            document.getElementById("res-location").value = importData.location;
+          }
+          if (importData.linkedin && document.getElementById("res-website")) {
+            document.getElementById("res-website").value = importData.linkedin;
+          }
           if (importData.recommendedSummary && document.getElementById("res-summary")) {
             document.getElementById("res-summary").value = importData.recommendedSummary;
+          } else if (importData.detectedSummary && document.getElementById("res-summary")) {
+            document.getElementById("res-summary").value = importData.detectedSummary;
           }
+          
           if (importData.role && document.getElementById("res-title")) {
             const titleEl = document.getElementById("res-title");
             let exists = false;
@@ -1329,15 +1348,55 @@
             }
             titleEl.value = importData.role;
           }
-          if (importData.missingKeywords && importData.missingKeywords.length > 0 && document.getElementById("res-skills")) {
-            const currentSkills = document.getElementById("res-skills").value;
-            const toAdd = importData.missingKeywords.slice(0, 5).join(", ");
-            document.getElementById("res-skills").value = currentSkills ? `${currentSkills}, ${toAdd}` : toAdd;
+          
+          if (document.getElementById("res-skills")) {
+            const parsedSkills = importData.skills || "";
+            const missing = (importData.missingKeywords || []).slice(0, 6).join(", ");
+            let combined = parsedSkills;
+            if (missing) {
+              combined = combined ? `${combined}, ${missing}` : missing;
+            }
+            document.getElementById("res-skills").value = combined;
           }
+
+          // Populate Experience
+          if (Array.isArray(importData.experience) && importData.experience.length > 0) {
+            const expContainer = document.getElementById("experience-list");
+            if (expContainer) {
+              expContainer.innerHTML = "";
+              importData.experience.forEach(exp => {
+                addExperienceRow({
+                  company: exp.company || "",
+                  position: exp.role || exp.position || "Software Engineer",
+                  startDate: exp.dates || exp.startDate || "",
+                  endDate: exp.endDate || "",
+                  summary: exp.summary || ""
+                });
+              });
+            }
+          }
+
+          // Populate Education
+          if (Array.isArray(importData.education) && importData.education.length > 0) {
+            const eduContainer = document.getElementById("education-list");
+            if (eduContainer) {
+              eduContainer.innerHTML = "";
+              importData.education.forEach(edu => {
+                addEducationRow({
+                  institution: edu.school || edu.institution || "",
+                  area: edu.degree || edu.area || "Bachelor's Degree",
+                  year: edu.year || ""
+                });
+              });
+            }
+          }
+
           sessionStorage.removeItem("jxa_import_draft");
           updatePreview();
-          showToast("Imported ATS diagnostic & keywords into your resume!", "success");
-        } catch(e) {}
+          showToast("Imported extracted resume details into your live editor!", "success");
+        } catch(e) {
+          console.error("Failed to parse import draft:", e);
+        }
       }
 
       if (mode === 'edit' || mode === 'import' || (hasSavedResume && mode !== 'new')) {

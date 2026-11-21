@@ -931,10 +931,9 @@ let activeProfileData = {};
 async function parsePdfTextAndLayout(arrayBuffer) {
   const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let textItemsCount = 0;
-  let leftCount = 0;
-  let rightCount = 0;
   let imageCount = 0;
   let textStr = "";
+  const multiWordBlocks = [];
 
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
@@ -943,17 +942,18 @@ async function parsePdfTextAndLayout(arrayBuffer) {
     const pageWidth = viewport.width;
 
     textContent.items.forEach(item => {
-      const x = item.transform[4];
       const text = item.str.trim();
       if (text) {
         textItemsCount++;
         textStr += item.str + " ";
         
+        const x = item.transform[4];
+        const y = item.transform[5];
         const ratio = x / pageWidth;
-        if (ratio < 0.35) {
-          leftCount++;
-        } else if (ratio > 0.65) {
-          rightCount++;
+        
+        // Track multi-word blocks (ignoring short dates/numbers/icons)
+        if (text.split(/\s+/).length >= 3) {
+          multiWordBlocks.push({ xRatio: ratio, y, page: i });
         }
       }
     });
@@ -971,8 +971,23 @@ async function parsePdfTextAndLayout(arrayBuffer) {
 
   // Scanned image PDF detection
   const isScanned = textItemsCount < 15 || textStr.trim().length < 60;
-  // Multi column detection
-  const hasColumns = leftCount > 6 && rightCount > 6;
+  
+  // Real multi-column detection: requires multiple multi-word paragraph blocks
+  // positioned side-by-side on the same Y-axis band on the same page
+  let parallelColumnPairs = 0;
+  for (let a = 0; a < multiWordBlocks.length; a++) {
+    const b1 = multiWordBlocks[a];
+    if (b1.xRatio < 0.40) {
+      for (let b = 0; b < multiWordBlocks.length; b++) {
+        const b2 = multiWordBlocks[b];
+        if (b1.page === b2.page && b2.xRatio > 0.50 && Math.abs(b1.y - b2.y) < 14) {
+          parallelColumnPairs++;
+          break;
+        }
+      }
+    }
+  }
+  const hasColumns = parallelColumnPairs >= 5;
 
   return {
     text: textStr,
@@ -1076,8 +1091,13 @@ runBtn.addEventListener('click', async () => {
       scoreEl.textContent = score + '%';
       scoreEl.style.color = score >= 85 ? 'var(--success)' : score >= 50 ? 'var(--alert)' : '#ef4444';
 
-      document.getElementById('score-detail').textContent = 
-        `${result.matchedKeywords.length} keywords matched. Full diagnostic scoring complete.`;
+      if (result.isValidResume === false) {
+        document.getElementById('score-detail').textContent = "Document validation failed: Not recognized as a valid resume.";
+        showToast("Upload rejected: The file does not appear to be a resume.", "error");
+      } else {
+        document.getElementById('score-detail').textContent = 
+          `${result.matchedKeywords.length} keywords matched. Full diagnostic scoring complete.`;
+      }
 
       // Update Breakdown bars
       const breakdown = result.breakdown;
@@ -1099,25 +1119,31 @@ runBtn.addEventListener('click', async () => {
 
       const summaryScoreEl = document.getElementById('summary-quality-score');
       if (summaryScoreEl) {
-        summaryScoreEl.textContent = `Quality Score: ${summaryDiagnosis.qualityScore}% (${summaryDiagnosis.lineCountAssessment || "Standard"})`;
+        summaryScoreEl.textContent = result.isValidResume === false 
+          ? "Quality Score: 0% (Invalid Document)"
+          : `Quality Score: ${summaryDiagnosis.qualityScore}% (${summaryDiagnosis.lineCountAssessment || "Standard"})`;
       }
 
       const detSumEl = document.getElementById('detected-summary-text');
       if (detSumEl) {
-        detSumEl.textContent = summaryDiagnosis.detectedSummary 
-          ? `"${summaryDiagnosis.detectedSummary}"` 
-          : "No distinct summary section detected. Recruiters and ATS scanners heavily prioritize a 3-5 line technical framing hook.";
+        detSumEl.textContent = result.isValidResume === false
+          ? "No resume sections or summary detected. Please upload a legitimate resume file with work history and education."
+          : (summaryDiagnosis.detectedSummary 
+              ? `"${summaryDiagnosis.detectedSummary}"` 
+              : "No distinct summary section detected. Recruiters and ATS scanners heavily prioritize a 3-5 line technical framing hook.");
       }
 
       const pillsEl = document.getElementById('summary-criteria-pills');
       if (pillsEl && summaryDiagnosis.checks) {
         const c = summaryDiagnosis.checks;
-        pillsEl.innerHTML = `
-          <span class="kw-tag ${c.hasSeniority ? 'match' : 'missing'}">${c.hasSeniority ? '[OK] Seniority Stated' : 'Missing Seniority'}</span>
-          <span class="kw-tag ${c.hasTechOrStack ? 'match' : 'missing'}">${c.hasTechOrStack ? '[OK] Stack Present' : 'Missing Stack'}</span>
-          <span class="kw-tag ${c.hasMetrics ? 'match' : 'missing'}">${c.hasMetrics ? '[OK] Metrics Included' : 'Missing Numbers'}</span>
-          <span class="kw-tag ${c.hasValueProp ? 'match' : 'missing'}">${c.hasValueProp ? '[OK] Value Prop' : 'Needs Hook'}</span>
-        `;
+        pillsEl.innerHTML = result.isValidResume === false
+          ? `<span class="kw-tag missing">Invalid Document Format</span>`
+          : `
+            <span class="kw-tag ${c.hasSeniority ? 'match' : 'missing'}">${c.hasSeniority ? '[OK] Seniority Stated' : 'Missing Seniority'}</span>
+            <span class="kw-tag ${c.hasTechOrStack ? 'match' : 'missing'}">${c.hasTechOrStack ? '[OK] Stack Present' : 'Missing Stack'}</span>
+            <span class="kw-tag ${c.hasMetrics ? 'match' : 'missing'}">${c.hasMetrics ? '[OK] Metrics Included' : 'Missing Numbers'}</span>
+            <span class="kw-tag ${c.hasValueProp ? 'match' : 'missing'}">${c.hasValueProp ? '[OK] Value Prop' : 'Needs Hook'}</span>
+          `;
       }
 
       const recSumEl = document.getElementById('recommended-summary-text');
@@ -1136,20 +1162,25 @@ runBtn.addEventListener('click', async () => {
       matchedEl.innerHTML = '';
       missingEl.innerHTML = '';
 
-      if (result.matchedKeywords.length === 0) {
-        matchedEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">No keywords matched.</span>';
+      if (result.isValidResume === false) {
+        matchedEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">None (Invalid document uploaded).</span>';
+        missingEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">Upload a legitimate resume to detect missing keywords.</span>';
       } else {
-        result.matchedKeywords.forEach(k => {
-          matchedEl.innerHTML += `<span class="kw-tag match">${escapeHtml(k)}</span>`;
-        });
-      }
+        if (result.matchedKeywords.length === 0) {
+          matchedEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">No keywords matched.</span>';
+        } else {
+          result.matchedKeywords.forEach(k => {
+            matchedEl.innerHTML += `<span class="kw-tag match">${escapeHtml(k)}</span>`;
+          });
+        }
 
-      if (result.missingKeywords.length === 0) {
-        missingEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">All target keywords matched!</span>';
-      } else {
-        result.missingKeywords.forEach(k => {
-          missingEl.innerHTML += `<span class="kw-tag missing">${escapeHtml(k)}</span>`;
-        });
+        if (result.missingKeywords.length === 0) {
+          missingEl.innerHTML = '<span style="color:var(--muted);font-size:10px;">All target keywords matched!</span>';
+        } else {
+          result.missingKeywords.forEach(k => {
+            missingEl.innerHTML += `<span class="kw-tag missing">${escapeHtml(k)}</span>`;
+          });
+        }
       }
 
       // Render Suggestions
@@ -1168,16 +1199,33 @@ runBtn.addEventListener('click', async () => {
       // Render Visualizer data
       renderSideBySideVisualizer(jdText, extractedText, result.matchedKeywords, result.missingKeywords);
 
-      // Package payload for 1-click transfer to Resume Builder
-      lastParsedResumePayload = {
-        role: role,
-        extractedText: extractedText,
-        detectedSummary: detectedSummary,
-        recommendedSummary: (summaryDiagnosis.idealSummary || []).join(" "),
-        matchedKeywords: result.matchedKeywords,
-        missingKeywords: result.missingKeywords,
-        score: score
-      };
+      // Package full-fidelity payload for 1-click transfer to Resume Builder
+      if (result.isValidResume !== false) {
+        const structuredResume = typeof parseResumeToStructuredData === "function" 
+          ? parseResumeToStructuredData(extractedText) 
+          : {};
+
+        lastParsedResumePayload = {
+          role: role,
+          extractedText: extractedText,
+          detectedSummary: detectedSummary,
+          recommendedSummary: (summaryDiagnosis.idealSummary || []).join(" "),
+          matchedKeywords: result.matchedKeywords,
+          missingKeywords: result.missingKeywords,
+          score: score,
+          fullName: structuredResume.fullName || "",
+          email: structuredResume.email || "",
+          phone: structuredResume.phone || "",
+          location: structuredResume.location || "",
+          linkedin: structuredResume.linkedin || "",
+          github: structuredResume.github || "",
+          skills: structuredResume.skills || (result.matchedKeywords || []).join(", "),
+          experience: structuredResume.experience || [],
+          education: structuredResume.education || []
+        };
+      } else {
+        lastParsedResumePayload = null;
+      }
 
       // Record scan in backend telemetry (rate-limited and non-blocking)
       try {
@@ -1189,7 +1237,7 @@ runBtn.addEventListener('click', async () => {
         }).catch(() => {});
       } catch (e) {}
 
-      updateStatus(`Analysis complete • Compatibility: ${score}%`, 'idle');
+      updateStatus(result.isValidResume === false ? 'Document validation failed' : `Analysis complete • Compatibility: ${score}%`, 'idle');
       placeholderPanel.style.display = 'none';
       resultsPanel.style.display = 'flex';
 
@@ -1207,7 +1255,7 @@ runBtn.addEventListener('click', async () => {
   }, 600);
 });
 
-// Transfer to Resume Builder Conversion Handler
+// Transfer to Resume Builder Conversion Handler (Un-gated for immediate editing)
 function transferToResumeBuilder() {
   if (!lastParsedResumePayload) {
     window.location.href = "resume-builder.html";
@@ -1217,15 +1265,12 @@ function transferToResumeBuilder() {
   // Stage draft payload into sessionStorage
   try {
     sessionStorage.setItem("jxa_import_draft", JSON.stringify(lastParsedResumePayload));
-  } catch (e) {}
-
-  const token = localStorage.getItem("jxa_token");
-  if (token) {
-    window.location.href = "resume-builder.html?mode=import";
-  } else {
-    // Route to sign-up with immediate return parameter
-    window.location.href = "auth.html?signup=true&next=resume-builder.html%3Fmode%3Dimport&reason=ats_fix";
+  } catch (e) {
+    console.error("Failed to stage draft in sessionStorage:", e);
   }
+
+  // Direct navigation into builder so user can edit their imported resume immediately
+  window.location.href = "resume-builder.html?mode=import";
 }
 
 function switchAtsView(view) {
