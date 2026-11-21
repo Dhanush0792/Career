@@ -777,7 +777,7 @@ function renderTable(filtered) {
     const stalled = isStalledApp(app);
     
     const compRole = `
-      <div class="company-name">${sanitizeUrl(app.url) ? `<a href="${sanitizeUrl(app.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:none;">${esc(app.company)} -></a>` : esc(app.company)}</div>
+      <div class="company-name">${safeUrl(app.url) ? `<a href="${safeUrl(app.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:none;">${esc(app.company)} -></a>` : esc(app.company)}</div>
       <div class="role-name">${esc(app.role)}</div>
     `;
     
@@ -844,7 +844,7 @@ function renderKanban(filtered) {
 
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div class="kanban-card-title">${sanitizeUrl(app.url) ? `<a href="${sanitizeUrl(app.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--white); text-decoration:none;">${esc(app.company)} -></a>` : esc(app.company)}</div>
+          <div class="kanban-card-title">${safeUrl(app.url) ? `<a href="${safeUrl(app.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--white); text-decoration:none;">${esc(app.company)} -></a>` : esc(app.company)}</div>
           <div style="display:flex; gap:4px;">
             <button class="btn-icon outreach" onclick="openOutreachModal('${app.id}')" style="padding:2px 5px; font-size:9px;">Draft</button>
             <button class="btn-icon" onclick="editApp('${app.id}')" style="padding:2px 5px; font-size:9px;">Edit</button>
@@ -1061,21 +1061,22 @@ function esc(str) {
     .replace(/'/g, '&#39;');
 }
 
-function sanitizeUrl(rawUrl) {
-  if (!rawUrl || typeof rawUrl !== 'string') return '';
-  const trimmed = rawUrl.trim();
+function safeUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
   try {
-    const parsed = new URL(trimmed, window.location.href);
+    const parsed = new URL(trimmed);
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
       return esc(trimmed);
     }
   } catch (e) {
-    if (/^https?:\/\//i.test(trimmed)) {
-      return esc(trimmed);
+    if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/.test(trimmed)) {
+      return esc('https://' + trimmed);
     }
   }
   return '';
 }
+const sanitizeUrl = safeUrl;
 
 function openAddModal() {
   document.getElementById('app-form').reset();

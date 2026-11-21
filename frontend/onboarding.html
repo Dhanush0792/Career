@@ -235,7 +235,7 @@ body::after {
 </div>
 
 <script>
-const ADMIN_EMAILS = ["dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+const ADMIN_EMAILS = ["admin@jobxapply.app"];
 const currentEmail = (localStorage.getItem("jxa_user_email") || "").toLowerCase().trim();
 if (localStorage.getItem("jxa_role") === "admin" || ADMIN_EMAILS.includes(currentEmail)) {
   localStorage.setItem("jxa_role", "admin");

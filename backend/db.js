@@ -107,8 +107,7 @@ if (DATABASE_URL) {
     pool = new Pool({
       connectionString: DATABASE_URL,
       ssl: {
-        // Disabled strict verification to support containerized cloud environments like Render/Heroku
-        rejectUnauthorized: false
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false"
       }
     });
     pool.query("SELECT NOW()")
@@ -215,6 +214,28 @@ function saveUserData(userId, data) {
 }
 
 // ─── DB Interface Exports ──────────────────────────────────────────────────
+function sanitizeForBackup(data) {
+  if (!data || typeof data !== "object") return data;
+  if (Array.isArray(data)) return data.map(sanitizeForBackup);
+  const copy = { ...data };
+  delete copy.passwordHash;
+  delete copy.password_hash;
+  delete copy.passcodeHash;
+  delete copy.passcode_hash;
+  delete copy.resetToken;
+  delete copy.reset_token;
+  delete copy.resetTokenHash;
+  delete copy.reset_token_hash;
+  delete copy.reset_token_expiry;
+  delete copy.resetTokenExpiry;
+  for (const key of Object.keys(copy)) {
+    if (copy[key] && typeof copy[key] === "object") {
+      copy[key] = sanitizeForBackup(copy[key]);
+    }
+  }
+  return copy;
+}
+
 module.exports = {
   // Authentication / Users
   async createUserOnSync({ id, email, name, role = "user", tier = "free" }) {
@@ -885,8 +906,8 @@ module.exports = {
     return {
       exportedAt: new Date().toISOString(),
       version: "2.0.0",
-      registry,
-      userData: userDataDump,
+      registry: registry.map(u => sanitizeForBackup(u)),
+      userData: sanitizeForBackup(userDataDump),
       reports,
       telemetry,
       cms

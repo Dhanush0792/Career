@@ -226,6 +226,22 @@ async function resetPassword(req, res, bodyData) {
   return sendJson(res, 400, { ok: false, error: "Password reset is deprecated. Please sign in using Google Sign-In." });
 }
 
+// In-memory token revocation cache (SEC-12)
+const revokedTokens = new Set();
+
+function revokeToken(token) {
+  if (token && typeof token === "string") {
+    revokedTokens.add(token.trim());
+    return true;
+  }
+  return false;
+}
+
+function isTokenRevoked(token) {
+  if (!token || typeof token !== "string") return false;
+  return revokedTokens.has(token.trim());
+}
+
 // Middleware helper
 function verifyToken(req) {
   const authHeader = req.headers.authorization;
@@ -233,6 +249,9 @@ function verifyToken(req) {
     return null;
   }
   const token = authHeader.substring(7).trim();
+  if (isTokenRevoked(token)) {
+    return null;
+  }
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (e) {
@@ -248,6 +267,9 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyToken,
+  revokeToken,
+  isTokenRevoked,
+  revokedTokens,
   JWT_SECRET
 };
 

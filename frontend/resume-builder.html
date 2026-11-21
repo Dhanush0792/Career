@@ -1622,14 +1622,16 @@
     }
 
     // Interactive functions for adding rows
-    function esc(str) {
-      return String(str || '')
+    function escHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+    const esc = escHtml;
     function addExperienceRow(data = {}) {
       const list = document.getElementById("experience-list");
       if (!list) return;
