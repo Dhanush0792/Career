@@ -100,6 +100,7 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding-bottom: 120px;
 }
 
 /* Individual Section Cards */
@@ -248,21 +249,28 @@ body::after {
 .floating-save-bar {
   position: fixed;
   bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 40px);
-  max-width: 1220px;
-  background: rgba(11, 16, 32, 0.92);
+  right: 24px;
+  left: auto;
+  transform: none;
+  width: auto;
+  max-width: 620px;
+  background: rgba(11, 16, 32, 0.95);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(91, 79, 232, 0.15);
-  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 24px rgba(91, 79, 232, 0.25);
+  backdrop-filter: blur(24px);
   border-radius: 14px;
-  padding: 12px 20px;
+  padding: 10px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 100;
   gap: 16px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.floating-save-bar.minimized {
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
 }
 .floating-status-wrap { display: flex; align-items: center; gap: 12px; }
 .status-pulsing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
@@ -285,6 +293,7 @@ body::after {
       <h1 class="page-title" style="margin:0; font-family:var(--display); font-size:32px; text-transform:uppercase; color:var(--white);">Master Profile Setup</h1>
     </div>
     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <button type="button" class="btn btn-primary" onclick="saveCloudProfile()" style="font-size:11px; padding:7px 16px; font-weight:700; box-shadow:0 0 16px rgba(91,79,232,0.4);" title="Save all changes to cloud and extension">Save Profile &amp; Sync</button>
       <div style="display:flex; align-items:center; gap:6px; background:rgba(7,10,24,0.6); border:1px solid var(--glass-border); padding:4px 8px; border-radius:8px;">
         <span style="font-family:var(--mono); font-size:10px; color:var(--muted); text-transform:uppercase;">Persona:</span>
         <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:transparent; border:none; color:var(--white); font-family:var(--mono); font-size:11px; font-weight:700; outline:none; max-width:180px; cursor:pointer;"></select>
@@ -387,20 +396,16 @@ body::after {
         <span>05 // DOCUMENTS</span>
         <span class="toc-indicator" id="ind-documents"></span>
       </a>
-      <a class="toc-btn" href="#section-additional" onclick="scrollToSection(event, 'section-additional')">
-        <span>06 // DECLARATIONS</span>
-        <span class="toc-indicator" id="ind-additional"></span>
-      </a>
       <a class="toc-btn" href="#section-vault" onclick="scrollToSection(event, 'section-vault')">
-        <span>07 // Q&amp;A VAULT</span>
+        <span>06 // Q&amp;A VAULT</span>
         <span class="toc-indicator" id="ind-vault"></span>
       </a>
       <a class="toc-btn" href="#section-screening" onclick="scrollToSection(event, 'section-screening')">
-        <span>08 // SCREENING VAULT</span>
+        <span>07 // SCREENING VAULT</span>
         <span class="toc-indicator" id="ind-screening"></span>
       </a>
       <a class="toc-btn" href="#section-security" onclick="scrollToSection(event, 'section-security')">
-        <span>09 // SYNC &amp; KEY</span>
+        <span>08 // SYNC &amp; KEY</span>
         <span class="toc-indicator" id="ind-security"></span>
       </a>
     </aside>
@@ -582,23 +587,23 @@ body::after {
             </div>
           </div>
 
-          <!-- PG Degree -->
+          <!-- Postgraduate / Masters Degree -->
           <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
-            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Postgraduate (PG) Degree (if applicable)</div>
+            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Postgraduate / Master's Degree (if applicable)</div>
             <div class="form-row">
               <div class="form-group">
-                <label for="f-eduPG_college">University / College</label>
-                <input type="text" id="f-eduPG_college" placeholder="e.g. IIM Bangalore">
+                <label for="f-eduPG_college">University / Institution</label>
+                <input type="text" id="f-eduPG_college" placeholder="e.g. Stanford University or IIM Bangalore">
               </div>
               <div class="form-group">
-                <label for="f-eduPG_degree">Degree (e.g. M.Tech, M.Sc, MBA, MD)</label>
-                <input type="text" id="f-eduPG_degree" placeholder="e.g. MBA">
+                <label for="f-eduPG_degree">Degree (e.g. MS, M.Tech, MBA, MCA)</label>
+                <input type="text" id="f-eduPG_degree" placeholder="e.g. MS / MBA">
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="f-eduPG_stream">Stream / Branch / Specialization</label>
-                <input type="text" id="f-eduPG_stream" placeholder="e.g. Finance, Marketing, Data Science">
+                <label for="f-eduPG_stream">Specialization / Stream</label>
+                <input type="text" id="f-eduPG_stream" placeholder="e.g. Computer Science, Finance, AI">
               </div>
               <div class="form-group">
                 <label for="f-eduPG_year">Year of Passing</label>
@@ -608,48 +613,20 @@ body::after {
             <div class="form-row">
               <div class="form-group">
                 <label for="f-eduPG_cgpa">Percentage / CGPA</label>
-                <input type="text" id="f-eduPG_cgpa" placeholder="e.g. 9.0 CGPA">
+                <input type="text" id="f-eduPG_cgpa" placeholder="e.g. 3.9 GPA or 88%">
               </div>
               <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 20px;">
                 <input type="checkbox" id="f-eduPG_pursuing" style="width: auto; margin: 0;">
-                <label for="f-eduPG_pursuing" style="cursor: pointer; font-size: 11px;">Currently Pursuing PG</label>
+                <label for="f-eduPG_pursuing" style="cursor: pointer; font-size: 11px;">Currently Pursuing Master's / PG</label>
               </div>
             </div>
-          </div>
-
-          <!-- Masters -->
-          <div style="border-bottom: 1px dashed var(--glass-border); padding-bottom: 16px; margin-bottom: 16px;">
-            <div style="font-family: var(--mono); font-size: 10px; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Masters Degree (if separate/applicable)</div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="f-eduMasters_college">University / College</label>
-                <input type="text" id="f-eduMasters_college" placeholder="e.g. Stanford University">
-              </div>
-              <div class="form-group">
-                <label for="f-eduMasters_degree">Degree (e.g. MS, MA)</label>
-                <input type="text" id="f-eduMasters_degree" placeholder="e.g. MS">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="f-eduMasters_stream">Stream / Branch</label>
-                <input type="text" id="f-eduMasters_stream" placeholder="e.g. Robotics">
-              </div>
-              <div class="form-group">
-                <label for="f-eduMasters_year">Year of Passing</label>
-                <input type="text" id="f-eduMasters_year" placeholder="e.g. 2025">
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="f-eduMasters_cgpa">Percentage / CGPA</label>
-                <input type="text" id="f-eduMasters_cgpa" placeholder="e.g. 3.8/4.0 GPA">
-              </div>
-              <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; padding-top: 20px;">
-                <input type="checkbox" id="f-eduMasters_pursuing" style="width: auto; margin: 0;">
-                <label for="f-eduMasters_pursuing" style="cursor: pointer; font-size: 11px;">Currently Pursuing Masters</label>
-              </div>
-            </div>
+            <!-- Hidden inputs to retain backward compatibility with autofill extension -->
+            <input type="hidden" id="f-eduMasters_college">
+            <input type="hidden" id="f-eduMasters_degree">
+            <input type="hidden" id="f-eduMasters_stream">
+            <input type="hidden" id="f-eduMasters_year">
+            <input type="hidden" id="f-eduMasters_cgpa">
+            <input type="checkbox" id="f-eduMasters_pursuing" style="display:none;">
           </div>
 
           <!-- PhD -->
@@ -851,31 +828,16 @@ body::after {
           </div>
         </section>
 
-        <!-- Section 6: Additional -->
-        <section class="profile-section-card" id="section-additional">
-          <div class="section-header-row">
-            <h2 class="section-title">06 / Additional Personal &amp; Medical Declarations</h2>
-            <span class="section-status-badge" id="badge-additional">Declarations</span>
-          </div>
-          <div class="form-row">
-            <div class="form-group full">
-              <label for="f-handicapped">Physically or Mentally Challenged / Handicapped?</label>
-              <select id="f-handicapped">
-                <option value="No">No</option>
-                <option value="Yes">Yes</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group full" style="margin-top: 16px;">
-            <label for="f-healthIssues">Declare any major health issues (that jobs might ask about)</label>
-            <textarea id="f-healthIssues" style="min-height: 150px;" placeholder="e.g. None, or specify any relevant medical declarations..."></textarea>
-          </div>
-        </section>
+      <!-- Section 6: Additional Declarations (Hidden for standard UI, kept for autofill compatibility) -->
+      <div id="section-additional" style="display:none;">
+        <input type="hidden" id="f-handicapped" value="No">
+        <input type="hidden" id="f-healthIssues" value="None">
+      </div>
 
-        <!-- Section 7: Q&A Vault & Saved Snippets -->
+        <!-- Section 6: Q&A Vault & Saved Snippets -->
         <section class="profile-section-card" id="section-vault">
           <div class="section-header-row">
-            <h2 class="section-title">07 / Behavioral Q&amp;A Vault &amp; Saved Application Snippets</h2>
+            <h2 class="section-title">06 / Behavioral Q&amp;A Vault &amp; Saved Application Snippets</h2>
             <span class="section-status-badge" id="badge-vault">Interview Vault</span>
           </div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
@@ -926,10 +888,10 @@ body::after {
           </div>
         </section>
 
-        <!-- Section 8: Universal Screening & Compliance Vault -->
+        <!-- Section 7: Universal Screening & Compliance Vault -->
         <section class="profile-section-card" id="section-screening">
           <div class="section-header-row">
-            <h2 class="section-title">08 / Universal Screening &amp; Compliance Vault</h2>
+            <h2 class="section-title">07 / Universal Screening &amp; Compliance Vault</h2>
             <span class="section-status-badge" id="badge-screening">Screening Ready</span>
           </div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
@@ -1146,10 +1108,10 @@ body::after {
           </div>
         </section>
 
-        <!-- Section 9: Security & Sync -->
+        <!-- Section 8: Security & Sync -->
         <section class="profile-section-card" id="section-security">
           <div class="section-header-row">
-            <h2 class="section-title">09 / Optional Client-Side Vault Encryption</h2>
+            <h2 class="section-title">08 / Optional Client-Side Vault Encryption</h2>
             <span class="section-status-badge" id="badge-security">Security &amp; Sync</span>
           </div>
           <p style="font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;">
@@ -1172,7 +1134,7 @@ body::after {
 </div>
 
 <!-- Persistent Floating Global Save Bar -->
-<div class="floating-save-bar">
+<div class="floating-save-bar" id="global-save-bar">
   <div class="floating-status-wrap">
     <div class="status-pulsing-dot" id="save-indicator"></div>
     <div>
@@ -1182,9 +1144,15 @@ body::after {
   </div>
   <div class="floating-actions">
     <button type="button" class="btn btn-secondary" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" style="font-size:10px;">Top &uarr;</button>
-    <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save Profile &amp; Sync</button>
+    <button type="button" class="btn btn-primary" onclick="saveCloudProfile()">Save &amp; Sync</button>
+    <button type="button" class="btn btn-ghost" onclick="toggleFloatingSaveBar(false)" title="Dismiss floating bar" style="padding: 4px 8px; font-size: 14px; line-height: 1; border-radius: 6px;">&times;</button>
   </div>
 </div>
+
+<!-- Floating Bar Re-open Pill (visible when dismissed) -->
+<button type="button" id="save-bar-reopen-btn" class="btn btn-primary" onclick="toggleFloatingSaveBar(true)" style="display:none; position:fixed; bottom:20px; right:24px; z-index:99; font-size:11px; padding:8px 16px; border-radius:20px; box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+  Save Profile &amp; Sync
+</button>
 
 <script>
 // Auth & Navigation - must run first
@@ -1198,7 +1166,6 @@ const SECTION_IDS = [
   'section-professional',
   'section-experience',
   'section-documents',
-  'section-additional',
   'section-vault',
   'section-screening',
   'section-security'
@@ -1224,10 +1191,11 @@ function updateActiveTocItem(activeId) {
   });
 }
 
-// Backward-compatible switchTab proxy so any residual callers smoothly scroll to target
-function switchTab(tabId) {
-  const mapped = tabId.replace('tab-', 'section-');
-  scrollToSection(null, mapped);
+function toggleFloatingSaveBar(show) {
+  const bar = document.getElementById('global-save-bar');
+  const pill = document.getElementById('save-bar-reopen-btn');
+  if (bar) bar.classList.toggle('minimized', !show);
+  if (pill) pill.style.display = show ? 'none' : 'block';
 }
 
 
@@ -1466,8 +1434,9 @@ function parseResume(text, fileName = '') {
   }
 
   // 8. Education Detection (Grad, PG, 12th, 10th)
-  const eduBlockMatch = cleanText.match(/(?:EDUCATION|ACADEMIC(?:\s+BACKGROUND)?|QUALIFICATIONS)[\s\S]*?(?=(?:EXPERIENCE|WORK\s+HISTORY|SKILLS|PROJECTS|CERTIFICATIONS|PUBLICATIONS|$))/i);
-  let eduContext = eduBlockMatch ? eduBlockMatch[0].replace(/^(?:EDUCATION|ACADEMIC(?:\s+BACKGROUND)?|QUALIFICATIONS)[^\n]*\n/i, '') : cleanText;
+  // Match section until next major heading on its own line
+  const eduBlockMatch = cleanText.match(/(?:^|\n)\s*(?:EDUCATION|ACADEMIC(?:\s+BACKGROUND)?|QUALIFICATIONS)\b[^\n]*\n([\s\S]*?)(?=(?:\n\s*(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|SKILLS|PROJECTS|CERTIFICATIONS|PUBLICATIONS)\b[^\n]*\n)|$)/i);
+  let eduContext = eduBlockMatch ? eduBlockMatch[1] : cleanText;
 
   // Undergraduate degree matching
   const ugDegreeMatch = eduContext.match(/\b(B\.?Tech|B\.?E\.?|B\.?Sc|B\.?S\.?|Bachelor\s+of\s+[A-Za-z\s]+|B\.?Com|B\.?C\.?A)\b/i);
@@ -1515,23 +1484,32 @@ function parseResume(text, fileName = '') {
   }
 
   // 9. Work History / Experience Section Extraction
-  const expMatch = cleanText.match(/(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|PROFESSIONAL\s+EXPERIENCE)[\s\S]*?(?=(?:EDUCATION|SKILLS|PROJECTS|CERTIFICATIONS|PUBLICATIONS|$))/i);
-  if (expMatch) {
-    let expBody = expMatch[0].replace(/^(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|PROFESSIONAL\s+EXPERIENCE)[^\n]*\n/i, '').trim();
-    parsed.experience = expBody.slice(0, 1800);
+  // Lookahead MUST match a section header anchored to a line start so that inline words like "5 years of experience" never truncate text
+  const expMatch = cleanText.match(/(?:^|\n)\s*(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|PROFESSIONAL\s+EXPERIENCE)\b[^\n]*\n([\s\S]*?)(?=(?:\n\s*(?:EDUCATION|ACADEMIC|SKILLS|PROJECTS|CERTIFICATIONS|PUBLICATIONS)\b[^\n]*\n)|$)/i);
+  if (expMatch && expMatch[1] && expMatch[1].trim().length > 20) {
+    let expBody = expMatch[1].trim();
+    parsed.experience = expBody.slice(0, 3000);
     parsed.employmentStatus = 'Experienced';
     // Calculate total experience
     const years = cleanText.match(/\b(\d{1,2})\+?\s*(?:years|yrs)\s*(?:of)?\s*experience/i);
     if (years) parsed.totalExperience = years[1];
   } else {
-    parsed.employmentStatus = 'Fresher';
+    // If not categorized under header, check if years of experience are mentioned
+    const years = cleanText.match(/\b(\d{1,2})\+?\s*(?:years|yrs)\s*(?:of)?\s*experience/i);
+    if (years && parseInt(years[1], 10) > 0) {
+      parsed.employmentStatus = 'Experienced';
+      parsed.totalExperience = years[1];
+    } else {
+      parsed.employmentStatus = 'Fresher';
+    }
   }
 
   // 10. Professional Summary
-  const sumMatch = cleanText.match(/(?:SUMMARY|PROFESSIONAL\s+SUMMARY|ABOUT\s+ME|PROFILE)[\s\S]*?(?=(?:EXPERIENCE|EDUCATION|SKILLS|WORK\s+HISTORY|$))/i);
-  if (sumMatch) {
-    let sumBody = sumMatch[0].replace(/^(?:SUMMARY|PROFESSIONAL\s+SUMMARY|ABOUT\s+ME|PROFILE)[^\n]*\n/i, '').trim();
-    parsed.summary = sumBody.slice(0, 600);
+  // Strictly boundary anchored to line start so sentences containing "experience", "skills", etc. are NOT cut off
+  const sumMatch = cleanText.match(/(?:^|\n)\s*(?:SUMMARY|PROFESSIONAL\s+SUMMARY|ABOUT\s+ME|PROFILE)\b[^\n]*\n([\s\S]*?)(?=(?:\n\s*(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|EDUCATION|ACADEMIC|SKILLS|PROJECTS)\b[^\n]*\n)|$)/i);
+  if (sumMatch && sumMatch[1] && sumMatch[1].trim().length > 10) {
+    let sumBody = sumMatch[1].trim();
+    parsed.summary = sumBody.slice(0, 1500);
   } else if (parsed.headline) {
     parsed.summary = `${parsed.fullName || 'Professional'} - ${parsed.headline} with expertise in ${matchedSkills.slice(0, 6).join(', ') || 'modern software technologies'}.`;
   }
@@ -1958,8 +1936,8 @@ function updateProfileCompleteness() {
   const hasProfessional = Boolean(p.skills && p.headline && p.summary);
   const hasExperience = Boolean(p.experience && p.experience.trim().length > 30);
   const hasDocuments = Boolean(p.resumeDraft && p.resumeDraft.trim().length > 50);
-  const hasAdditional = Boolean(p.handicapped);
   const hasVault = Boolean(p.q_why_hire || p.q_why_company || (p.customSnippets && p.customSnippets.length > 0));
+  const hasScreening = Boolean(p.workAuthStatus && p.noticePeriodDays);
   const hasSecurity = true;
 
   // Indicators
@@ -1968,12 +1946,12 @@ function updateProfileCompleteness() {
   setIndicatorStatus('professional', hasProfessional);
   setIndicatorStatus('experience', hasExperience);
   setIndicatorStatus('documents', hasDocuments);
-  setIndicatorStatus('additional', hasAdditional);
   setIndicatorStatus('vault', hasVault);
+  setIndicatorStatus('screening', hasScreening);
   setIndicatorStatus('security', hasSecurity);
 
   // Overall score
-  const checks = [hasBasics, hasAcademics, hasProfessional, hasExperience, hasDocuments, hasAdditional, hasVault, hasSecurity];
+  const checks = [hasBasics, hasAcademics, hasProfessional, hasExperience, hasDocuments, hasVault, hasScreening, hasSecurity];
   const passed = checks.filter(Boolean).length;
   const pct = Math.round((passed / checks.length) * 100);
 

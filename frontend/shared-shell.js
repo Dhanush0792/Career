@@ -1421,13 +1421,14 @@ function extractKeywordsFromJD(jdText) {
   // Curated High-Value Tech Skills & Credentials Dictionary for exact n-gram matching
   const TECH_SKILLS_CATALOG = [
     "javascript", "typescript", "python", "java", "c++", "c#", "go", "golang", "rust", "ruby", "php", "swift", "kotlin", "scala",
-    "react", "react.js", "next.js", "vue", "vue.js", "angular", "node.js", "nodejs", "express", "fastapi", "django", "flask", "spring boot",
-    "html", "html5", "css", "css3", "tailwind", "tailwind css", "sass", "bootstrap", "redux", "graphql", "rest api", "rest apis", "restful", "grpc", "websockets",
+    "react", "react.js", "next.js", "vue", "vue.js", "angular", "node.js", "nodejs", "express", "fastapi", "django", "flask", "spring boot", "spring",
+    "html", "html5", "css", "css3", "tailwind", "tailwind css", "sass", "bootstrap", "redux", "graphql", "rest api", "rest apis", "restful", "restful apis", "grpc", "websockets",
     "postgresql", "postgres", "mysql", "mongodb", "redis", "sqlite", "elasticsearch", "dynamodb", "cassandra", "supabase", "firebase", "sql", "nosql",
     "aws", "amazon web services", "azure", "google cloud", "gcp", "docker", "kubernetes", "k8s", "terraform", "ci/cd", "github actions", "jenkins", "gitlab",
-    "git", "linux", "bash", "shell", "webpack", "vite", "jest", "playwright", "cypress", "mocha", "pytest", "unit testing", "integration testing",
+    "git", "linux", "bash", "shell", "webpack", "vite", "jest", "playwright", "cypress", "mocha", "pytest", "unit testing", "integration testing", "automated testing", "testing",
     "pytorch", "tensorflow", "pandas", "numpy", "scikit-learn", "machine learning", "deep learning", "nlp", "computer vision", "llm", "etl", "data pipelines",
     "microservices", "distributed systems", "system design", "agile", "scrum", "kanban", "devops", "cloud computing", "serverless", "lambda",
+    "data structures", "algorithms", "object-oriented programming", "oop", "multithreading", "concurrency", "database optimization", "debugging", "performance tuning", "code reviews", "technical documentation",
     "kafka", "rabbitmq", "sqs", "sns", "event-driven", "mvc", "clean architecture", "domain-driven design", "ddd", "tdd", "bdd",
     "security", "oauth", "jwt", "sso", "rbac", "encryption", "https", "owasp", "api gateway", "load balancer", "reverse proxy", "nginx",
     "performance optimization", "caching", "monitoring", "datadog", "prometheus", "grafana", "sentry", "cloudwatch"
@@ -1464,6 +1465,210 @@ function extractKeywordsFromJD(jdText) {
 }
 
 /**
+ * Strict Document Validation Gate
+ * Checks whether the uploaded text is a genuine resume/CV or an invalid/random document.
+ */
+function validateResumeDocument(text, layoutData = {}) {
+  if (!text || typeof text !== "string" || text.trim().length < 60) {
+    return {
+      isValidResume: false,
+      reason: "Document contains insufficient text or is empty. If this is a scanned PDF, ATS engines cannot read non-selectable text."
+    };
+  }
+
+  const clean = text.toLowerCase();
+
+  // Contact markers
+  const hasEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(text);
+  const hasPhone = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10}\b/.test(text);
+  const hasLinks = /(?:linkedin\.com|github\.com|portfolio|\.github\.io)/i.test(text);
+  const contactScore = (hasEmail ? 1 : 0) + (hasPhone ? 1 : 0) + (hasLinks ? 1 : 0);
+
+  // Section markers
+  const sectionChecks = [
+    /\b(experience|work history|employment|career history|professional experience)\b/i.test(clean),
+    /\b(education|academic|qualifications|degrees|university|college|bachelor|master|b\.tech|b\.e|m\.tech|degree)\b/i.test(clean),
+    /\b(skills|technical skills|competencies|technologies|tools|languages)\b/i.test(clean),
+    /\b(projects|personal projects|key projects|academic projects)\b/i.test(clean),
+    /\b(summary|professional summary|profile|about me|objective|executive summary)\b/i.test(clean),
+    /\b(certifications|certificates|licenses|achievements)\b/i.test(clean)
+  ];
+  const sectionCount = sectionChecks.filter(Boolean).length;
+  const wordCount = clean.split(/\s+/).filter(Boolean).length;
+
+  if (wordCount < 40) {
+    return {
+      isValidResume: false,
+      reason: `Document contains only ${wordCount} words. A valid professional resume must be at least 80 words.`
+    };
+  }
+
+  // A genuine resume must have at least 1 contact marker OR at least 2 standard resume sections
+  if (contactScore === 0 && sectionCount < 2) {
+    return {
+      isValidResume: false,
+      reason: "The uploaded file does not contain standard resume sections (such as Experience, Education, Skills, or Contact details). The ATS checker only evaluates legitimate resume documents."
+    };
+  }
+
+  return {
+    isValidResume: true,
+    hasEmail,
+    hasPhone,
+    hasLinks,
+    sectionCount,
+    wordCount
+  };
+}
+
+/**
+ * Deterministic Resume Parser
+ * Extracts structured fields (contact, summary, skills, experience, education) from raw resume text
+ * for 1-click transfer to the ATS Resume Builder.
+ */
+function parseResumeToStructuredData(text) {
+  if (!text || typeof text !== "string") return {};
+
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  
+  // 1. Email & Phone
+  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  const email = emailMatch ? emailMatch[0] : "";
+  
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10}\b/);
+  const phone = phoneMatch ? phoneMatch[0] : "";
+
+  // 2. Links
+  const linkedinMatch = text.match(/https?:\/\/(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+/i);
+  const linkedin = linkedinMatch ? linkedinMatch[0] : "";
+  
+  const githubMatch = text.match(/https?:\/\/(?:www\.)?github\.com\/[a-zA-Z0-9_-]+/i);
+  const github = githubMatch ? githubMatch[0] : "";
+
+  // 3. Full Name
+  let fullName = "";
+  for (let i = 0; i < Math.min(6, lines.length); i++) {
+    const line = lines[i];
+    if (line.includes("@") || line.includes("http") || /\d{5,}/.test(line)) continue;
+    if (/^(resume|curriculum vitae|cv|page \d)/i.test(line)) continue;
+    if (line.length >= 3 && line.length <= 40 && /^[a-zA-Z\s.'-]+$/.test(line)) {
+      fullName = line;
+      break;
+    }
+  }
+
+  // 4. Section Slicing
+  const SECTION_HEADERS = {
+    summary: /^(summary|professional summary|profile|about me|executive summary|objective)\b/i,
+    experience: /^(experience|work experience|employment history|work history|professional experience)\b/i,
+    education: /^(education|academic background|qualifications|academic history)\b/i,
+    skills: /^(skills|technical skills|core competencies|technologies|tools)\b/i,
+    projects: /^(projects|key projects|personal projects|technical projects)\b/i
+  };
+
+  const sections = {
+    summary: [],
+    experience: [],
+    education: [],
+    skills: [],
+    projects: []
+  };
+
+  let currentSection = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    let matchedHeader = null;
+    for (const [secKey, rx] of Object.entries(SECTION_HEADERS)) {
+      if (rx.test(line.replace(/[^a-zA-Z\s]/g, "").trim())) {
+        matchedHeader = secKey;
+        break;
+      }
+    }
+    if (matchedHeader) {
+      currentSection = matchedHeader;
+      continue;
+    }
+    if (currentSection && sections[currentSection]) {
+      sections[currentSection].push(line);
+    }
+  }
+
+  // Format Summary
+  const summary = sections.summary.join(" ").slice(0, 600);
+
+  // Format Skills
+  const skillsText = sections.skills.join(", ")
+    .replace(/[•\-\*|]/g, ",")
+    .split(",")
+    .map(s => s.trim())
+    .filter(s => s.length > 1 && s.length < 35 && !/^(skills|technologies|proficient|tools|languages)$/i.test(s));
+  const uniqueSkills = Array.from(new Set(skillsText)).join(", ");
+
+  // Format Experience
+  const experienceEntries = [];
+  let currentExp = null;
+  const expLines = sections.experience;
+  const DATE_REGEX = /\b(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4}\s*(?:-|–|to)\s*(?:present|(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4})\b/i;
+
+  for (let i = 0; i < expLines.length; i++) {
+    const line = expLines[i];
+    if (DATE_REGEX.test(line) || (line.length < 60 && /^[A-Z][a-zA-Z0-9\s,&.-]+$/.test(line) && !line.startsWith("•") && !line.startsWith("-"))) {
+      if (currentExp && (currentExp.company || currentExp.role || currentExp.summary)) {
+        experienceEntries.push(currentExp);
+      }
+      currentExp = {
+        company: line.replace(DATE_REGEX, "").trim() || "Company",
+        role: "Software Engineer",
+        dates: (line.match(DATE_REGEX) || [""])[0],
+        summary: ""
+      };
+    } else if (currentExp) {
+      currentExp.summary = (currentExp.summary ? currentExp.summary + "\n" : "") + line;
+    } else {
+      currentExp = { company: "Work Experience", role: "Role", dates: "", summary: line };
+    }
+    if (experienceEntries.length >= 6) break;
+  }
+  if (currentExp && (currentExp.company || currentExp.summary)) {
+    experienceEntries.push(currentExp);
+  }
+
+  // Format Education
+  const educationEntries = [];
+  let currentEdu = null;
+  const eduLines = sections.education;
+  for (let i = 0; i < eduLines.length; i++) {
+    const line = eduLines[i];
+    if (/\b(university|college|institute|school|bachelor|master|b\.tech|b\.e|m\.tech|b\.s|m\.s|degree)\b/i.test(line)) {
+      if (currentEdu) educationEntries.push(currentEdu);
+      const yearMatch = line.match(/\b20\d{2}\b/);
+      currentEdu = {
+        school: line.replace(/\b20\d{2}\b/, "").trim(),
+        degree: line.includes("Bachelor") || line.includes("B.Tech") ? "Bachelor of Technology" : (line.includes("Master") ? "Master of Science" : "Degree"),
+        year: yearMatch ? yearMatch[0] : "2023"
+      };
+    } else if (currentEdu && !currentEdu.degree) {
+      currentEdu.degree = line;
+    }
+    if (educationEntries.length >= 4) break;
+  }
+  if (currentEdu) educationEntries.push(currentEdu);
+
+  return {
+    fullName: fullName || "Candidate Name",
+    email,
+    phone,
+    linkedin,
+    github,
+    location: "",
+    summary,
+    skills: uniqueSkills,
+    experience: experienceEntries,
+    education: educationEntries
+  };
+}
+
+/**
  * Centrally calculates the 0-100 ATS compatibility score.
  */
 function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'profile', layoutData = {}, jdText = "") {
@@ -1490,9 +1695,47 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     ].join(" ");
   }
 
+  // Strict Document Validation Gate
+  const validation = validateResumeDocument(resumeText, layoutData);
+  if (!validation.isValidResume && !isProfile) {
+    return {
+      isValidResume: false,
+      score: 0,
+      breakdown: {
+        parseability: 0,
+        title: 0,
+        keyword: 0,
+        density: 0,
+        achievement: 0,
+        completeness: 0
+      },
+      matchedKeywords: [],
+      missingKeywords: [],
+      verbAnalysis: {
+        totalBullets: 0,
+        quantifiedBullets: 0,
+        metricDensity: 0,
+        strongVerbs: 0,
+        moderateVerbs: 0,
+        weakVerbs: 0
+      },
+      suggestions: [
+        `**Document Validation Failed**: ${validation.reason}`,
+        "Applicant tracking systems require standard resume sections (such as Experience, Education, Skills, or Contact Info). Please upload a legitimate resume file to view accurate compatibility diagnostics."
+      ],
+      flags: {
+        invalid_document: true,
+        scanned_image: layoutData.isScanned || false,
+        multi_column: false,
+        embedded_images: false
+      }
+    };
+  }
+
   const cleanText = resumeText.toLowerCase().replace(/[^a-z0-9\s.+#-]/g, ' ');
   const suggestions = [];
   const flags = {
+    invalid_document: false,
     scanned_image: false,
     multi_column: false,
     embedded_images: false
@@ -1532,7 +1775,6 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     if (lowercaseText.includes(title)) {
       exactTitleMatch = true;
     } else {
-      // Check if any significant word of the title matches
       const words = title.split(' ');
       words.forEach(w => {
         if (w.length > 3 && lowercaseText.includes(w)) {
@@ -1558,30 +1800,27 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
   let keywordEarned = 0;
   let keywordTotal = 0;
 
-  // Merge static preset with dynamic keywords extracted from custom pasted JD if available
-  let targetMustHave = [...(preset.mustHave || [])];
-  let targetNiceToHave = [...(preset.niceToHave || [])];
+  // Extract keywords directly from custom pasted JD if available
+  let targetMustHave = [];
+  let targetNiceToHave = [];
 
   if (jdText && typeof jdText === 'string' && jdText.trim().length > 25) {
     const jdKeywords = extractKeywordsFromJD(jdText);
-    if (jdKeywords.mustHave.length > 0) {
-      // Prioritize dynamically extracted JD terms
-      const uniqueCombined = new Set([...jdKeywords.mustHave, ...targetMustHave]);
-      targetMustHave = Array.from(uniqueCombined).slice(0, 20);
-      targetNiceToHave = jdKeywords.niceToHave.slice(0, 10);
-    }
+    targetMustHave = jdKeywords.mustHave;
+    targetNiceToHave = jdKeywords.niceToHave;
+  } else {
+    targetMustHave = [...(preset.mustHave || [])];
+    targetNiceToHave = [...(preset.niceToHave || [])];
   }
 
   // Synonyms variant search helper
   function checkKeyword(kw) {
     const kwLow = kw.toLowerCase();
-    // exact word-boundary check
     const exactRegex = new RegExp('\\b' + kwLow.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'i');
     if (exactRegex.test(cleanText)) {
       return 1.0; // 100% credit
     }
     
-    // variant check
     const variants = ATS_KEYWORD_SYNONYMS[kwLow] || [];
     for (const variant of variants) {
       const variantRegex = new RegExp('\\b' + variant.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '\\b', 'i');
@@ -1590,7 +1829,6 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
       }
     }
 
-    // stem/partial check
     if (cleanText.includes(kwLow) || (kwLow.length > 4 && cleanText.includes(kwLow.substring(0, kwLow.length - 2)))) {
       return 0.5; // 50% credit
     }
@@ -1611,7 +1849,6 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
 
   targetNiceToHave.forEach(kw => {
     const credit = checkKeyword(kw);
-    // niceToHaves contribute bonus earned
     keywordEarned += credit * 0.5;
   });
 
@@ -1670,7 +1907,7 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
   const weakVerbExamples = [];
 
   // Split text by standard bullet point characters or line breaks
-  const bulletLines = resumeText.split(/[\n•\-\*]/).map(line => line.trim()).filter(line => line.length > 15);
+  const bulletLines = resumeText.split(/[\n•\-\*]/).map(line => line.trim()).filter(line => line.length > 20 && !line.includes("@") && !line.includes("http"));
 
   bulletLines.forEach(line => {
     totalBullets++;
@@ -1708,7 +1945,6 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
   // --- Category F: Section Completeness & Hygiene (15%) ---
   let completenessScore = 100;
   
-  // Section checks
   const experienceRegex = /\b(experience|work|employment|history)\b/i;
   const educationRegex = /\b(education|academic|college|university)\b/i;
   const skillsRegex = /\b(skills|technologies|expertise)\b/i;
@@ -1731,14 +1967,12 @@ function scoreResumeData(profile, targetRole, textOverride = null, fileType = 'p
     suggestions.push(`**Completeness**: Add a Professional Summary or Profile header to frame your experience.`);
   }
 
-  // Word count check
   const wordCount = cleanText.split(/\s+/).length;
-  if (wordCount < 250 || wordCount > 700) {
+  if (wordCount < 200 || wordCount > 900) {
     completenessScore -= 15;
     suggestions.push(`**Hygiene**: Your resume word count is ${wordCount}. Optimize length to 250-700 words to ensure it fits single-screen layouts perfectly.`);
   }
 
-  // First-person pronoun checks
   const pronouns = cleanText.match(/\b(i|me|my|we|our)\b/g);
   if (pronouns && pronouns.length > 0) {
     completenessScore -= 15;
@@ -1827,6 +2061,10 @@ function analyzeSummaryFourLines(candidateSummary, roleKey) {
   };
 }
 
+window.validateResumeDocument = validateResumeDocument;
+window.parseResumeToStructuredData = parseResumeToStructuredData;
+window.scoreResumeData = scoreResumeData;
+
 window.CareerBridgeSync = {
   requireAuth,
   logout,
@@ -1834,5 +2072,8 @@ window.CareerBridgeSync = {
   saveProfile,
   setActiveProfile,
   getCachedProfileState,
-  renderNav
+  renderNav,
+  validateResumeDocument,
+  parseResumeToStructuredData,
+  scoreResumeData
 };

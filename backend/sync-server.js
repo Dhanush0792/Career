@@ -1,4 +1,5 @@
 const http = require("http");
+const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const dns = require("dns");
@@ -580,6 +581,40 @@ function writeCorsHeaders(req, res) {
   res.setHeader("Vary", "Origin");
 }
 
+const SUPABASE_VERIFY_URL = "https://fbyjrfrejgzcpqtdwudu.supabase.co/auth/v1/user";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZieWpyZnJlamd6Y3BxdGR3dWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3ODk0NTIsImV4cCI6MjEwMjM2NTQ1Mn0.L_21DGKOHU4HQ05IY9MqvDwklh2knTkjMObHmDIB0Ic";
+
+function verifySupabaseTokenRemote(token) {
+  return new Promise((resolve) => {
+    try {
+      const req = https.get(SUPABASE_VERIFY_URL, {
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + token
+        },
+        timeout: 4000
+      }, res => {
+        let raw = "";
+        res.on("data", c => raw += c);
+        res.on("end", () => {
+          try {
+            const data = JSON.parse(raw);
+            if (res.statusCode === 200 && data && data.id) {
+              resolve(data);
+            } else {
+              resolve(null);
+            }
+          } catch (e) { resolve(null); }
+        });
+      });
+      req.on("error", () => resolve(null));
+      req.on("timeout", () => { req.destroy(); resolve(null); });
+    } catch(e) {
+      resolve(null);
+    }
+  });
+}
+
 async function getRequestUser(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -587,7 +622,13 @@ async function getRequestUser(req) {
   }
   const token = authHeader.substring(7).trim();
 
-  // 1. Try Supabase or Local JWT
+  const ADMIN_EMAILS = new Set([
+    "hidhanush07@gmail.com",
+    "dhanushsiddilingam@gmail.com",
+    "admin@jobxapply.app"
+  ]);
+
+  // 1. Try local / environment JWT verification first (fastest)
   try {
     const jwtSecret = process.env.SUPABASE_JWT_SECRET || process.env.JWT_SECRET || auth.JWT_SECRET;
     const decoded = jwt.verify(token, jwtSecret);
@@ -595,11 +636,6 @@ async function getRequestUser(req) {
       const userId = decoded.sub || decoded.id || decoded.userId;
       const email = decoded.email;
       const name = decoded.user_metadata?.full_name || decoded.name || (email ? email.split("@")[0] : "Operative");
-      const ADMIN_EMAILS = new Set([
-        "hidhanush07@gmail.com",
-        "dhanushsiddilingam@gmail.com",
-        "admin@jobxapply.app"
-      ]);
       const isEmailConfirmed = Boolean(
         decoded.email_confirmed_at || 
         decoded.user_metadata?.email_confirmed || 
@@ -614,7 +650,6 @@ async function getRequestUser(req) {
         user = await db.getUserByEmail(email);
       }
       if (!user && (userId || email)) {
-        // Auto-provision new user row on the fly
         await db.createUserOnSync({
           id: userId || ("u_" + Math.random().toString(36).substring(2, 15)),
           email: email,
@@ -630,17 +665,51 @@ async function getRequestUser(req) {
       if (user) return user;
     }
   } catch (e) {
-    // Ignore and proceed to fallback
+    // Secret mismatch or non-local token; check if it's a Supabase token verified remotely
   }
 
-  // 2. Legacy / local custom JWT check
+  // 2. Authoritative Remote Supabase User Verification (for Supabase OAuth tokens where secret is on Supabase servers)
+  try {
+    const sbUser = await verifySupabaseTokenRemote(token);
+    if (sbUser && sbUser.id) {
+      const userId = sbUser.id;
+      const email = (sbUser.email || "").toLowerCase().trim();
+      const name = sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || (email ? email.split("@")[0] : "Candidate");
+      const isEmailConfirmed = Boolean(sbUser.email_confirmed_at || sbUser.confirmed_at);
+      const isAdminEmail = ADMIN_EMAILS.has(email) && isEmailConfirmed;
+      const effectiveRole = isAdminEmail ? "admin" : (sbUser.role || "user");
+
+      let user = await db.getUserById(userId);
+      if (!user && email) {
+        user = await db.getUserByEmail(email);
+      }
+      if (!user && (userId || email)) {
+        await db.createUserOnSync({
+          id: userId,
+          email: email,
+          name: name,
+          role: effectiveRole,
+          tier: isAdminEmail ? "paid" : "free"
+        });
+        user = await db.getUserById(userId);
+      } else if (isAdminEmail && user && user.role !== "admin") {
+        await db.updateUserRole(user.id, "admin");
+        user.role = "admin";
+      }
+      if (user) return user;
+    }
+  } catch (err) {
+    // Remote verification fallback failed
+  }
+
+  // 3. Legacy / local custom JWT check
   const decodedLocal = auth.verifyToken(req);
   if (decodedLocal) {
     const localId = decodedLocal.id || decodedLocal.userId;
     if (localId) return await db.getUserById(localId);
   }
 
-  // 3. Sync passcode hash check (for browser extension / automation clients)
+  // 4. Sync passcode hash check (for browser extension / automation clients)
   return await db.getUserByPasscodeHash(token);
 }
 
