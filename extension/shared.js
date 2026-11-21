@@ -323,10 +323,9 @@ export function base64ToUint8(base64) {
 export async function generatePasscodeHash(passcode) {
   if (!passcode) return "";
   const encoder = new TextEncoder();
-  const data = encoder.encode(passcode);
+  const data = encoder.encode(passcode + ":jobxapply_salt_v2");
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return uint8ToBase64(new Uint8Array(hashBuffer));
 }
 
 async function deriveKey(passcode, saltBytes) {

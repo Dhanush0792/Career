@@ -1622,6 +1622,14 @@
     }
 
     // Interactive functions for adding rows
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
     function addExperienceRow(data = {}) {
       const list = document.getElementById("experience-list");
       if (!list) return;
@@ -1630,14 +1638,14 @@
       row.className = "experience-item";
       row.innerHTML = `
         <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
-          <input type="text" placeholder="Company Name" value="${data.company || ''}" style="width: 50%;" class="glass-input">
-          <input type="text" placeholder="Job Title" value="${data.position || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Company Name" value="${esc(data.company || '')}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Job Title" value="${esc(data.position || '')}" style="width: 50%;" class="glass-input">
         </div>
         <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
-          <input type="text" placeholder="Start Date (e.g., Jun 2022)" value="${data.startDate || ''}" style="width: 50%;" class="glass-input">
-          <input type="text" placeholder="End Date (e.g., Present)" value="${data.endDate || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Start Date (e.g., Jun 2022)" value="${esc(data.startDate || '')}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="End Date (e.g., Present)" value="${esc(data.endDate || '')}" style="width: 50%;" class="glass-input">
         </div>
-        <textarea placeholder="Key accomplishments and duties..." rows="3" style="width: 100%; margin-bottom: 10px;" class="glass-input">${data.summary || ''}</textarea>
+        <textarea placeholder="Key accomplishments and duties..." rows="3" style="width: 100%; margin-bottom: 10px;" class="glass-input">${esc(data.summary || '')}</textarea>
         <button class="btn btn-secondary delete-btn btn-sm" onclick="this.parentElement.remove(); updatePreview();" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">Remove</button>
       `;
       list.appendChild(row);
@@ -1653,11 +1661,11 @@
       row.className = "education-item";
       row.innerHTML = `
         <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
-          <input type="text" placeholder="Institution" value="${data.institution || ''}" style="width: 50%;" class="glass-input">
-          <input type="text" placeholder="Degree / Area of Study" value="${data.area || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Institution" value="${esc(data.institution || '')}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Degree / Area of Study" value="${esc(data.area || '')}" style="width: 50%;" class="glass-input">
         </div>
         <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
-          <input type="text" placeholder="Graduation Year" value="${data.year || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Graduation Year" value="${esc(data.year || '')}" style="width: 50%;" class="glass-input">
         </div>
         <button class="btn btn-secondary delete-btn btn-sm" onclick="this.parentElement.remove(); updatePreview();" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">Remove</button>
       `;
@@ -1674,10 +1682,10 @@
       row.className = "project-item";
       row.innerHTML = `
         <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 12px;">
-          <input type="text" placeholder="Project Name" value="${data.name || ''}" style="width: 50%;" class="glass-input">
-          <input type="text" placeholder="Technologies (e.g. React, Node, AWS)" value="${data.tech || ''}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Project Name" value="${esc(data.name || '')}" style="width: 50%;" class="glass-input">
+          <input type="text" placeholder="Technologies (e.g. React, Node, AWS)" value="${esc(data.tech || '')}" style="width: 50%;" class="glass-input">
         </div>
-        <textarea placeholder="Key features, metrics, or GitHub link..." rows="2" style="width: 100%; margin-bottom: 10px;" class="glass-input">${data.summary || ''}</textarea>
+        <textarea placeholder="Key features, metrics, or GitHub link..." rows="2" style="width: 100%; margin-bottom: 10px;" class="glass-input">${esc(data.summary || '')}</textarea>
         <button class="btn btn-secondary delete-btn btn-sm" onclick="this.parentElement.remove(); updatePreview();" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">Remove</button>
       `;
       list.appendChild(row);
@@ -1708,10 +1716,10 @@
           eduHtml += `
             <div style="margin-bottom: 8px;">
               <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${area}</span>
-                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${year}</span>
+                <span>${esc(area)}</span>
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(year)}</span>
               </div>
-              <div style="font-size: 0.85rem; color: #475569;">${inst}</div>
+              <div style="font-size: 0.85rem; color: #475569;">${esc(inst)}</div>
             </div>
           `;
         }
@@ -1729,10 +1737,10 @@
           expHtml += `
             <div style="margin-bottom: 12px;">
               <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${position} @ ${company}</span>
-                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${startDate} - ${endDate}</span>
+                <span>${esc(position)} @ ${esc(company)}</span>
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(startDate)} - ${esc(endDate)}</span>
               </div>
-              <p style="font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; white-space: pre-line;">${expSummary}</p>
+              <p style="font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; white-space: pre-line;">${esc(expSummary)}</p>
             </div>
           `;
         }
@@ -1748,10 +1756,10 @@
           projHtml += `
             <div style="margin-bottom: 8px;">
               <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${pName}</span>
-                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${pTech}</span>
+                <span>${esc(pName)}</span>
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(pTech)}</span>
               </div>
-              <p style="font-size: 0.85rem; color: #334155; margin-top: 2px; line-height: 1.4; white-space: pre-line;">${pSum}</p>
+              <p style="font-size: 0.85rem; color: #334155; margin-top: 2px; line-height: 1.4; white-space: pre-line;">${esc(pSum)}</p>
             </div>
           `;
         }
@@ -1765,28 +1773,28 @@
       const interestVal = document.getElementById("res-interests")?.value.trim() || "";
 
       let addItems = [];
-      if (langVal) addItems.push(`<strong>Languages:</strong> ${langVal}`);
-      if (relocVal) addItems.push(`<strong>Availability:</strong> ${relocVal}`);
-      if (interestVal) addItems.push(`<strong>Key Highlights:</strong> ${interestVal}`);
+      if (langVal) addItems.push(`<strong>Languages:</strong> ${esc(langVal)}`);
+      if (relocVal) addItems.push(`<strong>Availability:</strong> ${esc(relocVal)}`);
+      if (interestVal) addItems.push(`<strong>Key Highlights:</strong> ${esc(interestVal)}`);
 
       const sheet = document.getElementById("live-preview-sheet");
       if (!sheet) return;
 
       sheet.innerHTML = `
         <div class="preview-header">
-          <h1 class="preview-name">${name || ''}</h1>
+          <h1 class="preview-name">${esc(name || '')}</h1>
           <div class="preview-contact">
-            ${email ? `<span>${email}</span>` : ""}
-            ${phone ? `<span>${phone}</span>` : ""}
-            ${location ? `<span>${location}</span>` : ""}
-            ${website ? `<span>${website}</span>` : ""}
+            ${email ? `<span>${esc(email)}</span>` : ""}
+            ${phone ? `<span>${esc(phone)}</span>` : ""}
+            ${location ? `<span>${esc(location)}</span>` : ""}
+            ${website ? `<span>${esc(website)}</span>` : ""}
           </div>
         </div>
         
         ${summary ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Summary</h3>
-            <p style="font-size: 0.85rem; color: #000000; line-height: 1.4; white-space: pre-line;">${summary}</p>
+            <p style="font-size: 0.85rem; color: #000000; line-height: 1.4; white-space: pre-line;">${esc(summary)}</p>
           </div>
         ` : ""}
 
@@ -1807,7 +1815,7 @@
         ${skills.length > 0 ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Skills</h3>
-            <p class="preview-skills" style="color: #000000;">${skills.join(" • ")}</p>
+            <p class="preview-skills" style="color: #000000;">${skills.map(esc).join(" • ")}</p>
           </div>
         ` : ""}
 
@@ -1821,7 +1829,7 @@
         ${certs.length > 0 ? `
           <div class="preview-section">
             <h3 class="preview-section-title">Certifications</h3>
-            <p class="preview-skills" style="color: #000000;">${certs.join(" • ")}</p>
+            <p class="preview-skills" style="color: #000000;">${certs.map(esc).join(" • ")}</p>
           </div>
         ` : ""}
 

@@ -4,7 +4,8 @@
   "description": "Local sync server for CareerHub prototype",
   "main": "sync-server.js",
   "scripts": {
-    "start": "node sync-server.js"
+    "start": "node sync-server.js",
+    "test": "node test-suite.js"
   },
   "engines": {
     "node": ">=14"

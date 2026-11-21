@@ -5,6 +5,8 @@ node_modules/
 npm-debug.log*
 coverage/
 .netlify/
+database/user-registry.json
+database/jobxapply-sync-state.json
 database/users/*
 !database/users/.gitkeep
 *.log

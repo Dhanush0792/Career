@@ -653,19 +653,22 @@ document.addEventListener('jobxapply:offline', () => {
   const extDot = document.getElementById('ext-status-dot');
   const extText = document.getElementById('ext-status-text');
 
+  function markExtensionConnected() {
+    if (extDot) extDot.style.background = 'var(--success)';
+    if (extText) extText.textContent = 'Extension Connected';
+  }
+
   function checkExtension() {
     const isDetected = document.documentElement.getAttribute('data-jobxapply-extension') === 'active' ||
                        Boolean(window.__JOBXAPPLY_EXTENSION_ACTIVE__);
     if (isDetected) {
-      if (extDot) extDot.style.background = 'var(--success)';
-      if (extText) extText.textContent = 'Extension Connected';
+      markExtensionConnected();
     } else {
       setTimeout(() => {
         const retryDetected = document.documentElement.getAttribute('data-jobxapply-extension') === 'active' ||
                               Boolean(window.__JOBXAPPLY_EXTENSION_ACTIVE__);
         if (retryDetected) {
-          if (extDot) extDot.style.background = 'var(--success)';
-          if (extText) extText.textContent = 'Extension Connected';
+          markExtensionConnected();
         } else {
           if (extDot) extDot.style.background = '#94a3b8';
           if (extText) extText.textContent = 'Extension Not Detected';
@@ -675,12 +678,23 @@ document.addEventListener('jobxapply:offline', () => {
   }
 
   window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'JOBXAPPLY_EXTENSION_PONG') {
-      if (extDot) extDot.style.background = 'var(--success)';
-      if (extText) extText.textContent = 'Extension Connected';
+    if (e.data && (e.data.type === 'JOBXAPPLY_EXTENSION_PONG' || e.data.type === 'jobxapply:pongExtension')) {
+      markExtensionConnected();
     }
   });
-  window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PING' }, '*');
+
+  window.addEventListener('jobxapply:pongExtension', () => {
+    markExtensionConnected();
+  });
+
+  function pingExtension() {
+    window.dispatchEvent(new CustomEvent('jobxapply:pingExtension'));
+    window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PING' }, '*');
+  }
+
+  pingExtension();
+  setTimeout(pingExtension, 600);
+  setTimeout(pingExtension, 1500);
   checkExtension();
 })();
 </script>

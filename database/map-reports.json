@@ -16,5 +16,356 @@
     "reporterEmail": "anonymous",
     "submittedAt": 1787286865570,
     "status": "pending"
+  },
+  {
+    "id": "rep_t90j8t4c8",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236398187,
+    "status": "pending"
+  },
+  {
+    "id": "rep_tpv1l6ouh",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236479961,
+    "status": "pending"
+  },
+  {
+    "id": "rep_wrbep9u2h",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236693436,
+    "status": "pending"
+  },
+  {
+    "id": "rep_kmga6c1bd",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236736685,
+    "status": "pending"
+  },
+  {
+    "id": "rep_xmsvr6e8h",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236826707,
+    "status": "pending"
+  },
+  {
+    "id": "rep_z63envjj3",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236884540,
+    "status": "pending"
+  },
+  {
+    "id": "rep_ci2ejj45k",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236941496,
+    "status": "pending"
+  },
+  {
+    "id": "rep_n477zjps6",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795236948893,
+    "status": "pending"
+  },
+  {
+    "id": "rep_3mroh820u",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237024684,
+    "status": "pending"
+  },
+  {
+    "id": "rep_c0hvltmu5",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237266484,
+    "status": "pending"
+  },
+  {
+    "id": "rep_618x59n1v",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237279331,
+    "status": "pending"
+  },
+  {
+    "id": "rep_3bi344gww",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237851237,
+    "status": "pending"
+  },
+  {
+    "id": "rep_woyg687i2",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237861363,
+    "status": "pending"
+  },
+  {
+    "id": "rep_8k2jcyibe",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237896458,
+    "status": "pending"
+  },
+  {
+    "id": "rep_2v5z5asut",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237954159,
+    "status": "pending"
+  },
+  {
+    "id": "rep_44mqqx62w",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795237993235,
+    "status": "pending"
+  },
+  {
+    "id": "rep_gfakq0r9h",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238064604,
+    "status": "pending"
+  },
+  {
+    "id": "rep_dvqihk4fg",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238093663,
+    "status": "pending"
+  },
+  {
+    "id": "rep_v94ryqtx0",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238105130,
+    "status": "pending"
+  },
+  {
+    "id": "rep_bg5cjxh0y",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238120163,
+    "status": "pending"
+  },
+  {
+    "id": "rep_fqbgnsn95",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238127029,
+    "status": "pending"
+  },
+  {
+    "id": "rep_1kjnstosf",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238128322,
+    "status": "pending"
+  },
+  {
+    "id": "rep_m44g204nq",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238136565,
+    "status": "pending"
+  },
+  {
+    "id": "rep_pufu9z1l7",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238144714,
+    "status": "pending"
+  },
+  {
+    "id": "rep_sarzutwfw",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238219267,
+    "status": "pending"
+  },
+  {
+    "id": "rep_apa3o0l7d",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238362527,
+    "status": "pending"
+  },
+  {
+    "id": "rep_i2a2y8336",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238533242,
+    "status": "pending"
+  },
+  {
+    "id": "rep_q3yuf8bv2",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238558956,
+    "status": "pending"
+  },
+  {
+    "id": "rep_aabzh08k9",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238583808,
+    "status": "pending"
+  },
+  {
+    "id": "rep_4xstqws37",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238614859,
+    "status": "pending"
+  },
+  {
+    "id": "rep_ms7sffsb5",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238912442,
+    "status": "pending"
+  },
+  {
+    "id": "rep_shzshmls7",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795238993596,
+    "status": "pending"
+  },
+  {
+    "id": "rep_zwt41nfwi",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795239008712,
+    "status": "pending"
+  },
+  {
+    "id": "rep_drf17bxxl",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795239017609,
+    "status": "pending"
+  },
+  {
+    "id": "rep_ft5hj2ar3",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795239050754,
+    "status": "pending"
+  },
+  {
+    "id": "rep_3h18228o2",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795239055032,
+    "status": "pending"
+  },
+  {
+    "id": "rep_9y3764oer",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795239071171,
+    "status": "pending"
+  },
+  {
+    "id": "rep_g9zmpmx20",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795239083521,
+    "status": "pending"
+  },
+  {
+    "id": "rep_oh7d126bf",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795239151979,
+    "status": "pending"
   }
 ]

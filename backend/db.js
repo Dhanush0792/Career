@@ -177,10 +177,13 @@ function saveReports(reports) {
 function loadTelemetry() {
   try {
     if (fs.existsSync(TELEMETRY_FILE)) {
-      return JSON.parse(fs.readFileSync(TELEMETRY_FILE, "utf8"));
+      const content = fs.readFileSync(TELEMETRY_FILE, "utf8").trim();
+      if (content) {
+        return JSON.parse(content);
+      }
     }
   } catch (e) {
-    console.warn("Failed to load telemetry registry:", e);
+    // Ignore transient parse error during concurrent write
   }
   return { pageViews: 0, apiRequests: 0 };
 }

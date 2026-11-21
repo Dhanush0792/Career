@@ -946,13 +946,17 @@ async function pullApplicationsFromServer() {
 function addApplication(app) {
   const apps = loadApplications();
   const entry = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: app.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
     company: String(app.company || '').trim(),
     role: String(app.role || '').trim(),
     portal: String(app.portal || '').trim(),
     url: String(app.url || '').trim(),
+    salary: String(app.salary || '').trim(),
+    location: String(app.location || '').trim(),
     date: app.date || new Date().toISOString().slice(0, 10),
-    status: app.status || 'applied'
+    followUp: app.followUp || '',
+    status: app.status || 'applied',
+    notes: String(app.notes || '').trim()
   };
   apps.unshift(entry);
   saveApplications(apps);
@@ -1078,7 +1082,7 @@ function setRole(role) {
 const ADMIN_NAV_ITEMS = [
   { label: 'Overview',     href: 'index.html' },
   { label: 'Users',        href: 'users.html' },
-  { label: 'Portal Maps',  href: 'portal-maps.html' },
+  { label: 'Portal Maps',  href: 'admin/portal-maps.html' },
   { label: 'Reports',      href: 'reports.html' },
   { label: 'Analytics',    href: 'analytics.html' },
 ];
@@ -1089,9 +1093,16 @@ const ADMIN_NAV_ITEMS = [
  * @param {string} activePage - The current admin page filename (e.g. 'index.html').
  */
 function renderAdminNav(container, activePage) {
+  const isInAdmin = typeof window !== 'undefined' && window.location.pathname.includes('/admin/');
   const links = ADMIN_NAV_ITEMS.map(item => {
-    const isActive = item.href === activePage;
-    return `<a href="${item.href}" class="nav__link${isActive ? ' nav__link--active' : ''}" style="${isActive ? 'color:#F5A623;' : ''}">${item.label}</a>`;
+    let href = item.href;
+    if (isInAdmin && href.startsWith('admin/')) {
+      href = href.replace('admin/', '');
+    } else if (!isInAdmin && !href.startsWith('admin/')) {
+      href = 'admin/' + href;
+    }
+    const isActive = item.href === activePage || href === activePage;
+    return `<a href="${href}" class="nav__link${isActive ? ' nav__link--active' : ''}" style="${isActive ? 'color:#F5A623;' : ''}">${item.label}</a>`;
   }).join('');
 
   container.innerHTML = `
@@ -1192,10 +1203,9 @@ function base64ToUint8(base64) {
 async function generatePasscodeHash(passcode) {
   if (!passcode) return "";
   const encoder = new TextEncoder();
-  const data = encoder.encode(passcode);
+  const data = encoder.encode(passcode + ":jobxapply_salt_v2");
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  return uint8ToBase64(new Uint8Array(hashBuffer));
 }
 
 async function deriveKey(passcode, saltBytes) {

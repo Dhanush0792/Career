@@ -449,6 +449,29 @@ const MAX_BODY_BYTES = 256 * 1024; // 256 KB — reject bodies larger than this
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
+
+function redactSensitiveUserData(data) {
+  if (!data || typeof data !== "object") return data;
+  if (Array.isArray(data)) return data.map(redactSensitiveUserData);
+  const copy = { ...data };
+  delete copy.passwordHash;
+  delete copy.passcodeHash;
+  delete copy.password_hash;
+  delete copy.passcode_hash;
+  delete copy.resetToken;
+  delete copy.reset_token;
+  delete copy.resetTokenHash;
+  delete copy.reset_token_hash;
+  delete copy.token;
+  delete copy.rawToken;
+  for (const key of Object.keys(copy)) {
+    if (copy[key] && typeof copy[key] === "object") {
+      copy[key] = redactSensitiveUserData(copy[key]);
+    }
+  }
+  return copy;
+}
+
 // ── CORS Allowlist ─────────────────────────────────────────────────────────
 // Read from env, or fall back to sensible defaults for local dev
 const ALLOWED_ORIGINS_RAW = process.env.ALLOWED_ORIGINS || "";
@@ -470,8 +493,10 @@ const ALLOWED_ORIGINS = new Set([
 function isAllowedOrigin(origin) {
   if (!origin) return true; // Non-browser/server-to-server requests
   if (ALLOWED_ORIGINS.has(origin)) return true;
-  // Allow all chrome-extension:// origins (browser extension requests)
-  if (origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://")) return true;
+  // Restrict chrome-extension:// CORS reflection to verified extension ID or authorized origins
+  const verifiedExtensionId = process.env.ALLOWED_EXTENSION_ID || "";
+  if (verifiedExtensionId && origin === ("chrome-extension://" + verifiedExtensionId)) return true;
+  if (origin === "chrome-extension://" || origin === "moz-extension://jobxapply_autofill@jobxapply.local") return true;
   // Allow all localhost variants (for local dev)
   if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
   return false;
@@ -562,12 +587,12 @@ async function getRequestUser(req) {
   }
   const token = authHeader.substring(7).trim();
 
-  // 1. Try Supabase JWT
+  // 1. Try Supabase or Local JWT
   try {
     const jwtSecret = process.env.SUPABASE_JWT_SECRET || process.env.JWT_SECRET || auth.JWT_SECRET;
     const decoded = jwt.verify(token, jwtSecret);
     if (decoded) {
-      const userId = decoded.sub; // Supabase uses 'sub' for user UUID
+      const userId = decoded.sub || decoded.id || decoded.userId;
       const email = decoded.email;
       const name = decoded.user_metadata?.full_name || decoded.name || (email ? email.split("@")[0] : "Operative");
       const ADMIN_EMAILS = new Set([
@@ -575,25 +600,34 @@ async function getRequestUser(req) {
         "dhanushsiddilingam@gmail.com",
         "admin@jobxapply.app"
       ]);
-      const isAdminEmail = ADMIN_EMAILS.has((email || "").toLowerCase().trim());
-      const effectiveRole = isAdminEmail ? "admin" : "user";
+      const isEmailConfirmed = Boolean(
+        decoded.email_confirmed_at || 
+        decoded.user_metadata?.email_confirmed || 
+        decoded.app_metadata?.email_confirmed ||
+        decoded.email_verified
+      );
+      const isAdminEmail = ADMIN_EMAILS.has((email || "").toLowerCase().trim()) && isEmailConfirmed;
+      const effectiveRole = isAdminEmail ? "admin" : (decoded.role || "user");
       
-      let user = await db.getUserById(userId);
-      if (!user) {
+      let user = userId ? await db.getUserById(userId) : null;
+      if (!user && email) {
+        user = await db.getUserByEmail(email);
+      }
+      if (!user && (userId || email)) {
         // Auto-provision new user row on the fly
         await db.createUserOnSync({
-          id: userId,
+          id: userId || ("u_" + Math.random().toString(36).substring(2, 15)),
           email: email,
           name: name,
           role: effectiveRole,
           tier: isAdminEmail ? "paid" : "free"
         });
-        user = await db.getUserById(userId);
-      } else if (isAdminEmail && user.role !== "admin") {
-        await db.updateUserRole(userId, "admin");
+        user = userId ? await db.getUserById(userId) : await db.getUserByEmail(email);
+      } else if (isAdminEmail && user && user.role !== "admin") {
+        await db.updateUserRole(user.id, "admin");
         user.role = "admin";
       }
-      return user;
+      if (user) return user;
     }
   } catch (e) {
     // Ignore and proceed to fallback
@@ -954,7 +988,16 @@ const server = http.createServer(async (req, res) => {
   if (isUninitialized && urlObj.pathname === "/api/profile" && req.method === "POST") {
     // Handled in POST /api/profile below
   } else if (!activeUser && urlObj.pathname.startsWith("/api/")) {
-    if (urlObj.pathname !== "/api/events") {
+    const publicEndpoints = [
+      "/api/events",
+      "/api/resume/templates",
+      "/api/ats/analyze",
+      "/api/resume/generate",
+      "/api/cover-letter/generate",
+      "/api/status",
+      "/api/config"
+    ];
+    if (!publicEndpoints.includes(urlObj.pathname)) {
       sendJson(res, 401, { ok: false, error: "Unauthorized access: Invalid or missing token" });
       return;
     }
@@ -1005,9 +1048,9 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       sendJson(res, 200, {
-        profiles: profile.profiles,
+        profiles: redactSensitiveUserData(profile.profiles),
         activeProfileId: profile.activeProfileId,
-        profile: profile.profile,
+        profile: redactSensitiveUserData(profile.profile),
         version: profile.version || 1,
         updatedAt: profile.updatedAt || Date.now(),
         origin: profile.origin || "server",
@@ -1653,8 +1696,9 @@ const server = http.createServer(async (req, res) => {
   // ── FULL DATABASE BACKUP DOWNLOAD ──────────────────────────────────
   // GET /api/admin/database/backup
   if (req.method === "GET" && urlObj.pathname === "/api/admin/database/backup") {
-    const backup = await db.getDatabaseBackup();
-    logAdminActivity(`Generated full database snapshot backup`);
+    const rawBackup = await db.getDatabaseBackup();
+    const backup = redactSensitiveUserData(rawBackup);
+    logAdminActivity(`Generated full database snapshot backup (redacted)`);
     const allowedOrigin = res.getHeader("Access-Control-Allow-Origin") || (req.headers.origin || "null");
     res.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8",
@@ -1704,7 +1748,12 @@ const server = http.createServer(async (req, res) => {
     const profile = await db.getProfile(targetUserId);
     const applications = await db.getApplications(targetUserId);
     const userMeta = await db.getUserById(targetUserId);
-    sendJson(res, 200, { ok: true, user: userMeta, profile: profile || {}, applications: applications || [] });
+    sendJson(res, 200, {
+      ok: true,
+      user: redactSensitiveUserData(userMeta),
+      profile: redactSensitiveUserData(profile || {}),
+      applications: applications || []
+    });
     return;
   }
 

@@ -5,7 +5,11 @@
   "scripts": {
     "frontend": "http-server frontend -p 8000",
     "backend": "cd backend && npm start",
-    "start": "npm run backend"
+    "start": "npm run backend",
+    "test:backend": "cd backend && npm test",
+    "test:extension": "node extension/test-verifier.js",
+    "test": "node extension/test-verifier.js && cd backend && node test-suite.js",
+    "build": "echo \"Static client and Node backend; no build compilation required.\""
   },
   "dependencies": {
     "http-server": "^14.1.1"

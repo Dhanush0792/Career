@@ -30,7 +30,7 @@
       "email": "input[type='email'], input[id*='email'], input[name*='email']",
       "phone": "input[type='tel'], input[id*='phone'], input[name*='phone']",
       "resume": "input[type='file']",
-      "city: ": "input[id*='city'], input[name*='city']",
+      "city": "input[id*='city'], input[name*='city']",
       "country": "input[id*='country'], input[name*='country']"
     },
     "Greenhouse": {
@@ -42,7 +42,7 @@
     },
     "Lever": {
       "fullName": "input[name*='name']",
-      "email: ": "input[name*='email']",
+      "email": "input[name*='email']",
       "phone": "input[name*='phone']",
       "resume": "input[type='file']",
       "linkedin": "input[name*='linkedin'], input[placeholder*='linkedin']"
