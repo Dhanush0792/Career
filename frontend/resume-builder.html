@@ -1466,7 +1466,11 @@
         document.getElementById("res-experience-level").value = exp;
       }
 
-      handleRoleSelection();
+      // If user has not yet entered their own custom summary, align with target role summary
+      const currentSum = document.getElementById("res-summary")?.value || "";
+      if (!currentSum.trim() || Object.values(ROLE_SUMMARIES).some(obj => Object.values(obj).includes(currentSum))) {
+        handleRoleSelection();
+      }
     }
 
     async function triggerResumeGeneration() {
@@ -1601,8 +1605,10 @@
       const profile = activeUserProfile;
       
       // Populate Basics
-      document.getElementById("res-name").value = profile.fullName || "";
-      const titleVal = profile.headline || profile.targetRole || "";
+      if (document.getElementById("res-name")) {
+        document.getElementById("res-name").value = profile.fullName || "";
+      }
+      const titleVal = profile.headline || profile.targetRole || (profile.targetRoles ? profile.targetRoles.split(',')[0].trim() : "");
       const titleEl = document.getElementById("res-title");
       if (titleEl && titleVal) {
         let exists = false;
@@ -1615,41 +1621,103 @@
         }
         titleEl.value = titleVal;
       }
-      document.getElementById("res-email").value = profile.email || "";
-      document.getElementById("res-phone").value = profile.phone || "";
-      document.getElementById("res-location").value = (profile.city && profile.country) ? `${profile.city}, ${profile.country}` : (profile.city || profile.country || "");
-      document.getElementById("res-website").value = profile.portfolio || "";
-      document.getElementById("res-summary").value = profile.summary || "";
+      if (document.getElementById("res-email")) {
+        document.getElementById("res-email").value = profile.email || "";
+      }
+      if (document.getElementById("res-phone")) {
+        document.getElementById("res-phone").value = profile.phone || "";
+      }
+      if (document.getElementById("res-location")) {
+        document.getElementById("res-location").value = (profile.city && profile.country) ? `${profile.city}, ${profile.country}` : (profile.city || profile.country || "");
+      }
+      if (document.getElementById("res-website")) {
+        document.getElementById("res-website").value = profile.portfolio || profile.github || profile.linkedin || "";
+      }
+      if (document.getElementById("res-summary")) {
+        document.getElementById("res-summary").value = profile.summary || "";
+      }
       
       // Populate Skills
       const skills = profile.skills || "";
-      document.getElementById("res-skills").value = typeof skills === "string" ? skills : (Array.isArray(skills) ? skills.join(", ") : "");
+      if (document.getElementById("res-skills")) {
+        document.getElementById("res-skills").value = typeof skills === "string" ? skills : (Array.isArray(skills) ? skills.join(", ") : "");
+      }
       
-      // Populate Experience
-      const experience = profile.experience;
+      // Populate Experience (handles structured array, plain text, or resumeDraft fallback)
+      const rawExp = profile.experience || profile.resumeDraft || "";
       const expContainer = document.getElementById("experience-list");
       if (expContainer) {
         expContainer.innerHTML = "";
-        if (Array.isArray(experience)) {
-          experience.forEach(exp => {
-            addExperienceRow(exp);
-          });
-        } else if (typeof experience === "string" && experience.trim()) {
-          addExperienceRow({ summary: experience });
+        if (Array.isArray(profile.experience)) {
+          profile.experience.forEach(exp => addExperienceRow(exp));
+        } else if (typeof rawExp === "string" && rawExp.trim()) {
+          // Parse experience blocks or fallback to block text
+          const blocks = rawExp.split(/\n\s*\n/).filter(b => b.trim().length > 15);
+          if (blocks.length > 0) {
+            blocks.slice(0, 4).forEach(b => {
+              const lines = b.trim().split('\n');
+              const headerLine = lines[0] || '';
+              let pos = headerLine;
+              let comp = '';
+              let dates = '';
+              if (headerLine.includes('@')) {
+                const parts = headerLine.split('@');
+                pos = parts[0].trim();
+                comp = parts[1].replace(/\(.*\)/, '').trim();
+                const dMatch = headerLine.match(/\((.*?)\)/);
+                if (dMatch) dates = dMatch[1];
+              }
+              const desc = lines.slice(1).join('\n').trim() || b.trim();
+              addExperienceRow({
+                company: comp,
+                position: pos,
+                startDate: dates,
+                endDate: dates ? '' : 'Present',
+                summary: desc
+              });
+            });
+          } else {
+            addExperienceRow({ summary: rawExp });
+          }
         }
       }
       
-      // Populate Education
-      const education = profile.education;
+      // Populate Education (handles education array or individual eduGrad / eduPG / edu12 fields)
       const eduContainer = document.getElementById("education-list");
       if (eduContainer) {
         eduContainer.innerHTML = "";
-        if (Array.isArray(education)) {
-          education.forEach(edu => {
-            addEducationRow(edu);
-          });
-        } else if (typeof education === "string" && education.trim()) {
-          addEducationRow({ area: education });
+        if (Array.isArray(profile.education) && profile.education.length > 0) {
+          profile.education.forEach(edu => addEducationRow(edu));
+        } else {
+          // Check master profile education schema
+          if (profile.eduGrad_college || profile.eduGrad_degree) {
+            addEducationRow({
+              institution: profile.eduGrad_college || "",
+              area: (profile.eduGrad_degree || "Bachelor's") + (profile.eduGrad_stream ? ` in ${profile.eduGrad_stream}` : ""),
+              year: profile.eduGrad_year || ""
+            });
+          }
+          if (profile.eduPG_college || profile.eduPG_degree || profile.eduMasters_college || profile.eduMasters_degree) {
+            addEducationRow({
+              institution: profile.eduPG_college || profile.eduMasters_college || "",
+              area: (profile.eduPG_degree || profile.eduMasters_degree || "Master's") + (profile.eduPG_stream ? ` in ${profile.eduPG_stream}` : ""),
+              year: profile.eduPG_year || profile.eduMasters_year || ""
+            });
+          }
+          if (profile.eduPhD_college || profile.eduPhD_degree) {
+            addEducationRow({
+              institution: profile.eduPhD_college || "",
+              area: (profile.eduPhD_degree || "Doctor of Philosophy") + (profile.eduPhD_stream ? ` in ${profile.eduPhD_stream}` : ""),
+              year: profile.eduPhD_year || ""
+            });
+          }
+          if (profile.edu12_school || profile.edu12_board) {
+            addEducationRow({
+              institution: profile.edu12_school || "",
+              area: `High School / 12th Grade (${profile.edu12_board || 'Secondary'})`,
+              year: profile.edu12_year || ""
+            });
+          }
         }
       }
 
@@ -1673,7 +1741,7 @@
         document.getElementById("res-languages").value = profile.languages || "English (Fluent)";
       }
       if (document.getElementById("res-relocation")) {
-        document.getElementById("res-relocation").value = profile.relocation || "Open to Relocate, Immediate Joiner";
+        document.getElementById("res-relocation").value = profile.willingToRelocate ? (profile.willingToRelocate === 'Yes' ? 'Open to Relocate, Immediate Joiner' : 'Local / Remote Only') : (profile.relocation || "Open to Relocate, Immediate Joiner");
       }
 
       // Initial preview render
