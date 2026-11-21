@@ -1,4 +1,10 @@
 import { buildAutofillPayload, getPortalRule, PORTAL_MAPS } from "./shared.js";
+import JDMatcher from "./jd-matcher.js";
+import CoverLetterEngine from "./cover-letter-engine.js";
+import { buildResumePdf, createResumeFile, downloadResumePdf, injectPdfToFileInput } from "./resume-pdf-builder.js";
+
+let popupActiveJob = { title: "", company: "", description: "", location: "", url: "" };
+let popupActiveProfile = {};
 
 // ── Status Helpers ──────────────────────────────────────────────────────────
 function setStatus(msg, cls = "") {
@@ -35,6 +41,9 @@ function setupTabs() {
 
       if (targetId === "trackerTab") {
         loadTrackerMetadata();
+      }
+      if (targetId === "aiResumeTab") {
+        loadPopupActiveJobAi();
       }
     });
   });
@@ -123,6 +132,7 @@ function renderPersonaSelector(profiles, activeId) {
 }
 
 async function loadAndDisplayProfile(cachedProfile = null, cachedEmail = "") {
+  popupActiveProfile = cachedProfile || {};
   let profile = cachedProfile;
   if (!profile) {
     const local = await new Promise((r) =>
@@ -509,6 +519,197 @@ async function loadTestProfile() {
   });
 }
 
+
+// ── AI Resume & Cover Letter Popup Helpers ─────────────────────────────────
+async function loadPopupActiveJobAi() {
+  const titleEl = document.getElementById("popupAiJobTitle");
+  const compEl = document.getElementById("popupAiJobCompany");
+  const badgeEl = document.getElementById("popupAiAtsBadge");
+  const barEl = document.getElementById("popupAiScoreBar");
+  const pillsEl = document.getElementById("popupAiKeywordPills");
+
+  try {
+    const tab = await getActiveTab();
+    if (!tab?.id) {
+      if (titleEl) titleEl.textContent = "No active tab";
+      return;
+    }
+
+    if (titleEl) titleEl.textContent = "Extracting job details...";
+    chrome.tabs.sendMessage(tab.id, { type: "jobxapply:extractJD" }, (res) => {
+      if (chrome.runtime.lastError || !res || !res.ok) {
+        const titleParts = (tab.title || "").split(/[-|–—:]/);
+        popupActiveJob = {
+          title: titleParts[0]?.trim() || "Target Role",
+          company: titleParts[1]?.trim() || "Company",
+          description: tab.title || "",
+          location: "",
+          url: tab.url || ""
+        };
+      } else {
+        popupActiveJob = {
+          title: res.title || "Target Role",
+          company: res.company || "Company",
+          description: res.description || "",
+          location: res.location || "",
+          url: res.url || tab.url || ""
+        };
+      }
+
+      if (titleEl) titleEl.textContent = popupActiveJob.title;
+      if (compEl) compEl.textContent = popupActiveJob.company + (popupActiveJob.location ? " • " + popupActiveJob.location : "");
+
+      const jdText = popupActiveJob.description || (popupActiveJob.title + " " + popupActiveJob.company);
+      const matchResult = JDMatcher.matchJD(jdText, popupActiveProfile);
+      const atsScore = matchResult.score || 75;
+
+      if (badgeEl) {
+        badgeEl.textContent = `ATS ${atsScore}%`;
+        badgeEl.style.borderColor = atsScore >= 75 ? "#2fddc4" : (atsScore >= 50 ? "#f5a623" : "#ff5c5c");
+        badgeEl.style.color = atsScore >= 75 ? "#2fddc4" : (atsScore >= 50 ? "#f5a623" : "#ff5c5c");
+      }
+      if (barEl) {
+        barEl.style.width = `${atsScore}%`;
+      }
+
+      if (pillsEl) {
+        pillsEl.innerHTML = "";
+        const matchedPills = (matchResult.matched || []).slice(0, 4).map(kw =>
+          `<span style="background:rgba(47,221,196,0.15); color:#2fddc4; padding:1px 5px; border-radius:3px; font-weight:600;">✓ ${kw}</span>`
+        ).join("");
+        const missingPills = (matchResult.missing || []).slice(0, 3).map(kw =>
+          `<span style="background:rgba(245,166,35,0.15); color:#f5a623; padding:1px 5px; border-radius:3px; font-weight:600;">+ ${kw}</span>`
+        ).join("");
+        pillsEl.innerHTML = (matchedPills || missingPills) ? (matchedPills + missingPills) : '<span style="color:rgba(244,247,255,0.4);">Keywords analyzed.</span>';
+      }
+    });
+  } catch (e) {
+    console.error("loadPopupActiveJobAi error", e);
+  }
+}
+
+function getPopupTailoredProfile() {
+  const p = { ...popupActiveProfile };
+  const jdText = popupActiveJob.description || (popupActiveJob.title + " " + popupActiveJob.company);
+  const extracted = JDMatcher.extractKeywordsFromJD(jdText);
+  const highPriority = (extracted?.highPriority || []).slice(0, 5);
+
+  let existingSkills = Array.isArray(p.skills) ? [...p.skills] : (typeof p.skills === "string" ? p.skills.split(",").map(s => s.trim()) : []);
+  const lowerExisting = new Set(existingSkills.map(s => s.toLowerCase()));
+  highPriority.forEach(hp => {
+    if (!lowerExisting.has(hp.toLowerCase())) {
+      existingSkills.push(hp);
+    }
+  });
+  p.skills = existingSkills;
+  if (popupActiveJob.title && popupActiveJob.title !== "Target Role") {
+    p.targetRole = popupActiveJob.title;
+  }
+  return p;
+}
+
+function handlePopupDownloadResume() {
+  const tailored = getPopupTailoredProfile();
+  const safeName = (tailored.fullName || tailored.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const jobSuffix = (popupActiveJob.company || "Job").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const filename = `${safeName}_${jobSuffix}_Resume.pdf`;
+
+  downloadResumePdf(tailored, filename);
+  setStatus("Downloaded tailored resume PDF!", "success");
+}
+
+async function handlePopupAttachResume() {
+  const statusEl = document.getElementById("popupAiAttachStatus");
+  if (statusEl) statusEl.textContent = "Attaching tailored resume to portal...";
+
+  try {
+    const tab = await getActiveTab();
+    if (!tab?.id) {
+      if (statusEl) statusEl.textContent = "No active tab found.";
+      return;
+    }
+
+    const tailored = getPopupTailoredProfile();
+    const safeName = (tailored.fullName || tailored.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const jobSuffix = (popupActiveJob.company || "Job").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const filename = `${safeName}_${jobSuffix}_Resume.pdf`;
+
+    const pdfBytes = buildResumePdf(tailored);
+    let binary = "";
+    const len = pdfBytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(pdfBytes[i]);
+    }
+    const fileDataBase64 = btoa(binary);
+
+    chrome.tabs.sendMessage(tab.id, {
+      type: "jobxapply:injectResumeFile",
+      fileData: fileDataBase64,
+      fileName: filename,
+      mimeType: "application/pdf"
+    }, (res) => {
+      if (chrome.runtime.lastError) {
+        if (statusEl) statusEl.textContent = "Error: " + chrome.runtime.lastError.message;
+        return;
+      }
+      if (res?.ok) {
+        if (statusEl) statusEl.textContent = `✓ Attached ${filename}!`;
+        setStatus(`Attached ${filename} to page form!`, "success");
+      } else {
+        if (statusEl) statusEl.textContent = res?.error || "No file upload inputs found";
+        setStatus(res?.error || "Could not attach file", "warn");
+      }
+    });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = "Attach error: " + err.message;
+  }
+}
+
+function handlePopupGenerateCoverLetter() {
+  const outputEl = document.getElementById("popupAiCoverOutput");
+  const tailored = getPopupTailoredProfile();
+  const jdText = popupActiveJob.description || (popupActiveJob.title + " " + popupActiveJob.company);
+
+  const letterText = CoverLetterEngine.generateCoverLetter(tailored, {
+    companyName: popupActiveJob.company || "Hiring Team",
+    jobTitle: popupActiveJob.title || "Software Engineer",
+    template: "technical",
+    jdText: jdText
+  });
+
+  if (outputEl) outputEl.value = letterText;
+  setStatus("Generated cover letter!", "success");
+}
+
+function handlePopupCopyCoverLetter() {
+  const text = document.getElementById("popupAiCoverOutput")?.value || "";
+  if (!text) {
+    setStatus("Generate cover letter first", "warn");
+    return;
+  }
+  navigator.clipboard.writeText(text);
+  setStatus("Copied cover letter!", "success");
+}
+
+function handlePopupDownloadCoverLetter() {
+  const text = document.getElementById("popupAiCoverOutput")?.value || "";
+  if (!text) {
+    setStatus("Generate cover letter first", "warn");
+    return;
+  }
+  const comp = (popupActiveJob.company || "Company").replace(/[^a-zA-Z0-9_-]/g, "_");
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Cover_Letter_${comp}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  setStatus("Downloaded cover letter!", "success");
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 (async function init() {
   setupTabs();
@@ -522,6 +723,12 @@ async function loadTestProfile() {
   await loadPortalInfo();
   await checkAuthState();
   await detectActiveWebSession();
+
+  document.getElementById("popupAiDownloadResumeBtn")?.addEventListener("click", handlePopupDownloadResume);
+  document.getElementById("popupAiAttachResumeBtn")?.addEventListener("click", handlePopupAttachResume);
+  document.getElementById("popupAiGenCoverBtn")?.addEventListener("click", handlePopupGenerateCoverLetter);
+  document.getElementById("popupAiCopyCoverBtn")?.addEventListener("click", handlePopupCopyCoverLetter);
+  document.getElementById("popupAiDownloadCoverBtn")?.addEventListener("click", handlePopupDownloadCoverLetter);
 
   document.getElementById("loginPasscodeBtn")?.addEventListener("click", handleDirectLogin);
   document.getElementById("loginPasscodeInput")?.addEventListener("keydown", (e) => {

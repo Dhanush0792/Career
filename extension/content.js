@@ -744,6 +744,94 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     return true;
   }
+  if (message?.type === "jobxapply:extractJD") {
+    try {
+      if (typeof extractJD === "function") {
+        const jdData = extractJD();
+        sendResponse({ ok: true, ...jdData });
+      } else {
+        const meta = extractJobMetadata();
+        const clone = document.body.cloneNode(true);
+        const removals = clone.querySelectorAll("script, style, head, iframe, noscript, svg, nav, footer, header");
+        removals.forEach(el => el.remove());
+        const bodyText = (clone.innerText || clone.textContent || "").slice(0, 8000);
+        sendResponse({
+          ok: true,
+          title: meta.title || "Job Opening",
+          company: meta.company || "Company",
+          location: "",
+          description: bodyText,
+          url: window.location.href
+        });
+      }
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
+  if (message?.type === "jobxapply:injectResumeFile") {
+    try {
+      const { fileData, fileName, mimeType } = message;
+      if (!fileData) {
+        sendResponse({ ok: false, error: "No file data received" });
+        return true;
+      }
+      const binaryStr = atob(fileData);
+      const len = binaryStr.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      const safeName = fileName || "Resume.pdf";
+      const file = new File([bytes], safeName, {
+        type: mimeType || "application/pdf",
+        lastModified: Date.now()
+      });
+
+      const fileInputs = Array.from(document.querySelectorAll('input[type="file"]:not([disabled])'));
+      if (fileInputs.length === 0) {
+        sendResponse({ ok: false, error: "No file upload input elements found on this page" });
+        return true;
+      }
+
+      const resumeRegex = /resume|cv|curriculum|vitae|application|document|file/i;
+      let targetInput = fileInputs.find(input => {
+        const id = input.id || "";
+        const name = input.name || "";
+        const aria = input.getAttribute("aria-label") || "";
+        const accept = input.accept || "";
+        const labelText = input.labels ? Array.from(input.labels).map(l => l.innerText).join(" ") : "";
+        const containerText = input.closest("label, div, section")?.innerText || "";
+        return resumeRegex.test(id) || resumeRegex.test(name) || resumeRegex.test(aria) ||
+               resumeRegex.test(accept) || resumeRegex.test(labelText) || resumeRegex.test(containerText.slice(0, 300));
+      }) || fileInputs[0];
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      targetInput.files = dataTransfer.files;
+
+      targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+      targetInput.dispatchEvent(new Event("change", { bubbles: true }));
+
+      try {
+        const highlightTarget = targetInput.closest("label, div.dropzone, div.upload-container") || targetInput;
+        const origOutline = highlightTarget.style.outline;
+        const origShadow = highlightTarget.style.boxShadow;
+        highlightTarget.style.outline = "2px solid #2FDDC4";
+        highlightTarget.style.boxShadow = "0 0 14px rgba(47, 221, 196, 0.5)";
+        setTimeout(() => {
+          highlightTarget.style.outline = origOutline;
+          highlightTarget.style.boxShadow = origShadow;
+        }, 3000);
+      } catch (err) {}
+
+      showToastNotification("Attached " + safeName + " to form!");
+      sendResponse({ ok: true, fileName: safeName, inputId: targetInput.id || targetInput.name || "input[type='file']" });
+    } catch (e) {
+      sendResponse({ ok: false, error: e.message });
+    }
+    return true;
+  }
   if (message?.type === "jobxapply:receiveProfileFromExtension") {
     try {
       window.dispatchEvent(new CustomEvent("jobxapply:populateWebProfile", {

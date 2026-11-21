@@ -7,7 +7,7 @@
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        width: 330px;
+        width: 350px;
         font-family: Inter, system-ui, -apple-system, sans-serif;
         background: #0b1020;
         color: #f4f7ff;
@@ -235,6 +235,7 @@
     <!-- TAB NAVIGATION (Visible when logged in) -->
     <div class="nav-tabs" id="navTabs" style="display:none;">
       <button class="nav-tab active" data-tab="autofillTab">Autofill</button>
+      <button class="nav-tab" data-tab="aiResumeTab" style="color:#2fddc4;">AI Resume</button>
       <button class="nav-tab" data-tab="snippetsTab">Snippets</button>
       <button class="nav-tab" data-tab="trackerTab">Tracker</button>
     </div>
@@ -318,6 +319,49 @@
             Open App in Side Panel
           </button>
           <button class="btn-secondary" id="syncWebTabBtn" style="width:100%; border-color:rgba(91,79,232,0.4); color:#a59bf7;">Sync Profile to Website Tab</button>
+        </div>
+
+        <!-- TAB CONTENT 1.5: AI RESUME & COVER LETTER TAB -->
+        <div id="aiResumeTab" class="tab-pane" style="display:none; flex-direction:column; gap:10px;">
+          <!-- Active detected job card -->
+          <div class="card" style="border-left:3px solid #2fddc4; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+              <div style="flex:1; min-width:0;">
+                <div id="popupAiJobTitle" style="font-size:12px; font-weight:700; color:#f4f7ff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Detecting job...</div>
+                <div id="popupAiJobCompany" style="font-size:10px; color:rgba(244,247,255,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Target Company</div>
+              </div>
+              <span id="popupAiAtsBadge" style="font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; background:rgba(47,221,196,0.15); border:1px solid #2fddc4; color:#2fddc4; white-space:nowrap;">ATS --%</span>
+            </div>
+            <div style="height:4px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden;">
+              <div id="popupAiScoreBar" style="height:100%; width:0%; background:linear-gradient(90deg, #5b4fe8, #2fddc4); transition:width 0.4s;"></div>
+            </div>
+            <div id="popupAiKeywordPills" style="display:flex; gap:4px; flex-wrap:wrap; font-size:9.5px;">
+              <span style="color:rgba(244,247,255,0.4);">Analyzing job keywords...</span>
+            </div>
+          </div>
+
+          <!-- Tailor & Download PDF -->
+          <button class="btn-primary" id="popupAiDownloadResumeBtn" style="background:rgba(47,221,196,0.15); border:1px solid rgba(47,221,196,0.4); color:#2fddc4; padding:8px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Tailor &amp; Download Resume PDF
+          </button>
+
+          <!-- Auto-Attach to Form -->
+          <button class="btn-primary" id="popupAiAttachResumeBtn" style="padding:8px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            Auto-Attach Tailored Resume to Form
+          </button>
+          <div id="popupAiAttachStatus" style="font-size:10px; color:rgba(244,247,255,0.5); text-align:center; min-height:14px;"></div>
+
+          <div class="divider">Cover Letter</div>
+
+          <!-- Cover Letter controls -->
+          <div class="btn-row">
+            <button class="btn-primary" id="popupAiGenCoverBtn" style="flex:2; padding:7px; font-size:11px;">Generate Cover Letter</button>
+            <button class="btn-secondary" id="popupAiCopyCoverBtn" style="flex:1; padding:7px; font-size:11px;">Copy</button>
+            <button class="btn-secondary" id="popupAiDownloadCoverBtn" style="flex:1; padding:7px; font-size:11px;">Save</button>
+          </div>
+          <textarea id="popupAiCoverOutput" class="input-field" style="min-height:90px; font-size:10.5px; line-height:1.4; resize:vertical;" placeholder="Cover letter will generate here..."></textarea>
         </div>
 
         <!-- TAB CONTENT 2: SNIPPETS TAB -->

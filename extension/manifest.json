@@ -32,6 +32,7 @@
         "<all_urls>"
       ],
       "js": [
+        "jd-extractor.js",
         "content.js"
       ],
       "run_at": "document_idle"
