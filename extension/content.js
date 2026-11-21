@@ -833,6 +833,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message?.type === "jobxapply:receiveProfileFromExtension") {
+    if (!isAuthorizedAppOrigin()) {
+      sendResponse({ ok: false, error: "Unauthorized origin" });
+      return true;
+    }
     try {
       window.dispatchEvent(new CustomEvent("jobxapply:populateWebProfile", {
         detail: { profile: message.profile }
@@ -1360,22 +1364,27 @@ function handleFieldClick(e) {
 }
 
 
-// Validate origin for web-to-extension messages
-function isAuthorizedWebOrigin() {
-  const origin = window.location.origin;
-  if (!origin) return false;
-  if (origin === "https://jobxapply.netlify.app" || origin === "https://careerhub-app.netlify.app") {
-    return true;
+// Validate origin for web-to-extension messages (SEC-01)
+function isAuthorizedAppOrigin() {
+  try {
+    const origin = window.location.origin;
+    if (!origin) return false;
+    if (origin === "https://jobxapply.netlify.app" || origin === "https://careerhub-app.netlify.app") {
+      return true;
+    }
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
   }
-  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
-    return true;
-  }
-  return false;
 }
+const isAuthorizedWebOrigin = isAuthorizedAppOrigin;
 
 // Listen for ping check from extension setup page
 window.addEventListener("jobxapply:pingExtension", () => {
-  if (!isAuthorizedWebOrigin()) return;
+  if (!isAuthorizedAppOrigin()) return;
   window.dispatchEvent(new CustomEvent("jobxapply:pongExtension", {
     detail: { version: "1.0.0", active: true }
   }));
@@ -1384,7 +1393,7 @@ window.addEventListener("jobxapply:pingExtension", () => {
 // Listen for pairing event from the JobXApply website
 function handleShareAuth(e) {
   if (!checkContext()) return;
-  if (!isAuthorizedWebOrigin()) return;
+  if (!isAuthorizedAppOrigin()) return;
   const { token, passcode, email } = e.detail || {};
   if (token || passcode || email) {
     chrome.runtime.sendMessage({
@@ -1403,7 +1412,7 @@ window.addEventListener("jobxapply:shareAuth", handleShareAuth);
 // Listen for profile request from web page
 window.addEventListener("jobxapply:requestExtensionProfile", () => {
   if (!checkContext()) return;
-  if (!isAuthorizedWebOrigin()) return;
+  if (!isAuthorizedAppOrigin()) return;
   chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, (res) => {
     if (chrome.runtime.lastError) return;
     const profile = res?.profile || {};
@@ -1416,7 +1425,7 @@ window.addEventListener("jobxapply:requestExtensionProfile", () => {
 // Listen for profile save event from web page to store directly into extension
 window.addEventListener("jobxapply:saveWebProfileToExtension", (e) => {
   if (!checkContext()) return;
-  if (!isAuthorizedWebOrigin()) return;
+  if (!isAuthorizedAppOrigin()) return;
   const incoming = e.detail?.profile;
   if (!incoming) return;
   chrome.runtime.sendMessage({

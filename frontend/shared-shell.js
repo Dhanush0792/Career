@@ -377,7 +377,10 @@ async function decryptProfileData(encryptedProfile, passcode) {
 
   const decoder = new TextDecoder();
   const privateJson = decoder.decode(decryptedBuffer);
-  return JSON.parse(privateJson);
+  const parsed = JSON.parse(privateJson);
+  const full = { ...encryptedProfile, ...parsed };
+  delete full.encryptedBlob;
+  return full;
 }
 
 function showPasscodeModal() {
@@ -1180,135 +1183,6 @@ const DEFAULT_PROFILE_FIELDS = [
   "eduPhD_college", "eduPhD_degree", "eduPhD_stream", "eduPhD_year", "eduPhD_cgpa", "eduPhD_pursuing",
   "experienceList", "projectsList", "certificationsList"
 ];
-
-function uint8ToBase64(uint8) {
-  let bin = "";
-  const len = uint8.byteLength;
-  for (let i = 0; i < len; i++) {
-    bin += String.fromCharCode(uint8[i]);
-  }
-  return btoa(bin);
-}
-
-function base64ToUint8(base64) {
-  const binaryString = atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
-}
-
-async function generatePasscodeHash(passcode) {
-  if (!passcode) return "";
-  const encoder = new TextEncoder();
-  const data = encoder.encode(passcode + ":jobxapply_salt_v2");
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  return uint8ToBase64(new Uint8Array(hashBuffer));
-}
-
-async function deriveKey(passcode, saltBytes) {
-  const encoder = new TextEncoder();
-  const baseKey = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(passcode),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-  
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: saltBytes,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
-    baseKey,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-}
-
-async function encryptProfileData(profile, passcode) {
-  if (!profile) return null;
-  if (!passcode) {
-    throw new Error("Encryption key/passcode required");
-  }
-
-  const publicMetadata = {
-    fullName: profile.fullName || "",
-    headline: profile.headline || "",
-    targetRole: profile.targetRole || ""
-  };
-
-  const privateDetails = {};
-  for (const field of DEFAULT_PROFILE_FIELDS) {
-    if (field !== "fullName" && field !== "headline" && field !== "targetRole") {
-      privateDetails[field] = profile[field] || "";
-    }
-  }
-
-  const plaintext = JSON.stringify(privateDetails);
-  const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await deriveKey(passcode, salt);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  
-  const ciphertextBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encoder.encode(plaintext)
-  );
-
-  return {
-    ...publicMetadata,
-    encryptedBlob: {
-      ciphertext: uint8ToBase64(new Uint8Array(ciphertextBuffer)),
-      iv: uint8ToBase64(iv),
-      salt: uint8ToBase64(salt)
-    }
-  };
-}
-
-async function decryptProfileData(encryptedProfile, passcode) {
-  if (!encryptedProfile) return {};
-  if (!encryptedProfile.encryptedBlob) {
-    return encryptedProfile;
-  }
-  if (!passcode) {
-    throw new Error("Decryption passcode required");
-  }
-
-  const blob = encryptedProfile.encryptedBlob;
-  const salt = base64ToUint8(blob.salt);
-  const iv = base64ToUint8(blob.iv);
-  const ciphertext = base64ToUint8(blob.ciphertext);
-  
-  const key = await deriveKey(passcode, salt);
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    key,
-    ciphertext
-  );
-
-  const decoder = new TextDecoder();
-  const privateJson = decoder.decode(decryptedBuffer);
-  const privateDetails = JSON.parse(privateJson);
-
-  const fullProfile = {};
-  for (const field of DEFAULT_PROFILE_FIELDS) {
-    if (field === "fullName" || field === "headline" || field === "targetRole") {
-      fullProfile[field] = encryptedProfile[field] || "";
-    } else {
-      fullProfile[field] = privateDetails[field] || "";
-    }
-  }
-
-  return fullProfile;
-}
 
 function showPasscodeModal() {
   if (document.getElementById('cb-passcode-modal')) return;

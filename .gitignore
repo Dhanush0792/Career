@@ -7,6 +7,7 @@ coverage/
 .netlify/
 database/user-registry.json
 database/jobxapply-sync-state.json
+database/careerhub-sync-state.json
 database/users/*
 !database/users/.gitkeep
 *.log
