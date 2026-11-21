@@ -1813,29 +1813,38 @@ async function saveCloudProfile() {
 
   const res = await saveProfile(currentProfile);
   
-  // Proactively dispatch profile update to extension
+  // Proactively dispatch profile update and auth to extension
   try {
+    const token = localStorage.getItem('jxa_token') || '';
+    const email = localStorage.getItem('jxa_user_email') || currentProfile.email || '';
+    const passcode = localStorage.getItem('jxa_passcode') || '';
     window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
       detail: { profile: currentProfile }
+    }));
+    window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+      detail: { token, email, passcode }
     }));
   } catch (e) {}
 
   if (res.ok) {
     if (statusEl) {
-      statusEl.textContent = 'All changes synced with cloud';
+      statusEl.textContent = res.offline ? 'Saved locally (offline mode)' : 'All changes synced with cloud';
       statusEl.style.color = 'var(--white)';
     }
     if (indicatorEl) indicatorEl.style.background = 'var(--success)';
     updateProfileCompleteness();
-    showToast('Profile updated & synchronized successfully!', 'success');
+    showToast(res.offline ? 'Profile saved locally & synced to extension!' : 'Profile updated & synchronized successfully!', 'success');
   } else {
+    // Even if remote sync failed, ensure local storage and extension have latest data
+    localStorage.setItem('jxa_local_profile', JSON.stringify(currentProfile));
+    localStorage.setItem('jxa_local_profiles', JSON.stringify(allPersonas));
     if (statusEl) {
       statusEl.textContent = 'Saved locally (cloud sync pending)';
       statusEl.style.color = 'var(--alert)';
     }
     if (indicatorEl) indicatorEl.style.background = '#F5A623';
     updateProfileCompleteness();
-    showToast(res.errors ? res.errors.join('; ') : 'Saved locally. Cloud sync pending.', 'info');
+    showToast('Saved locally & to extension. Cloud sync pending.', 'info');
   }
 }
 

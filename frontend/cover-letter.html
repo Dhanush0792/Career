@@ -1217,8 +1217,16 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
 
 // Auto load profile details and sync
 (async () => {
-  const state = await loadProfile();
+  let state = await loadProfile();
   userProfile = state?.profile || {};
+  if (!userProfile.fullName && !userProfile.email) {
+    try {
+      const rawLocal = localStorage.getItem('jxa_local_profile');
+      if (rawLocal) {
+        userProfile = JSON.parse(rawLocal);
+      }
+    } catch(e) {}
+  }
 
   const missing = [];
   if (!userProfile.fullName?.trim()) missing.push('Full Name');

@@ -619,9 +619,20 @@
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = JDMatcher;
+    module.exports.default = JDMatcher;
+    module.exports.JDMatcher = JDMatcher;
   }
   if (typeof root !== 'undefined') {
     root.JDMatcher = JDMatcher;
   }
 
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+
+const _exportedJDMatcher = (typeof window !== 'undefined' && window.JDMatcher) || (typeof globalThis !== 'undefined' && globalThis.JDMatcher) || (typeof global !== 'undefined' && global.JDMatcher);
+export default _exportedJDMatcher;
+export { _exportedJDMatcher as JDMatcher };
+
+if (typeof module !== 'undefined' && module.exports) {
+  Object.assign(module.exports, _exportedJDMatcher);
+}
+

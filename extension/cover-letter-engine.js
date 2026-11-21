@@ -874,9 +874,19 @@ ${d.enclosureLine ? `Enclosures: ${escapeLatex(d.enclosureLine)}` : ''}
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = CoverLetterEngine;
+    module.exports.default = CoverLetterEngine;
+    module.exports.CoverLetterEngine = CoverLetterEngine;
   }
   if (typeof root !== 'undefined') {
     root.CoverLetterEngine = CoverLetterEngine;
   }
 
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+
+const _exportedCoverLetterEngine = (typeof window !== 'undefined' && window.CoverLetterEngine) || (typeof globalThis !== 'undefined' && globalThis.CoverLetterEngine) || (typeof global !== 'undefined' && global.CoverLetterEngine);
+export default _exportedCoverLetterEngine;
+export { _exportedCoverLetterEngine as CoverLetterEngine };
+
+if (typeof module !== 'undefined' && module.exports) {
+  Object.assign(module.exports, _exportedCoverLetterEngine);
+}

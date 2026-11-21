@@ -67,35 +67,41 @@ async function loadPortalInfo() {
 
 // ── Multi-Persona & Profile State ───────────────────────────────────────────
 async function checkAuthState() {
-  const local = await new Promise((r) =>
-    chrome.storage.local.get(
-      ["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyPasscode", "jobxapplyToken", "jobxapplyEmail"],
-      r
-    )
-  );
+  try {
+    const local = await new Promise((r) =>
+      chrome.storage.local.get(
+        ["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyPasscode", "jobxapplyToken", "jobxapplyEmail"],
+        r
+      )
+    );
 
-  let profiles = local.jobxapplyProfiles || {};
-  let activeId = local.jobxapplyActiveProfileId || Object.keys(profiles)[0] || "default";
-  let profile = profiles[activeId] || local.jobxapplyProfile || {};
+    let profiles = local.jobxapplyProfiles || {};
+    let activeId = local.jobxapplyActiveProfileId || Object.keys(profiles)[0] || "default";
+    let profile = profiles[activeId] || local.jobxapplyProfile || {};
 
-  const hasCredentials = !!(local.jobxapplyPasscode || local.jobxapplyToken);
-  const hasData = profile && !!(profile.fullName || profile.email || profile.phone);
+    const hasCredentials = !!(local.jobxapplyPasscode || local.jobxapplyToken);
+    const hasData = profile && !!(profile.fullName || profile.email || profile.phone);
 
-  const loginView = document.getElementById("loginView");
-  const autofillView = document.getElementById("autofillView");
-  const navTabs = document.getElementById("navTabs");
+    const loginView = document.getElementById("loginView");
+    const autofillView = document.getElementById("autofillView");
+    const navTabs = document.getElementById("navTabs");
 
-  if (hasCredentials || hasData) {
-    if (loginView) loginView.style.display = "none";
-    if (autofillView) autofillView.style.display = "flex";
-    if (navTabs) navTabs.style.display = "flex";
-    
-    renderPersonaSelector(profiles, activeId);
-    await loadAndDisplayProfile(profile, local.jobxapplyEmail);
-    renderSnippets(profile);
-  } else {
-    if (autofillView) autofillView.style.display = "none";
-    if (navTabs) navTabs.style.display = "none";
+    if (hasCredentials || hasData) {
+      if (loginView) loginView.style.display = "none";
+      if (autofillView) autofillView.style.display = "flex";
+      if (navTabs) navTabs.style.display = "flex";
+      
+      renderPersonaSelector(profiles, activeId);
+      await loadAndDisplayProfile(profile, local.jobxapplyEmail);
+      renderSnippets(profile);
+    } else {
+      if (autofillView) autofillView.style.display = "none";
+      if (navTabs) navTabs.style.display = "none";
+      if (loginView) loginView.style.display = "flex";
+    }
+  } catch (err) {
+    console.error("checkAuthState error:", err);
+    const loginView = document.getElementById("loginView");
     if (loginView) loginView.style.display = "flex";
   }
 }
@@ -712,74 +718,80 @@ function handlePopupDownloadCoverLetter() {
 
 // ── Init ────────────────────────────────────────────────────────────────────
 (async function init() {
-  setupTabs();
+  try {
+    setupTabs();
 
-  chrome.runtime.onMessage.addListener((message) => {
-    if (message?.type === "jobxapply:profileUpdated") {
-      checkAuthState();
-    }
-  });
-
-  await loadPortalInfo();
-  await checkAuthState();
-  await detectActiveWebSession();
-
-  document.getElementById("popupAiDownloadResumeBtn")?.addEventListener("click", handlePopupDownloadResume);
-  document.getElementById("popupAiAttachResumeBtn")?.addEventListener("click", handlePopupAttachResume);
-  document.getElementById("popupAiGenCoverBtn")?.addEventListener("click", handlePopupGenerateCoverLetter);
-  document.getElementById("popupAiCopyCoverBtn")?.addEventListener("click", handlePopupCopyCoverLetter);
-  document.getElementById("popupAiDownloadCoverBtn")?.addEventListener("click", handlePopupDownloadCoverLetter);
-
-  document.getElementById("loginPasscodeBtn")?.addEventListener("click", handleDirectLogin);
-  document.getElementById("loginPasscodeInput")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") handleDirectLogin();
-  });
-  document.getElementById("loginGoogleBtn")?.addEventListener("click", handleGoogleWebLogin);
-  document.getElementById("loadTestProfileBtn")?.addEventListener("click", loadTestProfile);
-
-  document.getElementById("apply")?.addEventListener("click", doAutofill);
-  document.getElementById("quickLogBtn")?.addEventListener("click", () => logApplication());
-  
-  document.getElementById("manualLogBtn")?.addEventListener("click", () => {
-    const company = document.getElementById("trackerCompanyInput")?.value?.trim();
-    const role = document.getElementById("trackerRoleInput")?.value?.trim();
-    const status = document.getElementById("trackerStatusSelect")?.value || "Applied";
-    logApplication(company, role, status);
-  });
-
-  document.getElementById("openTrackerBtn")?.addEventListener("click", async () => {
-    const activeTab = await getActiveTab();
-    let base = "https://jobxapply.netlify.app";
-    if (activeTab?.url && (activeTab.url.includes("localhost:") || activeTab.url.includes("127.0.0.1:"))) {
-      try {
-        const u = new URL(activeTab.url);
-        base = `${u.protocol}//${u.host}`;
-      } catch (e) {}
-    }
-    chrome.tabs.create({ url: `${base}/tracker.html` });
-  });
-
-  const triggerSidePanel = () => {
-    chrome.runtime.sendMessage({ type: "jobxapply:openSidePanel" }, (res) => {
-      if (res?.ok) {
-        window.close();
+    chrome.runtime.onMessage.addListener((message) => {
+      if (message?.type === "jobxapply:profileUpdated") {
+        checkAuthState();
       }
     });
-  };
 
-  document.getElementById("openSidePanelBtn")?.addEventListener("click", triggerSidePanel);
-  document.getElementById("openWorkspaceBtn")?.addEventListener("click", triggerSidePanel);
+    try { await loadPortalInfo(); } catch(e) { console.warn("Portal info error:", e); }
+    try { await checkAuthState(); } catch(e) { console.warn("Auth state error:", e); }
+    try { await detectActiveWebSession(); } catch(e) { console.warn("Active web session detection error:", e); }
 
-  document.getElementById("editProfile")?.addEventListener("click", () => {
-    chrome.runtime.openOptionsPage
-      ? chrome.runtime.openOptionsPage()
-      : chrome.tabs.create({ url: chrome.runtime.getURL("profile.html") });
-  });
+    document.getElementById("popupAiDownloadResumeBtn")?.addEventListener("click", handlePopupDownloadResume);
+    document.getElementById("popupAiAttachResumeBtn")?.addEventListener("click", handlePopupAttachResume);
+    document.getElementById("popupAiGenCoverBtn")?.addEventListener("click", handlePopupGenerateCoverLetter);
+    document.getElementById("popupAiCopyCoverBtn")?.addEventListener("click", handlePopupCopyCoverLetter);
+    document.getElementById("popupAiDownloadCoverBtn")?.addEventListener("click", handlePopupDownloadCoverLetter);
 
-  document.getElementById("syncCloud")?.addEventListener("click", async () => {
-    await syncFromCloud();
-    await syncToWebTab();
-  });
-  document.getElementById("syncWebTabBtn")?.addEventListener("click", syncToWebTab);
-  document.getElementById("disconnectBtn")?.addEventListener("click", handleDisconnect);
+    document.getElementById("loginPasscodeBtn")?.addEventListener("click", handleDirectLogin);
+    document.getElementById("loginPasscodeInput")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleDirectLogin();
+    });
+    document.getElementById("loginGoogleBtn")?.addEventListener("click", handleGoogleWebLogin);
+    document.getElementById("loadTestProfileBtn")?.addEventListener("click", loadTestProfile);
+
+    document.getElementById("apply")?.addEventListener("click", doAutofill);
+    document.getElementById("quickLogBtn")?.addEventListener("click", () => logApplication());
+    
+    document.getElementById("manualLogBtn")?.addEventListener("click", () => {
+      const company = document.getElementById("trackerCompanyInput")?.value?.trim();
+      const role = document.getElementById("trackerRoleInput")?.value?.trim();
+      const status = document.getElementById("trackerStatusSelect")?.value || "Applied";
+      logApplication(company, role, status);
+    });
+
+    document.getElementById("openTrackerBtn")?.addEventListener("click", async () => {
+      const activeTab = await getActiveTab();
+      let base = "https://jobxapply.netlify.app";
+      if (activeTab?.url && (activeTab.url.includes("localhost:") || activeTab.url.includes("127.0.0.1:"))) {
+        try {
+          const u = new URL(activeTab.url);
+          base = `${u.protocol}//${u.host}`;
+        } catch (e) {}
+      }
+      chrome.tabs.create({ url: `${base}/tracker.html` });
+    });
+
+    const triggerSidePanel = () => {
+      chrome.runtime.sendMessage({ type: "jobxapply:openSidePanel" }, (res) => {
+        if (res?.ok) {
+          window.close();
+        }
+      });
+    };
+
+    document.getElementById("openSidePanelBtn")?.addEventListener("click", triggerSidePanel);
+    document.getElementById("openWorkspaceBtn")?.addEventListener("click", triggerSidePanel);
+
+    document.getElementById("editProfile")?.addEventListener("click", () => {
+      chrome.runtime.openOptionsPage
+        ? chrome.runtime.openOptionsPage()
+        : chrome.tabs.create({ url: chrome.runtime.getURL("profile.html") });
+    });
+
+    document.getElementById("syncCloud")?.addEventListener("click", async () => {
+      await syncFromCloud();
+      await syncToWebTab();
+    });
+    document.getElementById("syncWebTabBtn")?.addEventListener("click", syncToWebTab);
+    document.getElementById("disconnectBtn")?.addEventListener("click", handleDisconnect);
+  } catch (globalErr) {
+    console.error("Popup init failed:", globalErr);
+    const loginView = document.getElementById("loginView");
+    if (loginView) loginView.style.display = "flex";
+  }
 })();

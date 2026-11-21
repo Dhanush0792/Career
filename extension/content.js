@@ -139,14 +139,16 @@ function isJobPage() {
   const host = location.hostname.toLowerCase();
   
   const BLACKLISTED = [
-    "chatgpt.com", "openai.com", "google.com", "github.com", "gitlab.com",
+    "google.", "bing.com", "yahoo.com", "duckduckgo.com", "baidu.com", "yandex.com",
+    "chatgpt.com", "openai.com", "claude.ai", "github.com", "gitlab.com",
     "microsoft.com", "stripe.com", "paypal.com", "facebook.com", "instagram.com",
     "twitter.com", "x.com", "youtube.com", "wikipedia.org", "netflix.com",
-    "amazon.com", "gmail.com", "outlook.com", "yahoo.com",
+    "amazon.", "flipkart.com", "reddit.com", "quora.com", "twitch.tv",
+    "gmail.com", "outlook.com", "mail.google.com", "web.whatsapp.com",
     "onrender.com"
   ];
   
-  if (BLACKLISTED.some(d => host.includes(d))) {
+  if (BLACKLISTED.some(d => host === d || host.endsWith(d) || host.includes(d))) {
     return false;
   }
   
@@ -155,25 +157,50 @@ function isJobPage() {
     return true;
   }
 
-  // Universal Heuristic: Detect application forms on ANY website
-  // Check for common career/job keywords in URL path or title
+  // Universal Heuristic: Detect actual job application forms on ANY career site
+  // Require explicit career/job context in URL or document title
   const pathname = location.pathname.toLowerCase();
   const title = (document.title || "").toLowerCase();
-  const urlKeywords = ["job", "career", "apply", "opening", "vacancy", "recruit", "position", "candidate", "internship", "employment", "hire", "work-with-us", "portal", "registration", "sandbox"];
-  const isJobContext = urlKeywords.some(kw => pathname.includes(kw) || title.includes(kw));
+  const urlKeywords = [
+    "/job", "/jobs", "/career", "/careers", "/apply", "/application", 
+    "/opening", "/openings", "/vacancy", "/vacancies", "/position", "/positions",
+    "/recruit", "/candidate", "/internship", "/employment", "/hire"
+  ];
+  const isJobContext = urlKeywords.some(kw => pathname.includes(kw)) || 
+                       ["job application", "career opportunities", "apply for", "job opening"].some(kw => title.includes(kw));
 
-  // Count candidate input fields (excluding hidden/buttons)
-  const inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select"));
+  // Count candidate input fields (excluding hidden, submit, button, search inputs)
+  const inputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']):not([type='search']), textarea, select"));
   const visibleInputs = inputs.filter(el => {
     const style = window.getComputedStyle(el);
-    return style.display !== "none" && style.visibility !== "hidden" && el.type !== "hidden";
+    const isSearchInput = (el.name && /search|query|q\b/i.test(el.name)) || (el.id && /search|query|q\b/i.test(el.id)) || (el.getAttribute("role") === "searchbox");
+    return style.display !== "none" && style.visibility !== "hidden" && el.type !== "hidden" && !isSearchInput;
   });
 
-  // If page is in job context with at least 1 input, or arbitrary page with >= 3 candidate fields
-  if (isJobContext && visibleInputs.length >= 1) {
+  // Verify presence of at least one dedicated job application signature field
+  const hasJobFormSignature = inputs.some(el => {
+    const attrs = [el.name, el.id, el.placeholder, el.getAttribute("aria-label"), el.className].filter(Boolean).join(" ").toLowerCase();
+    const isFileInput = el.type === "file" && /resume|cv|curriculum/i.test(attrs);
+    const isJobSpecificField = /resume|curriculum|portfolio|linkedin|github|experience|education|degree|qualification|notice[_\s]?period|work[_\s]?authorization|sponsorship|salary[_\s]?expectation/i.test(attrs);
+    return isFileInput || isJobSpecificField;
+  });
+
+  // Must have career context AND at least 3 visible inputs AND at least 1 job signature field
+  if (isJobContext && visibleInputs.length >= 2 && hasJobFormSignature) {
     return true;
   }
-  return visibleInputs.length >= 3;
+
+  // Or an application form with clear resume upload input and standard contact fields
+  const hasResumeUpload = Array.from(document.querySelectorAll("input[type='file']")).some(el => {
+    const attrs = [el.name, el.id, el.getAttribute("aria-label"), el.className].join(" ").toLowerCase();
+    return /resume|cv|curriculum/i.test(attrs);
+  });
+
+  if (hasResumeUpload && visibleInputs.length >= 3) {
+    return true;
+  }
+
+  return false;
 }
 
 function normalize(s) {
@@ -1454,6 +1481,12 @@ function injectFloatingQuickFill() {
   if (!checkContext()) return;
   if (!extensionEnabled) return;
   if (document.getElementById("jxa-floating-fill-pill")) return;
+  
+  // Honor per-session user dismissal on this origin
+  try {
+    if (sessionStorage.getItem("jxa_dismiss_pill") === "true") return;
+  } catch (e) {}
+
   if (!isJobPage()) return;
 
   const candidateInputs = Array.from(document.querySelectorAll("input:not([type='hidden']):not([type='submit']):not([type='button']), textarea, select"));
@@ -1515,6 +1548,9 @@ function injectFloatingQuickFill() {
   const closeBtn = pill.querySelector("#jxa-pill-close");
   closeBtn.addEventListener("click", (e) => {
     e.stopPropagation();
+    try {
+      sessionStorage.setItem("jxa_dismiss_pill", "true");
+    } catch (err) {}
     pill.remove();
   });
 

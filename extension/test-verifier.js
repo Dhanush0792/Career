@@ -290,7 +290,8 @@ console.log('\n======================================================');
 console.log('2. RUNNING JD KEYWORD MATCHING & ATS SCORING VERIFICATION');
 console.log('======================================================');
 
-const jdMatcher = require(path.join(__dirname, 'jd-matcher.js'));
+const jdMatcherRaw = require(path.join(__dirname, 'jd-matcher.js'));
+const jdMatcher = jdMatcherRaw.JDMatcher || jdMatcherRaw.default || jdMatcherRaw;
 
 const sampleJD = `
 We are seeking a Senior Full Stack Engineer to join our high-growth team.
@@ -423,7 +424,8 @@ console.log('\n======================================================');
 console.log('4. RUNNING COVER LETTER ENGINE ACROSS TEMPLATES');
 console.log('======================================================');
 
-const coverLetterEngine = require(path.join(__dirname, 'cover-letter-engine.js'));
+const coverLetterEngineRaw = require(path.join(__dirname, 'cover-letter-engine.js'));
+const coverLetterEngine = coverLetterEngineRaw.CoverLetterEngine || coverLetterEngineRaw.default || coverLetterEngineRaw;
 
 const templates = Object.keys(coverLetterEngine.TEMPLATES);
 assert(templates.length === 10, `Cover Letter Engine: exactly 10 templates supported (found ${templates.length})`);

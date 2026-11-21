@@ -1297,12 +1297,24 @@
       const container = document.getElementById("resume-builder-app");
       if (!container) return;
       
-      // Load profile data (centralized sync)
+      // Load profile data (centralized sync with local storage fallback)
       try {
-        const state = await window.CareerBridgeSync.loadProfile();
+        let state = await window.CareerBridgeSync.loadProfile();
+        if (!state?.profile || (!state.profile.fullName && !state.profile.email)) {
+          const rawLocal = localStorage.getItem('jxa_local_profile');
+          if (rawLocal) {
+            state = { profile: JSON.parse(rawLocal) };
+          }
+        }
         populateFromProfile(state);
       } catch (e) {
-        console.error("Failed to load profile:", e);
+        console.warn("Sync load error, reading localStorage:", e);
+        try {
+          const rawLocal = localStorage.getItem('jxa_local_profile');
+          if (rawLocal) {
+            populateFromProfile({ profile: JSON.parse(rawLocal) });
+          }
+        } catch (err) {}
       }
 
       // Check URL parameters for mode or existing resume state
