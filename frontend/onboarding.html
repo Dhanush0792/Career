@@ -90,9 +90,16 @@ body::after {
 <nav class="nav" id="main-nav"></nav>
 
 <div class="container">
-  <div class="page-header">
-    <div class="page-label">ONBOARDING GATEWAY</div>
-    <h1 class="page-title">SETUP <em>YOUR SECURE PROFILE</em></h1>
+  <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div class="page-label">ONBOARDING GATEWAY</div>
+      <h1 class="page-title">SETUP <em>YOUR SECURE PROFILE</em></h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <a href="dashboard.html" style="font-family:var(--mono); font-size:11px; font-weight:700; color:var(--muted); text-decoration:none; padding:8px 14px; border:1px solid var(--glass-border); border-radius:8px; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px;" onmouseover="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.4)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--glass-border)'">
+        Skip to Dashboard &rarr;
+      </a>
+    </div>
   </div>
 
   <!-- Step progress bar (shown after choice is made) -->
@@ -253,6 +260,62 @@ const resumeInput = document.getElementById('resume-input');
 const commitBtn = document.getElementById('commit-btn');
 
 let selectedSetupMethod = null; // 'resume' or 'manual'
+let currentActiveView = 'choice'; // 'choice', 'upload', 'step1', 'step2', 'step3'
+
+// Manage History Stack so browser Back button navigates through steps cleanly
+function updateHistoryState(viewName) {
+  currentActiveView = viewName;
+  try {
+    history.pushState({ onboardingView: viewName }, '', window.location.pathname + '#view=' + viewName);
+  } catch(e) {}
+}
+
+window.addEventListener('popstate', (e) => {
+  const targetView = e.state?.onboardingView;
+  if (!targetView || targetView === 'choice') {
+    // Return to choice view
+    showView('choice', false);
+  } else if (targetView === 'upload') {
+    showView('upload', false);
+  } else if (targetView === 'step1') {
+    showView('step1', false);
+  } else if (targetView === 'step2') {
+    showView('step2', false);
+  } else if (targetView === 'step3') {
+    showView('step3', false);
+  }
+});
+
+// Set initial history state on entry
+try {
+  history.replaceState({ onboardingView: 'choice' }, '', window.location.pathname);
+} catch(e) {}
+
+function showView(view, push = true) {
+  currentActiveView = view;
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  
+  if (view === 'choice') {
+    document.getElementById('step-bar').style.display = 'none';
+    document.getElementById('panel-choice').classList.add('active');
+  } else if (view === 'upload') {
+    document.getElementById('step-bar').style.display = 'none';
+    document.getElementById('panel-upload').classList.add('active');
+  } else if (view.startsWith('step')) {
+    const stepNum = parseInt(view.replace('step', ''), 10) || 1;
+    document.getElementById('step-bar').style.display = 'flex';
+    document.querySelectorAll('.step-indicator').forEach((si, i) => {
+      si.classList.remove('active', 'done');
+      if (i + 1 < stepNum) si.classList.add('done');
+      if (i + 1 === stepNum) si.classList.add('active');
+    });
+    const panel = document.getElementById(`panel-${stepNum}`);
+    if (panel) panel.classList.add('active');
+  }
+  
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (push) updateHistoryState(view);
+}
 
 function addLog(text, cls = '') {
   const line = document.createElement('div');
@@ -266,50 +329,34 @@ function addLog(text, cls = '') {
 
 function selectMethod(method) {
   selectedSetupMethod = method;
-  document.getElementById('panel-choice').classList.remove('active');
-  
   if (method === 'resume') {
-    document.getElementById('panel-upload').classList.add('active');
+    showView('upload');
   } else {
     // Manual
     unlockAllFields();
-    document.getElementById('step-bar').style.display = 'flex';
-    goStep(1);
+    showView('step1');
   }
 }
 
 function goBackToChoice() {
-  document.getElementById('panel-upload').classList.remove('active');
-  document.getElementById('panel-choice').classList.add('active');
+  showView('choice');
 }
 
 function skipUploadAndGo() {
   unlockAllFields();
-  document.getElementById('panel-upload').classList.remove('active');
-  document.getElementById('step-bar').style.display = 'flex';
-  goStep(1);
+  showView('step1');
 }
 
 function goBackFromStep1() {
-  document.getElementById('panel-1').classList.remove('active');
-  document.getElementById('step-bar').style.display = 'none';
   if (selectedSetupMethod === 'resume') {
-    document.getElementById('panel-upload').classList.add('active');
+    showView('upload');
   } else {
-    document.getElementById('panel-choice').classList.add('active');
+    showView('choice');
   }
 }
 
 function goStep(step) {
-  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('step-bar').style.display = 'flex';
-  document.querySelectorAll('.step-indicator').forEach((si, i) => {
-    si.classList.remove('active', 'done');
-    if (i + 1 < step) si.classList.add('done');
-    if (i + 1 === step) si.classList.add('active');
-  });
-  document.getElementById(`panel-${step}`).classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showView('step' + step);
 }
 
 resumeDropzone.addEventListener('click', () => resumeInput.click());
@@ -415,8 +462,7 @@ function parseAndExtractText(text) {
   addLog('[SUCCESS] Resume parsed! Fields populated. Review and edit as needed.', 'success');
   
   setTimeout(() => {
-    document.getElementById('panel-upload').classList.remove('active');
-    goStep(1);
+    showView('step1');
   }, 1000);
 }
 

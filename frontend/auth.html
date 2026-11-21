@@ -216,6 +216,31 @@ body::after {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
 <script>
+// If user already has an active, valid session and was not explicitly sent here via a logout reason,
+// redirect them forward immediately to their workspace or dashboard instead of showing the login card.
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const reason = params.get('reason');
+  const token = localStorage.getItem('jxa_token');
+  if (token && !reason) {
+    try {
+      const base64Url = token.split('.')[1];
+      if (base64Url) {
+        const payload = JSON.parse(decodeURIComponent(atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+        const now = Date.now();
+        const lastActive = Number(localStorage.getItem('jxa_last_active') || 0);
+        const INACTIVITY_MS = 3 * 24 * 60 * 60 * 1000;
+        if ((!payload.exp || payload.exp * 1000 > now) && (!lastActive || (now - lastActive < INACTIVITY_MS))) {
+          // Token is valid and not inactive
+          const target = localStorage.getItem('jxa_role') === 'admin' ? 'admin/index.html' : 'dashboard.html';
+          window.location.replace(target);
+          return;
+        }
+      }
+    } catch(e) {}
+  }
+})();
+
 const SUPABASE_URL = "https://fbyjrfrejgzcpqtdwudu.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZieWpyZnJlamd6Y3BxdGR3dWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3ODk0NTIsImV4cCI6MjEwMjM2NTQ1Mn0.L_21DGKOHU4HQ05IY9MqvDwklh2knTkjMObHmDIB0Ic";
 let supabaseClient = null;
