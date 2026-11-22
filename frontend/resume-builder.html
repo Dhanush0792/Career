@@ -658,6 +658,8 @@
       margin: 0 auto;
       height: 100%;
       overflow-y: auto;
+      scrollbar-width: none; /* Hide scrollbar for clean centered appearance in Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
       padding: 24px 20px 40px;
       display: flex;
       flex-direction: column;
@@ -665,8 +667,7 @@
       justify-content: flex-start;
       gap: 20px;
     }
-    .intake-screen::-webkit-scrollbar { width: 6px; }
-    .intake-screen::-webkit-scrollbar-thumb { background: rgba(0,243,255,0.2); border-radius: 3px; }
+    .intake-screen::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
     .intake-header {
       text-align: center;
@@ -1249,13 +1250,22 @@
                   <button class="zoom-btn" onclick="resetZoomToFit()" title="Fit to Screen" style="border-left:1px solid var(--border-color); margin-left:2px; padding-left:6px;">Fit</button>
                 </div>
 
-                <div style="position:relative;">
-                  <button onclick="toggleMenuDropdown(event)" style="background:transparent;border:none;color:var(--primary);font-size:11px;font-family:var(--mono);font-weight:700;cursor:pointer;padding:2px 8px;">ACTIONS</button>
-                  <div id="dropdown-content" style="display:none;position:absolute;right:0;top:28px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:100;min-width:160px;padding:4px 0;overflow:hidden;">
-                    <a href="#" class="dropdown-item" onclick="copyLatexCode();return false;">Copy LaTeX</a>
+                <div style="position:relative; display:flex; align-items:center; gap:6px;">
+                  <!-- One-Click Export PDF Button -->
+                  <button type="button" class="btn btn-primary" onclick="exportPDF()" style="padding: 4px 12px; font-size: 11px; font-family: var(--mono); font-weight: 700; height: 28px; display: inline-flex; align-items: center; gap: 6px;" title="Print or Save as Vector PDF">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>EXPORT PDF</span>
+                  </button>
+
+                  <!-- 3-Dots More Options Menu -->
+                  <button type="button" onclick="toggleMenuDropdown(event)" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: var(--primary); font-size: 14px; font-weight: 700; cursor: pointer; padding: 2px 9px; border-radius: 6px; height: 28px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;" title="More Export Formats & Options">
+                    &#8942;
+                  </button>
+                  <div id="dropdown-content" style="display:none;position:absolute;right:0;top:34px;background:#0f172a;border:1px solid var(--glass-border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.5);z-index:100;min-width:160px;padding:4px 0;overflow:hidden;">
+                    <a href="#" class="dropdown-item" onclick="exportPDF();return false;">Export PDF (Print)</a>
+                    <a href="#" class="dropdown-item" onclick="copyLatexCode();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Copy LaTeX</a>
                     <a href="#" class="dropdown-item" onclick="downloadLatexFile();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Download .tex</a>
                     <a href="#" class="dropdown-item" onclick="exportJSON();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export JSON</a>
-                    <a href="#" class="dropdown-item" onclick="exportPDF();return false;" style="border-top:1px solid rgba(255,255,255,0.05);">Export PDF</a>
                   </div>
                 </div>
               </div>
@@ -1616,9 +1626,10 @@
       activeUserProfile = state.profile || {};
       const profile = activeUserProfile;
       
-      // Populate Basics
+      // Populate Basics (with fallback chain: fullName -> name -> candidateName -> localStorage)
+      const resolvedName = profile.fullName || profile.name || profile.candidateName || localStorage.getItem('jxa_user_name') || "";
       if (document.getElementById("res-name")) {
-        document.getElementById("res-name").value = profile.fullName || "";
+        document.getElementById("res-name").value = resolvedName;
       }
       const titleVal = profile.headline || profile.targetRole || (profile.targetRoles ? profile.targetRoles.split(',')[0].trim() : "");
       const titleEl = document.getElementById("res-title");
@@ -1669,7 +1680,7 @@
             blocks.slice(0, 4).forEach(b => {
               const lines = b.trim().split('\n');
               const headerLine = lines[0] || '';
-              let pos = headerLine;
+              let pos = headerLine.trim();
               let comp = '';
               let dates = '';
               if (headerLine.includes('@')) {
@@ -1677,9 +1688,9 @@
                 pos = parts[0].trim();
                 comp = parts[1].replace(/\(.*\)/, '').trim();
                 const dMatch = headerLine.match(/\((.*?)\)/);
-                if (dMatch) dates = dMatch[1];
+                if (dMatch) dates = dMatch[1].trim();
               }
-              const desc = lines.slice(1).join('\n').trim() || b.trim();
+              const desc = lines.slice(1).join('\n').trim();
               addExperienceRow({
                 company: comp,
                 position: pos,
@@ -1836,7 +1847,7 @@
     // Update the live preview sheet in FAANG-preferred order:
     // 1. Header -> 2. Summary -> 3. Education -> 4. Experience -> 5. Skills -> 6. Projects -> 7. Certifications -> 8. Additional
     function updatePreview() {
-      const name = document.getElementById("res-name")?.value || "Your Name";
+      const name = document.getElementById("res-name")?.value.trim() || activeUserProfile.fullName || activeUserProfile.name || localStorage.getItem('jxa_user_name') || "";
       const title = document.getElementById("res-title")?.value || "Target Job Title";
       const email = document.getElementById("res-email")?.value || "";
       const phone = document.getElementById("res-phone")?.value || "";
@@ -1869,19 +1880,21 @@
       let expHtml = "";
       document.querySelectorAll(".experience-item").forEach(item => {
         const inputs = item.querySelectorAll("input, textarea");
-        const company = inputs[0]?.value || "";
-        const position = inputs[1]?.value || "";
-        const startDate = inputs[2]?.value || "";
-        const endDate = inputs[3]?.value || "";
-        const expSummary = inputs[4]?.value || "";
+        const company = inputs[0]?.value.trim() || "";
+        const position = inputs[1]?.value.trim() || "";
+        const startDate = inputs[2]?.value.trim() || "";
+        const endDate = inputs[3]?.value.trim() || "";
+        const expSummary = inputs[4]?.value.trim() || "";
         if (company || position) {
+          const titleLine = [position, company].filter(Boolean).join(" @ ");
+          const dateRange = [startDate, endDate].filter(Boolean).join(" - ");
           expHtml += `
             <div style="margin-bottom: 12px;">
               <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${esc(position)} @ ${esc(company)}</span>
-                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(startDate)} - ${esc(endDate)}</span>
+                <span>${esc(titleLine)}</span>
+                ${dateRange ? `<span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(dateRange)}</span>` : ''}
               </div>
-              <p style="font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; white-space: pre-line;">${esc(expSummary)}</p>
+              ${expSummary ? `<p style="font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; white-space: pre-line;">${esc(expSummary)}</p>` : ''}
             </div>
           `;
         }
@@ -1923,7 +1936,7 @@
 
       sheet.innerHTML = `
         <div class="preview-header">
-          <h1 class="preview-name">${esc(name || '')}</h1>
+          <h1 class="preview-name">${esc(name || 'Your Name')}</h1>
           <div class="preview-contact">
             ${email ? `<span>${esc(email)}</span>` : ""}
             ${phone ? `<span>${esc(phone)}</span>` : ""}
@@ -1990,6 +2003,22 @@
       if (sec) sec.classList.toggle('open');
       setTimeout(fitPreview, 50);
     };
+
+    // Actions & Export Dropdown Toggle
+    window.toggleMenuDropdown = function(e) {
+      if (e) e.stopPropagation();
+      const dd = document.getElementById('dropdown-content');
+      if (dd) {
+        dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+      }
+    };
+
+    window.addEventListener('click', (e) => {
+      const dd = document.getElementById('dropdown-content');
+      if (dd && !e.target.closest('#dropdown-content')) {
+        dd.style.display = 'none';
+      }
+    });
 
     let userZoomScale = 1.0; // Default to 100% natural document view
 
