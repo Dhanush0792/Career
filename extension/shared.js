@@ -205,50 +205,72 @@ export function getPortalRule(url) {
 
 export const PORTAL_MAPS = {
   LinkedIn: {
-    fullName: "input[aria-label*='Full name'], input[placeholder*='Full name'], input[name*='fullName']",
-    firstName: "input[aria-label*='First name'], input[placeholder*='First name'], input[name*='firstName']",
-    lastName: "input[aria-label*='Last name'], input[placeholder*='Last name'], input[name*='lastName']",
-    email: "input[aria-label*='Email'], input[placeholder*='Email'], input[type='email']",
-    phone: "input[aria-label*='Phone'], input[placeholder*='Phone'], input[name*='phone']",
-    linkedin: "input[aria-label*='LinkedIn'], input[placeholder*='LinkedIn']",
+    fullName: "input[aria-label*='Full name' i], input[placeholder*='Full name' i], input[name*='fullName' i]",
+    firstName: "input[aria-label*='First name' i], input[placeholder*='First name' i], input[name*='firstName' i]",
+    lastName: "input[aria-label*='Last name' i], input[placeholder*='Last name' i], input[name*='lastName' i]",
+    email: "input[aria-label*='Email' i], input[placeholder*='Email' i], input[type='email']",
+    phone: "input[aria-label*='Phone' i], input[placeholder*='Phone' i], input[name*='phone' i]",
+    linkedin: "input[aria-label*='LinkedIn' i], input[placeholder*='LinkedIn' i]",
     resume: "input[type='file'], input[accept*='pdf'], input[accept*='doc']"
   },
   Naukri: {
-    fullName: "input[placeholder*='Name'], input[name*='name'], input[aria-label*='Name']",
-    email: "input[placeholder*='Email'], input[name*='email'], input[type='email']",
-    phone: "input[placeholder*='Mobile'], input[name*='mobile'], input[name*='phone']",
-    resume: "input[type='file'][name*='resume'], input[type='file']",
-    college: "input[placeholder*='College'], input[name*='college']"
+    fullName: "input[placeholder*='Name' i], input[name*='name' i], input[aria-label*='Name' i]",
+    email: "input[placeholder*='Email' i], input[name*='email' i], input[type='email']",
+    phone: "input[placeholder*='Mobile' i], input[name*='mobile' i], input[name*='phone' i]",
+    resume: "input[type='file'][name*='resume' i], input[type='file']",
+    college: "input[placeholder*='College' i], input[name*='college' i]"
   },
   Wellfound: {
-    fullName: "input[name*='name'], input[placeholder*='name'], input[aria-label*='name']",
-    email: "input[name*='email'], input[type='email']",
-    phone: "input[name*='phone'], input[name*='mobile']",
+    fullName: "input[name*='name' i], input[placeholder*='name' i], input[aria-label*='name' i]",
+    email: "input[name*='email' i], input[type='email']",
+    phone: "input[name*='phone' i], input[name*='mobile' i]",
     resume: "input[type='file']",
-    linkedin: "input[name*='linkedin'], input[placeholder*='linkedin']",
-    portfolio: "input[name*='portfolio'], input[placeholder*='portfolio']"
+    linkedin: "input[name*='linkedin' i], input[placeholder*='linkedin' i]",
+    portfolio: "input[name*='portfolio' i], input[placeholder*='portfolio' i]"
   },
   Indeed: {
-    fullName: "input[id*='name'], input[name*='name'], input[placeholder*='name']",
-    email: "input[type='email'], input[id*='email'], input[name*='email']",
-    phone: "input[type='tel'], input[id*='phone'], input[name*='phone']",
+    fullName: "input[id*='name' i], input[name*='name' i], input[placeholder*='name' i]",
+    email: "input[type='email'], input[id*='email' i], input[name*='email' i]",
+    phone: "input[type='tel'], input[id*='phone' i], input[name*='phone' i]",
     resume: "input[type='file']",
-    city: "input[id*='city'], input[name*='city']",
-    country: "input[id*='country'], input[name*='country']"
+    city: "input[id*='city' i], input[name*='city' i]",
+    country: "input[id*='country' i], input[name*='country' i]"
   },
   Greenhouse: {
-    fullName: "#first_name, #last_name, #name, input[name*='name'], input[name*='first_name']",
-    email: "#email, input[name*='email']",
-    phone: "#phone, input[name*='phone']",
+    fullName: "#first_name, #last_name, #name, input[name*='name' i], input[name*='first_name' i]",
+    email: "#email, input[name*='email' i], input[type='email']",
+    phone: "#phone, input[name*='phone' i], input[type='tel']",
     resume: "#resume_file, input[type='file']",
-    linkedin: "input[placeholder*='LinkedIn'], input[name*='linkedin']"
+    linkedin: "input[placeholder*='LinkedIn' i], input[name*='linkedin' i]"
   },
   Lever: {
-    fullName: "input[name*='name']",
-    email: "input[name*='email']",
-    phone: "input[name*='phone']",
-    resume: "input[type='file']",
-    linkedin: "input[name*='linkedin'], input[placeholder*='linkedin']"
+    fullName: "input[name='name'], input[name*='name' i]",
+    email: "input[name='email'], input[type='email']",
+    phone: "input[name='phone'], input[type='tel']",
+    currentCompany: "input[name='org'], input[name*='org' i]",
+    city: "input[name='location'], input[placeholder*='location' i]",
+    linkedin: "input[name*='urls[LinkedIn]' i], input[name*='linkedin' i], input[placeholder*='linkedin' i]",
+    github: "input[name*='urls[GitHub]' i], input[name*='github' i], input[placeholder*='github' i]",
+    portfolio: "input[name*='urls[Portfolio]' i], input[name*='urls[Other]' i], input[placeholder*='portfolio' i], input[placeholder*='website' i]",
+    resume: "input[type='file']"
+  },
+  Workday: {
+    fullName: "input[data-automation-id*='legalName' i], input[data-automation-id*='name' i]",
+    firstName: "input[data-automation-id*='firstName' i]",
+    lastName: "input[data-automation-id*='lastName' i]",
+    email: "input[data-automation-id*='email' i], input[type='email']",
+    phone: "input[data-automation-id*='phone' i]",
+    city: "input[data-automation-id*='city' i]",
+    resume: "input[type='file']"
+  },
+  Ashby: {
+    fullName: "input[name*='name' i], input[id*='name' i]",
+    email: "input[type='email'], input[name*='email' i]",
+    phone: "input[type='tel'], input[name*='phone' i]",
+    linkedin: "input[placeholder*='LinkedIn' i], input[name*='linkedin' i]",
+    github: "input[placeholder*='GitHub' i], input[name*='github' i]",
+    portfolio: "input[placeholder*='website' i], input[placeholder*='portfolio' i]",
+    resume: "input[type='file']"
   }
 };
 

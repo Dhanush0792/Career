@@ -41,11 +41,15 @@
       "linkedin": "input[placeholder*='LinkedIn'], input[name*='linkedin']"
     },
     "Lever": {
-      "fullName": "input[name*='name']",
-      "email": "input[name*='email']",
-      "phone": "input[name*='phone']",
-      "resume": "input[type='file']",
-      "linkedin": "input[name*='linkedin'], input[placeholder*='linkedin']"
+      "fullName": "input[name='name'], input[name*='name' i]",
+      "email": "input[name='email'], input[type='email']",
+      "phone": "input[name='phone'], input[type='tel']",
+      "currentCompany": "input[name='org'], input[name*='org' i]",
+      "city": "input[name='location'], input[placeholder*='location' i]",
+      "linkedin": "input[name*='urls[LinkedIn]' i], input[name*='linkedin' i], input[placeholder*='linkedin' i]",
+      "github": "input[name*='urls[GitHub]' i], input[name*='github' i], input[placeholder*='github' i]",
+      "portfolio": "input[name*='urls[Portfolio]' i], input[name*='urls[Other]' i], input[placeholder*='portfolio' i], input[placeholder*='website' i]",
+      "resume": "input[type='file']"
     }
   }
 }

@@ -211,8 +211,36 @@ function normalize(s) {
     .trim();
 }
 
+function getElementLabelText(el) {
+  if (!el) return "";
+  const attrs = [
+    el.getAttribute("aria-label"),
+    el.getAttribute("placeholder"),
+    el.getAttribute("name"),
+    el.getAttribute("id")
+  ].filter(Boolean).join(" ");
+  
+  let labelText = attrs;
+  try {
+    const id = el.getAttribute("id");
+    if (id) {
+      const label = document.querySelector(`label[for='${id}']`);
+      if (label) labelText += " " + label.textContent;
+    }
+  } catch (e) {}
+  
+  const closestLabel = el.closest("label");
+  if (closestLabel) {
+    labelText += " " + closestLabel.textContent;
+  } else if (el.parentElement) {
+    labelText += " " + el.parentElement.textContent;
+  }
+  return labelText;
+}
+
 function scoreElementForKey(el, key) {
   if (!el) return 0;
+  const normKey = String(key || "").toLowerCase();
   const checks = [];
   const attrs = [el.getAttribute("aria-label"), el.getAttribute("name"), el.getAttribute("id"), el.getAttribute("placeholder"), el.getAttribute("type")];
   for (const a of attrs) {
@@ -249,28 +277,69 @@ function scoreElementForKey(el, key) {
   try {
     let sib = el.previousElementSibling;
     if (sib) checks.push(normalize(sib.textContent));
-    
     let nextSib = el.nextElementSibling;
     if (nextSib) checks.push(normalize(nextSib.textContent));
-
     let parentSib = el.parentElement ? el.parentElement.previousElementSibling : null;
     if (parentSib) checks.push(normalize(parentSib.textContent));
-    
     let parentNextSib = el.parentElement ? el.parentElement.nextElementSibling : null;
     if (parentNextSib) checks.push(normalize(parentNextSib.textContent));
   } catch (e) {}
 
+  const combinedContext = checks.join(" ");
+
+  // ── SEMANTIC DISQUALIFICATION GUARDS ──────────────────────────────────────
+  // 1. Education fields MUST have explicit educational context in label/attributes
+  const isEduKey = normKey.includes("edu") || normKey.includes("school") || normKey.includes("college") || normKey.includes("degree") || normKey.includes("cgpa") || normKey.includes("board");
+  if (isEduKey) {
+    const hasEduContext = /(school|college|university|institute|degree|cgpa|gpa|percentage|marks|board|matric|hsc|ssc|graduation|bachelor|master|phd|education|academic)/i.test(combinedContext);
+    if (!hasEduContext) return 0;
+  }
+
+  // 2. Personal candidate name fields MUST NOT match company, school, or file inputs
+  const isPersonalName = normKey === "fullname" || normKey === "firstname" || normKey === "lastname" || normKey === "middlename";
+  if (isPersonalName) {
+    const isNonPerson = /(company|organization|org|school|college|university|employer|firm|institute|file|resume|attachment)/i.test(combinedContext);
+    if (isNonPerson) return 0;
+  }
+
+  // 3. Email fields MUST have email in input type or context
+  if (normKey === "email" || normKey === "alternativeemail") {
+    const isEmail = el.type === "email" || /email|e-mail/i.test(combinedContext);
+    if (!isEmail) return 0;
+  }
+
+  // 4. Phone fields MUST have phone/mobile/tel in input type or context
+  if (normKey === "phone" || normKey === "phonecode") {
+    const isPhone = el.type === "tel" || /phone|mobile|telephone|contact no|cell/i.test(combinedContext);
+    if (!isPhone) return 0;
+  }
+
+  // 5. Company / Employer fields MUST have company / organization context
+  if (normKey === "currentcompany" || normKey === "company") {
+    const isCompany = /company|organization|employer|org|firm|current employer/i.test(combinedContext);
+    if (!isCompany) return 0;
+  }
+
+  // ── HEURISTIC SCORING ─────────────────────────────────────────────────────
   let maxScore = 0;
-  const aliases = FIELD_ALIASES[key] || [];
+  const aliases = FIELD_ALIASES[normKey] || [];
+  const GENERIC_SUBSTRINGS = new Set(["name", "id", "text", "input", "field", "txt", "data", "val", "no", "code", "num", "url", "org"]);
+
   for (const a of aliases) {
     const needle = normalize(a);
     for (const c of checks) {
       if (!c) continue;
       let score = 0;
-      if (c === needle) score = 10;
-      else if (c.includes(needle)) score = 8;
-      else if (needle.includes(c)) score = 6;
-      
+      if (c === needle) {
+        score = 10;
+      } else if (c.includes(needle)) {
+        score = 8;
+      } else if (needle.includes(c)) {
+        // Only count if c is NOT a generic short word
+        if (c.length >= 5 && !GENERIC_SUBSTRINGS.has(c)) {
+          score = 6;
+        }
+      }
       if (score > maxScore) {
         maxScore = score;
       }
@@ -279,18 +348,19 @@ function scoreElementForKey(el, key) {
   return maxScore;
 }
 
-function findBestElementForKey(key) {
+function findBestElementForKey(key, claimedElements = new Set()) {
   const candidates = Array.from(document.querySelectorAll("input, textarea, select, [contenteditable='true']"));
   let best = null;
   let bestScore = 0;
   for (const el of candidates) {
+    if (claimedElements.has(el)) continue; // Never overwrite already claimed elements!
     const score = scoreElementForKey(el, key);
     if (score > bestScore) {
       best = el;
       bestScore = score;
     }
   }
-  const confidenceThreshold = 6; // Strict 60% minimum score threshold
+  const confidenceThreshold = 7; // Strict 70% minimum score threshold
   return bestScore >= confidenceThreshold ? best : null;
 }
 
@@ -674,6 +744,132 @@ function checkContext() {
   return false;
 }
 
+function extractJobMetadata() {
+  let title = "";
+  let company = "";
+  const host = window.location.hostname.toLowerCase();
+  const url = window.location.href;
+
+  if (host.includes("greenhouse.io") || host.includes("boards.greenhouse.io")) {
+    title = document.querySelector(".app-title, .job-title, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".company-name, .logo-wrapper img")?.alt ||
+              document.querySelector(".company-name")?.textContent?.trim() || "";
+    if (!company) {
+      const match = window.location.pathname.match(/\/([^/]+)\/jobs/);
+      if (match) company = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+    }
+  } else if (host.includes("lever.co")) {
+    title = document.querySelector(".posting-headline h2, .posting-headline h1")?.textContent?.trim() || "";
+    company = document.querySelector(".main-header-logo img")?.alt || "";
+    if (!company) {
+      const match = window.location.pathname.match(/\/([^/]+)\/[a-f0-9-]+/);
+      if (match) company = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+    }
+  } else if (host.includes("linkedin.com")) {
+    title = document.querySelector(".job-details-jobs-unified-top-card__job-title, .top-card-layout__title, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".job-details-jobs-unified-top-card__company-name, .topcard__org-name-link, .top-card-layout__first-subline a")?.textContent?.trim() || "";
+  } else if (host.includes("myworkdayjobs.com") || host.includes("workday.com")) {
+    title = document.querySelector("h2[data-automation-id='jobPostingHeader'], h1")?.textContent?.trim() || "";
+    company = document.querySelector("img[data-automation-id='clientLogo']")?.alt || host.split(".")[0];
+  } else if (host.includes("indeed.com")) {
+    title = document.querySelector(".jobsearch-JobInfoHeader-title, h1")?.textContent?.trim() || "";
+    company = document.querySelector("[data-company-name='true'], .jobsearch-InlineCompanyRating-companyHeader")?.textContent?.trim() || "";
+  } else if (host.includes("naukri.com")) {
+    title = document.querySelector(".jd-header-title, .title, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".jd-header-comp-name, .company-name")?.textContent?.trim() || "";
+  } else if (host.includes("wellfound.com") || host.includes("angel.co")) {
+    title = document.querySelector("h1, .job-title")?.textContent?.trim() || "";
+    company = document.querySelector("h2, .company-name")?.textContent?.trim() || "";
+  } else if (host.includes("internshala.com")) {
+    title = document.querySelector(".heading_4_5.profile, h1")?.textContent?.trim() || "";
+    company = document.querySelector(".heading_6.company_name, .company-name")?.textContent?.trim() || "";
+  } else if (host.includes("glassdoor.com")) {
+    title = document.querySelector("[data-test='jobTitle'], h1")?.textContent?.trim() || "";
+    company = document.querySelector("[data-test='employerName']")?.textContent?.trim() || "";
+  }
+
+  if (!title) {
+    title = document.querySelector("meta[property='og:title']")?.content ||
+            document.querySelector("h1")?.textContent?.trim() ||
+            document.title.split(/[-|–—:]/)[0].trim();
+  }
+  if (!company) {
+    company = document.querySelector("meta[property='og:site_name']")?.content || "";
+    if (!company) {
+      const parts = host.replace("www.", "").split(".");
+      if (parts.length >= 2) company = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    }
+  }
+
+  title = title.replace(/\s+/g, " ").trim();
+  company = company.replace(/\s+/g, " ").trim();
+
+  return { title: title || "Job Application", company: company || "Company", url, host };
+}
+
+const QUESTION_BANK = {
+  knockout: [
+    "authorized to work", "legally authorized", "visa sponsorship", "require sponsorship", "willing to relocate", "relocate to", "working on-site", "on-site", "willing to work", "shift/weekend", "background check"
+  ],
+  compensation: [
+    "expected salary", "current salary", "salary expectations", "expected ctc", "current ctc", "salary range"
+  ],
+  logistics: [
+    "notice period", "available to start", "earliest start date", "willing to travel", "travel"
+  ],
+  eeo: [
+    "gender", "disability", "disabled", "veteran status", "veteran", "race", "ethnicity", "demographic"
+  ],
+  essay: [
+    "why do you want to work", "why should we hire you", "tell us about yourself", "describe your relevant experience", "looking for in your next role", "walk us through your background"
+  ]
+};
+
+function identifyQuestionCategory(label) {
+  const norm = normalize(label);
+  for (const [category, keywords] of Object.entries(QUESTION_BANK)) {
+    if (keywords.some(kw => norm.includes(kw))) {
+      return category;
+    }
+  }
+  return null;
+}
+
+function showKnockoutSuggestion(el, value) {
+  const rect = el.getBoundingClientRect();
+  const tip = document.createElement("div");
+  tip.className = "jxa-knockout-tip";
+  tip.style.position = "absolute";
+  tip.style.zIndex = "2147483647";
+  tip.style.top = `${window.scrollY + rect.top - 32}px`;
+  tip.style.left = `${window.scrollX + rect.left}px`;
+  tip.style.background = "#fff";
+  tip.style.color = "#000";
+  tip.style.border = "1px solid #ff9800";
+  tip.style.padding = "4px 8px";
+  tip.style.borderRadius = "4px";
+  tip.style.fontSize = "11px";
+  tip.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
+  tip.innerHTML = `Suggested: <strong>${value}</strong> <button style="background:#5b4fe8;color:#fff;border:none;padding:2px 6px;margin-left:6px;cursor:pointer;border-radius:2px;">Fill</button>`;
+  
+  tip.querySelector("button").addEventListener("click", () => {
+    setValue(el, value);
+    tip.remove();
+  });
+  document.body.appendChild(tip);
+  setTimeout(() => tip.remove(), 8000);
+}
+
+// Block auto submits if essay or knockout tips exist
+function handleSubmit(e) {
+  if (!checkContext()) return;
+  if (document.querySelector(".jxa-knockout-tip")) {
+    e.preventDefault();
+    alert("Please review the knockout question confirmations before submitting.");
+  }
+}
+document.addEventListener("submit", handleSubmit, true);
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "jobxapply:getFieldStats") {
     try {
@@ -888,158 +1084,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-function extractJobMetadata() {
-  let title = "";
-  let company = "";
-  const host = window.location.hostname.toLowerCase();
-  const url = window.location.href;
-
-  if (host.includes("greenhouse.io") || host.includes("boards.greenhouse.io")) {
-    title = document.querySelector(".app-title, .job-title, h1")?.textContent?.trim() || "";
-    company = document.querySelector(".company-name, .logo-wrapper img")?.alt ||
-              document.querySelector(".company-name")?.textContent?.trim() || "";
-    if (!company) {
-      const match = window.location.pathname.match(/\/([^/]+)\/jobs/);
-      if (match) company = match[1].charAt(0).toUpperCase() + match[1].slice(1);
-    }
-  } else if (host.includes("lever.co")) {
-    title = document.querySelector(".posting-headline h2, .posting-headline h1")?.textContent?.trim() || "";
-    company = document.querySelector(".main-header-logo img")?.alt || "";
-    if (!company) {
-      const match = window.location.pathname.match(/\/([^/]+)\/[a-f0-9-]+/);
-      if (match) company = match[1].charAt(0).toUpperCase() + match[1].slice(1);
-    }
-  } else if (host.includes("linkedin.com")) {
-    title = document.querySelector(".job-details-jobs-unified-top-card__job-title, .top-card-layout__title, h1")?.textContent?.trim() || "";
-    company = document.querySelector(".job-details-jobs-unified-top-card__company-name, .topcard__org-name-link, .top-card-layout__first-subline a")?.textContent?.trim() || "";
-  } else if (host.includes("myworkdayjobs.com") || host.includes("workday.com")) {
-    title = document.querySelector("h2[data-automation-id='jobPostingHeader'], h1")?.textContent?.trim() || "";
-    company = document.querySelector("img[data-automation-id='clientLogo']")?.alt || host.split(".")[0];
-  } else if (host.includes("indeed.com")) {
-    title = document.querySelector(".jobsearch-JobInfoHeader-title, h1")?.textContent?.trim() || "";
-    company = document.querySelector("[data-company-name='true'], .jobsearch-InlineCompanyRating-companyHeader")?.textContent?.trim() || "";
-  } else if (host.includes("naukri.com")) {
-    title = document.querySelector(".jd-header-title, .title, h1")?.textContent?.trim() || "";
-    company = document.querySelector(".jd-header-comp-name, .company-name")?.textContent?.trim() || "";
-  } else if (host.includes("wellfound.com") || host.includes("angel.co")) {
-    title = document.querySelector("h1, .job-title")?.textContent?.trim() || "";
-    company = document.querySelector("h2, .company-name")?.textContent?.trim() || "";
-  } else if (host.includes("internshala.com")) {
-    title = document.querySelector(".heading_4_5.profile, h1")?.textContent?.trim() || "";
-    company = document.querySelector(".heading_6.company_name, .company-name")?.textContent?.trim() || "";
-  } else if (host.includes("glassdoor.com")) {
-    title = document.querySelector("[data-test='jobTitle'], h1")?.textContent?.trim() || "";
-    company = document.querySelector("[data-test='employerName']")?.textContent?.trim() || "";
-  }
-
-  if (!title) {
-    title = document.querySelector("meta[property='og:title']")?.content ||
-            document.querySelector("h1")?.textContent?.trim() ||
-            document.title.split(/[-|–—:]/)[0].trim();
-  }
-  if (!company) {
-    company = document.querySelector("meta[property='og:site_name']")?.content || "";
-    if (!company) {
-      const parts = host.replace("www.", "").split(".");
-      if (parts.length >= 2) company = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-    }
-  }
-
-  title = title.replace(/\s+/g, " ").trim();
-  company = company.replace(/\s+/g, " ").trim();
-
-  return { title: title || "Job Application", company: company || "Company", url, host };
-}
-const QUESTION_BANK = {
-  knockout: [
-    "authorized to work", "legally authorized", "visa sponsorship", "require sponsorship", "willing to relocate", "relocate to", "working on-site", "on-site", "willing to work", "shift/weekend", "background check"
-  ],
-  compensation: [
-    "expected salary", "current salary", "salary expectations", "expected ctc", "current ctc", "salary range"
-  ],
-  logistics: [
-    "notice period", "available to start", "earliest start date", "willing to travel", "travel"
-  ],
-  eeo: [
-    "gender", "disability", "disabled", "veteran status", "veteran", "race", "ethnicity", "demographic"
-  ],
-  essay: [
-    "why do you want to work", "why should we hire you", "tell us about yourself", "describe your relevant experience", "looking for in your next role", "walk us through your background"
-  ]
-};
-
-function identifyQuestionCategory(label) {
-  const norm = normalize(label);
-  for (const [category, keywords] of Object.entries(QUESTION_BANK)) {
-    if (keywords.some(kw => norm.includes(kw))) {
-      return category;
-    }
-  }
-  return null;
-}
-
-function getElementLabelText(el) {
-  if (!el) return "";
-  const attrs = [
-    el.getAttribute("aria-label"),
-    el.getAttribute("placeholder"),
-    el.getAttribute("name"),
-    el.getAttribute("id")
-  ].filter(Boolean).join(" ");
-  
-  let labelText = attrs;
-  try {
-    const id = el.getAttribute("id");
-    if (id) {
-      const label = document.querySelector(`label[for='${id}']`);
-      if (label) labelText += " " + label.textContent;
-    }
-  } catch (e) {}
-  
-  const closestLabel = el.closest("label");
-  if (closestLabel) {
-    labelText += " " + closestLabel.textContent;
-  } else if (el.parentElement) {
-    labelText += " " + el.parentElement.textContent;
-  }
-  return labelText;
-}
-
-function showKnockoutSuggestion(el, value) {
-  const rect = el.getBoundingClientRect();
-  const tip = document.createElement("div");
-  tip.className = "jxa-knockout-tip";
-  tip.style.position = "absolute";
-  tip.style.zIndex = "2147483647";
-  tip.style.top = `${window.scrollY + rect.top - 32}px`;
-  tip.style.left = `${window.scrollX + rect.left}px`;
-  tip.style.background = "#fff";
-  tip.style.color = "#000";
-  tip.style.border = "1px solid #ff9800";
-  tip.style.padding = "4px 8px";
-  tip.style.borderRadius = "4px";
-  tip.style.fontSize = "11px";
-  tip.style.boxShadow = "0 2px 8px rgba(0,0,0,0.2)";
-  tip.innerHTML = `Suggested: <strong>${value}</strong> <button style="background:#5b4fe8;color:#fff;border:none;padding:2px 6px;margin-left:6px;cursor:pointer;border-radius:2px;">Fill</button>`;
-  
-  tip.querySelector("button").addEventListener("click", () => {
-    setValue(el, value);
-    tip.remove();
-  });
-  document.body.appendChild(tip);
-  setTimeout(() => tip.remove(), 8000);
-}
-
-// Block auto submits if essay or knockout tips exist
-function handleSubmit(e) {
-  if (!checkContext()) return;
-  if (document.querySelector(".jxa-knockout-tip")) {
-    e.preventDefault();
-    alert("Please review the knockout question confirmations before submitting.");
-  }
-}
-document.addEventListener("submit", handleSubmit, true);
-
   if (message?.type === "jobxapply:applyAutofill") {
     const profile = message.profile || {};
     const rawProfile = profile.payload ? profile.payload : profile;
@@ -1055,16 +1099,46 @@ document.addEventListener("submit", handleSubmit, true);
     const portalMap = message.portalMap || {};
     const results = [];
     let filledCount = 0;
-    
-    for (const [field, value] of Object.entries(payload.payload || {})) {
-      if (!value) continue; // skip empty values
+    const claimedElements = new Set();
+
+    // Prioritize identity and core contact fields first, then career, then screening/education
+    const PRIORITY_ORDER = [
+      "fullname", "firstname", "lastname",
+      "email", "phone", "phonecode",
+      "currentcompany", "company", "headline", "targetrole",
+      "city", "state", "country", "zip", "pincode", "address",
+      "linkedin", "github", "portfolio",
+      "totalexperience", "experience", "noticeperiod", "expectedsalary",
+      "resume", "resumedraft"
+    ];
+
+    const entries = Object.entries(payload.payload || {}).sort(([a], [b]) => {
+      const idxA = PRIORITY_ORDER.indexOf(a.toLowerCase());
+      const idxB = PRIORITY_ORDER.indexOf(b.toLowerCase());
+      const rankA = idxA === -1 ? 999 : idxA;
+      const rankB = idxB === -1 ? 999 : idxB;
+      return rankA - rankB;
+    });
+
+    for (const [field, value] of entries) {
+      if (!value) continue;
       const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
-      const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
-      
-      if (el) {
+      let el = null;
+      if (mapSelector) {
+        try {
+          const matchedEls = Array.from(document.querySelectorAll(mapSelector));
+          el = matchedEls.find(e => !claimedElements.has(e)) || null;
+        } catch (e) {}
+      }
+      if (!el) {
+        el = findBestElementForKey(field, claimedElements) || findBestElementForKey(field.toLowerCase(), claimedElements) || null;
+      }
+
+      if (el && !claimedElements.has(el)) {
+        claimedElements.add(el);
         const labelText = getElementLabelText(el);
         const category = identifyQuestionCategory(labelText);
-        
+
         if (category === "knockout") {
           showKnockoutSuggestion(el, value);
           results.push({ field, status: "suggested", via: "knockout-rule" });
@@ -1087,9 +1161,7 @@ document.addEventListener("submit", handleSubmit, true);
             logisticsVal = "Immediate";
           } else {
             const noticeVal = rawProfile.noticePeriod || rawProfile.preferences?.noticePeriod || "";
-            if (noticeVal) {
-              logisticsVal = noticeVal;
-            }
+            if (noticeVal) logisticsVal = noticeVal;
           }
           setValue(el, logisticsVal);
           el.style.backgroundColor = "#ffffe0";
@@ -1100,7 +1172,6 @@ document.addEventListener("submit", handleSubmit, true);
           results.push({ field, status: "skipped", via: "eeo-rule" });
         } else if (category === "essay") {
           let chosenAnswer = value;
-          // Check if specific behavioral field matched or fallback to customSnippets / profile summary
           if (!chosenAnswer && Array.isArray(rawProfile.customSnippets)) {
             const normLabel = normalize(labelText);
             for (const snip of rawProfile.customSnippets) {
@@ -1120,6 +1191,15 @@ document.addEventListener("submit", handleSubmit, true);
           results.push({ field, status: "filled", via: "vault-essay-rule" });
         } else {
           setValue(el, value);
+          try {
+            const origOutline = el.style.outline;
+            el.style.outline = "2px solid #2FDDC4";
+            el.style.boxShadow = "0 0 10px rgba(47, 221, 196, 0.4)";
+            setTimeout(() => {
+              el.style.outline = origOutline;
+              el.style.boxShadow = "";
+            }, 2500);
+          } catch (err) {}
           filledCount++;
           results.push({ field, status: "filled", via: "heuristic" });
         }
@@ -1584,12 +1664,41 @@ function injectFloatingQuickFill() {
         const rawProfile = res.profile.payload ? res.profile.payload : res.profile;
         const payload = buildAutofillPayload(rawProfile, Object.keys(rawProfile));
         let filledCount = 0;
+        const claimedElements = new Set();
 
-        for (const [field, value] of Object.entries(payload.payload || {})) {
+        const PRIORITY_ORDER = [
+          "fullname", "firstname", "lastname",
+          "email", "phone", "phonecode",
+          "currentcompany", "company", "headline", "targetrole",
+          "city", "state", "country", "zip", "pincode", "address",
+          "linkedin", "github", "portfolio",
+          "totalexperience", "experience", "noticeperiod", "expectedsalary",
+          "resume", "resumedraft"
+        ];
+
+        const entries = Object.entries(payload.payload || {}).sort(([a], [b]) => {
+          const idxA = PRIORITY_ORDER.indexOf(a.toLowerCase());
+          const idxB = PRIORITY_ORDER.indexOf(b.toLowerCase());
+          const rankA = idxA === -1 ? 999 : idxA;
+          const rankB = idxB === -1 ? 999 : idxB;
+          return rankA - rankB;
+        });
+
+        for (const [field, value] of entries) {
           if (!value) continue;
           const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
-          const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
-          if (el) {
+          let el = null;
+          if (mapSelector) {
+            try {
+              const matchedEls = Array.from(document.querySelectorAll(mapSelector));
+              el = matchedEls.find(e => !claimedElements.has(e)) || null;
+            } catch (e) {}
+          }
+          if (!el) {
+            el = findBestElementForKey(field, claimedElements) || findBestElementForKey(field.toLowerCase(), claimedElements) || null;
+          }
+          if (el && !claimedElements.has(el)) {
+            claimedElements.add(el);
             setValue(el, value);
             try {
               const origOutline = el.style.outline;
