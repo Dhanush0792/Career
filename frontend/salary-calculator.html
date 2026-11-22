@@ -298,8 +298,9 @@ body::after {
       <div class="page-label">COMPENSATION INTELLIGENCE &amp; COUNTER-OFFER SUITE</div>
       <h1 class="page-title">Salary Benchmark &amp; <em>Negotiation Guide</em></h1>
     </div>
-    <div style="font-family:var(--mono); font-size:11px; color:var(--muted); background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); padding:6px 14px; border-radius:20px;">
-      Verified Market Ranges &bull; Ready-to-Send Counter-Offers
+    <div id="signup-badge" style="display:inline-flex; align-items:center; gap:8px; background:rgba(47,221,196,0.08); border:1px solid rgba(47,221,196,0.3); border-radius:20px; padding:6px 14px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2FDDC4" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <span id="signup-badge-text" style="font-family:var(--mono); font-size:11px; font-weight:700; color:#2FDDC4; letter-spacing:0.08em; text-transform:uppercase;">100% Free &bull; No Sign-Up Required</span>
     </div>
   </header>
 
@@ -451,12 +452,45 @@ body::after {
     </div>
 
   </div>
+  <!-- GUEST / PUBLIC VISITOR CONVERSION BANNER -->
+  <div id="guest-cta-banner" style="display: none; margin-top: 24px; padding: 22px 28px; background: linear-gradient(135deg, rgba(79,110,247,0.14), rgba(47,221,196,0.08)); border: 1px solid rgba(79,110,247,0.35); border-radius: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.35);">
+    <div style="max-width: 680px;">
+      <div style="font-family: var(--display); font-size: 16px; font-weight: 800; color: #fff; letter-spacing: -0.01em;">
+        Ready to land higher-paying engineering offers?
+      </div>
+      <div style="font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.5;">
+        Use JobXApply&apos;s free browser extension to 1-click autofill your centralized profile across LinkedIn, Naukri, Greenhouse, Workday &amp; 50+ job portals.
+      </div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <a href="extension-landing.html" class="btn" style="background: var(--primary); color: #fff; padding: 10px 20px; font-size: 12px; font-weight: 700; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+        GET EXTENSION FREE &rsaquo;
+      </a>
+      <a href="auth.html#signup" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: #fff; padding: 10px 18px; font-size: 12px; font-weight: 700; text-decoration: none; border-radius: 6px;">
+        CREATE ACCOUNT
+      </a>
+    </div>
+  </div>
+
 </div>
 
 <script>
-// Auth check & Shared Navigation
-if (typeof requireAuth === 'function') requireAuth();
+// 100% Free Public Access: No requireAuth() gate required
 if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'salary-calculator.html');
+
+// Dynamic header badge & guest CTA check
+(function() {
+  const token = localStorage.getItem('jxa_token');
+  const userEmail = localStorage.getItem('jxa_user_email');
+  const badgeText = document.getElementById('signup-badge-text');
+  const guestBanner = document.getElementById('guest-cta-banner');
+
+  if ((token || userEmail) && badgeText) {
+    badgeText.textContent = 'Cloud Synced \u2022 Verified Market Data';
+  } else if (guestBanner) {
+    guestBanner.style.display = 'flex';
+  }
+})();
 
 // ── Verified Salary Benchmarks ───────────────────────────────────────────────
 const SALARY_BENCHMARKS = {

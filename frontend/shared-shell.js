@@ -1324,6 +1324,7 @@ const NAV_ITEMS = [
   { label: 'Profile',      href: 'profile-setup.html' },
   { label: 'Resume',       href: 'resume-builder.html' },
   { label: 'ATS Checker',  href: 'ats-checker.html' },
+  { label: 'Salary Guide', href: 'salary-calculator.html' },
   { label: 'Cover Letter', href: 'cover-letter.html' },
   { label: 'Tracker',      href: 'tracker.html' },
   { label: 'Autofill Lab', href: 'autofill-lab.html' },
