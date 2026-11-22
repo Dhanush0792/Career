@@ -1366,13 +1366,32 @@ function handleDocUpload(file, docKey, statusElId) {
   if (!file) return;
   const statusEl = document.getElementById(statusElId);
   const reader = new FileReader();
-  reader.onload = (e) => {
-    uploadedDocs[docKey] = {
+  reader.onload = async (e) => {
+    const binaryData = e.target.result;
+    const meta = {
       name: file.name,
       size: (file.size / 1024).toFixed(1) + ' KB',
+      bytes: file.size,
       type: file.type,
-      data: e.target.result // Data URL for persistent storage
+      storage: 'indexeddb',
+      updatedAt: Date.now()
     };
+    // Keep ONLY lightweight metadata in memory and localStorage (NO .data property)
+    uploadedDocs[docKey] = meta;
+
+    // Decouple full binary into IndexedDB
+    if (window.CareerBridgeDocsDB && window.CareerBridgeDocsDB.saveDocBinary) {
+      try {
+        await window.CareerBridgeDocsDB.saveDocBinary(docKey, {
+          ...meta,
+          docKey: docKey,
+          data: binaryData
+        });
+      } catch (idbErr) {
+        console.warn("Could not save document binary to IndexedDB:", idbErr);
+      }
+    }
+
     if (statusEl) {
       statusEl.innerHTML = `<span style="color:var(--success); font-weight:700;">&#10003; ${escapeHtml(file.name)}</span> <span style="color:var(--dim); font-size:10px;">(${(file.size / 1024).toFixed(1)} KB)</span>`;
     }
@@ -1384,6 +1403,9 @@ function handleDocUpload(file, docKey, statusElId) {
 
 function removeDoc(docKey, statusElId, inputElId) {
   delete uploadedDocs[docKey];
+  if (window.CareerBridgeDocsDB && window.CareerBridgeDocsDB.deleteDocBinary) {
+    window.CareerBridgeDocsDB.deleteDocBinary(docKey).catch(() => {});
+  }
   const statusEl = document.getElementById(statusElId);
   const inputEl = document.getElementById(inputElId);
   if (statusEl) statusEl.textContent = 'No document uploaded yet';
@@ -1736,15 +1758,21 @@ async function saveCloudProfile() {
     }));
   } catch (e) {}
 
-  if (saveDot) saveDot.style.background = res.ok ? 'var(--success)' : '#F5A623';
-  if (saveText) {
-    saveText.textContent = res.ok 
-      ? (res.localOnly ? 'Saved locally (offline mode)' : '✓ Profile saved to Supabase cloud & local storage') 
-      : 'Saved locally (cloud sync pending)';
+  if (res.syncedToCloud) {
+    if (saveDot) saveDot.style.background = 'var(--success)';
+    if (saveText) saveText.textContent = '✓ Profile saved & synchronized to Supabase cloud';
+    showToast('Profile saved & synchronized successfully to Supabase cloud!', 'success');
+  } else if (res.offline) {
+    if (saveDot) saveDot.style.background = '#F5A623';
+    if (saveText) saveText.textContent = 'Saved locally (offline mode)';
+    showToast('Profile saved locally (offline mode)', 'info');
+  } else {
+    if (saveDot) saveDot.style.background = '#F5A623';
+    if (saveText) saveText.textContent = 'Saved locally (cloud sync pending)';
+    showToast('Profile saved locally (cloud sync pending)', 'info');
   }
 
   updateProfileCompleteness();
-  showToast('Profile saved & synchronized successfully to Supabase cloud!', 'success');
 }
 
 // ── Deterministic Resume Parser (100% Pure Logic / Regex) ───────────────────
@@ -2133,8 +2161,14 @@ function setStepIndicator(key, isComplete) {
 
 // ── Initial Document Load & Setup ───────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", async () => {
-  if (typeof window.CareerBridgeSync !== 'undefined' && window.CareerBridgeSync.requireAuth) {
-    if (!window.CareerBridgeSync.requireAuth()) return;
+  if (typeof window.CareerBridgeSync !== 'undefined' && typeof window.CareerBridgeSync.requireAuth === 'function') {
+    const isAuthed = window.CareerBridgeSync.requireAuth();
+    if (isAuthed === false) return;
+  }
+
+  // Decoupled legacy documents migration
+  if (window.CareerBridgeDocsDB && window.CareerBridgeDocsDB.migrateLegacyLocalStorageDocs) {
+    window.CareerBridgeDocsDB.migrateLegacyLocalStorageDocs().catch(() => {});
   }
 
   // 1. Immediately load local profile from localStorage FIRST (Zero data loss guarantee)

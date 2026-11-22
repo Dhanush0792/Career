@@ -3,6 +3,7 @@
 // Instead, post only a signal to the extension via chrome.runtime.sendMessage.
 // The extension fetches its own token from chrome.storage.local directly.
 (function() {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   const token = localStorage.getItem('jxa_token') || "";
   const email = localStorage.getItem('jxa_user_email') || "";
   if (!token) return; // Nothing to pair
@@ -20,6 +21,7 @@
 
 // ─── Local Storage Migration ───────────────────────────────────────────────
 (function() {
+  if (typeof localStorage === 'undefined') return;
   const legacyKeys = ['token', 'passcode', 'local_profile', 'local_profiles', 'active_profile_id', 'local_state', 'applications', 'role'];
   legacyKeys.forEach(k => {
     const val = localStorage.getItem('ch_' + k);
@@ -29,9 +31,9 @@
   });
 })();
 
-const SYNC_API = (window.location.hostname === 'localhost' || 
+const SYNC_API = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || 
                   window.location.hostname === '127.0.0.1' || 
-                  window.location.protocol === 'file:')
+                  window.location.protocol === 'file:'))
   ? 'http://localhost:8787/api'
   : 'https://jobxapply-backend.onrender.com/api';
 
@@ -146,12 +148,54 @@ function triggerSessionLogout(reason = 'logged_out', navigate = true) {
   }
 }
 
+// Helper: Get effective auth token, synchronizing Supabase OAuth tokens if expired
+function getEffectiveAuthToken() {
+  let token = (typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_token') : "") || "";
+  const now = Date.now();
+  let isValid = false;
+
+  if (token) {
+    const payload = parseJwtPayload(token);
+    if (!payload || !payload.exp || (payload.exp * 1000 > now + 30000)) {
+      isValid = true;
+    }
+  }
+
+  // If token is missing, expired, or expiring within 30s, inspect Supabase local session
+  if (!isValid && typeof localStorage !== 'undefined') {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const candidateToken = parsed?.access_token || parsed?.session?.access_token;
+            if (candidateToken) {
+              const candPayload = parseJwtPayload(candidateToken);
+              if (candPayload && (!candPayload.exp || candPayload.exp * 1000 > now)) {
+                token = candidateToken;
+                localStorage.setItem('jxa_token', candidateToken);
+                isValid = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  return token;
+}
+
 /**
  * Redirect to auth.html if no session token exists, if token is expired, or if inactive for 3+ consecutive days.
  * Call this at the top of every inner page.
+ * Returns true if authenticated or public page, false if redirecting/unauthenticated.
  */
 function requireAuth() {
-  const path = window.location.pathname;
+  const path = (typeof window !== 'undefined' && window.location) ? window.location.pathname : '';
   const isInAdmin = path.includes('/admin/');
   const prefix = isInAdmin ? '../' : '';
   let page = path.substring(path.lastIndexOf('/') + 1).toLowerCase();
@@ -162,25 +206,25 @@ function requireAuth() {
   // Whitelist public pages (extension-agnostic names)
   const publicPages = ['', 'auth', 'extension-setup', 'extension-landing', 'index', 'about', 'tools', 'ats-checker', 'resume-builder', 'salary-calculator', 'gov-resizer', 'roadmap-software-engineer', 'roadmap-data-scientist', 'gov-ssc-cgl', 'gov-ibps-po', 'resume-importance'];
   if (publicPages.includes(page)) {
-    if (localStorage.getItem('jxa_token')) {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_token')) {
       pullApplicationsFromServer().catch(() => {});
     }
-    return; // Allow access without authentication
+    return true; // Allow access without authentication
   }
 
-  const token = localStorage.getItem('jxa_token');
+  const token = getEffectiveAuthToken();
   let isValidToken = false;
   let tokenRole = 'user';
   let invalidReason = 'expired';
 
   if (token) {
-    let lastActive = Number(localStorage.getItem('jxa_last_active') || 0);
+    let lastActive = Number((typeof localStorage !== 'undefined' && localStorage.getItem('jxa_last_active')) || 0);
     const now = Date.now();
 
     // If no lastActive was stored, initialize it now so it is tracked going forward
     if (!lastActive) {
       lastActive = now;
-      localStorage.setItem('jxa_last_active', String(now));
+      if (typeof localStorage !== 'undefined') localStorage.setItem('jxa_last_active', String(now));
     }
 
     // Check Case 1: Inactivity >= 3 consecutive days (72h)
@@ -196,7 +240,7 @@ function requireAuth() {
           invalidReason = 'expired';
         } else {
           isValidToken = true;
-          const storedRole = localStorage.getItem('jxa_role');
+          const storedRole = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_role') : null;
 
           if (storedRole === 'admin') {
             tokenRole = 'admin';
@@ -205,7 +249,7 @@ function requireAuth() {
           } else {
             tokenRole = payload.user_metadata?.role || payload.app_metadata?.role || storedRole || 'user';
           }
-          if (tokenRole === 'admin') {
+          if (tokenRole === 'admin' && typeof localStorage !== 'undefined') {
             localStorage.setItem('jxa_role', 'admin');
           }
           // Touch activity timestamp
@@ -214,35 +258,40 @@ function requireAuth() {
       } else {
         // Opaque token / fallback token
         isValidToken = true;
-        tokenRole = localStorage.getItem('jxa_role') || 'user';
+        tokenRole = (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_role')) || 'user';
         recordUserActivity();
       }
     }
   }
 
   if (!isValidToken) {
-    if (document.documentElement) {
+    if (typeof document !== 'undefined' && document.documentElement) {
       document.documentElement.style.display = 'none';
     }
-    if (page.includes('resume-builder')) {
-      window.location.replace(prefix + 'tools.html#resume-builder');
-    } else if (page.includes('ats-checker')) {
-      window.location.replace(prefix + 'tools.html#ats-checker');
-    } else if (page.includes('cover-letter')) {
-      window.location.replace(prefix + 'tools.html#cover-letter');
-    } else if (page.includes('autofill-lab')) {
-      window.location.replace(prefix + 'tools.html#autofill-lab');
-    } else {
-      triggerSessionLogout(token ? invalidReason : 'unauthenticated');
+    if (typeof window !== 'undefined' && window.location) {
+      if (page.includes('resume-builder')) {
+        window.location.replace(prefix + 'tools.html#resume-builder');
+      } else if (page.includes('ats-checker')) {
+        window.location.replace(prefix + 'tools.html#ats-checker');
+      } else if (page.includes('cover-letter')) {
+        window.location.replace(prefix + 'tools.html#cover-letter');
+      } else if (page.includes('autofill-lab')) {
+        window.location.replace(prefix + 'tools.html#autofill-lab');
+      } else {
+        triggerSessionLogout(token ? invalidReason : 'unauthenticated');
+      }
     }
+    return false;
   } else {
     // Non-admin trying to access admin pages
     if (tokenRole !== 'admin' && isInAdmin) {
-      if (document.documentElement) {
+      if (typeof document !== 'undefined' && document.documentElement) {
         document.documentElement.style.display = 'none';
       }
-      window.location.replace('../dashboard.html');
-      return;
+      if (typeof window !== 'undefined' && window.location) {
+        window.location.replace('../dashboard.html');
+      }
+      return false;
     }
     // Background pull tracker data from server on startup
     pullApplicationsFromServer().catch(() => {});
@@ -250,14 +299,17 @@ function requireAuth() {
 
     // Proactively share authentication session with the extension content script
     try {
-      window.dispatchEvent(new CustomEvent('jobxapply:shareAuth', {
-        detail: {
-          token: token,
-          email: localStorage.getItem('jxa_user_email') || '',
-          passcode: localStorage.getItem('jxa_passcode') || ''
-        }
-      }));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('jobxapply:shareAuth', {
+          detail: {
+            token: token,
+            email: (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_user_email')) || '',
+            passcode: (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_passcode')) || ''
+          }
+        }));
+      }
     } catch (e) {}
+    return true; // Session verified
   }
 }
 
@@ -440,13 +492,228 @@ async function decryptAllProfiles(profilesMap, passcode) {
   return decryptedMap;
 }
 
+// ── Safe Local Storage & Quota Resilience ──────────────────────────────────
+function safeSetItem(key, val) {
+  if (typeof localStorage === 'undefined') return false;
+  const strVal = typeof val === 'string' ? val : JSON.stringify(val);
+  try {
+    localStorage.setItem(key, strVal);
+    return true;
+  } catch (err) {
+    console.warn(`[STORAGE_QUOTA] QuotaExceededError when setting '${key}'. Attempting eviction:`, err);
+    try {
+      localStorage.removeItem('jxa_profile_cache');
+      localStorage.setItem(key, strVal);
+      return true;
+    } catch (err2) {
+      console.warn(`[STORAGE_QUOTA] Critical: Failed to persist '${key}' even after eviction.`);
+      return false;
+    }
+  }
+}
+
+/**
+ * Strips heavy binary base64 data URLs from uploadedDocs to ensure zero QuotaExceededError
+ * and keeps only lightweight metadata in localStorage & network payloads.
+ */
+function sanitizeProfileForStorage(p) {
+  if (!p || typeof p !== 'object') return p;
+  const clean = JSON.parse(JSON.stringify(p));
+  if (clean.uploadedDocs && typeof clean.uploadedDocs === 'object') {
+    for (const k of Object.keys(clean.uploadedDocs)) {
+      if (clean.uploadedDocs[k]) {
+        if (clean.uploadedDocs[k].data) {
+          delete clean.uploadedDocs[k].data;
+        }
+        clean.uploadedDocs[k].storage = 'indexeddb';
+      }
+    }
+  }
+  return clean;
+}
+
+// ── IndexedDB Binary Document Decoupling (CareerBridgeDocsDB) ───────────────
+const DB_DOCS_NAME = 'CareerBridgeDocsDB';
+const DB_DOCS_VERSION = 1;
+const STORE_DOCS_NAME = 'documents';
+
+function openDocsDB() {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === 'undefined') {
+      return reject(new Error('IndexedDB not supported in this runtime'));
+    }
+    const request = indexedDB.open(DB_DOCS_NAME, DB_DOCS_VERSION);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_DOCS_NAME)) {
+        db.createObjectStore(STORE_DOCS_NAME, { keyPath: 'docKey' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+const CareerBridgeDocsDB = {
+  async saveDocBinary(docKey, record = {}) {
+    if (!docKey) throw new Error('docKey required');
+    const db = await openDocsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_DOCS_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_DOCS_NAME);
+      const dataToStore = {
+        ...record,
+        docKey: docKey,
+        storage: 'indexeddb',
+        updatedAt: record.updatedAt || Date.now()
+      };
+      const req = store.put(dataToStore);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async getDocBinary(docKey) {
+    if (!docKey) return null;
+    const db = await openDocsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_DOCS_NAME, 'readonly');
+      const store = tx.objectStore(STORE_DOCS_NAME);
+      const req = store.get(docKey);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async deleteDocBinary(docKey) {
+    if (!docKey) return;
+    const db = await openDocsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_DOCS_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_DOCS_NAME);
+      const req = store.delete(docKey);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async getAllDocMetas() {
+    const db = await openDocsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_DOCS_NAME, 'readonly');
+      const store = tx.objectStore(STORE_DOCS_NAME);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const list = req.result || [];
+        resolve(list.map(d => ({
+          docKey: d.docKey,
+          name: d.name,
+          size: d.size,
+          bytes: d.bytes,
+          type: d.type,
+          storage: 'indexeddb',
+          updatedAt: d.updatedAt
+        })));
+      };
+      req.onerror = () => reject(req.error);
+    });
+  },
+
+  async migrateLegacyLocalStorageDocs() {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const profileKeys = ['jxa_local_profile', 'jxa_profile_cache'];
+      for (const pk of profileKeys) {
+        const raw = localStorage.getItem(pk);
+        if (!raw) continue;
+        let parsed = null;
+        try { parsed = JSON.parse(raw); } catch(e) {}
+        if (!parsed) continue;
+
+        let modified = false;
+        const targetProfile = parsed.profile || parsed;
+        if (targetProfile && targetProfile.uploadedDocs && typeof targetProfile.uploadedDocs === 'object') {
+          for (const [docKey, doc] of Object.entries(targetProfile.uploadedDocs)) {
+            if (doc && doc.data && typeof doc.data === 'string' && doc.data.startsWith('data:')) {
+              try {
+                await CareerBridgeDocsDB.saveDocBinary(docKey, {
+                  docKey,
+                  name: doc.name || docKey,
+                  size: doc.size || '',
+                  bytes: doc.bytes || Math.round(doc.data.length * 0.75),
+                  type: doc.type || 'application/octet-stream',
+                  data: doc.data,
+                  updatedAt: doc.updatedAt || Date.now()
+                });
+                delete doc.data;
+                doc.storage = 'indexeddb';
+                modified = true;
+              } catch (err) {
+                console.warn('Failed to migrate doc to IndexedDB:', docKey, err);
+              }
+            }
+          }
+        }
+
+        if (modified) {
+          safeSetItem(pk, JSON.stringify(parsed));
+        }
+      }
+
+      const rawProfiles = localStorage.getItem('jxa_local_profiles');
+      if (rawProfiles) {
+        let profiles = null;
+        try { profiles = JSON.parse(rawProfiles); } catch(e) {}
+        if (profiles && typeof profiles === 'object') {
+          let modified = false;
+          for (const pid of Object.keys(profiles)) {
+            const prof = profiles[pid];
+            if (prof && prof.uploadedDocs && typeof prof.uploadedDocs === 'object') {
+              for (const [docKey, doc] of Object.entries(prof.uploadedDocs)) {
+                if (doc && doc.data && typeof doc.data === 'string' && doc.data.startsWith('data:')) {
+                  try {
+                    await CareerBridgeDocsDB.saveDocBinary(docKey, {
+                      docKey,
+                      name: doc.name || docKey,
+                      size: doc.size || '',
+                      bytes: doc.bytes || Math.round(doc.data.length * 0.75),
+                      type: doc.type || 'application/octet-stream',
+                      data: doc.data,
+                      updatedAt: doc.updatedAt || Date.now()
+                    });
+                    delete doc.data;
+                    doc.storage = 'indexeddb';
+                    modified = true;
+                  } catch (e) {}
+                }
+              }
+            }
+          }
+          if (modified) {
+            safeSetItem('jxa_local_profiles', JSON.stringify(profiles));
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Legacy docs migration notice:", e);
+    }
+  }
+};
+
+// Automatic startup migration trigger
+if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+  setTimeout(() => {
+    CareerBridgeDocsDB.migrateLegacyLocalStorageDocs().catch(() => {});
+  }, 100);
+}
+
 /**
  * Load profile from sync server; falls back to localStorage.
  * Returns the normalized state object: { profile, version, updatedAt, origin }
  */
 async function loadProfile() {
-  const token = localStorage.getItem('jxa_token') || "";
-  const passcode = localStorage.getItem('jxa_passcode') || "";
+  const token = getEffectiveAuthToken();
+  const passcode = (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_passcode')) || "";
   const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
   const headers = {};
   if (token) {
@@ -476,12 +743,12 @@ async function loadProfile() {
             state.profile = decrypted;
           } catch (e) {
             console.error("Failed to decrypt legacy profile:", e);
-            if (!window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
+            if (typeof window !== 'undefined' && !window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
               setTimeout(showPasscodeModal, 100);
             }
           }
         } else {
-          if (!window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
+          if (typeof window !== 'undefined' && !window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
             setTimeout(showPasscodeModal, 100);
           }
         }
@@ -492,7 +759,7 @@ async function loadProfile() {
       }
       
       // Cache locally for offline fallback - NEVER overwrite existing rich local profile with an empty or less complete server response
-      const existingLocalRaw = localStorage.getItem('jxa_local_profile');
+      const existingLocalRaw = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_local_profile') : null;
       let existingLocal = null;
       try { existingLocal = existingLocalRaw ? JSON.parse(existingLocalRaw) : null; } catch(e) {}
 
@@ -511,46 +778,48 @@ async function loadProfile() {
         if (!profiles[activeId]) profiles[activeId] = mergedProfile;
         profiles[activeId] = mergedProfile;
         state.profiles = profiles;
-        localStorage.setItem('jxa_local_profile', JSON.stringify(mergedProfile));
-        localStorage.setItem('jxa_local_profiles', JSON.stringify(profiles));
+        safeSetItem('jxa_local_profile', JSON.stringify(mergedProfile));
+        safeSetItem('jxa_local_profiles', JSON.stringify(profiles));
         setTimeout(() => saveProfile(mergedProfile).catch(() => {}), 1200);
       } else {
-        localStorage.setItem('jxa_local_profile', JSON.stringify(state.profile || {}));
-        localStorage.setItem('jxa_local_profiles', JSON.stringify(profiles));
+        safeSetItem('jxa_local_profile', JSON.stringify(state.profile || {}));
+        safeSetItem('jxa_local_profiles', JSON.stringify(profiles));
       }
-      localStorage.setItem('jxa_active_profile_id', activeId);
-      localStorage.setItem('jxa_local_state', JSON.stringify(state));
-      localStorage.setItem('jxa_profile_cache', JSON.stringify(state.profile || {}));
+      safeSetItem('jxa_active_profile_id', activeId);
+      safeSetItem('jxa_local_state', JSON.stringify(state));
+      safeSetItem('jxa_profile_cache', JSON.stringify(state.profile || {}));
       return state;
     }
   } catch (_) {}
   
   // Offline fallback
-  const localProfile = localStorage.getItem('jxa_local_profile');
-  const localState = localStorage.getItem('jxa_local_state');
+  const localProfile = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_local_profile') : null;
+  const localState = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_local_state') : null;
   if (localProfile) {
-    let state = localState ? JSON.parse(localState) : { profile: JSON.parse(localProfile), version: 0, updatedAt: 0, origin: 'local' };
+    let parsedLocal = null;
+    try { parsedLocal = JSON.parse(localProfile); } catch(e) {}
+    let state = localState ? JSON.parse(localState) : { profile: parsedLocal, version: 0, updatedAt: 0, origin: 'local' };
     let profiles = state.profiles || {};
-    let activeId = state.activeProfileId || "default";
+    let activeId = state.activeProfileId || (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_active_profile_id')) || "default";
 
-    if (state.profiles) {
+    if (state.profiles && Object.keys(state.profiles).length > 0) {
       if (passcode) {
         profiles = await decryptAllProfiles(state.profiles, passcode);
       }
       state.profiles = profiles;
-      state.profile = profiles[activeId] || {};
+      state.profile = profiles[activeId] || parsedLocal || {};
     } else if (state.profile && state.profile.encryptedBlob) {
       if (passcode) {
         try {
           const decryptedProfile = await decryptProfileData(state.profile, passcode);
           state.profile = decryptedProfile;
         } catch (e) {
-          if (!window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
+          if (typeof window !== 'undefined' && !window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
             setTimeout(showPasscodeModal, 100);
           }
         }
       } else {
-        if (!window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
+        if (typeof window !== 'undefined' && !window.location.pathname.endsWith('profile-setup.html') && !window.location.pathname.endsWith('auth.html')) {
           setTimeout(showPasscodeModal, 100);
         }
       }
@@ -558,7 +827,20 @@ async function loadProfile() {
       activeId = "default";
       state.profiles = profiles;
       state.activeProfileId = activeId;
+    } else {
+      state.profile = parsedLocal || state.profile || {};
+      if (!profiles[activeId] && state.profile) {
+        profiles[activeId] = state.profile;
+        state.profiles = profiles;
+      }
     }
+
+    // Ensure state.profile is never empty if parsedLocal is available
+    if ((!state.profile || Object.keys(state.profile).length === 0) && parsedLocal) {
+      state.profile = parsedLocal;
+    }
+
+    state.origin = 'local';
     return state;
   }
   return { profile: {}, version: 0, updatedAt: 0, origin: 'none' };
@@ -569,7 +851,7 @@ async function loadProfile() {
  */
 function getCachedProfileState() {
   try {
-    const localState = localStorage.getItem('jxa_local_state');
+    const localState = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_local_state') : null;
     if (localState) {
       const state = JSON.parse(localState);
       const localProfiles = localStorage.getItem('jxa_local_profiles');
@@ -588,31 +870,39 @@ function getCachedProfileState() {
 }
 
 /**
- * Save profile to sync server AND localStorage.
- * Returns { ok, state, errors }.
+ * Save profile to sync server AND localStorage with complete QuotaExceededError protection.
+ * Decouples document binaries via sanitizeProfileForStorage().
+ * Returns { ok, syncedToCloud, localOnly, state, status, error }.
  */
 async function saveProfile(profileData) {
-  let activeId = localStorage.getItem('jxa_active_profile_id') || "default";
+  let activeId = (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_active_profile_id')) || "default";
   
-  let localProfilesRaw = localStorage.getItem('jxa_local_profiles');
+  // Cleanse any heavy binary document strings from profileData before storage
+  const cleanProfile = sanitizeProfileForStorage(profileData);
+  cleanProfile.id = activeId;
+
+  let localProfilesRaw = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_local_profiles') : null;
   let localProfiles = {};
   try {
     localProfiles = localProfilesRaw ? JSON.parse(localProfilesRaw) : {};
   } catch(e) {}
   
-  profileData.id = activeId;
-  localProfiles[activeId] = profileData;
+  // Clean all profiles in localProfiles
+  for (const k of Object.keys(localProfiles)) {
+    localProfiles[k] = sanitizeProfileForStorage(localProfiles[k]);
+  }
+  localProfiles[activeId] = cleanProfile;
 
-  // STEP 1: ALWAYS PERSIST LOCALLY FIRST (Zero Data Loss)
-  localStorage.setItem('jxa_local_profile', JSON.stringify(profileData));
-  localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
-  localStorage.setItem('jxa_active_profile_id', activeId);
-  localStorage.setItem('jxa_profile_cache', JSON.stringify(profileData));
+  // STEP 1: ALWAYS PERSIST LOCALLY FIRST (Zero Data Loss) - Wrapped safely against QuotaExceededError
+  safeSetItem('jxa_local_profile', JSON.stringify(cleanProfile));
+  safeSetItem('jxa_local_profiles', JSON.stringify(localProfiles));
+  safeSetItem('jxa_active_profile_id', activeId);
+  safeSetItem('jxa_profile_cache', JSON.stringify(cleanProfile));
 
-  const localState = localStorage.getItem('jxa_local_state');
+  const localState = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_local_state') : null;
   const knownVersion = localState ? (JSON.parse(localState).version || 0) : 0;
   
-  const passcode = localStorage.getItem('jxa_passcode') || "";
+  const passcode = (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_passcode')) || "";
   const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
 
   const encryptedProfiles = {};
@@ -623,7 +913,7 @@ async function saveProfile(profileData) {
         encryptedProfiles[key] = await encryptProfileData(p, passcode);
       } catch (e) {
         console.error("Encryption failed for profile:", key, e);
-        return { ok: false, errors: ["Encryption failed: " + e.message] };
+        return { ok: false, syncedToCloud: false, localOnly: true, errors: ["Encryption failed: " + e.message] };
       }
     } else {
       encryptedProfiles[key] = p;
@@ -638,7 +928,7 @@ async function saveProfile(profileData) {
     origin: 'frontend' 
   };
   
-  const token = localStorage.getItem('jxa_token') || "";
+  const token = getEffectiveAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -654,24 +944,28 @@ async function saveProfile(profileData) {
     });
     const result = await res.json();
     if (res.ok && result.ok) {
-      localStorage.setItem('jxa_local_profile', JSON.stringify(profileData));
-      localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
-      localStorage.setItem('jxa_active_profile_id', activeId);
+      safeSetItem('jxa_local_profile', JSON.stringify(cleanProfile));
+      safeSetItem('jxa_local_profiles', JSON.stringify(localProfiles));
+      safeSetItem('jxa_active_profile_id', activeId);
       
       const serverState = result.state || {};
       const decryptedServerState = {
         ...serverState,
         profiles: localProfiles,
-        profile: profileData
+        profile: cleanProfile
       };
-      localStorage.setItem('jxa_local_state', JSON.stringify(decryptedServerState));
+      safeSetItem('jxa_local_state', JSON.stringify(decryptedServerState));
 
-      // Notify extension: auth is available — extension reads from chrome.storage.local, not this event
-      window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
-        detail: { paired: true, email: localStorage.getItem('jxa_user_email') || "" }
-      }));
+      // Notify extension: auth is available
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
+            detail: { paired: true, email: localStorage.getItem('jxa_user_email') || "" }
+          }));
+        }
+      } catch (e) {}
       
-      return { ok: true, state: decryptedServerState };
+      return { ok: true, syncedToCloud: true, localOnly: false, state: decryptedServerState };
     }
     if (res.status === 409 && result.current) {
       let serverProfiles = result.current.profiles || {};
@@ -681,24 +975,31 @@ async function saveProfile(profileData) {
       }
       const serverProfile = serverProfiles[serverActiveId] || {};
       
-      localStorage.setItem('jxa_local_profile', JSON.stringify(serverProfile));
-      localStorage.setItem('jxa_local_profiles', JSON.stringify(serverProfiles));
-      localStorage.setItem('jxa_active_profile_id', serverActiveId);
+      safeSetItem('jxa_local_profile', JSON.stringify(serverProfile));
+      safeSetItem('jxa_local_profiles', JSON.stringify(serverProfiles));
+      safeSetItem('jxa_active_profile_id', serverActiveId);
       
       const decryptedCurrent = {
         ...result.current,
         profiles: serverProfiles,
         profile: serverProfile
       };
-      localStorage.setItem('jxa_local_state', JSON.stringify(decryptedCurrent));
+      safeSetItem('jxa_local_state', JSON.stringify(decryptedCurrent));
     }
-    return { ok: true, syncedToCloud: false, localOnly: true, state: { profile: profileData, profiles: localProfiles, activeProfileId: activeId } };
+    return { 
+      ok: false, 
+      syncedToCloud: false, 
+      localOnly: true, 
+      status: res.status, 
+      error: result?.error || 'Server rejected profile sync', 
+      state: { profile: cleanProfile, profiles: localProfiles, activeProfileId: activeId } 
+    };
   } catch (e) {
-    localStorage.setItem('jxa_local_profile', JSON.stringify(profileData));
-    localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
-    const offlineState = { profile: profileData, profiles: localProfiles, activeProfileId: activeId, version: 0, updatedAt: Date.now(), origin: 'local' };
-    localStorage.setItem('jxa_local_state', JSON.stringify(offlineState));
-    return { ok: true, offline: true, state: offlineState };
+    safeSetItem('jxa_local_profile', JSON.stringify(cleanProfile));
+    safeSetItem('jxa_local_profiles', JSON.stringify(localProfiles));
+    const offlineState = { profile: cleanProfile, profiles: localProfiles, activeProfileId: activeId, version: 0, updatedAt: Date.now(), origin: 'local' };
+    safeSetItem('jxa_local_state', JSON.stringify(offlineState));
+    return { ok: true, syncedToCloud: false, offline: true, localOnly: true, state: offlineState };
   }
 }
 
@@ -2092,19 +2393,169 @@ function analyzeSummaryFourLines(candidateSummary, roleKey) {
   };
 }
 
-window.validateResumeDocument = validateResumeDocument;
-window.parseResumeToStructuredData = parseResumeToStructuredData;
-window.scoreResumeData = scoreResumeData;
+/**
+ * Scale-aware reconstruction of text from PDF.js page content items.
+ * Accounts for baseline micro-jitter (avgH * 0.5), horizontal progression,
+ * variable font sizes, superscripts, multi-word entities, word spacing gaps,
+ * punctuation clinging, and paragraph transitions.
+ */
+function reconstructPdfPageText(textContent) {
+  if (!textContent || !Array.isArray(textContent.items) || textContent.items.length === 0) {
+    return '';
+  }
 
-window.CareerBridgeSync = {
-  requireAuth,
-  logout,
-  loadProfile,
-  saveProfile,
-  setActiveProfile,
-  getCachedProfileState,
-  renderNav,
-  validateResumeDocument,
-  parseResumeToStructuredData,
-  scoreResumeData
-};
+  // 1. Normalize items and filter out pure empty items without EOL
+  const items = [];
+  for (const raw of textContent.items) {
+    if (!raw) continue;
+    const str = raw.str || '';
+    if (str.length === 0 && !raw.hasEOL) continue;
+    
+    const tx = raw.transform ? raw.transform[4] : 0;
+    const ty = raw.transform ? raw.transform[5] : 0;
+    const h = raw.height || (raw.transform ? Math.abs(raw.transform[3]) : 12) || 12;
+    const w = raw.width || (str.length * (h * 0.5));
+
+    items.push({
+      str,
+      x: tx,
+      y: ty,
+      w,
+      h,
+      hasEOL: Boolean(raw.hasEOL)
+    });
+  }
+
+  if (items.length === 0) return '';
+
+  let reconstructed = '';
+  let prev = null;
+
+  for (let i = 0; i < items.length; i++) {
+    const cur = items[i];
+
+    if (!prev) {
+      reconstructed += cur.str;
+      prev = cur;
+      continue;
+    }
+
+    const avgH = (cur.h + prev.h) / 2 || 12;
+    const dy = cur.y - prev.y;         // In PDF coordinates: positive = up, negative = down
+    const prevRight = prev.x + prev.w;
+    const gapX = cur.x - prevRight;
+
+    let isSameLine = false;
+    let isNewLine = false;
+    let isParagraphGap = false;
+
+    if (prev.hasEOL) {
+      isNewLine = true;
+    } else if (dy < 0) {
+      if (Math.abs(dy) <= avgH * 0.5) {
+        // Minor baseline jitter (e.g. 1-6pt on 12pt font) on the same visual line
+        isSameLine = true;
+      } else if (cur.x >= prevRight - 2 && Math.abs(dy) <= avgH * 0.8) {
+        // Subscript / font change continuing to the right
+        isSameLine = true;
+      } else if (Math.abs(dy) > avgH * 1.8) {
+        // Significant vertical drop indicates paragraph / section break
+        isParagraphGap = true;
+      } else {
+        // Standard next line drop
+        isNewLine = true;
+      }
+    } else if (dy > 0) {
+      if (dy <= avgH * 0.5 && cur.x >= prevRight - 2) {
+        // Superscript or upward baseline jitter continuing on same line
+        isSameLine = true;
+      } else if (dy > avgH * 1.5) {
+        // Jumped upwards on the page (multi-column shift or new block)
+        isParagraphGap = true;
+      } else {
+        isNewLine = true;
+      }
+    } else {
+      isSameLine = true;
+    }
+
+    if (isParagraphGap) {
+      if (!reconstructed.endsWith('\n\n')) {
+        reconstructed = reconstructed.trimEnd() + '\n\n';
+      }
+      reconstructed += cur.str;
+    } else if (isNewLine) {
+      if (!reconstructed.endsWith('\n')) {
+        reconstructed = reconstructed.trimEnd() + '\n';
+      }
+      reconstructed += cur.str;
+    } else {
+      // Same line: determine if a space is needed
+      const endsWithSpace = prev.str.endsWith(' ') || reconstructed.endsWith(' ');
+      const startsWithSpace = cur.str.startsWith(' ');
+      const isPunctuation = /^[.,:;!?%)\'\"\]}]/.test(cur.str);
+
+      if (!endsWithSpace && !startsWithSpace) {
+        if (gapX > 1.5 && !isPunctuation) {
+          reconstructed += ' ';
+        } else if (gapX <= 1.5 && gapX >= -2 && !isPunctuation) {
+          const prevLastChar = prev.str.slice(-1);
+          const curFirstChar = cur.str.charAt(0);
+          if (/[a-zA-Z0-9]/.test(prevLastChar) && /[a-zA-Z0-9]/.test(curFirstChar) && gapX > 0.5) {
+            reconstructed += ' ';
+          }
+        }
+      }
+      reconstructed += cur.str;
+    }
+
+    prev = cur;
+  }
+
+  return reconstructed;
+}
+
+if (typeof window !== 'undefined') {
+  window.validateResumeDocument = validateResumeDocument;
+  window.parseResumeToStructuredData = parseResumeToStructuredData;
+  window.scoreResumeData = scoreResumeData;
+  window.reconstructPdfPageText = reconstructPdfPageText;
+  window.CareerBridgeDocsDB = CareerBridgeDocsDB;
+
+  window.CareerBridgeSync = {
+    requireAuth,
+    logout,
+    loadProfile,
+    saveProfile,
+    setActiveProfile,
+    getCachedProfileState,
+    sanitizeProfileForStorage,
+    CareerBridgeDocsDB,
+    reconstructPdfPageText,
+    safeSetItem,
+    getEffectiveAuthToken,
+    renderNav,
+    validateResumeDocument,
+    parseResumeToStructuredData,
+    scoreResumeData
+  };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    requireAuth,
+    logout,
+    loadProfile,
+    saveProfile,
+    setActiveProfile,
+    getCachedProfileState,
+    sanitizeProfileForStorage,
+    CareerBridgeDocsDB,
+    reconstructPdfPageText,
+    safeSetItem,
+    getEffectiveAuthToken,
+    validateResumeDocument,
+    parseResumeToStructuredData,
+    scoreResumeData
+  };
+}
