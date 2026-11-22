@@ -83,20 +83,13 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Legacy setup
+// Handle install / update: purge any fake mock test profile (Alex Morgan)
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(["jobxapplyProfiles", "jobxapplyProfile"], (result) => {
     const existing = result.jobxapplyProfile || {};
-    const hasData = existing.fullName || existing.email;
-    if (!result.jobxapplyProfiles || !hasData) {
-      const defaultProfile = { ...MOCK_PROFILE_DATA };
-      chrome.storage.local.set({
-        jobxapplyActiveProfileId: "default",
-        jobxapplyProfile: defaultProfile,
-        jobxapplyProfiles: {
-          "default": defaultProfile
-        }
-      });
+    // If stored profile is fake mock data, clear it so real user profile can sync cleanly
+    if (existing.fullName === "Alex R. Morgan" || existing.email === "alex.morgan.dev@gmail.com") {
+      chrome.storage.local.remove(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"]);
     }
   });
 });
@@ -337,9 +330,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.get(["jobxapplyState", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyProfile", "jobxapplyPasscode"], (result) => {
       const passcode = result.jobxapplyPasscode || "";
       
-      // If we already have cached profiles and not forcing refresh, return them immediately for fast UI response, and sync in background
-      if (!message.force && result.jobxapplyProfiles && Object.keys(result.jobxapplyProfiles).length) {
-        const activeProfile = result.jobxapplyProfiles[result.jobxapplyActiveProfileId] || result.jobxapplyProfile || {};
+      // If we already have cached REAL profiles and not forcing refresh, return them immediately
+      const activeProfile = result.jobxapplyProfiles?.[result.jobxapplyActiveProfileId] || result.jobxapplyProfile || {};
+      const isMock = activeProfile.fullName === "Alex R. Morgan" || activeProfile.email === "alex.morgan.dev@gmail.com";
+      if (!message.force && !isMock && result.jobxapplyProfiles && Object.keys(result.jobxapplyProfiles).length) {
         sendResponse({ 
           profile: activeProfile, 
           profiles: result.jobxapplyProfiles,

@@ -62,10 +62,53 @@ async function loadPortalInfo() {
   return { tab, rule };
 }
 
+// ── Active Web Session Auto-Sync Helper ────────────────────────────────────
+async function trySyncFromActiveWebTab() {
+  try {
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      if (!tab.url) continue;
+      const u = tab.url.toLowerCase();
+      if (u.includes(".netlify.app") || u.includes("jobxapply") || u.includes("careerhub") || u.includes("localhost:") || u.includes("127.0.0.1:")) {
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => ({
+            token: localStorage.getItem("jxa_token") || "",
+            email: localStorage.getItem("jxa_user_email") || "",
+            passcode: localStorage.getItem("jxa_passcode") || "",
+            profile: localStorage.getItem("jxa_local_profile") || localStorage.getItem("jxa_profile_cache") || ""
+          })
+        });
+        const session = results?.[0]?.result;
+        if (session && session.profile) {
+          let parsed = null;
+          try { parsed = JSON.parse(session.profile); } catch(e) {}
+          if (parsed && (parsed.fullName || parsed.firstName || parsed.email)) {
+            // Found real user profile in web tab!
+            const toSet = {
+              jobxapplyProfile: parsed,
+              jobxapplyProfiles: { "default": parsed },
+              jobxapplyActiveProfileId: "default",
+              jobxapplyEmail: session.email || parsed.email || ""
+            };
+            if (session.token) toSet.jobxapplyToken = session.token;
+            if (session.passcode) toSet.jobxapplyPasscode = session.passcode;
+            await new Promise(r => chrome.storage.local.set(toSet, r));
+            return true;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[JobXApply] Auto-sync from web tab notice:", err);
+  }
+  return false;
+}
+
 // ── Multi-Persona & Profile State ───────────────────────────────────────────
 async function checkAuthState() {
   try {
-    const local = await new Promise((r) =>
+    let local = await new Promise((r) =>
       chrome.storage.local.get(
         ["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyPasscode", "jobxapplyToken", "jobxapplyEmail"],
         r
@@ -75,6 +118,29 @@ async function checkAuthState() {
     let profiles = local.jobxapplyProfiles || {};
     let activeId = local.jobxapplyActiveProfileId || Object.keys(profiles)[0] || "default";
     let profile = profiles[activeId] || local.jobxapplyProfile || {};
+
+    const isMock = profile && (profile.fullName === "Alex R. Morgan" || profile.email === "alex.morgan.dev@gmail.com");
+
+    // If profile is empty or is fake Alex Morgan, immediately attempt silent sync from any open JobXApply web tab
+    if (!profile.fullName || isMock) {
+      const synced = await trySyncFromActiveWebTab();
+      if (synced) {
+        local = await new Promise((r) =>
+          chrome.storage.local.get(
+            ["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyPasscode", "jobxapplyToken", "jobxapplyEmail"],
+            r
+          )
+        );
+        profiles = local.jobxapplyProfiles || {};
+        activeId = local.jobxapplyActiveProfileId || Object.keys(profiles)[0] || "default";
+        profile = profiles[activeId] || local.jobxapplyProfile || {};
+      } else if (isMock) {
+        // Purge mock Alex Morgan so it doesn't trick the user
+        await new Promise(r => chrome.storage.local.remove(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], r));
+        profiles = {};
+        profile = {};
+      }
+    }
 
     const hasCredentials = !!(local.jobxapplyPasscode || local.jobxapplyToken);
     const hasData = profile && !!(profile.fullName || profile.email || profile.phone);
@@ -95,11 +161,13 @@ async function checkAuthState() {
       if (autofillView) autofillView.style.display = "none";
       if (navTabs) navTabs.style.display = "none";
       if (loginView) loginView.style.display = "flex";
+      detectActiveWebSession();
     }
   } catch (err) {
     console.error("checkAuthState error:", err);
     const loginView = document.getElementById("loginView");
     if (loginView) loginView.style.display = "flex";
+    detectActiveWebSession();
   }
 }
 
@@ -385,28 +453,36 @@ async function detectActiveWebSession() {
 }
 
 async function pairWithTabSession(tabId) {
-  setLoginStatus("Reading session from JobXApply tab...", "warn");
+  setLoginStatus("Reading session & profile from JobXApply tab...", "warn");
   try {
     const results = await chrome.scripting.executeScript({
       target: { tabId },
       func: () => ({
         token: localStorage.getItem("jxa_token") || "",
         email: localStorage.getItem("jxa_user_email") || "",
-        passcode: localStorage.getItem("jxa_passcode") || ""
+        passcode: localStorage.getItem("jxa_passcode") || "",
+        profile: localStorage.getItem("jxa_local_profile") || localStorage.getItem("jxa_profile_cache") || ""
       })
     });
 
     const session = results?.[0]?.result;
-    if (session?.token) {
-      chrome.storage.local.set({
-        jobxapplyToken: session.token,
-        jobxapplyEmail: session.email,
-        jobxapplyPasscode: session.passcode
-      }, () => {
+    if (session?.token || session?.profile) {
+      let parsed = null;
+      try { parsed = session.profile ? JSON.parse(session.profile) : null; } catch(e) {}
+
+      const toSet = {
+        jobxapplyToken: session.token || "",
+        jobxapplyEmail: session.email || (parsed ? parsed.email : ""),
+        jobxapplyPasscode: session.passcode || ""
+      };
+      if (parsed && (parsed.fullName || parsed.firstName || parsed.email)) {
+        toSet.jobxapplyProfile = parsed;
+        toSet.jobxapplyProfiles = { "default": parsed };
+        toSet.jobxapplyActiveProfileId = "default";
+      }
+      chrome.storage.local.set(toSet, () => {
         setLoginStatus("Authenticated & Synced!", "success");
-        chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, () => {
-          checkAuthState();
-        });
+        checkAuthState();
       });
     } else {
       setLoginStatus("No active session in that tab. Sign in first.", "warn");
@@ -514,10 +590,20 @@ async function doAutofill() {
   });
 }
 
-// ── Sync from Cloud ──────────────────────────────────────────────────────────
+// ── Sync from Cloud & Web Tab ───────────────────────────────────────────────
 async function syncFromCloud() {
-  setStatus("Syncing from cloud…");
-  chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, async (res) => {
+  setStatus("Syncing master profile…");
+  
+  // 1. First attempt instant sync directly from open JobXApply tab
+  const tabSynced = await trySyncFromActiveWebTab();
+  if (tabSynced) {
+    setStatus("Profile synced from open JobXApply tab!", "success");
+    await checkAuthState();
+    return;
+  }
+
+  // 2. Fallback to server sync via background
+  chrome.runtime.sendMessage({ type: "jobxapply:getProfile", force: true }, async (res) => {
     if (chrome.runtime.lastError) {
       setStatus("Sync error: " + chrome.runtime.lastError.message, "error");
       return;
@@ -526,7 +612,7 @@ async function syncFromCloud() {
       setStatus("Profile synced from cloud", "success");
       await checkAuthState();
     } else {
-      setStatus("No profile found on server.", "warn");
+      setStatus("No profile found on server. Open JobXApply tab to sync.", "warn");
     }
   });
 }

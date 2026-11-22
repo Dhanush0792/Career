@@ -788,6 +788,16 @@ async function loadProfile() {
       safeSetItem('jxa_active_profile_id', activeId);
       safeSetItem('jxa_local_state', JSON.stringify(state));
       safeSetItem('jxa_profile_cache', JSON.stringify(state.profile || {}));
+
+      // Broadcast to extension content script
+      try {
+        if (typeof window !== 'undefined' && state.profile && (state.profile.fullName || state.profile.email)) {
+          window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
+            detail: { profile: state.profile }
+          }));
+        }
+      } catch (e) {}
+
       return state;
     }
   } catch (_) {}
@@ -956,9 +966,19 @@ async function saveProfile(profileData) {
       };
       safeSetItem('jxa_local_state', JSON.stringify(decryptedServerState));
 
-      // Notify extension: auth is available
+      // Notify extension: auth & profile are available
       try {
         if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
+            detail: { profile: cleanProfile }
+          }));
+          window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
+            detail: {
+              token: token || "",
+              email: localStorage.getItem('jxa_user_email') || cleanProfile.email || "",
+              passcode: passcode || ""
+            }
+          }));
           window.dispatchEvent(new CustomEvent("jobxapply:authReady", {
             detail: { paired: true, email: localStorage.getItem('jxa_user_email') || "" }
           }));
