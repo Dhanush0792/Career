@@ -1011,12 +1011,12 @@ function renderNav(container, activePage) {
 
   let links = NAV_ITEMS.map(item => {
     let href = item.href;
-    // Extension nav link ALWAYS goes to the landing page; landing page has its own Setup button
+    // Authenticated users go directly to extension setup & pairing; public visitors go to landing
     if (item.label === 'Extension') {
-      href = 'extension-landing.html';
+      href = token ? 'extension-setup.html' : 'extension-landing.html';
     }
-    // If not logged in, only show ATS Checker (no Extension link in the shared nav)
-    const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html', 'extension-landing.html'].includes(href);
+    // If not logged in, only show ATS Checker (no private links in the shared nav)
+    const isPrivate = ['dashboard.html', 'profile-setup.html', 'resume-builder.html', 'cover-letter.html', 'tracker.html', 'autofill-lab.html', 'settings.html', 'extension-setup.html'].includes(href);
     if (!token && isPrivate) return '';
 
     const isActive = (href === activePage) || (item.label === 'Extension' && (activePage === 'extension-setup.html' || activePage === 'extension-landing.html'));

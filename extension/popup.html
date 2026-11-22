@@ -621,7 +621,7 @@
     <main class="content-body">
 
       <!-- ================= VIEW 1: AUTHENTICATION / PAIRING ================= -->
-      <section id="loginView" class="auth-container" style="display:none;">
+      <section id="loginView" class="auth-container" style="display:flex;">
         <div class="auth-heading">
           <h3>Connect Your Profile</h3>
           <p>Sync your verified master profile to enable 1-click autofill.</p>
@@ -642,12 +642,12 @@
           <span>Sign In on JobXApply</span>
         </button>
 
-        <div class="divider-text">OR ENTER SYNC KEY</div>
+        <div class="divider-text">OR ENTER PAIRING CODE</div>
 
         <div class="glass-card" style="display:flex; flex-direction:column; gap:9px;">
           <div class="input-field-group">
-            <label class="field-label" for="loginPasscodeInput">Sync Passcode</label>
-            <input type="password" id="loginPasscodeInput" class="form-input-dark" placeholder="Enter your 6-digit sync key">
+            <label class="field-label" for="loginPasscodeInput">Pairing Code or Sync Passcode</label>
+            <input type="text" id="loginPasscodeInput" class="form-input-dark" placeholder="e.g. CB-415015 or sync passcode">
           </div>
           <button class="btn-pill highlight" id="loginPasscodeBtn" style="justify-content:center; padding:9px; font-weight:700;">
             Verify &amp; Link Profile

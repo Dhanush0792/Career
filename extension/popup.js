@@ -1,7 +1,4 @@
 import { buildAutofillPayload, getPortalRule, PORTAL_MAPS } from "./shared.js";
-import JDMatcher from "./jd-matcher.js";
-import CoverLetterEngine from "./cover-letter-engine.js";
-import { buildResumePdf, createResumeFile, downloadResumePdf, injectPdfToFileInput } from "./resume-pdf-builder.js";
 
 let popupActiveJob = { title: "", company: "", description: "", location: "", url: "" };
 let popupActiveProfile = {};
@@ -290,17 +287,58 @@ async function logApplication(companyName = "", jobTitle = "", appStatus = "Appl
   setStatus(`Logged application for ${company}`, "success");
 }
 
-// ── Direct Login with Sync Key ───────────────────────────────────────────────
+// ── Direct Login with Sync Key or Pairing Code ─────────────────────────────
 async function handleDirectLogin() {
   const input = document.getElementById("loginPasscodeInput");
-  const passcode = input?.value?.trim() || "";
-  if (!passcode) {
-    setLoginStatus("Please enter your Sync Key (Passcode)", "warn");
+  const rawInput = input?.value?.trim() || "";
+  if (!rawInput) {
+    setLoginStatus("Please enter your Pairing Code or Sync Key", "warn");
     return;
   }
 
-  setLoginStatus("Connecting and decrypting profile...", "warn");
-  // Clear any stale tokens or cached empty profiles
+  setLoginStatus("Connecting and authenticating...", "warn");
+
+  // Check if input is a pairing code (CB-XXXXXX or 6 digits) and see if any open tab matches
+  try {
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      if (!tab.url) continue;
+      const url = tab.url.toLowerCase();
+      if (url.includes(".netlify.app") || url.includes("localhost:") || url.includes("127.0.0.1:")) {
+        try {
+          const results = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => ({
+              token: localStorage.getItem("jxa_token") || "",
+              email: localStorage.getItem("jxa_user_email") || "",
+              passcode: localStorage.getItem("jxa_passcode") || "",
+              pairingCode: localStorage.getItem("jxa_pairing_code") || ""
+            })
+          });
+          const session = results?.[0]?.result;
+          const cleanInput = rawInput.toUpperCase().replace(/[^A-Z0-9]/g, "");
+          const cleanPairing = (session?.pairingCode || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+          if (session?.token && cleanPairing && (cleanInput === cleanPairing || cleanInput.endsWith(cleanPairing) || cleanPairing.endsWith(cleanInput))) {
+            chrome.storage.local.set({
+              jobxapplyToken: session.token,
+              jobxapplyEmail: session.email,
+              jobxapplyPasscode: session.passcode
+            }, () => {
+              setLoginStatus("Pairing successful! Profile synced.", "success");
+              chrome.runtime.sendMessage({ type: "jobxapply:getProfile" }, () => {
+                checkAuthState();
+              });
+            });
+            return;
+          }
+        } catch (e) {}
+      }
+    }
+  } catch (e) {}
+
+  // Fallback: Treat as sync passcode
+  const passcode = rawInput;
   await new Promise((r) =>
     chrome.storage.local.remove(["jobxapplyToken", "jobxapplyProfile", "jobxapplyProfiles", "jobxapplyState"], r)
   );
@@ -324,14 +362,14 @@ async function handleDirectLogin() {
   });
 }
 
-// ── Active Web Session Detection & Google Login ─────────────────────────────
+// ── Active Web Session Detection ───────────────────────────────────────────
 async function detectActiveWebSession() {
   try {
     const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
       if (!tab.url) continue;
       const url = tab.url.toLowerCase();
-      if (url.includes("jobxapply.netlify.app") || url.includes("localhost:") || url.includes("127.0.0.1:")) {
+      if (url.includes(".netlify.app") || url.includes("jobxapply") || url.includes("localhost:") || url.includes("127.0.0.1:")) {
         const syncBtn = document.getElementById("syncActiveWebBtn");
         if (syncBtn) {
           syncBtn.style.display = "block";
@@ -730,12 +768,6 @@ function handlePopupDownloadCoverLetter() {
     try { await loadPortalInfo(); } catch(e) { console.warn("Portal info error:", e); }
     try { await checkAuthState(); } catch(e) { console.warn("Auth state error:", e); }
     try { await detectActiveWebSession(); } catch(e) { console.warn("Active web session detection error:", e); }
-
-    document.getElementById("popupAiDownloadResumeBtn")?.addEventListener("click", handlePopupDownloadResume);
-    document.getElementById("popupAiAttachResumeBtn")?.addEventListener("click", handlePopupAttachResume);
-    document.getElementById("popupAiGenCoverBtn")?.addEventListener("click", handlePopupGenerateCoverLetter);
-    document.getElementById("popupAiCopyCoverBtn")?.addEventListener("click", handlePopupCopyCoverLetter);
-    document.getElementById("popupAiDownloadCoverBtn")?.addEventListener("click", handlePopupDownloadCoverLetter);
 
     document.getElementById("loginPasscodeBtn")?.addEventListener("click", handleDirectLogin);
     document.getElementById("loginPasscodeInput")?.addEventListener("keydown", (e) => {

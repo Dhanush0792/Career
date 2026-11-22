@@ -104,11 +104,12 @@ async function initializeDatabase(p) {
 const DATABASE_URL = process.env.DATABASE_URL;
 if (DATABASE_URL) {
   try {
+    // Default rejectUnauthorized to false to allow Supabase / cloud PostgreSQL cert chains without SELF_SIGNED_CERT_IN_CHAIN errors
     pool = new Pool({
       connectionString: DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false"
-      }
+      ssl: process.env.DB_SSL_REJECT_UNAUTHORIZED === "true"
+        ? { rejectUnauthorized: true }
+        : { rejectUnauthorized: false }
     });
     pool.query("SELECT NOW()")
       .then(async () => {

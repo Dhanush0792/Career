@@ -1409,7 +1409,7 @@ function isAuthorizedAppOrigin() {
   try {
     const origin = window.location.origin;
     if (!origin) return false;
-    if (origin === "https://jobxapply.netlify.app" || origin === "https://careerhub-app.netlify.app") {
+    if (origin.endsWith(".netlify.app") || origin === "https://jobxapply.netlify.app" || origin === "https://careerhub-app.netlify.app") {
       return true;
     }
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {

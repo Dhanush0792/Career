@@ -174,19 +174,23 @@ a { color: inherit; text-decoration: none; }
 </div>
 
 <script>
+// If logged in, prioritize Extension Setup
+const token = localStorage.getItem('jxa_token') || "";
+if (token) {
+  const ctaBtn = document.querySelector('.hero-ctas .btn-primary');
+  if (ctaBtn) {
+    ctaBtn.textContent = 'Go to Extension Setup & Pairing ›';
+  }
+}
+
 document.getElementById('download-zip-btn').addEventListener('click', (e) => {
   e.preventDefault();
-  
-  const token = localStorage.getItem('jxa_token') || "";
-  const passcode = localStorage.getItem('jxa_passcode') || "";
-  
-  if (token || passcode) {
-    // User is logged in, start download
-    window.location.href = "https://jobxapply-backend.onrender.com/api/extension/download";
-  } else {
-    // User is not logged in, redirect to login page
-    window.location.href = "auth.html?redirect=extension-landing.html";
-  }
+  // Direct extension download via API
+  const host = window.location.hostname;
+  const apiBase = (host === 'localhost' || host === '127.0.0.1')
+    ? 'http://localhost:8787/api'
+    : 'https://jobxapply-backend.onrender.com/api';
+  window.location.href = `${apiBase}/extension/download`;
 });
 </script>
 </body>
