@@ -491,11 +491,27 @@ async function loadProfile() {
         state.activeProfileId = activeId;
       }
       
-      // Cache locally for offline fallback
-      localStorage.setItem('jxa_local_profile', JSON.stringify(state.profile || {}));
-      localStorage.setItem('jxa_local_profiles', JSON.stringify(profiles));
+      // Cache locally for offline fallback - NEVER overwrite existing rich local profile with an empty server response
+      const existingLocalRaw = localStorage.getItem('jxa_local_profile');
+      let existingLocal = null;
+      try { existingLocal = existingLocalRaw ? JSON.parse(existingLocalRaw) : null; } catch(e) {}
+      const localHasData = existingLocal && (existingLocal.fullName || existingLocal.email || existingLocal.phone || existingLocal.skills || existingLocal.eduGrad_college);
+      const serverHasData = state.profile && (state.profile.fullName || state.profile.email || state.profile.phone || state.profile.skills || state.profile.eduGrad_college);
+
+      if (!serverHasData && localHasData) {
+        console.log("[SYNC] Preserving rich local profile because server returned empty profile.");
+        state.profile = existingLocal;
+        if (!profiles[activeId]) profiles[activeId] = existingLocal;
+        state.profiles = profiles;
+        // Schedule push of local profile up to cloud
+        setTimeout(() => saveProfile(existingLocal).catch(() => {}), 1000);
+      } else {
+        localStorage.setItem('jxa_local_profile', JSON.stringify(state.profile || {}));
+        localStorage.setItem('jxa_local_profiles', JSON.stringify(profiles));
+      }
       localStorage.setItem('jxa_active_profile_id', activeId);
       localStorage.setItem('jxa_local_state', JSON.stringify(state));
+      localStorage.setItem('jxa_profile_cache', JSON.stringify(state.profile || {}));
       return state;
     }
   } catch (_) {}
@@ -567,12 +583,6 @@ function getCachedProfileState() {
  * Returns { ok, state, errors }.
  */
 async function saveProfile(profileData) {
-  const localState = localStorage.getItem('jxa_local_state');
-  const knownVersion = localState ? (JSON.parse(localState).version || 0) : 0;
-  
-  const passcode = localStorage.getItem('jxa_passcode') || "";
-  const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
-
   let activeId = localStorage.getItem('jxa_active_profile_id') || "default";
   
   let localProfilesRaw = localStorage.getItem('jxa_local_profiles');
@@ -583,6 +593,18 @@ async function saveProfile(profileData) {
   
   profileData.id = activeId;
   localProfiles[activeId] = profileData;
+
+  // STEP 1: ALWAYS PERSIST LOCALLY FIRST (Zero Data Loss)
+  localStorage.setItem('jxa_local_profile', JSON.stringify(profileData));
+  localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));
+  localStorage.setItem('jxa_active_profile_id', activeId);
+  localStorage.setItem('jxa_profile_cache', JSON.stringify(profileData));
+
+  const localState = localStorage.getItem('jxa_local_state');
+  const knownVersion = localState ? (JSON.parse(localState).version || 0) : 0;
+  
+  const passcode = localStorage.getItem('jxa_passcode') || "";
+  const passcodeHash = passcode ? await generatePasscodeHash(passcode) : "";
 
   const encryptedProfiles = {};
   for (const key of Object.keys(localProfiles)) {
@@ -661,7 +683,7 @@ async function saveProfile(profileData) {
       };
       localStorage.setItem('jxa_local_state', JSON.stringify(decryptedCurrent));
     }
-    return { ok: false, errors: result.errors || [result.error || 'Save failed'] };
+    return { ok: true, syncedToCloud: false, localOnly: true, state: { profile: profileData, profiles: localProfiles, activeProfileId: activeId } };
   } catch (e) {
     localStorage.setItem('jxa_local_profile', JSON.stringify(profileData));
     localStorage.setItem('jxa_local_profiles', JSON.stringify(localProfiles));

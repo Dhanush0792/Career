@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply Admin // User Registry</title>
+<title>JobXApply Admin // User Registry &amp; Profile Explorer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../style-glass.css">
 <script src="../shared-shell.js?v=2"></script>
 <script src="admin-shell.js"></script>
@@ -22,8 +22,8 @@
     --text: #f4f7ff;
     --muted: rgba(244,247,255,0.65);
     --dim: rgba(244,247,255,0.4);
-    --glass-bg: rgba(255,255,255,0.05);
-    --glass-border: rgba(255,255,255,0.12);
+    --glass-bg: rgba(255,255,255,0.04);
+    --glass-border: rgba(255,255,255,0.11);
     --mono: 'JetBrains Mono', monospace;
     --display: 'Barlow Condensed', sans-serif;
     --body: 'Inter', sans-serif;
@@ -33,35 +33,71 @@
     background-color: var(--base);
     color: var(--text);
     font-family: var(--body);
-    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.1) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
+    background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.08) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.07) 0%, transparent 45%);
     min-height: 100vh;
     margin: 0;
   }
-  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; position: relative; z-index: 10; }
+  .container { max-width: 1440px; margin: 0 auto; padding: 24px 24px 60px; position: relative; z-index: 10; }
   
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
   h1 {
     font-family: var(--display);
-    font-size: 36px;
+    font-size: 34px;
     color: var(--alert);
     text-transform: uppercase;
-    margin: 0 0 20px 0;
+    margin: 0;
     letter-spacing: 0.02em;
-  }
-
-  .privacy-callout {
-    background: rgba(47,221,196,0.08);
-    border: 1px solid rgba(47,221,196,0.3);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--success);
-    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+  }
+  .user-count-chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--success);
+    background: rgba(47,221,196,0.1);
+    border: 1px solid rgba(47,221,196,0.25);
+    padding: 3px 10px;
+    border-radius: 9999px;
   }
 
+  /* Quick Summary Metric Cards */
+  .quick-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .quick-stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    backdrop-filter: blur(14px);
+  }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .stat-val {
+    font-family: var(--display);
+    font-size: 30px;
+    color: var(--white);
+    margin-top: 4px;
+    line-height: 1.1;
+  }
+
+  /* Search & Filter Toolbar */
   .toolbar {
     display: flex;
     justify-content: space-between;
@@ -71,73 +107,95 @@
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     padding: 14px 18px;
-    border-radius: 10px;
+    border-radius: 12px;
     backdrop-filter: blur(16px);
     flex-wrap: wrap;
   }
   .search-box {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.35);
     border: 1px solid var(--glass-border);
     color: var(--white);
     font-family: var(--mono);
     font-size: 12px;
     padding: 8px 14px;
-    border-radius: 6px;
-    width: 260px;
+    border-radius: 7px;
+    min-width: 280px;
     outline: none;
+    transition: border-color 0.18s;
   }
   .search-box:focus { border-color: var(--alert); }
 
   .filter-select {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.35);
     border: 1px solid var(--glass-border);
     color: var(--white);
     font-family: var(--mono);
     font-size: 12px;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 7px;
     outline: none;
+    cursor: pointer;
   }
 
   .btn-export {
-    background: rgba(245,166,35,0.1);
+    background: rgba(245,166,35,0.12);
     border: 1px solid var(--alert);
     color: var(--alert);
     font-family: var(--mono);
     font-size: 11px;
     font-weight: 700;
     padding: 8px 14px;
-    border-radius: 6px;
+    border-radius: 7px;
     cursor: pointer;
     text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
   }
+  .btn-export:hover { background: rgba(245,166,35,0.25); color: #fff; }
 
+  /* Table View */
   .table-card {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    border-radius: 12px;
+    border-radius: 14px;
     backdrop-filter: blur(16px);
     overflow: hidden;
   }
   table { width: 100%; border-collapse: collapse; text-align: left; }
   th {
     font-family: var(--display);
-    font-size: 15px;
+    font-size: 14px;
     color: var(--alert);
     text-transform: uppercase;
-    padding: 14px 20px;
+    padding: 14px 18px;
     border-bottom: 1px solid var(--glass-border);
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.28);
+    letter-spacing: 0.04em;
   }
   td {
-    padding: 14px 20px;
+    padding: 14px 18px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
     font-size: 13px;
+    vertical-align: middle;
   }
   tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
+  tr:hover td { background: rgba(255,255,255,0.025); }
 
-  .td-mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .user-link-name {
+    font-weight: 600;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .user-subtext {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    margin-top: 2px;
+  }
 
   .badge {
     display: inline-block;
@@ -152,26 +210,116 @@
   .badge-user { background: rgba(255,255,255,0.08); color: var(--muted); border: 1px solid rgba(255,255,255,0.15); }
   .badge-active { background: rgba(47,221,196,0.1); color: var(--success); border: 1px solid rgba(47,221,196,0.3); }
   .badge-suspended { background: rgba(245,90,35,0.15); color: var(--danger); border: 1px solid rgba(245,90,35,0.3); }
+  .badge-profile { background: rgba(91,79,232,0.15); color: #8e84f5; border: 1px solid rgba(91,79,232,0.35); }
 
   .actions-cell {
     display: flex;
     gap: 6px;
     align-items: center;
+    flex-wrap: wrap;
   }
   .btn-sm {
     background: rgba(255,255,255,0.05);
     border: 1px solid var(--glass-border);
     color: var(--white);
     font-family: var(--mono);
-    font-size: 10px;
-    padding: 4px 8px;
-    border-radius: 4px;
+    font-size: 10.5px;
+    padding: 4px 9px;
+    border-radius: 5px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.16s ease;
   }
-  .btn-sm:hover { background: rgba(255,255,255,0.15); }
+  .btn-sm:hover { background: rgba(255,255,255,0.14); }
+  .btn-sm.inspect { color: var(--success); border-color: rgba(47,221,196,0.35); background: rgba(47,221,196,0.06); }
+  .btn-sm.inspect:hover { background: rgba(47,221,196,0.15); }
   .btn-sm.warn { color: var(--alert); border-color: rgba(245,166,35,0.3); }
   .btn-sm.danger { color: var(--danger); border-color: rgba(245,90,35,0.3); }
+
+  /* ── Slide-Out Drawer / Inspector Modal ────────────────────────────── */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .modal-backdrop.open { display: flex; }
+  .drawer-panel {
+    background: #0d1226;
+    border-left: 1px solid var(--glass-border);
+    width: 620px;
+    max-width: 95vw;
+    height: 100vh;
+    padding: 30px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: -12px 0 40px rgba(0,0,0,0.8);
+    animation: slideIn 0.22s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 16px;
+  }
+  .drawer-title {
+    font-family: var(--display);
+    font-size: 24px;
+    color: var(--alert);
+    text-transform: uppercase;
+  }
+  .btn-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .btn-close:hover { color: #fff; }
+
+  .profile-section-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--success);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .profile-data-box {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .app-chip-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  @media (max-width: 900px) {
+    .quick-stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 </head>
 <body>
@@ -179,50 +327,127 @@
 <nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
 
 <div class="container">
-  <h1>USER REGISTRY &amp; ACCESS</h1>
-
-  <div class="privacy-callout">
-    <span>Privacy Shield: Personal profile blobs are client-encrypted. Admin registry provides identity verification and access controls only.</span>
+  <div class="header-row">
+    <div>
+      <h1>
+        USER COMMAND &amp; PROFILES
+        <span class="user-count-chip" id="user-count-badge">-- Users</span>
+      </h1>
+      <div style="font-size:12px; color:var(--muted); margin-top:4px;">
+        Inspect verified candidate profiles, review active job application trackers, manage subscriptions, and verify credentials.
+      </div>
+    </div>
+    <button class="btn-export" onclick="exportUsersCSV()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export User Data CSV
+    </button>
   </div>
 
+  <!-- Quick Stats -->
+  <div class="quick-stats-row">
+    <div class="quick-stat-card">
+      <div class="stat-label">Total Registered</div>
+      <div class="stat-val" id="qs-total">--</div>
+    </div>
+    <div class="quick-stat-card">
+      <div class="stat-label">Paid / Pro Subscribers</div>
+      <div class="stat-val" id="qs-paid" style="color:var(--success);">--</div>
+    </div>
+    <div class="quick-stat-card">
+      <div class="stat-label">Profiles Master Synced</div>
+      <div class="stat-val" id="qs-profiles" style="color:var(--alert);">--</div>
+    </div>
+    <div class="quick-stat-card">
+      <div class="stat-label">Applications Logged</div>
+      <div class="stat-val" id="qs-apps">--</div>
+    </div>
+  </div>
+
+  <!-- Live Toolbar -->
   <div class="toolbar">
     <div style="display:flex; gap:10px; align-items:center; flex:1; flex-wrap:wrap;">
-      <input type="text" class="search-box" id="search-input" placeholder="Search by email or user ID...">
+      <input type="text" class="search-box" id="search-input" placeholder="Search by name, email, target role, or ID...">
       <select class="filter-select" id="filter-tier">
-        <option value="all">All Tiers</option>
-        <option value="free">Free</option>
-        <option value="paid">Paid</option>
+        <option value="all">All Tiers (Free &amp; Paid)</option>
+        <option value="free">Free Tier Only</option>
+        <option value="paid">Paid / Pro Only</option>
       </select>
       <select class="filter-select" id="filter-role">
         <option value="all">All Roles</option>
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
+        <option value="user">Candidate (User)</option>
+        <option value="admin">Administrator</option>
       </select>
       <select class="filter-select" id="filter-status">
         <option value="all">All Statuses</option>
-        <option value="active">Active</option>
-        <option value="suspended">Suspended</option>
+        <option value="active">Active Only</option>
+        <option value="suspended">Suspended Only</option>
       </select>
     </div>
-    <button class="btn-export" onclick="exportUsersCSV()">Export CSV</button>
   </div>
 
+  <!-- Users Table -->
   <div class="table-card">
     <table>
       <thead>
         <tr>
-          <th>User / ID</th>
-          <th>Last Sync</th>
-          <th>Role</th>
-          <th>Status</th>
-          <th>Tier</th>
+          <th>Candidate / Identity</th>
+          <th>Target Role</th>
+          <th>Last Activity</th>
+          <th>Tracker Apps</th>
+          <th>Role / Status</th>
+          <th>Subscription</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody id="users-tbody">
-        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">Loading users registry...</td></tr>
+        <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">Loading users registry...</td></tr>
       </tbody>
     </table>
+  </div>
+</div>
+
+<!-- Slide-Out Inspector Drawer -->
+<div class="modal-backdrop" id="userDrawerBackdrop" onclick="closeDrawer(event)">
+  <div class="drawer-panel" onclick="event.stopPropagation()">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title" id="drawerUserName">Candidate Profile</div>
+        <div class="user-subtext" id="drawerUserId">ID: --</div>
+      </div>
+      <button class="btn-close" onclick="closeDrawer()">&times;</button>
+    </div>
+
+    <!-- Quick Impersonation and Editing Bar -->
+    <div style="display:flex; gap:8px; align-items:center; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--glass-border);">
+      <button class="btn-sm inspect" id="drawerImpersonateBtn" style="padding:6px 12px; font-weight:700;">
+        Log In As User (Impersonate) &rarr;
+      </button>
+      <select class="filter-select" id="drawerTierSelect" style="padding:4px 8px; font-size:11px;">
+        <option value="free">FREE</option>
+        <option value="paid">PAID / PRO</option>
+      </select>
+      <button class="btn-sm warn" id="drawerRoleBtn" style="padding:4px 10px;"></button>
+    </div>
+
+    <!-- Candidate Basics -->
+    <div>
+      <div class="profile-section-title">01 // Verified Identity &amp; Contact</div>
+      <div class="profile-data-box" id="drawerContactBox">Loading...</div>
+    </div>
+
+    <!-- Target Role & Summary -->
+    <div>
+      <div class="profile-section-title">02 // Target Role &amp; Professional Summary</div>
+      <div class="profile-data-box" id="drawerSummaryBox">Loading...</div>
+    </div>
+
+    <!-- Application Tracker Pipeline -->
+    <div>
+      <div class="profile-section-title" id="drawerAppsTitle">03 // Tracked Applications (0)</div>
+      <div id="drawerAppsList" style="max-height:220px; overflow-y:auto;">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
   </div>
 </div>
 
@@ -231,38 +456,47 @@
   verifyAdminAccess(loadUsers);
 
   let allUsers = [];
+  let currentActiveDrawerUser = null;
 
-  async function loadUsers(attempt) {
-    if (!attempt) attempt = 1;
+  async function loadUsers(attempt = 1) {
     const tbody = document.getElementById('users-tbody');
     if (attempt === 1) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">Loading user registry...</td></tr>';
-    } else {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--alert);padding:40px;font-family:var(--mono);">Reconnecting to backend... attempt ${attempt}/3</td></tr>`;
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">Loading user registry...</td></tr>';
     }
     try {
       const res = await adminFetch('/admin/users');
       if (res.ok) {
         const data = await res.json();
         allUsers = data.users || [];
+        updateQuickStats(allUsers);
         renderTable(allUsers);
       } else if (res.status === 403) {
         showToast('Access denied: Admin role required', 'error');
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">403 Forbidden — token may be expired. Please log out and log back in.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">403 Forbidden — token may be expired.</td></tr>';
       } else if (attempt < 3) {
-        setTimeout(() => loadUsers(attempt + 1), 4000);
-      } else {
-        showToast('Failed to load user list', 'error');
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">Could not reach backend after 3 attempts. Check that the server is running.</td></tr>';
+        setTimeout(() => loadUsers(attempt + 1), 3500);
       }
     } catch(e) {
       if (attempt < 3) {
-        setTimeout(() => loadUsers(attempt + 1), 4000);
+        setTimeout(() => loadUsers(attempt + 1), 3500);
       } else {
         showToast('Network error loading users', 'error');
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">Network error — backend may be offline or still starting up.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:40px;font-family:var(--mono);">Network error connecting to backend.</td></tr>';
       }
     }
+  }
+
+  function updateQuickStats(users) {
+    const total = users.length;
+    const paid = users.filter(u => u.tier === 'paid' || u.tier === 'pro').length;
+    const profiles = users.filter(u => u.hasProfile).length;
+    const totalApps = users.reduce((acc, u) => acc + (u.applicationsCount || 0), 0);
+
+    document.getElementById('user-count-badge').textContent = `${total} Registered Users`;
+    document.getElementById('qs-total').textContent = total;
+    document.getElementById('qs-paid').textContent = `${paid} (${total ? Math.round((paid/total)*100) : 0}%)`;
+    document.getElementById('qs-profiles').textContent = profiles;
+    document.getElementById('qs-apps').textContent = totalApps;
   }
 
   function renderTable(users) {
@@ -270,7 +504,7 @@
     tbody.innerHTML = '';
 
     if (users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">No users found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px;font-family:var(--mono);">No users match your filters.</td></tr>';
       return;
     }
 
@@ -278,34 +512,51 @@
       const tr = document.createElement('tr');
       const safeId = escHtml(u.id);
       const safeEmail = escHtml(u.email);
+      const safeName = escHtml(u.name || (u.email ? u.email.split('@')[0] : 'Candidate'));
       const safeRole = escHtml(u.role || 'user');
+      const safeTarget = escHtml(u.targetRole || 'Software Development Engineer');
       const isSuspended = u.status === 'suspended';
       const safeTier = escHtml(u.tier || 'free');
-      const syncTime = timeSince(u.lastSync || u.last_sync || u.createdAt || u.created_at);
+      const syncTime = timeSince(u.lastSync || u.createdAt);
+      const appsCount = Number(u.applicationsCount || 0);
 
       tr.innerHTML = `
         <td>
-          <div style="font-weight:600;color:var(--white);">${safeEmail}</div>
-          <div class="td-mono" style="font-size:10px;">ID: ${safeId}</div>
+          <div class="user-link-name">
+            <span>${safeName}</span>
+            ${u.hasProfile ? '<span class="badge badge-profile">Profile Active</span>' : ''}
+          </div>
+          <div class="user-subtext">${safeEmail} &bull; ID: ${safeId.slice(0, 16)}...</div>
+        </td>
+        <td>
+          <div style="font-weight:600; font-size:12px; color:rgba(244,247,255,0.85);">${safeTarget}</div>
         </td>
         <td class="td-mono">${syncTime}</td>
-        <td><span class="badge ${safeRole === 'admin' ? 'badge-admin' : 'badge-user'}">${safeRole}</span></td>
-        <td><span class="badge ${isSuspended ? 'badge-suspended' : 'badge-active'}">${isSuspended ? 'Suspended' : 'Active'}</span></td>
         <td>
-          <select class="filter-select" style="padding:2px 6px;font-size:11px;" onchange="changeTier('${safeId}', this.value)">
+          <span style="font-weight:700; color:${appsCount > 0 ? 'var(--success)' : 'var(--muted)'};">${appsCount} jobs</span>
+        </td>
+        <td>
+          <div style="display:flex; gap:4px; align-items:center;">
+            <span class="badge ${safeRole === 'admin' ? 'badge-admin' : 'badge-user'}">${safeRole}</span>
+            <span class="badge ${isSuspended ? 'badge-suspended' : 'badge-active'}">${isSuspended ? 'Suspended' : 'Active'}</span>
+          </div>
+        </td>
+        <td>
+          <select class="filter-select" style="padding:3px 8px; font-size:11px;" onchange="changeTier('${safeId}', this.value)">
             <option value="free" ${safeTier === 'free' ? 'selected' : ''}>FREE</option>
             <option value="paid" ${safeTier === 'paid' ? 'selected' : ''}>PAID</option>
           </select>
         </td>
         <td>
           <div class="actions-cell">
-            <button class="btn-sm" style="color:var(--success);border-color:rgba(47,221,196,0.3);" onclick="impersonateUser('${safeId}')">Impersonate</button>
+            <button class="btn-sm inspect" onclick="inspectUserProfile('${safeId}')">Inspect</button>
+            <button class="btn-sm" style="color:var(--success); border-color:rgba(47,221,196,0.3);" onclick="impersonateUser('${safeId}')" title="Log into user view">Login As</button>
             ${safeRole === 'admin' 
               ? `<button class="btn-sm warn" onclick="changeRole('${safeId}', 'user')">Demote</button>` 
               : `<button class="btn-sm warn" onclick="changeRole('${safeId}', 'admin')">Make Admin</button>`
             }
             ${isSuspended
-              ? `<button class="btn-sm" style="color:var(--success);border-color:rgba(47,221,196,0.3);" onclick="reinstateUser('${safeId}')">Reinstate</button>`
+              ? `<button class="btn-sm" style="color:var(--success);" onclick="reinstateUser('${safeId}')">Reinstate</button>`
               : `<button class="btn-sm danger" onclick="suspendUser('${safeId}')">Suspend</button>`
             }
             <button class="btn-sm danger" onclick="deleteUser('${safeId}')">Delete</button>
@@ -316,6 +567,85 @@
     });
   }
 
+  // ── User Profile Drawer Inspector ──────────────────────────────────
+  async function inspectUserProfile(userId) {
+    const backdrop = document.getElementById('userDrawerBackdrop');
+    backdrop.classList.add('open');
+
+    document.getElementById('drawerUserName').textContent = 'Loading profile details...';
+    document.getElementById('drawerUserId').textContent = `ID: ${userId}`;
+    document.getElementById('drawerContactBox').innerHTML = 'Retrieving decrypted records...';
+    document.getElementById('drawerSummaryBox').innerHTML = 'Retrieving...';
+    document.getElementById('drawerAppsList').innerHTML = 'Loading applications...';
+
+    try {
+      const res = await adminFetch(`/admin/users/${userId}/profile`);
+      if (res.ok) {
+        const data = await res.json();
+        currentActiveDrawerUser = data.user || {};
+        const profile = data.profile || {};
+        const apps = data.applications || [];
+
+        document.getElementById('drawerUserName').textContent = profile.fullName || currentActiveDrawerUser.name || 'Candidate';
+        document.getElementById('drawerUserId').textContent = `ID: ${userId} • Email: ${currentActiveDrawerUser.email || profile.email || 'N/A'}`;
+
+        // Contact Box
+        document.getElementById('drawerContactBox').innerHTML = `
+          <div><strong>Email:</strong> ${escHtml(profile.email || currentActiveDrawerUser.email || 'None')}</div>
+          <div><strong>Phone:</strong> ${escHtml(profile.phone || 'None')}</div>
+          <div><strong>Location:</strong> ${escHtml(profile.location || profile.city || 'None')}</div>
+          <div><strong>Portfolio:</strong> ${profile.portfolio || profile.linkedin ? `<a href="${escHtml(profile.portfolio || profile.linkedin)}" target="_blank" style="color:var(--alert);">${escHtml(profile.portfolio || profile.linkedin)}</a>` : 'None'}</div>
+        `;
+
+        // Summary Box
+        document.getElementById('drawerSummaryBox').innerHTML = `
+          <div style="margin-bottom:6px;"><strong>Target Role:</strong> ${escHtml(profile.targetRole || profile.headline || 'Software Development Engineer')}</div>
+          <div style="margin-bottom:6px;"><strong>Skills:</strong> ${escHtml(Array.isArray(profile.skills) ? profile.skills.join(', ') : (profile.skills || 'None'))}</div>
+          <div><strong>Summary:</strong> <span style="color:var(--muted);">${escHtml(profile.summary || 'No custom summary entered yet.')}</span></div>
+        `;
+
+        // Tracker Apps List
+        document.getElementById('drawerAppsTitle').textContent = `03 // Tracked Applications (${apps.length})`;
+        if (apps.length === 0) {
+          document.getElementById('drawerAppsList').innerHTML = '<div style="color:var(--muted); font-size:12px; padding:10px 0;">No job applications tracked yet.</div>';
+        } else {
+          document.getElementById('drawerAppsList').innerHTML = apps.map(a => `
+            <div class="app-chip-item">
+              <div>
+                <strong style="color:var(--white);">${escHtml(a.company || 'Company')}</strong>
+                <span style="color:var(--muted); font-size:11px;"> - ${escHtml(a.role || 'Role')}</span>
+              </div>
+              <span class="badge ${a.status === 'Offer' ? 'badge-active' : 'badge-user'}">${escHtml(a.status || 'Applied')}</span>
+            </div>
+          `).join('');
+        }
+
+        // Action hooks inside drawer
+        const impBtn = document.getElementById('drawerImpersonateBtn');
+        impBtn.onclick = () => impersonateUser(userId);
+
+        const tierSelect = document.getElementById('drawerTierSelect');
+        tierSelect.value = currentActiveDrawerUser.tier || 'free';
+        tierSelect.onchange = (e) => changeTier(userId, e.target.value);
+
+        const roleBtn = document.getElementById('drawerRoleBtn');
+        const isAdmin = currentActiveDrawerUser.role === 'admin';
+        roleBtn.textContent = isAdmin ? 'Demote to User' : 'Make Admin';
+        roleBtn.onclick = () => changeRole(userId, isAdmin ? 'user' : 'admin');
+      } else {
+        showToast('Could not load user profile', 'error');
+      }
+    } catch(e) {
+      showToast('Error inspecting user profile', 'error');
+    }
+  }
+
+  function closeDrawer(e) {
+    if (e && e.target !== document.getElementById('userDrawerBackdrop')) return;
+    document.getElementById('userDrawerBackdrop').classList.remove('open');
+  }
+
+  // ── Actions & Impersonation ─────────────────────────────────────────
   async function impersonateUser(userId) {
     if (!confirm('Log into the platform dashboard as this user?')) return;
     try {
@@ -338,7 +668,6 @@
     }
   }
 
-  // Live filter handlers
   ['search-input', 'filter-tier', 'filter-role', 'filter-status'].forEach(id => {
     document.getElementById(id).addEventListener('input', applyFilters);
     document.getElementById(id).addEventListener('change', applyFilters);
@@ -351,7 +680,10 @@
     const s = document.getElementById('filter-status').value;
 
     const filtered = allUsers.filter(u => {
-      const matchQ = (u.email || '').toLowerCase().includes(q) || (u.id || '').toLowerCase().includes(q);
+      const matchQ = (u.email || '').toLowerCase().includes(q) || 
+                     (u.name || '').toLowerCase().includes(q) || 
+                     (u.targetRole || '').toLowerCase().includes(q) || 
+                     (u.id || '').toLowerCase().includes(q);
       const matchT = t === 'all' || (u.tier || 'free') === t;
       const matchR = r === 'all' || (u.role || 'user') === r;
       const matchS = s === 'all' || (s === 'suspended' ? u.status === 'suspended' : u.status !== 'suspended');
@@ -442,13 +774,16 @@
 
   function exportUsersCSV() {
     if (allUsers.length === 0) return alert('No users to export');
-    const headers = ['ID', 'Email', 'Role', 'Status', 'Tier', 'LastSync'];
+    const headers = ['ID', 'Email', 'Name', 'TargetRole', 'Role', 'Status', 'Tier', 'ApplicationsCount', 'LastSync'];
     const rows = allUsers.map(u => [
       u.id || '',
       u.email || '',
+      u.name || '',
+      u.targetRole || '',
       u.role || 'user',
       u.status || 'active',
       u.tier || 'free',
+      u.applicationsCount || 0,
       u.lastSync ? new Date(u.lastSync).toISOString() : ''
     ]);
     const csvContent = [headers.join(','), ...rows.map(r => r.map(f => `"${String(f).replace(/"/g, '""')}"`).join(','))].join('\n');
@@ -456,7 +791,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `jobxapply-users-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `jobxapply-candidates-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
   }
 </script>

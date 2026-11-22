@@ -2135,6 +2135,15 @@ function exportText() {
     showToast('Generate a cover letter first.', 'error');
     return;
   }
+  // Record telemetry in background
+  try {
+    const syncUrl = window.CareerBridgeSync?.SYNC_API || "https://jobxapply-backend.onrender.com/api";
+    fetch(`${syncUrl}/telemetry/hit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ metric: "coverLetters" })
+    }).catch(() => {});
+  } catch(e) {}
   const blob = new Blob([text], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);

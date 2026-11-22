@@ -820,7 +820,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     // HIGH-5: Whitelist metric names to prevent pollution of telemetry table
-    const ALLOWED_METRICS = new Set(["pageViews", "apiRequests", "atsScans", "resumeBuilds", "coverLetters", "extensionDownloads"]);
+    const ALLOWED_METRICS = new Set(["pageViews", "apiRequests", "atsScans", "resumeBuilds", "coverLetters", "extensionDownloads", "autofillHits"]);
     try {
       const body = await readBody(req, 4096); // 4KB limit for this tiny payload
       const incoming = JSON.parse(body || "{}");
@@ -829,6 +829,10 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { ok: false, error: "Invalid metric name" });
       }
       await db.recordTelemetryHit(metric);
+      if (metric === "resumeBuilds") recordToolUsage("resumeBuilder");
+      if (metric === "coverLetters") recordToolUsage("coverLetter");
+      if (metric === "atsScans") recordToolUsage("atsChecker");
+      if (metric === "autofillHits") recordToolUsage("autofill");
       sendJson(res, 200, { ok: true });
     } catch (e) {
       sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
@@ -1484,7 +1488,27 @@ const server = http.createServer(async (req, res) => {
 
   // GET /api/admin/tool-usage
   if (req.method === "GET" && urlObj.pathname === "/api/admin/tool-usage") {
-    sendJson(res, 200, { ok: true, tools: toolUsageCounters });
+    const stats = await db.getStats();
+    const dynamicTools = {
+      ...toolUsageCounters,
+      resumeBuilder: {
+        ...toolUsageCounters.resumeBuilder,
+        total: Math.max(toolUsageCounters.resumeBuilder.total, stats.resumeBuilds || 0)
+      },
+      coverLetter: {
+        ...toolUsageCounters.coverLetter,
+        total: Math.max(toolUsageCounters.coverLetter.total, stats.coverLetters || 0)
+      },
+      atsChecker: {
+        ...toolUsageCounters.atsChecker,
+        total: Math.max(toolUsageCounters.atsChecker.total, stats.atsScans || 0)
+      },
+      autofill: {
+        ...toolUsageCounters.autofill,
+        total: Math.max(toolUsageCounters.autofill.total, stats.autofillHits || 0)
+      }
+    };
+    sendJson(res, 200, { ok: true, tools: dynamicTools });
     return;
   }
 

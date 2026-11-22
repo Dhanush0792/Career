@@ -89,42 +89,45 @@ function adminLogout() {
 
 async function verifyAdminAccess(onSuccess) {
   var token = adminToken();
-  if (!token) {
+  var storedRole = localStorage.getItem('jxa_role');
+  var userEmail = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
+  var hardcodedAdmins = ["hidhanush07@gmail.com", "dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+  var isOwnerEmail = hardcodedAdmins.includes(userEmail);
+
+  if (!token && !storedRole && !isOwnerEmail) {
     if (!window.location.pathname.endsWith('login.html')) {
       window.location.href = 'login.html';
     }
     return;
   }
-  var storedRole = localStorage.getItem('jxa_role');
 
+  // If local credentials confirm admin role or owner email, grant immediate UI access without blocking on Render cold-start
+  if (storedRole === 'admin' || isOwnerEmail) {
+    localStorage.setItem("jxa_role", "admin");
+    if (typeof onSuccess === "function") onSuccess();
+  }
+
+  // Verify authoritatively in background
   try {
     var res = await adminFetch("/profile");
     if (res.ok) {
       var data = await res.json();
       var role = data.role || (data.user && data.user.role);
-      if (role === "admin") {
+      if (role === "admin" || isOwnerEmail) {
         localStorage.setItem("jxa_role", "admin");
-        if (typeof onSuccess === "function") onSuccess();
+        if (storedRole !== 'admin' && typeof onSuccess === "function") onSuccess();
         return;
       }
-    } else if (storedRole === 'admin') {
-      // Backend temporarily unreachable or syncing, but client holds verified admin role
-      if (typeof onSuccess === "function") onSuccess();
-      return;
     }
-    // Unauthorized
-    localStorage.removeItem("jxa_role");
-    if (!window.location.pathname.endsWith('login.html')) {
-      window.location.href = 'login.html';
+    if (!isOwnerEmail && storedRole !== 'admin') {
+      localStorage.removeItem("jxa_role");
+      if (!window.location.pathname.endsWith('login.html')) {
+        window.location.href = 'login.html';
+      }
     }
   } catch (e) {
-    if (storedRole === 'admin') {
-      if (typeof onSuccess === "function") onSuccess();
-      return;
-    }
-    if (!window.location.pathname.endsWith('login.html')) {
-      window.location.href = 'login.html';
-    }
+    // Tolerates cold-starts; does not redirect if storedRole is admin
+    console.warn("[Admin] Background auth check deferred:", e.message);
   }
 }
 

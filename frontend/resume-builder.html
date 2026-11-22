@@ -2059,6 +2059,15 @@
 
     // Export PDF or JSON functions
     function exportPDF() {
+      // Record telemetry in background
+      try {
+        const syncUrl = window.CareerBridgeSync?.SYNC_API || "https://jobxapply-backend.onrender.com/api";
+        fetch(`${syncUrl}/telemetry/hit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ metric: "resumeBuilds" })
+        }).catch(() => {});
+      } catch(e) {}
       // Print preview sheet
       window.print();
     }

@@ -503,22 +503,67 @@ module.exports = {
 
   async getUsersList() {
     if (usePg) {
-      const res = await pool.query("SELECT id, email, name, role, tier, status, created_at, last_sync, passcode_hash FROM users ORDER BY created_at DESC");
-      return res.rows.map(u => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        role: u.role,
-        tier: u.tier,
-        status: u.status || "active",
-        createdAt: Number(u.created_at),
-        lastSync: Number(u.last_sync),
-        passcodeHash: u.passcode_hash
-      }));
+      const res = await pool.query(`
+        SELECT u.id, u.email, u.name, u.role, u.tier, u.status, u.created_at, u.last_sync, u.passcode_hash,
+               d.profile, d.applications
+        FROM users u
+        LEFT JOIN userdata d ON u.id = d.user_id
+        ORDER BY u.created_at DESC
+      `);
+      return res.rows.map(u => {
+        let appCount = 0;
+        let targetRole = "";
+        let profileSummary = "";
+        if (u.applications) {
+          try {
+            const apps = typeof u.applications === "string" ? JSON.parse(u.applications) : u.applications;
+            if (Array.isArray(apps)) appCount = apps.length;
+          } catch(e) {}
+        }
+        if (u.profile) {
+          try {
+            const p = typeof u.profile === "string" ? JSON.parse(u.profile) : u.profile;
+            targetRole = p.targetRole || p.headline || "";
+            profileSummary = p.summary || p.bio || "";
+          } catch(e) {}
+        }
+        return {
+          id: u.id,
+          email: u.email,
+          name: u.name,
+          role: u.role,
+          tier: u.tier,
+          status: u.status || "active",
+          createdAt: Number(u.created_at),
+          lastSync: Number(u.last_sync),
+          passcodeHash: u.passcode_hash,
+          hasProfile: Boolean(u.profile),
+          applicationsCount: appCount,
+          targetRole: targetRole,
+          summary: profileSummary
+        };
+      });
     }
 
     const registry = loadRegistry();
-    return registry.map(({ passwordHash, ...rest }) => rest);
+    return registry.map(({ passwordHash, ...rest }) => {
+      const userData = loadUserData(rest.id);
+      let appCount = 0;
+      let targetRole = "";
+      let profileSummary = "";
+      if (Array.isArray(userData.applications)) appCount = userData.applications.length;
+      if (userData.profile) {
+        targetRole = userData.profile.targetRole || userData.profile.headline || "";
+        profileSummary = userData.profile.summary || userData.profile.bio || "";
+      }
+      return {
+        ...rest,
+        hasProfile: Boolean(userData.profile),
+        applicationsCount: appCount,
+        targetRole: targetRole,
+        summary: profileSummary
+      };
+    });
   },
 
   // Lightweight initialization check — avoids full getUsersList scan on every request
@@ -803,7 +848,12 @@ module.exports = {
         freeUsers: Number(freeUsersRes.rows[0].count),
         paidUsers: Number(paidUsersRes.rows[0].count),
         pageViews: tel.pageViews || 0,
-        apiRequests: tel.apiRequests || 0
+        apiRequests: tel.apiRequests || 0,
+        atsScans: tel.atsScans || 0,
+        resumeBuilds: tel.resumeBuilds || 0,
+        coverLetters: tel.coverLetters || 0,
+        autofillHits: tel.autofillHits || 0,
+        extensionDownloads: tel.extensionDownloads || 0
       };
     }
 
@@ -836,7 +886,12 @@ module.exports = {
       freeUsers: freeCount,
       paidUsers: paidCount,
       pageViews: tel.pageViews || 0,
-      apiRequests: tel.apiRequests || 0
+      apiRequests: tel.apiRequests || 0,
+      atsScans: tel.atsScans || 0,
+      resumeBuilds: tel.resumeBuilds || 0,
+      coverLetters: tel.coverLetters || 0,
+      autofillHits: tel.autofillHits || 0,
+      extensionDownloads: tel.extensionDownloads || 0
     };
   },
 
