@@ -19,9 +19,9 @@ body::after {
   background-size: 160px 160px;
 }
 .profile-full-container {
-  max-width: 1040px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
   position: relative;
   z-index: 10;
   width: 100%;
@@ -69,57 +69,6 @@ body::after {
   border-color: var(--success);
   transform: translateY(-1px);
 }
-
-/* Horizontal Sticky Section Navigation Stepper */
-.horizontal-stepper {
-  position: sticky;
-  top: 72px;
-  z-index: 30;
-  display: flex;
-  gap: 8px;
-  padding: 10px 14px;
-  background: rgba(11, 16, 32, 0.95);
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  backdrop-filter: blur(20px);
-  margin-bottom: 28px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-.horizontal-stepper::-webkit-scrollbar { display: none; }
-.hstep-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-  text-decoration: none;
-}
-.hstep-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--white);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-.hstep-btn.active {
-  background: rgba(91, 79, 232, 0.22);
-  border-color: var(--primary);
-  color: var(--white);
-  box-shadow: 0 0 12px rgba(91, 79, 232, 0.3);
-}
-.hstep-num { color: var(--primary); font-size: 10px; }
-.hstep-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); }
-.hstep-dot.complete { background: var(--success); box-shadow: 0 0 6px var(--success); }
 
 /* Document Continuous Stream */
 .profile-stream {
@@ -437,20 +386,13 @@ body::after {
     </div>
     
     <div class="readiness-actions">
-      <!-- Live Auto-Save Indicator -->
-      <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); border-radius:20px;">
-        <div class="status-pulsing-dot" id="top-save-dot"></div>
-        <span id="top-save-status" style="font-family:var(--mono); font-size:10px; font-weight:700; color:var(--white);">Auto-saved locally</span>
-      </div>
-      
       <!-- Persona Switcher -->
-      <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:rgba(0,0,0,0.4); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:8px 12px; border-radius:8px; outline:none; cursor:pointer;">
-        <option value="default">Primary Profile</option>
-      </select>
-
-      <button type="button" class="btn btn-primary" onclick="saveCloudProfile()" style="padding:10px 20px; font-weight:800;">
-        Save &amp; Sync
-      </button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <label for="persona-selector" style="font-family:var(--mono); font-size:10.5px; color:var(--muted); text-transform:uppercase;">Active Persona:</label>
+        <select id="persona-selector" onchange="switchActivePersona(this.value)" style="background:rgba(0,0,0,0.5); border:1px solid var(--glass-border); color:var(--white); font-family:var(--mono); font-size:11px; padding:8px 14px; border-radius:8px; outline:none; cursor:pointer;">
+          <option value="default">Primary Profile</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -474,34 +416,6 @@ body::after {
     </button>
     <input type="file" id="top-resume-input" accept="application/pdf,.docx" style="display:none;">
   </div>
-
-  <!-- Horizontal Sticky Stepper Navigation -->
-  <nav class="horizontal-stepper" id="stepper-nav">
-    <a class="hstep-btn active" href="#section-basics" onclick="scrollToSection(event, 'section-basics')">
-      <span class="hstep-num">01</span> Identity <span class="hstep-dot" id="dot-basics"></span>
-    </a>
-    <a class="hstep-btn" href="#section-academic" onclick="scrollToSection(event, 'section-academic')">
-      <span class="hstep-num">02</span> Academics <span class="hstep-dot" id="dot-academic"></span>
-    </a>
-    <a class="hstep-btn" href="#section-certifications" onclick="scrollToSection(event, 'section-certifications')">
-      <span class="hstep-num">03</span> Certifications <span class="hstep-dot" id="dot-certifications"></span>
-    </a>
-    <a class="hstep-btn" href="#section-skills" onclick="scrollToSection(event, 'section-skills')">
-      <span class="hstep-num">04</span> Skills <span class="hstep-dot" id="dot-skills"></span>
-    </a>
-    <a class="hstep-btn" href="#section-experience" onclick="scrollToSection(event, 'section-experience')">
-      <span class="hstep-num">05</span> Experience <span class="hstep-dot" id="dot-experience"></span>
-    </a>
-    <a class="hstep-btn" href="#section-vault" onclick="scrollToSection(event, 'section-vault')">
-      <span class="hstep-num">06</span> Q&amp;A Vault <span class="hstep-dot" id="dot-vault"></span>
-    </a>
-    <a class="hstep-btn" href="#section-screening" onclick="scrollToSection(event, 'section-screening')">
-      <span class="hstep-num">07</span> Screening <span class="hstep-dot" id="dot-screening"></span>
-    </a>
-    <a class="hstep-btn" href="#section-security" onclick="scrollToSection(event, 'section-security')">
-      <span class="hstep-num">08</span> Sync &amp; Key <span class="hstep-dot" id="dot-security"></span>
-    </a>
-  </nav>
 
   <!-- Continuous Form Stream -->
   <form id="profile-form" onsubmit="event.preventDefault();">
@@ -1283,19 +1197,7 @@ function scrollToSection(e, sectionId) {
   const el = document.getElementById(sectionId);
   if (el) {
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    updateActiveStep(sectionId);
   }
-}
-
-function updateActiveStep(activeId) {
-  document.querySelectorAll('.hstep-btn').forEach(btn => {
-    const href = btn.getAttribute('href') || '';
-    if (href === '#' + activeId) {
-      btn.classList.add('active');
-    } else {
-      btn.classList.remove('active');
-    }
-  });
 }
 
 // Collapsible Toggle Helper
@@ -1697,11 +1599,11 @@ function toggleEmploymentFields() {
 // ── Auto-Save Engine (Instant & Debounced to LocalStorage) ───────────────────
 let autoSaveTimer = null;
 function triggerAutoSave() {
-  const saveDots = [document.getElementById('top-save-dot'), document.getElementById('bottom-save-dot')];
-  const saveTexts = [document.getElementById('top-save-status'), document.getElementById('bottom-save-status')];
+  const saveDot = document.getElementById('bottom-save-dot');
+  const saveText = document.getElementById('bottom-save-status');
   
-  saveDots.forEach(d => { if (d) d.style.background = '#F5A623'; });
-  saveTexts.forEach(t => { if (t) t.textContent = 'Saving changes...'; });
+  if (saveDot) saveDot.style.background = '#F5A623';
+  if (saveText) saveText.textContent = 'Saving changes locally...';
 
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(() => {
@@ -1725,8 +1627,8 @@ function triggerAutoSave() {
         }));
       } catch (e) {}
 
-      saveDots.forEach(d => { if (d) d.style.background = 'var(--success)'; });
-      saveTexts.forEach(t => { if (t) t.textContent = 'Auto-saved locally'; });
+      if (saveDot) saveDot.style.background = 'var(--success)';
+      if (saveText) saveText.textContent = 'All changes saved locally';
       updateProfileCompleteness();
     } catch (err) {
       console.warn("Auto-save error:", err);
@@ -1813,11 +1715,11 @@ async function saveCloudProfile() {
 
   allPersonas[currentPersonaId] = currentProfile;
 
-  const saveDots = [document.getElementById('top-save-dot'), document.getElementById('bottom-save-dot')];
-  const saveTexts = [document.getElementById('top-save-status'), document.getElementById('bottom-save-status')];
+  const saveDot = document.getElementById('bottom-save-dot');
+  const saveText = document.getElementById('bottom-save-status');
 
-  saveDots.forEach(d => { if (d) d.style.background = '#5B4FE8'; });
-  saveTexts.forEach(t => { if (t) t.textContent = 'Saving & syncing with cloud...'; });
+  if (saveDot) saveDot.style.background = '#5B4FE8';
+  if (saveText) saveText.textContent = 'Saving & syncing with Supabase cloud...';
 
   const res = await saveProfile(currentProfile);
 
@@ -1834,11 +1736,15 @@ async function saveCloudProfile() {
     }));
   } catch (e) {}
 
-  saveDots.forEach(d => { if (d) d.style.background = 'var(--success)'; });
-  saveTexts.forEach(t => { if (t) t.textContent = res.ok ? (res.localOnly ? 'Saved locally (ready for autofill)' : 'All changes synced with cloud') : 'Saved locally (cloud sync pending)'; });
+  if (saveDot) saveDot.style.background = res.ok ? 'var(--success)' : '#F5A623';
+  if (saveText) {
+    saveText.textContent = res.ok 
+      ? (res.localOnly ? 'Saved locally (offline mode)' : '✓ Profile saved to Supabase cloud & local storage') 
+      : 'Saved locally (cloud sync pending)';
+  }
 
   updateProfileCompleteness();
-  showToast('Profile saved & synchronized successfully!', 'success');
+  showToast('Profile saved & synchronized successfully to Supabase cloud!', 'success');
 }
 
 // ── Deterministic Resume Parser (100% Pure Logic / Regex) ───────────────────
@@ -2288,20 +2194,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     form.addEventListener('input', triggerAutoSave);
     form.addEventListener('change', triggerAutoSave);
   }
-
-  // 4. Scroll-spy with IntersectionObserver
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        updateActiveStep(entry.target.id);
-      }
-    });
-  }, { rootMargin: "-20% 0px -70% 0px", threshold: 0 });
-
-  SECTION_IDS.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) observer.observe(el);
-  });
 });
 
 // Real-Time Extension Message Listener

@@ -558,9 +558,9 @@ mark.kw-miss {
       <div class="page-label">ATS SCORE ANALYSIS &amp; KEYWORD GAP DETECTOR</div>
       <h1 class="page-title">Resume Compatibility <span class="title-accent">Testing</span></h1>
     </div>
-    <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(47,221,196,0.08); border:1px solid rgba(47,221,196,0.3); border-radius:20px; padding:6px 14px;">
+    <div id="signup-badge" style="display:inline-flex; align-items:center; gap:8px; background:rgba(47,221,196,0.08); border:1px solid rgba(47,221,196,0.3); border-radius:20px; padding:6px 14px;">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2FDDC4" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <span style="font-family:var(--mono); font-size:11px; font-weight:700; color:#2FDDC4; letter-spacing:0.08em; text-transform:uppercase;">100% Free &bull; No Sign-Up Required</span>
+      <span id="signup-badge-text" style="font-family:var(--mono); font-size:11px; font-weight:700; color:#2FDDC4; letter-spacing:0.08em; text-transform:uppercase;">100% Free &bull; No Sign-Up Required</span>
     </div>
   </header>
 
@@ -569,20 +569,70 @@ mark.kw-miss {
     <div class="left-col">
       <!-- Target Job details -->
       <div class="card">
-        <div class="card__title">01 // TARGET ROLE & JOB DESCRIPTION</div>
-        <div style="margin-bottom: 8px;">
-          <label style="display:block; font-family:var(--mono); font-size:9.5px; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">Select Target Role</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div class="card__title" style="margin:0;">01 // TARGET ROLE &amp; JOB DESCRIPTION</div>
+          <button type="button" class="btn btn-secondary" onclick="extractJdDetails()" style="font-size:9.5px; padding:4px 10px; border-radius:6px; cursor:pointer;" title="Extract role title and keywords from the job description">
+            &darr; Extract JD Details
+          </button>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <label style="display:block; font-family:var(--mono); font-size:9.5px; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">Select or Detected Target Role</label>
           <select class="select-input" id="select-role">
             <option value="default">Default / General Role</option>
             <option value="sde">Software Development Engineer (SDE)</option>
             <option value="backend">Backend Developer</option>
             <option value="java">Java Developer</option>
+            <option value="frontend">Frontend Developer</option>
+            <option value="fullstack">Full Stack Developer</option>
+            <option value="devops">DevOps Engineer</option>
+            <option value="data">Data Analyst / Scientist</option>
             <option value="marketing">Marketing Specialist</option>
             <option value="sales">Sales Representative</option>
             <option value="customer_care">Customer Care Operator</option>
           </select>
         </div>
-        <textarea class="text-area" id="jd-input" placeholder="Paste target job description or requirements here..."></textarea>
+
+        <!-- JD Input Mode Tabs: Paste Text vs Upload File -->
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button type="button" id="tab-jd-text" class="btn btn-primary" onclick="switchJdMode('text')" style="flex:1; justify-content:center; padding:7px 12px; font-size:10.5px;">
+            Paste JD Text
+          </button>
+          <button type="button" id="tab-jd-file" class="btn btn-secondary" onclick="switchJdMode('file')" style="flex:1; justify-content:center; padding:7px 12px; font-size:10.5px;">
+            Upload JD (PDF / DOCX)
+          </button>
+        </div>
+
+        <!-- Mode A: Paste Text -->
+        <div id="jd-text-container">
+          <textarea class="text-area" id="jd-input" placeholder="Paste target job description or requirements here..." oninput="autoExtractJdDebounced()"></textarea>
+        </div>
+
+        <!-- Mode B: File Upload -->
+        <div id="jd-file-container" style="display:none;">
+          <div id="jd-dropzone" class="dropzone" style="min-height:90px; padding:18px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="margin-bottom:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-family: var(--mono); font-size: 11px; color: var(--text); font-weight: 600; text-transform: uppercase;">Click to Browse or Drag &amp; Drop JD</span>
+            <span style="font-family: var(--mono); font-size: 9.5px; color: var(--dim);">Supports Company Job Description PDF or DOCX up to 10MB</span>
+            <input type="file" id="jd-file-input" accept="application/pdf,.docx" style="display: none;">
+          </div>
+          <div id="jd-file-pill" class="file-pill" style="display:none; margin-top:8px;">
+            <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <span id="jd-file-name-text" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px;"></span>
+            </div>
+            <button type="button" id="jd-file-remove-btn" class="file-pill-remove" title="Remove JD file">&times;</button>
+          </div>
+        </div>
+
+        <!-- Live JD Analysis Preview Box -->
+        <div id="jd-extracted-preview" style="display:none; background:rgba(0,0,0,0.3); border:1px solid rgba(47,221,196,0.3); border-radius:8px; padding:10px 12px; margin-top:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-family:var(--mono); font-size:10px; font-weight:700; color:var(--success); text-transform:uppercase;">Detected JD Specs:</span>
+            <span id="jd-role-detected-badge" style="font-family:var(--mono); font-size:9.5px; color:var(--white); font-weight:700;"></span>
+          </div>
+          <div id="jd-skills-preview-tags" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;"></div>
+        </div>
       </div>
 
       <!-- Resume Uploader (Merged PDF/DOCX) -->
@@ -855,6 +905,180 @@ const fileNameText = document.getElementById('file-name-text');
 const fileRemoveBtn = document.getElementById('file-remove-btn');
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
+
+// JD Mode & Upload Elements
+const tabJdText = document.getElementById('tab-jd-text');
+const tabJdFile = document.getElementById('tab-jd-file');
+const jdTextContainer = document.getElementById('jd-text-container');
+const jdFileContainer = document.getElementById('jd-file-container');
+const jdDropzone = document.getElementById('jd-dropzone');
+const jdFileInput = document.getElementById('jd-file-input');
+const jdFilePill = document.getElementById('jd-file-pill');
+const jdFileNameText = document.getElementById('jd-file-name-text');
+const jdFileRemoveBtn = document.getElementById('jd-file-remove-btn');
+const jdExtractedPreview = document.getElementById('jd-extracted-preview');
+const jdRoleDetectedBadge = document.getElementById('jd-role-detected-badge');
+const jdSkillsPreviewTags = document.getElementById('jd-skills-preview-tags');
+
+function switchJdMode(mode) {
+  if (mode === 'file') {
+    tabJdFile.className = 'btn btn-primary';
+    tabJdText.className = 'btn btn-secondary';
+    jdFileContainer.style.display = 'block';
+    jdTextContainer.style.display = 'none';
+  } else {
+    tabJdText.className = 'btn btn-primary';
+    tabJdFile.className = 'btn btn-secondary';
+    jdTextContainer.style.display = 'block';
+    jdFileContainer.style.display = 'none';
+  }
+}
+
+if (jdDropzone && jdFileInput) {
+  jdDropzone.addEventListener('click', () => jdFileInput.click());
+  jdFileInput.addEventListener('change', (e) => handleJdFile(e.target.files[0]));
+  jdDropzone.addEventListener('dragover', (e) => { e.preventDefault(); jdDropzone.style.borderColor = 'var(--primary)'; });
+  jdDropzone.addEventListener('dragleave', () => { jdDropzone.style.borderColor = 'var(--glass-border)'; });
+  jdDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    jdDropzone.style.borderColor = 'var(--glass-border)';
+    if (e.dataTransfer.files.length > 0) handleJdFile(e.dataTransfer.files[0]);
+  });
+}
+
+if (jdFileRemoveBtn) {
+  jdFileRemoveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    jdFileInput.value = '';
+    jdFilePill.style.display = 'none';
+    jdDropzone.style.display = 'flex';
+    document.getElementById('jd-input').value = '';
+    if (jdExtractedPreview) jdExtractedPreview.style.display = 'none';
+  });
+}
+
+async function handleJdFile(file) {
+  if (!file) return;
+  const name = file.name.toLowerCase();
+  if (!name.endsWith('.pdf') && !name.endsWith('.docx')) {
+    showToast('Please select a valid PDF or DOCX Job Description.', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const arrayBuffer = e.target.result;
+    try {
+      let jdText = '';
+      if (name.endsWith('.pdf')) {
+        const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        for (let i = 1; i <= doc.numPages; i++) {
+          const page = await doc.getPage(i);
+          const content = await page.getTextContent();
+          jdText += content.items.map(it => it.str).join(' ') + '\n';
+        }
+      } else if (name.endsWith('.docx')) {
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        jdText = result.value || '';
+      }
+
+      document.getElementById('jd-input').value = jdText;
+      jdFileNameText.textContent = `${file.name} (${Math.round(file.size/1024)} KB)`;
+      jdFilePill.style.display = 'flex';
+      jdDropzone.style.display = 'none';
+      extractJdDetails(jdText);
+      showToast(`Loaded Job Description: ${file.name}`, 'success');
+    } catch (err) {
+      console.error("Error reading JD file:", err);
+      showToast("Failed to parse Job Description file.", "error");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+let jdDebounceTimer = null;
+function autoExtractJdDebounced() {
+  clearTimeout(jdDebounceTimer);
+  jdDebounceTimer = setTimeout(() => {
+    const text = document.getElementById('jd-input').value;
+    if (text.trim().length > 40) extractJdDetails(text);
+  }, 600);
+}
+
+function extractJdDetails(explicitText) {
+  const text = explicitText || document.getElementById('jd-input').value;
+  if (!text || text.trim().length < 20) {
+    showToast('Please paste or upload a Job Description first.', 'info');
+    return;
+  }
+
+  const clean = text.toLowerCase();
+  let detectedRole = 'Default / General Role';
+  let roleVal = 'default';
+
+  if (clean.includes('software development engineer') || clean.includes('sde')) {
+    detectedRole = 'Software Development Engineer (SDE)';
+    roleVal = 'sde';
+  } else if (clean.includes('java developer') || clean.includes('java engineer')) {
+    detectedRole = 'Java Developer';
+    roleVal = 'java';
+  } else if (clean.includes('backend developer') || clean.includes('backend engineer')) {
+    detectedRole = 'Backend Developer';
+    roleVal = 'backend';
+  } else if (clean.includes('frontend developer') || clean.includes('frontend engineer') || clean.includes('react')) {
+    detectedRole = 'Frontend Developer';
+    roleVal = 'frontend';
+  } else if (clean.includes('full stack') || clean.includes('fullstack')) {
+    detectedRole = 'Full Stack Developer';
+    roleVal = 'fullstack';
+  } else if (clean.includes('devops') || clean.includes('site reliability')) {
+    detectedRole = 'DevOps Engineer';
+    roleVal = 'devops';
+  } else if (clean.includes('data analyst') || clean.includes('data scientist')) {
+    detectedRole = 'Data Analyst / Scientist';
+    roleVal = 'data';
+  }
+
+  const roleSelect = document.getElementById('select-role');
+  if (roleSelect && roleVal !== 'default') {
+    roleSelect.value = roleVal;
+  }
+
+  // Detect Core Skills
+  const commonTech = [
+    'java', 'python', 'spring boot', 'sql', 'postgresql', 'mysql', 'redis', 'docker', 'kubernetes',
+    'aws', 'azure', 'gcp', 'git', 'restful', 'microservices', 'ci/cd', 'linux', 'c++', 'c#', 'react', 'node.js',
+    'data structures', 'algorithms', 'unit testing', 'agile'
+  ];
+
+  const foundSkills = [];
+  commonTech.forEach(skill => {
+    const rx = new RegExp('(^|[^a-zA-Z0-9])' + skill.replace(/[.+]/g, '\\$&') + '(?![a-zA-Z0-9])', 'i');
+    if (rx.test(text)) foundSkills.push(skill);
+  });
+
+  // Detect Experience
+  const expMatch = text.match(/\b(\d{1,2})\+?\s*(?:years|yrs)\s*(?:of)?\s*experience/i);
+  const expStr = expMatch ? ` (${expMatch[0]})` : '';
+
+  if (jdExtractedPreview && jdRoleDetectedBadge && jdSkillsPreviewTags) {
+    jdRoleDetectedBadge.textContent = `${detectedRole}${expStr}`;
+    jdSkillsPreviewTags.innerHTML = foundSkills.slice(0, 12).map(s => 
+      `<span style="background:rgba(47,221,196,0.15); border:1px solid rgba(47,221,196,0.4); color:var(--success); font-family:var(--mono); font-size:9px; padding:2px 8px; border-radius:12px; text-transform:uppercase;">${s}</span>`
+    ).join('');
+    jdExtractedPreview.style.display = 'block';
+  }
+}
+
+// Check Login State and Update Signup Badge
+(() => {
+  const token = localStorage.getItem('jxa_token');
+  const userEmail = localStorage.getItem('jxa_user_email');
+  const badgeText = document.getElementById('signup-badge-text');
+  if ((token || userEmail) && badgeText) {
+    badgeText.textContent = 'Cloud Synced • Unlimited ATS Scans';
+  }
+})();
 
 let uploadedFileData = null;
 let uploadedFileName = "";

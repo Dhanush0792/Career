@@ -491,20 +491,29 @@ async function loadProfile() {
         state.activeProfileId = activeId;
       }
       
-      // Cache locally for offline fallback - NEVER overwrite existing rich local profile with an empty server response
+      // Cache locally for offline fallback - NEVER overwrite existing rich local profile with an empty or less complete server response
       const existingLocalRaw = localStorage.getItem('jxa_local_profile');
       let existingLocal = null;
       try { existingLocal = existingLocalRaw ? JSON.parse(existingLocalRaw) : null; } catch(e) {}
-      const localHasData = existingLocal && (existingLocal.fullName || existingLocal.email || existingLocal.phone || existingLocal.skills || existingLocal.eduGrad_college);
-      const serverHasData = state.profile && (state.profile.fullName || state.profile.email || state.profile.phone || state.profile.skills || state.profile.eduGrad_college);
 
-      if (!serverHasData && localHasData) {
-        console.log("[SYNC] Preserving rich local profile because server returned empty profile.");
-        state.profile = existingLocal;
-        if (!profiles[activeId]) profiles[activeId] = existingLocal;
+      const countMeaningfulFields = (obj) => {
+        if (!obj || typeof obj !== 'object') return 0;
+        return Object.keys(obj).filter(k => k !== 'email' && k !== 'id' && k !== 'profileName' && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim().length > 0).length;
+      };
+
+      const localFieldsCount = countMeaningfulFields(existingLocal);
+      const serverFieldsCount = countMeaningfulFields(state.profile);
+
+      if (localFieldsCount > serverFieldsCount) {
+        console.log(`[SYNC] Preserving rich local profile (${localFieldsCount} fields) over server profile (${serverFieldsCount} fields). Syncing UP to cloud.`);
+        const mergedProfile = { ...state.profile, ...existingLocal };
+        state.profile = mergedProfile;
+        if (!profiles[activeId]) profiles[activeId] = mergedProfile;
+        profiles[activeId] = mergedProfile;
         state.profiles = profiles;
-        // Schedule push of local profile up to cloud
-        setTimeout(() => saveProfile(existingLocal).catch(() => {}), 1000);
+        localStorage.setItem('jxa_local_profile', JSON.stringify(mergedProfile));
+        localStorage.setItem('jxa_local_profiles', JSON.stringify(profiles));
+        setTimeout(() => saveProfile(mergedProfile).catch(() => {}), 1200);
       } else {
         localStorage.setItem('jxa_local_profile', JSON.stringify(state.profile || {}));
         localStorage.setItem('jxa_local_profiles', JSON.stringify(profiles));

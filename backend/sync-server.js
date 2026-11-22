@@ -121,7 +121,17 @@ const DEFAULT_PROFILE = {
   
   experienceList: [],
   projectsList: [],
-  certificationsList: []
+  certificationsList: [],
+  certifications: [],
+  skillsList: [],
+  customSnippets: [],
+  uploadedDocs: {},
+  q_why_hire: "",
+  q_why_company: "",
+  q_achievement: "",
+  q_challenge: "",
+  q_strengths_weaknesses: "",
+  q_leadership: ""
 };
 
 function loadState() {
@@ -159,9 +169,18 @@ function normalizeProfile(profile = {}) {
         normalized[key] = typeof val === "boolean" ? val : Boolean(val);
       } else if (Array.isArray(DEFAULT_PROFILE[key])) {
         normalized[key] = Array.isArray(val) ? val : [];
+      } else if (typeof DEFAULT_PROFILE[key] === "object" && DEFAULT_PROFILE[key] !== null) {
+        normalized[key] = typeof val === "object" && val !== null ? val : {};
       } else {
         normalized[key] = typeof val === "string" ? val.trim() : (val == null ? "" : String(val));
       }
+    }
+  }
+
+  // Preserve any additional custom properties on profile
+  for (const extraKey of Object.keys(profile)) {
+    if (normalized[extraKey] === undefined && extraKey !== "encryptedBlob") {
+      normalized[extraKey] = profile[extraKey];
     }
   }
   
@@ -1150,7 +1169,7 @@ const server = http.createServer(async (req, res) => {
     }
     let body;
     try {
-      body = await readBody(req, 256 * 1024); // 256KB profile limit
+      body = await readBody(req, 10 * 1024 * 1024); // 10MB profile limit (supports document metadata and resumes)
     } catch (e) {
       return sendJson(res, 413, { ok: false, error: "Request body too large" });
     }
