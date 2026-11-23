@@ -399,7 +399,8 @@ function resetProfile() {
 function factoryReset() {
   if(confirm('Sign out and erase all local data on this browser?')) {
     localStorage.clear();
-    window.location.href = 'auth.html';
+    sessionStorage.clear();
+    window.location.replace('index.html?logged_out=1');
   }
 }
 

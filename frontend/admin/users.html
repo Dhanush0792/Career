@@ -658,7 +658,7 @@
           localStorage.setItem('jxa_user_name', data.user.name);
           localStorage.setItem('jxa_role', data.user.role);
           showToast(`Impersonating ${data.user.email}... Redirecting`, 'success');
-          setTimeout(() => { window.location.href = '../dashboard.html'; }, 1000);
+          setTimeout(() => { window.location.replace('../dashboard.html'); }, 1000);
         }
       } else {
         showToast('Failed to start impersonation session', 'error');

@@ -357,7 +357,11 @@
 
   (async function verifyAdminRole() {
     const token = localStorage.getItem('jxa_token');
-    if (!token) { window.location.href = 'login.html'; return; }
+    if (!token) {
+      if (document.documentElement) document.documentElement.style.display = 'none';
+      window.location.replace('login.html');
+      return;
+    }
     try {
       const res = await fetch(`${SYNC_API}/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -366,19 +370,26 @@
       const serverRole = data.role || data.user?.role;
       if (serverRole !== 'admin') {
         localStorage.removeItem('jxa_role');
-        window.location.href = 'login.html';
+        if (document.documentElement) document.documentElement.style.display = 'none';
+        window.location.replace('login.html');
         return;
       }
       localStorage.setItem('jxa_role', 'admin');
       if (typeof renderAdminNav === 'function') renderAdminNav('content.html');
       loadMaps();
-    } catch (e) { window.location.href = 'login.html'; }
+    } catch (e) {
+      if (document.documentElement) document.documentElement.style.display = 'none';
+      window.location.replace('login.html');
+    }
   })();
 
   function logout() {
     const keys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
     keys.forEach(k => localStorage.removeItem(k));
-    window.location.href = '../auth.html';
+    const sessionKeys = Object.keys(sessionStorage).filter(k => k.startsWith('jxa_'));
+    sessionKeys.forEach(k => sessionStorage.removeItem(k));
+    if (document.documentElement) document.documentElement.style.display = 'none';
+    window.location.replace('../index.html?logged_out=1');
   }
 
   // LOW-7: Sanitize HTML to prevent injection via user-controlled values

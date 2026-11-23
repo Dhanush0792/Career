@@ -211,7 +211,7 @@
         const role = data.role || data.user?.role;
         if (role === 'admin') {
           localStorage.setItem('jxa_role', 'admin');
-          window.location.href = 'index.html';
+          window.location.replace('index.html');
         }
       }
     } catch(e) {}
@@ -245,7 +245,7 @@
         if (data.user?.email) localStorage.setItem('jxa_user_email', data.user.email);
         btn.textContent = 'Authenticated... Redirecting';
         setTimeout(() => {
-          window.location.href = 'index.html';
+          window.location.replace('index.html');
         }, 400);
       } else {
         errMsg.textContent = data.error || 'Invalid credentials or administrative privileges required.';

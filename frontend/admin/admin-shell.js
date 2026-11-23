@@ -83,8 +83,33 @@ function renderAdminNav(activePage) {
 }
 
 function adminLogout() {
-  Object.keys(localStorage).filter(function(k) { return k.startsWith("jxa_"); }).forEach(function(k) { localStorage.removeItem(k); });
-  window.location.href = "../auth.html";
+  try {
+    Object.keys(localStorage).filter(function(k) { return k.startsWith("jxa_"); }).forEach(function(k) { localStorage.removeItem(k); });
+    Object.keys(sessionStorage).filter(function(k) { return k.startsWith("jxa_"); }).forEach(function(k) { sessionStorage.removeItem(k); });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent("jobxapply:authReady", { detail: { paired: false, email: "" } }));
+      window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", { detail: { token: "", email: "", passcode: "" } }));
+    }
+  } catch(e) {}
+  if (document.documentElement) document.documentElement.style.display = 'none';
+  window.location.replace("../index.html?logged_out=1");
+}
+
+// BFCache guard for admin pages: re-check credentials on browser Back/Forward navigation
+if (typeof window !== 'undefined') {
+  window.addEventListener('pageshow', function(event) {
+    if (!window.location.pathname.endsWith('login.html')) {
+      var token = adminToken();
+      var storedRole = localStorage.getItem('jxa_role');
+      var userEmail = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
+      var hardcodedAdmins = ["hidhanush07@gmail.com", "dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+      var isOwner = hardcodedAdmins.includes(userEmail);
+      if (!token && !storedRole && !isOwner) {
+        if (document.documentElement) document.documentElement.style.display = 'none';
+        window.location.replace('../index.html?logged_out=1');
+      }
+    }
+  });
 }
 
 async function verifyAdminAccess(onSuccess) {
@@ -96,7 +121,8 @@ async function verifyAdminAccess(onSuccess) {
 
   if (!token && !storedRole && !isOwnerEmail) {
     if (!window.location.pathname.endsWith('login.html')) {
-      window.location.href = 'login.html';
+      if (document.documentElement) document.documentElement.style.display = 'none';
+      window.location.replace('login.html');
     }
     return;
   }
@@ -122,7 +148,8 @@ async function verifyAdminAccess(onSuccess) {
     if (!isOwnerEmail && storedRole !== 'admin') {
       localStorage.removeItem("jxa_role");
       if (!window.location.pathname.endsWith('login.html')) {
-        window.location.href = 'login.html';
+        if (document.documentElement) document.documentElement.style.display = 'none';
+        window.location.replace('login.html');
       }
     }
   } catch (e) {

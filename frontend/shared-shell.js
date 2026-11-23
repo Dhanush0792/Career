@@ -136,15 +136,19 @@ function triggerSessionLogout(reason = 'logged_out', navigate = true) {
     } catch(e) {}
   }
 
-  // 5. Navigate to authentication gateway using location.replace to eliminate back-button cache retention
+  // 5. Navigate using location.replace to eliminate back-button cache retention
   if (navigate && typeof window !== 'undefined') {
     const isInAdmin = window.location.pathname.includes('/admin/');
     const prefix = isInAdmin ? '../' : '';
-    const safeReason = encodeURIComponent(reason);
     if (document.documentElement) {
       document.documentElement.style.display = 'none';
     }
-    window.location.replace(`${prefix}auth.html?reason=${safeReason}`);
+    if (reason === 'logged_out') {
+      window.location.replace(`${prefix}index.html?logged_out=1`);
+    } else {
+      const safeReason = encodeURIComponent(reason);
+      window.location.replace(`${prefix}auth.html?reason=${safeReason}`);
+    }
   }
 }
 
@@ -203,8 +207,13 @@ function requireAuth() {
     page = page.substring(0, page.length - 5);
   }
 
-  // Whitelist public pages (extension-agnostic names)
-  const publicPages = ['', 'auth', 'extension-setup', 'extension-landing', 'index', 'about', 'tools', 'ats-checker', 'resume-builder', 'salary-calculator', 'gov-resizer', 'roadmap-software-engineer', 'roadmap-data-scientist', 'gov-ssc-cgl', 'gov-ibps-po', 'resume-importance'];
+  // Whitelist public pages (extension-agnostic names). Note: extension-setup is protected.
+  const publicPages = [
+    '', 'auth', 'auth-callback', 'reset-password', 'extension-landing',
+    'index', 'about', 'features', 'pricing', 'blog', 'contact', 'how-it-works', 'privacy-terms', 'portals',
+    'tools', 'ats-checker', 'resume-builder', 'salary-calculator',
+    'gov-resizer', 'roadmap-software-engineer', 'roadmap-data-scientist', 'gov-ssc-cgl', 'gov-ibps-po', 'resume-importance'
+  ];
   if (publicPages.includes(page)) {
     if (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_token')) {
       pullApplicationsFromServer().catch(() => {});
