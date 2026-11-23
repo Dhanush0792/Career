@@ -172,8 +172,11 @@ function triggerSessionLogout(reason = 'logged_out', navigate = true) {
   try {
     const localKeys = Object.keys(localStorage).filter(k => k.startsWith('jxa_'));
     localKeys.forEach(k => localStorage.removeItem(k));
-    const sessionKeys = Object.keys(sessionStorage).filter(k => k.startsWith('jxa_'));
+    const sessionKeys = Object.keys(sessionStorage).filter(k => k.startsWith('jxa_') && k !== 'jxa_logged_out');
     sessionKeys.forEach(k => sessionStorage.removeItem(k));
+    if (reason === 'logged_out' || reason === 'unauthenticated') {
+      sessionStorage.setItem('jxa_logged_out', '1');
+    }
   } catch(e) {}
 
   // 3. Clear in-memory profile and runtime references
@@ -201,7 +204,7 @@ function triggerSessionLogout(reason = 'logged_out', navigate = true) {
     if (document.documentElement) {
       document.documentElement.style.display = 'none';
     }
-    if (reason === 'logged_out') {
+    if (reason === 'logged_out' || reason === 'unauthenticated' || !reason) {
       window.location.replace(`${prefix}index.html?logged_out=1`);
     } else {
       const safeReason = encodeURIComponent(reason);
@@ -352,17 +355,9 @@ function requireAuth() {
       document.documentElement.style.display = 'none';
     }
     if (typeof window !== 'undefined' && window.location) {
-      if (page.includes('resume-builder')) {
-        window.location.replace(prefix + 'tools.html#resume-builder');
-      } else if (page.includes('ats-checker')) {
-        window.location.replace(prefix + 'tools.html#ats-checker');
-      } else if (page.includes('cover-letter')) {
-        window.location.replace(prefix + 'tools.html#cover-letter');
-      } else if (page.includes('autofill-lab')) {
-        window.location.replace(prefix + 'tools.html#autofill-lab');
-      } else {
-        triggerSessionLogout(token ? invalidReason : 'unauthenticated');
-      }
+      // Universal Zero-Hop Rule: All protected pages uniformly replace to index.html?logged_out=1
+      // No jumping to fragmented anchor hashes (#resume-builder, #cover-letter, etc.)
+      triggerSessionLogout(token ? invalidReason : 'unauthenticated');
     }
     return false;
   } else {

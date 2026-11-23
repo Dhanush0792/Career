@@ -2851,21 +2851,33 @@ window.addEventListener('load', () => {
   }
 })();
 
-// Logout Toast Feedback
-(function checkLoggedOutFeedback() {
+// Post-Logout History Boundary Trap: prevents browser Back button from traversing backwards into dead session pages
+(function setupLogoutHistoryBoundary() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('logged_out') === '1') {
-    const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:28px;right:28px;z-index:9999;background:rgba(47,221,196,0.15);border:1px solid #2FDDC4;color:#2FDDC4;padding:12px 20px;border-radius:10px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:all .3s ease;';
-    toast.textContent = '✓ You have been logged out successfully.';
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(8px)';
-      setTimeout(() => toast.remove(), 400);
-    }, 3500);
-    const cleanUrl = window.location.pathname + window.location.hash;
-    window.history.replaceState({}, document.title, cleanUrl);
+  const isLoggedOut = params.get('logged_out') === '1' || sessionStorage.getItem('jxa_logged_out') === '1';
+
+  if (isLoggedOut) {
+    if (params.get('logged_out') === '1') {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:28px;right:28px;z-index:9999;background:rgba(47,221,196,0.15);border:1px solid #2FDDC4;color:#2FDDC4;padding:12px 20px;border-radius:10px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:700;backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:all .3s ease;';
+      toast.textContent = '✓ You have been logged out successfully.';
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        setTimeout(() => toast.remove(), 400);
+      }, 3500);
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({ page: 'home_logged_out' }, document.title, cleanUrl);
+    }
+
+    // Intercept Back button so user stays firmly on Home page
+    try {
+      window.history.pushState({ page: 'home_locked' }, document.title, window.location.href);
+      window.addEventListener('popstate', function(e) {
+        window.history.pushState({ page: 'home_locked' }, document.title, window.location.href);
+      });
+    } catch(e) {}
   }
 })();
 </script>

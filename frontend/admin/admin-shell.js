@@ -85,7 +85,8 @@ function renderAdminNav(activePage) {
 function adminLogout() {
   try {
     Object.keys(localStorage).filter(function(k) { return k.startsWith("jxa_"); }).forEach(function(k) { localStorage.removeItem(k); });
-    Object.keys(sessionStorage).filter(function(k) { return k.startsWith("jxa_"); }).forEach(function(k) { sessionStorage.removeItem(k); });
+    Object.keys(sessionStorage).filter(function(k) { return k.startsWith("jxa_") && k !== "jxa_logged_out"; }).forEach(function(k) { sessionStorage.removeItem(k); });
+    sessionStorage.setItem("jxa_logged_out", "1");
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent("jobxapply:authReady", { detail: { paired: false, email: "" } }));
       window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", { detail: { token: "", email: "", passcode: "" } }));

@@ -90,9 +90,10 @@ async function processSession(token, userEmail = "") {
     const email = (userEmail || parseJwtEmail(token) || "").toLowerCase().trim();
     statusText.textContent = "Session verified. Checking profile...";
     
-    // Store credentials safely
+    // Store credentials safely and clear logged-out flag
     localStorage.setItem("jxa_token", token);
     localStorage.setItem("jxa_last_active", String(Date.now()));
+    sessionStorage.removeItem("jxa_logged_out");
     if (email) localStorage.setItem("jxa_user_email", email);
 
     // Initial admin check based on previously verified role if session already known
