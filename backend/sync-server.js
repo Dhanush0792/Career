@@ -1256,7 +1256,11 @@ const server = http.createServer(async (req, res) => {
       const incoming = JSON.parse(body || "{}");
       
       const currentUsers = await db.getUsersList();
-      if (currentUsers.length === 0) {
+      if (currentUsers.length === 0 && !activeUser) {
+        const setupToken = req.headers["x-setup-token"] || incoming.setupToken;
+        if (process.env.INITIAL_SETUP_TOKEN && setupToken !== process.env.INITIAL_SETUP_TOKEN) {
+          return sendJson(res, 403, { ok: false, error: "Invalid setup token for server initialization" });
+        }
         if (!incoming.passcodeHash) {
           return sendJson(res, 400, { ok: false, error: "Passcode hash is required to initialize the server" });
         }
@@ -1957,6 +1961,10 @@ const server = http.createServer(async (req, res) => {
   // PUT /api/admin/users/:id/profile
   if (req.method === "PUT" && /^\/api\/admin\/users\/[^/]+\/profile$/.test(urlObj.pathname)) {
     const targetUserId = urlObj.pathname.split("/")[4];
+    const existingTargetUser = await db.getUserById(targetUserId);
+    if (!existingTargetUser) {
+      return sendJson(res, 404, { ok: false, error: "Target user not found" });
+    }
     let body;
     try { body = await readBody(req, 256 * 1024); } catch (e) {
       return sendJson(res, 413, { ok: false, error: "Payload too large" });
@@ -1967,9 +1975,15 @@ const server = http.createServer(async (req, res) => {
         await db.saveProfile(targetUserId, incoming.profile);
       }
       if (incoming.tier) {
+        if (!["free", "pro", "paid"].includes(incoming.tier)) {
+          return sendJson(res, 400, { ok: false, error: "Invalid tier specified" });
+        }
         await db.updateUserTier(targetUserId, incoming.tier);
       }
       if (incoming.role) {
+        if (!["user", "admin"].includes(incoming.role)) {
+          return sendJson(res, 400, { ok: false, error: "Invalid role specified" });
+        }
         await db.updateUserRole(targetUserId, incoming.role);
       }
       logAdminActivity(`Directly edited profile & settings for user ${targetUserId}`);
