@@ -439,5 +439,14 @@
     "reporterEmail": "tester@test.local",
     "submittedAt": 1795402870370,
     "status": "pending"
+  },
+  {
+    "id": "rep_q7ao4q6z9",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795403108864,
+    "status": "pending"
   }
 ]
