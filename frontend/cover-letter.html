@@ -1278,7 +1278,7 @@ document.getElementById('opt-enclosure').addEventListener('change', (e) => {
     // Rerender pre-defined summaries list if custom_role is populated
     if (cl.customRoleSummary) {
       PREDEFINED_SUMMARIES["custom_role"] = cl.customRoleSummary;
-      const displayRole = cl.role || "Preset";
+      const displayRole = String(cl.role || "Preset").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       document.getElementById('summary-select').innerHTML = `
         <option value="">-- Choose pre-defined summaries --</option>
         <option value="custom_role" ${cl.summarySelect === 'custom_role' ? 'selected' : ''}>${displayRole} Summary Preset</option>
