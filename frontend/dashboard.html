@@ -301,6 +301,29 @@ requireAuth();
 // Inject nav
 renderNav(document.getElementById('main-nav'), 'dashboard.html');
 
+// Welcome / Welcome Back Notification
+(function checkWelcomeGreeting() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const welcomeType = urlParams.get('welcome') || sessionStorage.getItem('jxa_welcome_type');
+  if (welcomeType) {
+    sessionStorage.removeItem('jxa_welcome_type');
+    const profile = (typeof getProfile === 'function') ? getProfile() : {};
+    const email = localStorage.getItem('jxa_user_email') || '';
+    const rawName = profile?.firstName || profile?.fullName?.split(' ')[0] || email.split('@')[0] || 'User';
+    const cleanName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+    
+    if (welcomeType === 'back') {
+      showToast(`👋 Welcome back, ${cleanName}! Your profile is ready.`, 'success');
+    } else if (welcomeType === 'new') {
+      showToast(`🎉 Welcome to JobXApply, ${cleanName}! Your workspace is active.`, 'success');
+    }
+    if (urlParams.has('welcome')) {
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }
+})();
+
 const consoleBox = document.getElementById('console');
 let sseConnected = false;
 

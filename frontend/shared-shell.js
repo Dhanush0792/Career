@@ -56,10 +56,68 @@ function parseJwtPayload(token) {
 }
 
 // ─── Session Lifecycle & Inactivity Management ──────────────────────────────
-// Strictly 3 consecutive days of inactivity timeout (72 hours)
-const INACTIVITY_TIMEOUT_MS = 3 * 24 * 60 * 60 * 1000;
+// 5 consecutive days of inactivity timeout (120 hours / 5 days)
+const INACTIVITY_TIMEOUT_MS = 5 * 24 * 60 * 60 * 1000;
 let _activeSSE = null;
 let _lastActivityUpdate = 0;
+let _isRefreshingToken = false;
+
+// Silent background token refresh using Supabase refresh_token
+async function triggerSilentTokenRefresh() {
+  if (_isRefreshingToken) return;
+  _isRefreshingToken = true;
+  try {
+    let refreshToken = "";
+    let storageKey = "";
+    if (typeof localStorage !== 'undefined') {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+          const raw = localStorage.getItem(k);
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw);
+              refreshToken = parsed?.refresh_token || parsed?.session?.refresh_token;
+              storageKey = k;
+              if (refreshToken) break;
+            } catch(e) {}
+          }
+        }
+      }
+    }
+
+    if (refreshToken) {
+      const SUPABASE_URL = "https://fbyjrfrejgzcpqtdwudu.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZieWpyZnJlamd6Y3BxdGR3dWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3ODk0NTIsImV4cCI6MjEwMjM2NTQ1Mn0.L_21DGKOHU4HQ05IY9MqvDwklh2knTkjMObHmDIB0Ic";
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.access_token) {
+          localStorage.setItem('jxa_token', data.access_token);
+          if (data.refresh_token && storageKey) {
+            try {
+              const current = JSON.parse(localStorage.getItem(storageKey) || '{}');
+              current.access_token = data.access_token;
+              current.refresh_token = data.refresh_token;
+              localStorage.setItem(storageKey, JSON.stringify(current));
+            } catch(e) {}
+          }
+        }
+      }
+    }
+  } catch(e) {
+    // Non-blocking; tolerates offline/cold-start state
+  } finally {
+    _isRefreshingToken = false;
+  }
+}
 
 function recordUserActivity() {
   const now = Date.now();
@@ -162,6 +220,12 @@ function getEffectiveAuthToken() {
     const payload = parseJwtPayload(token);
     if (!payload || !payload.exp || (payload.exp * 1000 > now + 30000)) {
       isValid = true;
+    } else {
+      // Token expired or nearing expiry; if within 5-day active session, trigger silent background refresh
+      const lastActive = Number((typeof localStorage !== 'undefined' && localStorage.getItem('jxa_last_active')) || 0);
+      if (lastActive && (now - lastActive < INACTIVITY_TIMEOUT_MS)) {
+        triggerSilentTokenRefresh();
+      }
     }
   }
 
@@ -243,12 +307,22 @@ function requireAuth() {
     } else {
       const payload = parseJwtPayload(token);
       if (payload) {
-        // Check Case 2: JWT expiration
+        // Check Case 2: JWT expiration vs 5-Day Inactivity Window
         if (payload.exp && payload.exp * 1000 < now) {
-          isValidToken = false;
-          invalidReason = 'expired';
+          // If the short-lived access token (e.g. 1-hr Supabase OAuth) expired,
+          // but the user was active within their 5-day window, preserve session and refresh silently in background.
+          if (now - lastActive < INACTIVITY_TIMEOUT_MS) {
+            isValidToken = true;
+            triggerSilentTokenRefresh();
+          } else {
+            isValidToken = false;
+            invalidReason = 'inactivity';
+          }
         } else {
           isValidToken = true;
+        }
+
+        if (isValidToken) {
           const storedRole = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_role') : null;
 
           if (storedRole === 'admin') {

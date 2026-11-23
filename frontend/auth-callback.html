@@ -149,17 +149,19 @@ async function processSession(token, userEmail = "") {
     const source = urlParams.get("source") || urlParams.get("origin") || "";
     if (source === "extension") {
       statusText.innerHTML = '<span style="color:#2fddc4; font-weight:700;">Extension Authenticated & Synced!</span><br><span style="color:rgba(244,247,255,0.7); font-size:10px; margin-top:6px; display:inline-block;">You can close this tab and open the extension.</span>';
+      sessionStorage.setItem("jxa_welcome_type", isExistingUser ? "back" : "new");
       setTimeout(() => {
-        if (isAdmin) window.location.replace("admin/index.html");
-        else if (isExistingUser) window.location.replace("dashboard.html");
-        else window.location.replace("profile-setup.html?onboarding=1");
+        if (isAdmin) window.location.replace("admin/index.html?welcome=admin");
+        else if (isExistingUser) window.location.replace("dashboard.html?welcome=back");
+        else window.location.replace("profile-setup.html?onboarding=1&welcome=new");
       }, 1500);
       return;
     }
 
     if (isAdmin) {
       statusText.textContent = "Admin verified. Opening Command Center...";
-      window.location.replace("admin/index.html");
+      sessionStorage.setItem("jxa_welcome_type", "admin");
+      window.location.replace("admin/index.html?welcome=admin");
       return;
     }
 
@@ -167,16 +169,20 @@ async function processSession(token, userEmail = "") {
     if (nextTarget) {
       sessionStorage.removeItem("jxa_auth_next");
       statusText.textContent = "Redirecting to your target workspace...";
-      window.location.replace(nextTarget);
+      sessionStorage.setItem("jxa_welcome_type", isExistingUser ? "back" : "new");
+      const sep = nextTarget.includes('?') ? '&' : '?';
+      window.location.replace(`${nextTarget}${sep}welcome=${isExistingUser ? 'back' : 'new'}`);
       return;
     }
 
     if (isExistingUser) {
       statusText.textContent = "Welcome back! Redirecting to dashboard...";
-      window.location.replace("dashboard.html");
+      sessionStorage.setItem("jxa_welcome_type", "back");
+      window.location.replace("dashboard.html?welcome=back");
     } else {
       statusText.textContent = "New account detected! Opening Master Profile Setup...";
-      window.location.replace("profile-setup.html?onboarding=1");
+      sessionStorage.setItem("jxa_welcome_type", "new");
+      window.location.replace("profile-setup.html?onboarding=1&welcome=new");
     }
   } catch (err) {
     console.error("Callback processing error:", err);

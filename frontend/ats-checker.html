@@ -1464,6 +1464,11 @@ runBtn.addEventListener('click', async () => {
       updateStatus(result.isValidResume === false ? 'Document validation failed' : `Analysis complete • Compatibility: ${score}%`, 'idle');
       placeholderPanel.style.display = 'none';
       resultsPanel.style.display = 'flex';
+      if (result.isValidResume !== false) {
+        showToast(`✓ ATS Analysis Complete: ${score}% match score!`, 'success');
+      } else {
+        showToast('⚠️ Document validation failed. Please upload a legitimate resume.', 'error');
+      }
 
     } catch (err) {
       updateStatus('Scoring encountered an error', 'idle');

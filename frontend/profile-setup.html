@@ -1180,6 +1180,32 @@ body::after {
 if (typeof requireAuth === 'function') requireAuth();
 if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'profile-setup.html');
 
+// Welcome / Welcome Back Notification
+(function checkWelcomeGreeting() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const welcomeType = urlParams.get('welcome') || sessionStorage.getItem('jxa_welcome_type');
+  if (welcomeType) {
+    sessionStorage.removeItem('jxa_welcome_type');
+    const email = localStorage.getItem('jxa_user_email') || '';
+    const rawName = (localStorage.getItem('jxa_user_name') || email.split('@')[0] || 'User').trim();
+    const cleanName = rawName ? (rawName.charAt(0).toUpperCase() + rawName.slice(1)) : 'User';
+    
+    if (welcomeType === 'new') {
+      if (typeof showToast === 'function') {
+        showToast(`🎉 Welcome to JobXApply, ${cleanName}! Let's build your master profile.`, 'success');
+      }
+    } else if (welcomeType === 'back') {
+      if (typeof showToast === 'function') {
+        showToast(`👋 Welcome back, ${cleanName}! Your profile details are loaded.`, 'success');
+      }
+    }
+    if (urlParams.has('welcome')) {
+      const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]welcome=[^&]+/, '').replace(/^&/, '?');
+      window.history.replaceState({}, document.title, cleanUrl || window.location.pathname);
+    }
+  }
+})();
+
 // Section IDs for Navigation
 const SECTION_IDS = [
   'section-basics',

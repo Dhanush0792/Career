@@ -286,7 +286,7 @@ body::after {
         const payload = JSON.parse(decodeURIComponent(atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
         const now = Date.now();
         const lastActive = Number(localStorage.getItem('jxa_last_active') || 0);
-        const INACTIVITY_MS = 3 * 24 * 60 * 60 * 1000;
+        const INACTIVITY_MS = 5 * 24 * 60 * 60 * 1000;
         if ((!payload.exp || payload.exp * 1000 > now) && (!lastActive || (now - lastActive < INACTIVITY_MS))) {
           // Token is valid and not inactive
           const target = localStorage.getItem('jxa_role') === 'admin' ? 'admin/index.html' : 'dashboard.html';
@@ -382,7 +382,7 @@ if (logoutReason && logoutReason !== 'unauthenticated') {
     box.style.background = 'rgba(245, 166, 35, 0.08)';
     title.style.color = '#F5A623';
     title.textContent = 'Session Inactive';
-    desc.textContent = 'You were signed out after 3 days of inactivity. Please sign in again to continue.';
+    desc.textContent = 'You were signed out after 5 days of inactivity. Please sign in again to continue.';
     box.style.display = 'block';
   } else if (logoutReason === 'expired') {
     box.style.borderColor = 'rgba(245, 90, 35, 0.4)';

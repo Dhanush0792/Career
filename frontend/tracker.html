@@ -1145,12 +1145,18 @@ async function saveApp(e) {
 function changeStatus(id, newStatus) {
   updateApplicationStatus(id, newStatus);
   setTimeout(renderActiveView, 200);
+  if (typeof showToast === 'function') {
+    showToast(`✓ Application moved to ${newStatus.toUpperCase()}`, 'success');
+  }
 }
 
 function deleteApp(id) {
   if (confirm('Delete this application record?')) {
     deleteApplication(id);
     setTimeout(renderActiveView, 200);
+    if (typeof showToast === 'function') {
+      showToast('✓ Application removed from tracker', 'info');
+    }
   }
 }
 
