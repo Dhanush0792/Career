@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Emergency Maintenance Mode</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style-glass.css">
+<style>
+:root {
+  --base: #0B1020;
+  --primary: #5B4FE8;
+  --danger: #F55A23;
+  --alert: #F5A623;
+  --white: #ffffff;
+  --text: #f4f7ff;
+  --muted: rgba(244,247,255,0.65);
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(245,90,35,0.3);
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Barlow Condensed', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--body);
+  background-color: var(--base);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 24px;
+  background-image: radial-gradient(circle at 50% 30%, rgba(245,90,35,0.12) 0%, transparent 70%);
+}
+.maint-card {
+  max-width: 580px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 48px 36px;
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 40px rgba(245,90,35,0.15);
+}
+.maint-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--danger);
+  background: rgba(245,90,35,0.12);
+  border: 1px solid rgba(245,90,35,0.4);
+  padding: 5px 14px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+}
+.maint-title {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--white);
+  margin-bottom: 14px;
+}
+.maint-msg {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.btn-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text);
+  transition: all 0.2s;
+}
+.btn-admin:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  transform: translateY(-2px);
+}
+</style>
+</head>
+<body>
+  <div class="maint-card">
+    <div class="maint-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <span>Emergency System Hold</span>
+    </div>
+    <h1 class="maint-title">Platform Maintenance In Progress</h1>
+    <p class="maint-msg" id="maint-text">
+      The platform is currently undergoing scheduled infrastructure upgrades. All user operations are paused temporarily. Please check back shortly.
+    </p>
+    <div>
+      <a href="/admin/login.html" class="btn-admin">Admin Operative Access &rsaquo;</a>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const msg = urlParams.get('msg');
+    if (msg) {
+      document.getElementById('maint-text').textContent = decodeURIComponent(msg);
+    }
+  </script>
+</body>
+</html>

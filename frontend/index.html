@@ -2827,6 +2827,12 @@ window.addEventListener('load', () => {
       const tagEl = document.querySelector('.hero__tag');
       if (tagEl && h.tag) tagEl.textContent = h.tag;
 
+      // Update main title if customized
+      const titleEl = document.querySelector('.hero__title');
+      if (titleEl && h.title) {
+        titleEl.textContent = h.title;
+      }
+
       const subEl = document.querySelector('.hero__sub');
       if (subEl && h.subtitle) subEl.textContent = h.subtitle;
 

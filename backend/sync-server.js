@@ -366,9 +366,18 @@ setInterval(() => {
 }, 10 * 60 * 1000); // Sweep every 10 minutes
 
 const adminActivityLog = [];
+function maskEmail(str) {
+  if (typeof str !== "string") return str;
+  return str.replace(/([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)/g, (match, user, domain) => {
+    const maskedUser = user.length > 2 ? user[0] + "***" + user[user.length - 1] : user[0] + "***";
+    return maskedUser + "@" + domain;
+  });
+}
+
 function logAdminActivity(msg, status = "SUCCESS") {
   const timeStr = new Date().toLocaleTimeString();
-  adminActivityLog.unshift({ time: timeStr, msg, status });
+  const safeMsg = maskEmail(String(msg || ""));
+  adminActivityLog.unshift({ time: timeStr, msg: safeMsg, status });
   if (adminActivityLog.length > 50) {
     adminActivityLog.pop();
   }
@@ -504,8 +513,6 @@ const ALLOWED_ORIGINS = new Set([
   // Production Netlify / Render origins
   "https://jobxapply.netlify.app",
   "https://careerhub-app.netlify.app",
-  // Extension origin
-  "chrome-extension://",
   // Custom overrides from .env
   ...ALLOWED_ORIGINS_RAW.split(",").map(o => o.trim()).filter(Boolean)
 ]);
@@ -513,10 +520,16 @@ const ALLOWED_ORIGINS = new Set([
 function isAllowedOrigin(origin) {
   if (!origin) return true; // Non-browser/server-to-server requests
   if (ALLOWED_ORIGINS.has(origin)) return true;
-  // Restrict chrome-extension:// CORS reflection to verified extension ID or authorized origins
-  const verifiedExtensionId = process.env.ALLOWED_EXTENSION_ID || "";
-  if (verifiedExtensionId && origin === ("chrome-extension://" + verifiedExtensionId)) return true;
-  if (origin === "chrome-extension://" || origin === "moz-extension://jobxapply_autofill@jobxapply.local") return true;
+  // Restrict chrome-extension:// CORS reflection to verified extension IDs
+  const allowedExtEnv = process.env.ALLOWED_EXTENSION_IDS || process.env.ALLOWED_EXTENSION_ID || "";
+  const allowedExtIds = allowedExtEnv.split(",").map(id => id.trim()).filter(Boolean);
+  if (origin.startsWith("chrome-extension://")) {
+    const extId = origin.replace("chrome-extension://", "").split("/")[0];
+    if (allowedExtIds.length > 0 && allowedExtIds.includes(extId)) return true;
+    if (allowedExtIds.length === 0 && process.env.NODE_ENV !== "production") return true;
+    return false;
+  }
+  if (origin === "moz-extension://jobxapply_autofill@jobxapply.local") return true;
   // Allow all localhost variants (for local dev)
   if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return true;
   return false;
@@ -538,8 +551,13 @@ function isRateLimited(key, limit, windowMs, trackerMap) {
 }
 
 function getClientIp(req) {
-  const xfwd = req.headers["x-forwarded-for"];
-  return (xfwd ? xfwd.split(",")[0].trim() : null) || req.socket.remoteAddress || "unknown-ip";
+  if (process.env.TRUST_PROXY === "true") {
+    const xfwd = req.headers["x-forwarded-for"];
+    if (xfwd) {
+      return xfwd.split(",")[0].trim();
+    }
+  }
+  return req.socket.remoteAddress || "unknown-ip";
 }
 
 // ── Account Lockout Helpers ────────────────────────────────────────────────
@@ -592,10 +610,9 @@ function writeCorsHeaders(req, res) {
   } else if (!origin) {
     // Non-browser request — no ACAO header needed
   } else {
-    // Blocked origin — do NOT reflect it
-    res.setHeader("Access-Control-Allow-Origin", "null");
+    // Blocked origin — do NOT reflect it, never reflect "null"
   }
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
   res.setHeader("Vary", "Origin");
 }
@@ -635,22 +652,33 @@ function verifySupabaseTokenRemote(token) {
 }
 
 async function getRequestUser(req) {
+  let token = null;
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7).trim();
+  } else if (req.headers.cookie) {
+    const match = req.headers.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+    if (match) token = decodeURIComponent(match[1]).trim();
+  }
+  if (!token) {
     return null;
   }
-  const token = authHeader.substring(7).trim();
 
-  const ADMIN_EMAILS = new Set([
-    "hidhanush07@gmail.com",
-    "dhanushsiddilingam@gmail.com",
-    "admin@jobxapply.app"
-  ]);
+  // Check if token has been revoked (SEC-12)
+  if (auth.isTokenRevoked && auth.isTokenRevoked(token)) {
+    return null;
+  }
+
+  const adminEmailsList = (process.env.ADMIN_EMAILS || "admin@jobxapply.app")
+    .split(",")
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+  const ADMIN_EMAILS = new Set(adminEmailsList);
 
   // 1. Try local / environment JWT verification first (fastest)
   try {
     const jwtSecret = process.env.SUPABASE_JWT_SECRET || process.env.JWT_SECRET || auth.JWT_SECRET;
-    const decoded = jwt.verify(token, jwtSecret);
+    const decoded = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] });
     if (decoded) {
       const userId = decoded.sub || decoded.id || decoded.userId;
       const email = decoded.email;
@@ -742,7 +770,7 @@ function sendJson(res, code, payload) {
   const currentOrigin = res.getHeader("Access-Control-Allow-Origin");
   if (currentOrigin) {
     headers["Access-Control-Allow-Origin"] = currentOrigin;
-    headers["Access-Control-Allow-Methods"] = res.getHeader("Access-Control-Allow-Methods") || "GET,POST,DELETE,OPTIONS";
+    headers["Access-Control-Allow-Methods"] = res.getHeader("Access-Control-Allow-Methods") || "GET,POST,PUT,DELETE,OPTIONS";
     headers["Access-Control-Allow-Headers"] = res.getHeader("Access-Control-Allow-Headers") || "Content-Type,Authorization";
     headers["Access-Control-Allow-Credentials"] = "true";
   } else {
@@ -810,6 +838,39 @@ const server = http.createServer(async (req, res) => {
 
   // Parse URL
   const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+
+  // Emergency Maintenance Mode Lockdown Check
+  // Allow health checks, CMS config read, and admin authentication/APIs
+  const cmsConfig = await db.getCmsConfig();
+  if (cmsConfig && cmsConfig.maintenance && cmsConfig.maintenance.active) {
+    const isExempt = 
+      urlObj.pathname === "/api/health" ||
+      urlObj.pathname === "/api/cms" ||
+      urlObj.pathname === "/api/auth/login" ||
+      urlObj.pathname.startsWith("/api/admin");
+
+    if (!isExempt) {
+      // If user provided a token, check if they are an admin
+      const authHeader = req.headers.authorization || "";
+      let isAdminUser = false;
+      if (authHeader.startsWith("Bearer ")) {
+        const token = authHeader.slice(7);
+        const user = await verifyAuthToken(token);
+        if (user && user.role === "admin") {
+          isAdminUser = true;
+        }
+      }
+
+      if (!isAdminUser) {
+        sendJson(res, 503, {
+          ok: false,
+          maintenance: true,
+          error: cmsConfig.maintenance.message || "Platform is currently under emergency maintenance. Please check back shortly."
+        });
+        return;
+      }
+    }
+  }
 
 
   // GET /api/admin/banner -- public, read by user dashboard to display announcements
@@ -959,6 +1020,24 @@ const server = http.createServer(async (req, res) => {
     } catch (e) {
       sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
     }
+    return;
+  }
+
+  // POST /api/auth/logout -- revokes presented token and clears session (SEC-12)
+  if (req.method === "POST" && urlObj.pathname === "/api/auth/logout") {
+    let token = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7).trim();
+    } else if (req.headers.cookie) {
+      const match = req.headers.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+      if (match) token = decodeURIComponent(match[1]).trim();
+    }
+    if (token && typeof auth.revokeToken === "function") {
+      auth.revokeToken(token);
+    }
+    res.setHeader("Set-Cookie", "token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Strict");
+    sendJson(res, 200, { ok: true, message: "Logged out successfully" });
     return;
   }
 
@@ -1382,6 +1461,9 @@ const server = http.createServer(async (req, res) => {
         try {
           const incoming = JSON.parse(body || "{}");
           const tier = incoming.tier || "free";
+          if (!["free", "pro", "paid"].includes(tier)) {
+            return sendJson(res, 400, { ok: false, error: "Invalid tier specified. Must be free, pro, or paid." });
+          }
           const success = await db.updateUserTier(userId, tier);
           if (success) {
             logAdminActivity(`Updated tier for user ${userId} to ${tier}`);
@@ -1409,6 +1491,9 @@ const server = http.createServer(async (req, res) => {
         try {
           const incoming = JSON.parse(body || "{}");
           const role = incoming.role || "user";
+          if (!["user", "admin"].includes(role)) {
+            return sendJson(res, 400, { ok: false, error: "Invalid role specified. Must be user or admin." });
+          }
           const success = await db.updateUserRole(userId, role);
           if (success) {
             logAdminActivity(`Updated role for user ${userId} to ${role}`);

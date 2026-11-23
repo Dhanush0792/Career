@@ -72,6 +72,18 @@ async function initializeDatabase(p) {
     )
   `);
 
+  // Enable Row Level Security (RLS) on all tables (SEC-RLS)
+  try {
+    await p.query(`
+      ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE userdata ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE telemetry ENABLE ROW LEVEL SECURITY;
+    `);
+  } catch (e) {
+    // Non-fatal if DB role lacks superuser/owner privileges in dev
+  }
+
   // Ensure default users exist only when explicitly enabled (e.g. initial setup / development)
   if (process.env.SEED_DEFAULT_USERS === "true") {
     console.log("[DB] Seeding default development users...");
@@ -122,10 +134,10 @@ if (DATABASE_URL) {
         }
       })
       .catch(err => {
-        console.error("[DB] Supabase connection failed. Falling back to local files.", err);
+        console.error("[DB] Supabase connection failed. Falling back to local files.", err.message || "Connection error");
       });
   } catch (err) {
-    console.error("[DB] Failed to construct pg Pool. Falling back to local files.", err);
+    console.error("[DB] Failed to construct pg Pool. Falling back to local files.", err.message || "Construction error");
   }
 }
 

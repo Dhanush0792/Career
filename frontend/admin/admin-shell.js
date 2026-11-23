@@ -4,9 +4,29 @@
 const ADMIN_API = (typeof SYNC_API !== "undefined") ? SYNC_API : "https://jobxapply-backend.onrender.com/api";
 
 function escHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = String(str || "");
-  return div.innerHTML;
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeHref(url) {
+  if (!url || typeof url !== "string") return "#";
+  const trimmed = url.trim();
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return trimmed;
+    }
+  } catch (e) {
+    if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/.test(trimmed)) {
+      return "https://" + trimmed;
+    }
+  }
+  return "#";
 }
 
 function adminToken() {
@@ -103,7 +123,7 @@ if (typeof window !== 'undefined') {
       var token = adminToken();
       var storedRole = localStorage.getItem('jxa_role');
       var userEmail = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
-      var hardcodedAdmins = ["hidhanush07@gmail.com", "dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+      var hardcodedAdmins = ["admin@jobxapply.app"];
       var isOwner = hardcodedAdmins.includes(userEmail);
       if (!token && !storedRole && !isOwner) {
         if (document.documentElement) document.documentElement.style.display = 'none';
@@ -117,7 +137,7 @@ async function verifyAdminAccess(onSuccess) {
   var token = adminToken();
   var storedRole = localStorage.getItem('jxa_role');
   var userEmail = (localStorage.getItem('jxa_user_email') || '').toLowerCase().trim();
-  var hardcodedAdmins = ["hidhanush07@gmail.com", "dhanushsiddilingam@gmail.com", "admin@jobxapply.app"];
+  var hardcodedAdmins = ["admin@jobxapply.app"];
   var isOwnerEmail = hardcodedAdmins.includes(userEmail);
 
   if (!token && !storedRole && !isOwnerEmail) {

@@ -63,12 +63,15 @@ async function registerUser(req, res, bodyData) {
     }
     
     // Hash password and create user
-    const passwordHash = bcrypt.hashSync(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
     const user = await db.createUser({ email, name: name || "", passwordHash });
     
     // Generate JWT token
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
     
+    // Set secure HttpOnly session cookie
+    res.setHeader("Set-Cookie", `token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800`);
+
     sendJson(res, 201, {
       ok: true,
       token,
@@ -86,27 +89,38 @@ async function registerUser(req, res, bodyData) {
 }
 
 // Login user
-async function loginUser(req, res, bodyData) {
+async function loginUser(req, res, bodyData, helpers = {}) {
   try {
     const { email, password } = bodyData;
     
     if (!email || !password) {
       return sendJson(res, 400, { ok: false, error: "Email and password are required" });
     }
+
+    if (helpers.isAccountLocked && helpers.isAccountLocked(email)) {
+      return sendJson(res, 429, { ok: false, error: "Account temporarily locked due to excessive failed attempts. Please try again in 15 minutes." });
+    }
     
     const user = await db.getUserByEmail(email);
     if (!user || !user.passwordHash) {
+      if (helpers.recordLoginFailure) helpers.recordLoginFailure(email);
       return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
     }
     
-    const isMatch = bcrypt.compareSync(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
+      if (helpers.recordLoginFailure) helpers.recordLoginFailure(email);
       return sendJson(res, 401, { ok: false, error: "Invalid email or password" });
     }
+
+    if (helpers.clearLoginFailures) helpers.clearLoginFailures(email);
     
     // Generate JWT token
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "7d" });
     
+    // Set secure HttpOnly session cookie
+    res.setHeader("Set-Cookie", `token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800`);
+
     sendJson(res, 200, {
       ok: true,
       token,
@@ -131,6 +145,10 @@ async function loginAdmin(req, res, bodyData, helpers = {}) {
     if (!email || !password) {
       return sendJson(res, 400, { ok: false, error: "Email and master password are required." });
     }
+
+    if (helpers.isAccountLocked && helpers.isAccountLocked(email)) {
+      return sendJson(res, 429, { ok: false, error: "Account temporarily locked due to excessive failed attempts. Please try again in 15 minutes." });
+    }
     
     const user = await db.getUserByEmail(email);
     if (!user || !user.passwordHash) {
@@ -138,7 +156,7 @@ async function loginAdmin(req, res, bodyData, helpers = {}) {
       return sendJson(res, 401, { ok: false, error: "Invalid credentials or administrative privileges required." });
     }
     
-    const isMatch = bcrypt.compareSync(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       if (helpers.recordLoginFailure) helpers.recordLoginFailure(email);
       return sendJson(res, 401, { ok: false, error: "Invalid credentials or administrative privileges required." });
@@ -157,6 +175,9 @@ async function loginAdmin(req, res, bodyData, helpers = {}) {
       JWT_SECRET,
       { expiresIn: "12h" }
     );
+
+    // Set secure HttpOnly session cookie
+    res.setHeader("Set-Cookie", `token=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=43200`);
     
     sendJson(res, 200, {
       ok: true,
@@ -244,16 +265,22 @@ function isTokenRevoked(token) {
 
 // Middleware helper
 function verifyToken(req) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  let token = null;
+  const authHeader = req.headers && req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7).trim();
+  } else if (req.headers && req.headers.cookie) {
+    const match = req.headers.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+    if (match) token = decodeURIComponent(match[1]).trim();
+  }
+  if (!token) {
     return null;
   }
-  const token = authHeader.substring(7).trim();
   if (isTokenRevoked(token)) {
     return null;
   }
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] });
   } catch (e) {
     return null;
   }

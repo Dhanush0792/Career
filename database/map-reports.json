@@ -421,5 +421,14 @@
     "reporterEmail": "tester@test.local",
     "submittedAt": 1795260471215,
     "status": "pending"
+  },
+  {
+    "id": "rep_fkhacog0s",
+    "portal": "linkedin",
+    "field": "phone",
+    "selectorTried": "input[name=\"tel\"]",
+    "reporterEmail": "tester@test.local",
+    "submittedAt": 1795402600773,
+    "status": "pending"
   }
 ]

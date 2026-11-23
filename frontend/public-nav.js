@@ -362,6 +362,29 @@
     injectPublicNav();
   }
 
+  // Emergency Maintenance Mode check on public pages
+  (async function checkPublicMaintenance() {
+    if (typeof window === 'undefined' || !window.location) return;
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('maintenance.html') || path.includes('/admin/')) return;
+    try {
+      const apiBase = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:')
+        ? 'http://localhost:8787/api'
+        : 'https://jobxapply-backend.onrender.com/api';
+      const res = await fetch(`${apiBase}/cms`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.cms && data.cms.maintenance && data.cms.maintenance.active) {
+          const storedRole = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_role') : '';
+          if (storedRole !== 'admin') {
+            const msg = encodeURIComponent(data.cms.maintenance.message || '');
+            window.location.replace(`maintenance.html${msg ? '?msg=' + msg : ''}`);
+          }
+        }
+      }
+    } catch(e) {}
+  })();
+
   // Expose globally for manual calls
   window.injectPublicNav = injectPublicNav;
 })();

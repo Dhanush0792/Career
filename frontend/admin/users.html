@@ -594,7 +594,7 @@
           <div><strong>Email:</strong> ${escHtml(profile.email || currentActiveDrawerUser.email || 'None')}</div>
           <div><strong>Phone:</strong> ${escHtml(profile.phone || 'None')}</div>
           <div><strong>Location:</strong> ${escHtml(profile.location || profile.city || 'None')}</div>
-          <div><strong>Portfolio:</strong> ${profile.portfolio || profile.linkedin ? `<a href="${escHtml(profile.portfolio || profile.linkedin)}" target="_blank" style="color:var(--alert);">${escHtml(profile.portfolio || profile.linkedin)}</a>` : 'None'}</div>
+          <div><strong>Portfolio:</strong> ${profile.portfolio || profile.linkedin ? `<a href="${escHtml(safeHref(profile.portfolio || profile.linkedin))}" target="_blank" rel="noopener noreferrer" style="color:var(--alert);">${escHtml(profile.portfolio || profile.linkedin)}</a>` : 'None'}</div>
         `;
 
         // Summary Box

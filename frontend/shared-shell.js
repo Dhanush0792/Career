@@ -394,6 +394,30 @@ function requireAuth() {
 // Auto-run authorization check immediately upon script parsing
 requireAuth();
 
+// Emergency Maintenance Mode Global Guard
+(async function checkGlobalMaintenance() {
+  if (typeof window === 'undefined' || !window.location) return;
+  const path = window.location.pathname.toLowerCase();
+  // Skip if already on maintenance page or admin portal
+  if (path.includes('maintenance.html') || path.includes('/admin/')) return;
+
+  try {
+    const res = await fetch(`${SYNC_API}/cms`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.cms && data.cms.maintenance && data.cms.maintenance.active) {
+        const storedRole = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_role') : '';
+        if (storedRole !== 'admin') {
+          const msg = encodeURIComponent(data.cms.maintenance.message || '');
+          window.location.replace(`maintenance.html${msg ? '?msg=' + msg : ''}`);
+        }
+      }
+    }
+  } catch(e) {
+    // Non-blocking in case of offline/network glitch
+  }
+})();
+
 function logout() {
   triggerSessionLogout('logged_out');
 }
