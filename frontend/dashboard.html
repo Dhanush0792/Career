@@ -444,10 +444,11 @@ function renderProfileState(state) {
 
 // ”€”€ Application tracker ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 function renderTracker() {
-  const apps = loadApplications();
+  const apps = typeof loadApplications === 'function' ? loadApplications() : [];
   const wrap = document.getElementById('tracker-wrap');
-
-  document.getElementById('m-apps').textContent = apps.length;
+  const mApps = document.getElementById('m-apps');
+  if (mApps) mApps.textContent = apps.length;
+  if (!wrap) return;
 
   if (apps.length === 0) {
     wrap.innerHTML = `
@@ -570,48 +571,67 @@ document.getElementById('modal-save').addEventListener('click', () => {
   addLog(`Logged: ${company} - ${role}`, 'success');
 });
 
-// ”€”€ Profile Selector & Modal Actions ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+// Profile Selector & Modal Actions (Null-Guarded)
 const profileSelect = document.getElementById('active-profile-select');
-profileSelect.addEventListener('change', async (e) => {
-  const newActiveId = e.target.value;
-  if (!newActiveId) return;
-  addLog(`Swapping profile to ${newActiveId}...`, 'info');
-  const res = await setActiveProfile(newActiveId);
-  if (res.ok) {
-    addLog(`Profile swapped to ${newActiveId}.`, 'success');
-    showToast('Profile swapped successfully.', 'success');
-    window.location.reload();
-  } else {
-    addLog(`Failed to swap profile: ${res.errors.join('; ')}`, 'warn');
-    showToast('Failed to swap profile.', 'error');
-  }
-});
+if (profileSelect) {
+  profileSelect.addEventListener('change', async (e) => {
+    const newActiveId = e.target.value;
+    if (!newActiveId) return;
+    addLog(`Swapping profile to ${newActiveId}...`, 'info');
+    if (typeof setActiveProfile === 'function') {
+      const res = await setActiveProfile(newActiveId);
+      if (res && res.ok) {
+        addLog(`Profile swapped to ${newActiveId}.`, 'success');
+        showToast('Profile swapped successfully.', 'success');
+        window.location.reload();
+      } else {
+        addLog(`Failed to swap profile.`, 'warn');
+        showToast('Failed to swap profile.', 'error');
+      }
+    }
+  });
+}
 
 const profileModal = document.getElementById('profile-modal-overlay');
-document.getElementById('btn-create-profile').addEventListener('click', () => {
-  document.getElementById('new-profile-name').value = '';
-  profileModal.classList.add('open');
-});
-document.getElementById('profile-modal-cancel').addEventListener('click', () => profileModal.classList.remove('open'));
-profileModal.addEventListener('click', (e) => { if (e.target === profileModal) profileModal.classList.remove('open'); });
+const btnCreateProfile = document.getElementById('btn-create-profile');
+if (btnCreateProfile && profileModal) {
+  btnCreateProfile.addEventListener('click', () => {
+    const nameInput = document.getElementById('new-profile-name');
+    if (nameInput) nameInput.value = '';
+    profileModal.classList.add('open');
+  });
+}
+const profileModalCancel = document.getElementById('profile-modal-cancel');
+if (profileModalCancel && profileModal) {
+  profileModalCancel.addEventListener('click', () => profileModal.classList.remove('open'));
+}
+if (profileModal) {
+  profileModal.addEventListener('click', (e) => { if (e.target === profileModal) profileModal.classList.remove('open'); });
+}
 
-document.getElementById('profile-modal-save').addEventListener('click', async () => {
-  const name = document.getElementById('new-profile-name').value.trim();
-  if (!name) { showToast('Profile name is required.', 'error'); return; }
-  
-  profileModal.classList.remove('open');
-  addLog(`Creating new profile "${name}"...`, 'info');
-  
-  const res = await createNewProfile(name);
-  if (res.ok) {
-    addLog(`Profile "${name}" created and activated.`, 'success');
-    showToast(`Profile "${name}" created.`, 'success');
-    window.location.reload();
-  } else {
-    addLog(`Failed to create profile: ${res.errors.join('; ')}`, 'warn');
-    showToast('Failed to create profile.', 'error');
-  }
-});
+const profileModalSave = document.getElementById('profile-modal-save');
+if (profileModalSave) {
+  profileModalSave.addEventListener('click', async () => {
+    const nameInput = document.getElementById('new-profile-name');
+    const name = nameInput ? nameInput.value.trim() : '';
+    if (!name) { showToast('Profile name is required.', 'error'); return; }
+    
+    if (profileModal) profileModal.classList.remove('open');
+    addLog(`Creating new profile "${name}"...`, 'info');
+    
+    if (typeof createNewProfile === 'function') {
+      const res = await createNewProfile(name);
+      if (res && res.ok) {
+        addLog(`Profile "${name}" created and activated.`, 'success');
+        showToast(`Profile "${name}" created.`, 'success');
+        window.location.reload();
+      } else {
+        addLog(`Failed to create profile.`, 'warn');
+        showToast('Failed to create profile.', 'error');
+      }
+    }
+  });
+}
 
 // ”€”€ SSE + Initial Load ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
 const syncDot = document.getElementById('sync-dot');
@@ -621,121 +641,6 @@ document.addEventListener('jobxapply:profile', (e) => {
   renderProfileState(e.detail);
   addLog('Profile updated via live sync.', 'success');
 });
-document.addEventListener('jobxapply:offline', () => {
-  syncDot.classList.add('offline');
-  syncLabel.textContent = 'Sync offline';
-  addLog('SSE connection lost. Using cached profile.', 'warn');
-});
-
-(async () => {
-  // 1. Instant optimistic UI render from cache (0ms delay)
-  let cachedState = (typeof getCachedProfileState === 'function') ? getCachedProfileState() : null;
-  if (!cachedState && typeof localStorage !== 'undefined') {
-    const rawProfile = localStorage.getItem('jxa_local_profile') || localStorage.getItem('jxa_profile_cache');
-    if (rawProfile) {
-      try {
-        const p = JSON.parse(rawProfile);
-        cachedState = { profile: p, version: 1, updatedAt: Date.now(), origin: 'local' };
-      } catch(e) {}
-    }
-  }
-
-  if (cachedState) {
-    try {
-      renderProfileState(cachedState);
-      renderTracker();
-      if (syncDot) syncDot.classList.remove('offline');
-      if (syncLabel) syncLabel.textContent = 'Synced (Ready)';
-      // Broadcast cached profile to extension immediately
-      window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
-        detail: { profile: cachedState.profile }
-      }));
-    } catch(renderErr) {
-      console.warn("Optimistic cache render notice:", renderErr);
-    }
-  }
-
-  // Telemetry page view hit
-  fetch(`${SYNC_API}/telemetry/hit`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ metric: 'pageViews' })
-  }).catch(() => {});
-
-  // Fetch active system broadcast banner
-  try {
-    const bRes = await fetch(`${SYNC_API}/admin/banner`);
-    if (bRes.ok) {
-      const bData = await bRes.json();
-      if (bData.banner && bData.banner.active && bData.banner.text) {
-        const bEl = document.getElementById('sys-broadcast-banner');
-        const bTag = document.getElementById('sys-broadcast-tag');
-        const bTxt = document.getElementById('sys-broadcast-text');
-        if (bTxt) bTxt.textContent = bData.banner.text;
-        
-        const sev = bData.banner.severity || 'info';
-        if (bEl && bTag) {
-          if (sev === 'critical') {
-            bEl.style.background = 'rgba(245, 90, 35, 0.12)';
-            bEl.style.borderColor = 'rgba(245, 90, 35, 0.4)';
-            bTag.style.background = 'rgba(245, 90, 35, 0.2)';
-            bTag.style.color = '#F55A23';
-            bTag.textContent = 'CRITICAL';
-          } else if (sev === 'warning') {
-            bEl.style.background = 'rgba(245, 166, 35, 0.12)';
-            bEl.style.borderColor = 'rgba(245, 166, 35, 0.4)';
-            bTag.style.background = 'rgba(245, 166, 35, 0.2)';
-            bTag.style.color = '#F5A623';
-            bTag.textContent = 'NOTICE';
-          } else {
-            bEl.style.background = 'rgba(91, 79, 232, 0.12)';
-            bEl.style.borderColor = 'rgba(91, 79, 232, 0.4)';
-            bTag.style.background = 'rgba(91, 79, 232, 0.2)';
-            bTag.style.color = '#5B4FE8';
-            bTag.textContent = 'UPDATE';
-          }
-          bEl.style.display = 'flex';
-        }
-      }
-    }
-  } catch(e) {}
-
-  // 2. Fetch fresh updates silently in the background
-  try {
-    const state = await loadProfile();
-    renderProfileState(state);
-    renderTracker();
-
-    if (state.origin !== 'none') {
-      if (syncDot) syncDot.classList.remove('offline');
-      if (syncLabel) syncLabel.textContent = state.origin === 'local' ? 'Cached (Ready)' : 'Synced';
-      if (!cachedState || cachedState.version !== state.version || cachedState.updatedAt !== state.updatedAt) {
-        addLog('Profile state synchronized with server.', 'success');
-      }
-    } else {
-      if (syncLabel) syncLabel.textContent = cachedState ? 'Synced (Ready)' : 'No profile yet';
-    }
-  } catch (e) {
-    console.warn("Background cloud sync notice:", e.message);
-    if (!cachedState) {
-      if (syncDot) syncDot.classList.add('offline');
-      if (syncLabel) syncLabel.textContent = 'Sync offline';
-    } else {
-      if (syncLabel) syncLabel.textContent = 'Cached (Ready)';
-    }
-  }
-
-  connectSSE();
-})();
-
-// Modal handlers
-const snapModal = document.getElementById('snapshot-modal');
-const closeModalBtn = document.getElementById('close-modal');
-if (closeModalBtn && snapModal) {
-  closeModalBtn.addEventListener('click', () => snapModal.style.display = 'none');
-  snapModal.addEventListener('click', (e) => { if (e.target === snapModal) snapModal.style.display = 'none'; });
-}
-
 // ── Immediate Browser Extension Handshake (0ms Delay) ──────────────────────
 (function initExtensionHandshake() {
   const extDot = document.getElementById('ext-status-dot');
@@ -777,7 +682,9 @@ if (closeModalBtn && snapModal) {
 
   function pingExtension() {
     window.dispatchEvent(new CustomEvent('jobxapply:pingExtension'));
-    window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PING' }, '*');
+    try {
+      window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PING' }, '*');
+    } catch(e) {}
   }
 
   // Ping immediately and check state
@@ -786,6 +693,159 @@ if (closeModalBtn && snapModal) {
   setTimeout(pingExtension, 300);
   setTimeout(pingExtension, 1000);
 })();
+
+// ── Instant Optimistic UI Hydration (0ms Delay) ───────────────────────────
+(function initInstantDashboardRender() {
+  const syncDot = document.getElementById('sync-dot');
+  const syncLabel = document.getElementById('sync-label');
+
+  let cachedState = (typeof getCachedProfileState === 'function') ? getCachedProfileState() : null;
+  if (!cachedState && typeof localStorage !== 'undefined') {
+    let p = null;
+    const rawProfile = localStorage.getItem('jxa_local_profile') || localStorage.getItem('jxa_profile_cache');
+    if (rawProfile) {
+      try { p = JSON.parse(rawProfile); } catch(e) {}
+    }
+    if (!p) {
+      const rawState = localStorage.getItem('jxa_local_state');
+      if (rawState) {
+        try {
+          const s = JSON.parse(rawState);
+          p = s.profile || s.candidate_profile || s;
+        } catch(e) {}
+      }
+    }
+    if (!p) {
+      const rawProfiles = localStorage.getItem('jxa_local_profiles');
+      if (rawProfiles) {
+        try {
+          const ps = JSON.parse(rawProfiles);
+          p = ps[localStorage.getItem('jxa_active_profile_id') || 'default'] || ps[Object.keys(ps)[0]];
+        } catch(e) {}
+      }
+    }
+    const email = localStorage.getItem('jxa_user_email') || '';
+    const name = localStorage.getItem('jxa_user_name') || (email ? email.split('@')[0] : 'Candidate');
+    if (!p) {
+      p = { fullName: name, email: email };
+    }
+    cachedState = {
+      profile: p,
+      profiles: { 'default': p },
+      activeProfileId: 'default',
+      version: 1,
+      updatedAt: Date.now(),
+      tier: 'free',
+      origin: 'local'
+    };
+  }
+
+  if (cachedState) {
+    try {
+      renderProfileState(cachedState);
+      renderTracker();
+      if (syncDot) syncDot.classList.remove('offline');
+      if (syncLabel) syncLabel.textContent = 'Synced (Ready)';
+      window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
+        detail: { profile: cachedState.profile }
+      }));
+    } catch(renderErr) {
+      console.warn("Optimistic cache render notice:", renderErr);
+    }
+  }
+})();
+
+// ── Background Server Sync & SSE ──────────────────────────────────────────
+const syncDot = document.getElementById('sync-dot');
+const syncLabel = document.getElementById('sync-label');
+
+document.addEventListener('jobxapply:profile', (e) => {
+  renderProfileState(e.detail);
+  addLog('Profile updated via live sync.', 'success');
+});
+document.addEventListener('jobxapply:offline', () => {
+  if (syncDot) syncDot.classList.add('offline');
+  if (syncLabel) syncLabel.textContent = 'Sync offline';
+  addLog('SSE connection lost. Using cached profile.', 'warn');
+});
+
+(async () => {
+  // Telemetry page view hit
+  try {
+    fetch(`${SYNC_API}/telemetry/hit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metric: 'pageViews' })
+    }).catch(() => {});
+  } catch(e) {}
+
+  // Fetch active system broadcast banner
+  try {
+    const bRes = await fetch(`${SYNC_API}/admin/banner`);
+    if (bRes.ok) {
+      const bData = await bRes.json();
+      if (bData.banner && bData.banner.active && bData.banner.text) {
+        const bEl = document.getElementById('sys-broadcast-banner');
+        const bTag = document.getElementById('sys-broadcast-tag');
+        const bTxt = document.getElementById('sys-broadcast-text');
+        if (bTxt) bTxt.textContent = bData.banner.text;
+        
+        const sev = bData.banner.severity || 'info';
+        if (bEl && bTag) {
+          if (sev === 'critical') {
+            bEl.style.background = 'rgba(245, 90, 35, 0.12)';
+            bEl.style.borderColor = 'rgba(245, 90, 35, 0.4)';
+            bTag.style.background = 'rgba(245, 90, 35, 0.2)';
+            bTag.style.color = '#F55A23';
+            bTag.textContent = 'CRITICAL';
+          } else if (sev === 'warning') {
+            bEl.style.background = 'rgba(245, 166, 35, 0.12)';
+            bEl.style.borderColor = 'rgba(245, 166, 35, 0.4)';
+            bTag.style.background = 'rgba(245, 166, 35, 0.2)';
+            bTag.style.color = '#F5A623';
+            bTag.textContent = 'NOTICE';
+          } else {
+            bEl.style.background = 'rgba(91, 79, 232, 0.12)';
+            bEl.style.borderColor = 'rgba(91, 79, 232, 0.4)';
+            bTag.style.background = 'rgba(91, 79, 232, 0.2)';
+            bTag.style.color = '#5B4FE8';
+            bTag.textContent = 'UPDATE';
+          }
+          bEl.style.display = 'flex';
+        }
+      }
+    }
+  } catch(e) {}
+
+  // 2. Fetch fresh updates silently in the background
+  try {
+    if (typeof loadProfile === 'function') {
+      const state = await loadProfile();
+      renderProfileState(state);
+      renderTracker();
+
+      if (state && state.origin !== 'none') {
+        if (syncDot) syncDot.classList.remove('offline');
+        if (syncLabel) syncLabel.textContent = state.origin === 'local' ? 'Cached (Ready)' : 'Synced';
+        addLog('Profile state synchronized with server.', 'success');
+      }
+    }
+  } catch (e) {
+    console.warn("Background cloud sync notice:", e.message);
+  }
+
+  if (typeof connectSSE === 'function') {
+    connectSSE();
+  }
+})();
+
+// Modal handlers
+const snapModal = document.getElementById('snapshot-modal');
+const closeModalBtn = document.getElementById('close-modal');
+if (closeModalBtn && snapModal) {
+  closeModalBtn.addEventListener('click', () => snapModal.style.display = 'none');
+  snapModal.addEventListener('click', (e) => { if (e.target === snapModal) snapModal.style.display = 'none'; });
+}
 </script>
 
 <div id="snapshot-modal" class="modal-overlay hidden" style="position: fixed; inset: 0; background: rgba(7, 10, 24, 0.85); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 99999; padding: 20px;">
