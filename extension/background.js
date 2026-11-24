@@ -88,7 +88,8 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(["jobxapplyProfiles", "jobxapplyProfile"], (result) => {
     const existing = result.jobxapplyProfile || {};
     // If stored profile is fake mock data, clear it so real user profile can sync cleanly
-    if (existing.fullName === "Alex R. Morgan" || existing.email === "alex.morgan.dev@gmail.com") {
+    const isMock = existing.fullName === "Alex R. Morgan" || existing.fullName === "Alex Morgan" || existing.email === "alex.morgan.dev@gmail.com" || existing.edu10_school === "Westfield High School";
+    if (isMock) {
       chrome.storage.local.remove(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"]);
     }
   });
@@ -547,7 +548,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   if (message?.type === "jobxapply:syncToWebTab") {
     chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], async (res) => {
-      let profile = res.jobxapplyProfiles?.[res.jobxapplyActiveProfileId] || res.jobxapplyProfile || MOCK_PROFILE_DATA;
+      let profile = res.jobxapplyProfiles?.[res.jobxapplyActiveProfileId] || res.jobxapplyProfile || {};
       try {
         const tabs = await chrome.tabs.query({});
         let targetTab = null;

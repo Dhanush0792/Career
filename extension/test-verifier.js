@@ -598,6 +598,82 @@ const contentSimResult = (() => {
 assert(contentSimResult.ok && contentSimResult.count === 1 && contentSimResult.fileName === 'Injected_Resume.pdf',
   `Content Script Handler Simulation: parsed base64 into binary File and attached via DataTransfer`);
 
+// ── 6. TEST SUITE: MULTI-PORTAL VOCABULARY & LEVER COLLISION BARRIER ───────────
+console.log('\n======================================================');
+console.log('6. RUNNING MULTI-PORTAL VOCABULARY & COLLISION BARRIER VERIFICATION');
+console.log('======================================================');
+
+const sharedModule = require('./shared.js');
+const fieldAliases = sharedModule.FIELD_ALIASES;
+
+// 6.1 Verify Synonym Dictionaries
+assert(fieldAliases.fullName.includes('legal name') && fieldAliases.fullName.includes('complete name'),
+  'Field Aliases: fullName includes "legal name" and "complete name"');
+assert(fieldAliases.city.includes('current location') && fieldAliases.city.includes('location'),
+  'Field Aliases: city includes "current location" and "location"');
+assert(fieldAliases.currentCompany.includes('current company') && fieldAliases.currentCompany.includes('organization') && fieldAliases.currentCompany.includes('org'),
+  'Field Aliases: currentCompany includes "current company", "organization", "org"');
+assert(fieldAliases.edu12_school.includes('intermediate college') && fieldAliases.edu12_school.includes('puc college') && fieldAliases.edu12_school.includes('diploma college'),
+  'Field Aliases: edu12_school includes "intermediate college", "puc college", "diploma college"');
+assert(fieldAliases.eduGrad_college.includes('ug college') && fieldAliases.eduGrad_college.includes('institute of graduation'),
+  'Field Aliases: eduGrad_college includes "ug college" and "institute of graduation"');
+
+// 6.2 Simulate Lever Form Matching & Collision Barrier
+const leverMap = sharedModule.PORTAL_MAPS.Lever;
+assert(leverMap && leverMap.fullName.includes("name='name'"),
+  'Lever Portal Map: fullName correctly targeted to input[name="name"]');
+assert(leverMap && leverMap.currentCompany.includes("name='org'"),
+  'Lever Portal Map: currentCompany correctly targeted to input[name="org"]');
+assert(leverMap && leverMap.city.includes("name='location'"),
+  'Lever Portal Map: city correctly targeted to input[name="location"]');
+
+// Simulate candidate profile containing both candidate name and educational school name
+const candidateProfile = {
+  fullName: "Dhanush Siddilingam",
+  email: "dhanush.candidate@gmail.com",
+  phone: "+91 9876543210",
+  city: "Hyderabad",
+  currentCompany: "Tech Innovators Pvt Ltd",
+  edu10_school: "Sunrise Public School, Hyderabad"
+};
+
+// Build mock Lever DOM nodes
+const leverInputs = [
+  { name: 'name', type: 'text', label: 'Full name *' },
+  { name: 'email', type: 'email', label: 'Email *' },
+  { name: 'phone', type: 'text', label: 'Phone *' },
+  { name: 'location', type: 'text', label: 'Current location' },
+  { name: 'org', type: 'text', label: 'Current company *' }
+];
+
+const filledLeverResults = {};
+const claimedEls = new Set();
+
+// Emulate content.js portal map matching first
+for (const [key, selector] of Object.entries(leverMap)) {
+  const normKey = key.toLowerCase();
+  for (const input of leverInputs) {
+    if (claimedEls.has(input)) continue;
+    if (selector.includes(`name='${input.name}'`)) {
+      claimedEls.add(input);
+      filledLeverResults[input.name] = candidateProfile[key] || candidateProfile[normKey];
+      break;
+    }
+  }
+}
+
+assert(filledLeverResults['name'] === "Dhanush Siddilingam",
+  `Lever Form Test: Full name field filled with candidate name "${filledLeverResults['name']}" (NOT school name)`);
+assert(filledLeverResults['name'] !== candidateProfile.edu10_school,
+  'Lever Form Test: Strict barrier prevented school name from invading Full name field');
+assert(filledLeverResults['org'] === "Tech Innovators Pvt Ltd",
+  `Lever Form Test: Current company field filled with "${filledLeverResults['org']}"`);
+assert(filledLeverResults['location'] === "Hyderabad",
+  `Lever Form Test: Current location field filled with "${filledLeverResults['location']}"`);
+assert(filledLeverResults['email'] === "dhanush.candidate@gmail.com",
+  `Lever Form Test: Email field filled with "${filledLeverResults['email']}"`);
+assert(filledLeverResults['phone'] === "+91 9876543210",
+  `Lever Form Test: Phone field filled with "${filledLeverResults['phone']}"`);
 
 // ── SUMMARY REPORT ─────────────────────────────────────────────────────────────
 console.log('\n======================================================');

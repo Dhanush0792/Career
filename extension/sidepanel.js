@@ -85,7 +85,7 @@ async function loadStoredProfiles() {
         activeProfile = res.jobxapplyProfile;
         allProfiles[activeProfileId] = activeProfile;
       } else {
-        activeProfile = { ...MOCK_PROFILE_DATA };
+        activeProfile = {};
         allProfiles["default"] = activeProfile;
       }
 

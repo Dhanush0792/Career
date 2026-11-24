@@ -27,25 +27,25 @@ try {
 // Enhanced content script: heuristic field matching and floating autofill button
 
 const FIELD_ALIASES = {
-  fullname: ["fullname", "full name", "applicant name", "candidate name", "candidate's name", "your name", "full_name", "applicant_name", "cand_name", "complete name", "name"],
-  firstname: ["first", "firstname", "given name", "first name", "fname", "first_name", "forename"],
-  middlename: ["middle", "middlename", "middle name", "mname", "middle_name"],
-  lastname: ["last", "lastname", "surname", "family name", "last name", "lname", "last_name"],
+  fullname: ["fullname", "full name", "applicant name", "candidate name", "candidate's name", "your name", "full_name", "applicant_name", "cand_name", "complete name", "legal name", "legal full name", "first and last name", "first & last name", "name"],
+  firstname: ["first", "firstname", "given name", "first name", "fname", "first_name", "forename", "legal first name", "preferred first name"],
+  middlename: ["middle", "middlename", "middle name", "mname", "middle_name", "legal middle name"],
+  lastname: ["last", "lastname", "surname", "family name", "last name", "lname", "last_name", "legal last name"],
   age: ["age", "current age", "age in years", "applicant age"],
   dob: ["dob", "date of birth", "birthdate", "birthday", "birth date", "d.o.b", "d.o.b.", "date_of_birth"],
   dob_day: ["birth day", "dob day", "day of birth", "day (dob)", "birthdate day", "dd", "dob_dd", "dob_day"],
   dob_month: ["birth month", "dob month", "month of birth", "month (dob)", "birthdate month", "mm", "dob_mm", "dob_month"],
   dob_year: ["birth year", "dob year", "year of birth", "year (dob)", "birthdate year", "yyyy", "dob_yyyy", "dob_year"],
-  gender: ["gender", "sex"],
+  gender: ["gender", "sex", "gender identity"],
   fathername: ["father's name", "father name", "guardian name", "father", "parent name", "fathers name", "father_name"],
   mothername: ["mother's name", "mother name", "mother", "mothers name", "mother_name"],
-  email: ["email", "email address", "e-mail", "e-mail address", "user email", "primary email", "email_address", "cand_email", "applicant email"],
-  phone: ["phone", "phone number", "mobile", "mobile number", "telephone", "cell", "cell phone", "contact number", "primary phone", "cand_phone", "applicant phone", "contact no", "mobile no"],
+  email: ["email", "email address", "e-mail", "e-mail address", "user email", "primary email", "email_address", "cand_email", "applicant email", "electronic mail"],
+  phone: ["phone", "phone number", "mobile", "mobile number", "telephone", "cell", "cell phone", "contact number", "primary phone", "cand_phone", "applicant phone", "contact no", "mobile no", "phone no", "cell number"],
   phonecode: ["phone code", "country code", "country/region code", "dial code", "calling code", "phone prefix", "isd code", "dialling code", "std code"],
-  address: ["address", "street", "address1", "address line 1", "residential address", "permanent address", "current address", "street address", "line 1"],
-  city: ["city", "town", "district", "current city"],
+  address: ["address", "street", "address1", "address line 1", "residential address", "permanent address", "current address", "street address", "line 1", "house no"],
+  city: ["city", "town", "district", "current city", "current location", "location", "present location", "present city", "residential city", "where are you located", "city, state", "base location"],
   state: ["state", "province", "region", "state/province", "state / province"],
-  country: ["country", "nation", "citizenship country", "country/region"],
+  country: ["country", "nation", "citizenship country", "country/region", "nationality"],
   zip: ["zip", "postal", "postal code", "zipcode", "zip code", "pin", "pincode", "pin code", "area code"],
   headline: ["headline", "professional headline", "title", "job title", "profile title"],
   summary: ["summary", "about", "about me", "bio", "description", "profile summary", "personal summary", "executive summary", "career objective", "objective"],
@@ -53,9 +53,9 @@ const FIELD_ALIASES = {
   college: ["college", "university", "institution", "institute name", "school/university", "college/university"],
   experience: ["experience", "work experience", "employment", "professional experience", "past experience"],
   skills: ["skills", "skillset", "key skills", "technical skills", "core skills", "competencies"],
-  linkedin: ["linkedin", "linked in", "linkedin profile", "linkedin url", "linkedin link"],
-  github: ["github", "git hub", "github url", "github profile", "github link"],
-  portfolio: ["portfolio", "website", "site", "personal website", "portfolio url", "portfolio link", "web site"],
+  linkedin: ["linkedin", "linked in", "linkedin profile", "linkedin url", "linkedin link", "urls[linkedin]"],
+  github: ["github", "git hub", "github url", "github profile", "github link", "urls[github]"],
+  portfolio: ["portfolio", "website", "site", "personal website", "portfolio url", "portfolio link", "web site", "urls[portfolio]", "urls[other]"],
   resume: ["resume", "cv", "curriculum vitae", "upload resume", "attach resume", "upload cv"],
   targetrole: ["role", "target role", "position", "designation", "desired role", "applied position", "job profile", "applying for"],
   portalpassword: ["choose password", "password", "create password", "new password", "portal password", "account password"],
@@ -63,15 +63,16 @@ const FIELD_ALIASES = {
   pincode: ["pincode", "pin code", "postal code", "zip", "zip code", "area pincode"],
   maritalstatus: ["marital status", "marital", "marriage status", "single/married", "marital_status"],
   employmentstatus: ["employment status", "employment", "job status", "current status", "current employment status", "work status"],
-  expectedsalary: ["expected salary", "expected package", "salary expectation", "expected ctq", "expected ctc", "desired salary", "expected remuneration"],
-  currentsalary: ["current salary", "current package", "current ctc", "present salary", "present ctc"],
+  expectedsalary: ["expected salary", "expected package", "salary expectation", "expected ctq", "expected ctc", "desired salary", "expected remuneration", "expected fixed salary"],
+  currentsalary: ["current salary", "current package", "current ctc", "present salary", "present ctc", "current fixed salary"],
   handicapped: ["handicapped", "physically handicapped", "disability", "disabled", "special ability", "pwd", "person with disability"],
   healthissues: ["health issues", "medical history", "health status", "medical conditions", "major illness"],
   targetroles: ["target roles", "preferred roles", "desired roles"],
   coverletterdraft: ["cover letter", "letter", "letter of intent", "cover_letter"],
   otherdocuments: ["other documents", "supporting documents", "additional documents", "certificates"],
-  noticeperiod: ["notice period", "notice", "days to join", "joining time", "availability to join", "notice days"],
-  totalexperience: ["total experience", "years of experience", "work experience", "experience in years", "experience (years)", "total work experience", "relevant experience"],
+  noticeperiod: ["notice period", "notice", "days to join", "joining time", "availability to join", "notice days", "notice period in days", "availability"],
+  totalexperience: ["total experience", "years of experience", "work experience", "experience in years", "experience (years)", "total work experience", "relevant experience", "total years of experience"],
+  currentcompany: ["current company", "current employer", "organization", "company", "present employer", "employer name", "firm", "org", "current organization"],
   
   // Behavioral & Application Q&A Vault
   q_why_hire: ["why should we hire you", "why hire", "why are you a good fit", "why fit for this role", "what makes you a good fit", "why you are the best candidate", "why should you be considered", "why do you think you are suitable"],
@@ -81,28 +82,28 @@ const FIELD_ALIASES = {
   q_strengths_weaknesses: ["strengths and weaknesses", "greatest strength", "area of improvement", "core strengths", "areas for improvement"],
   q_leadership: ["leadership experience", "demonstrated initiative", "led a project", "mentored someone", "leadership", "taking initiative"],
   
-  edu10_school: ["10th school", "10th board school", "ssc school", "matriculation school", "school name (10", "class x school", "class 10 school", "secondary school name", "high school name"],
-  edu10_board: ["10th board", "ssc board", "matriculation board", "class x board", "class 10 board", "secondary board", "secondary school board"],
-  edu10_year: ["10th passing year", "10th year", "ssc passing year", "matric_year", "matric year", "matriculation passing year", "class x passing year", "class 10 passing year", "year of passing (10", "year of completion (10", "secondary passing year"],
-  edu10_cgpa: ["10th cgpa", "10th percentage", "10th marks", "ssc cgpa", "ssc percentage", "ssc marks", "matriculation marks", "class x marks", "class x cgpa", "class 10 cgpa", "class 10 percentage"],
+  edu10_school: ["10th school", "10th board school", "ssc school", "matriculation school", "school name (10", "class x school", "class 10 school", "secondary school name", "high school name", "10th standard school", "standard 10 school"],
+  edu10_board: ["10th board", "ssc board", "matriculation board", "class x board", "class 10 board", "secondary board", "secondary school board", "10th standard board"],
+  edu10_year: ["10th passing year", "10th year", "ssc passing year", "matric_year", "matric year", "matriculation passing year", "class x passing year", "class 10 passing year", "year of passing (10", "year of completion (10", "secondary passing year", "year of passing 10th"],
+  edu10_cgpa: ["10th cgpa", "10th percentage", "10th marks", "ssc cgpa", "ssc percentage", "ssc marks", "matriculation marks", "class x marks", "class x cgpa", "class 10 cgpa", "class 10 percentage", "10th grade"],
   
-  edu12_school: ["12th school", "12th board school", "hsc school", "intermediate school", "school name (12", "class xii school", "class 12 school", "higher secondary school name", "senior secondary school name"],
-  edu12_board: ["12th board", "hsc board", "intermediate board", "class xii board", "class 12 board", "higher secondary board", "senior secondary board"],
-  edu12_year: ["12th passing year", "12th year", "hsc passing year", "intermediate passing year", "class xii passing year", "class 12 passing year", "year of passing (12", "year of completion (12", "higher secondary passing year"],
-  edu12_cgpa: ["12th cgpa", "12th percentage", "12th marks", "hsc cgpa", "hsc percentage", "hsc marks", "intermediate marks", "intermediate cgpa", "class xii marks", "class xii cgpa", "class 12 cgpa", "class 12 percentage"],
+  edu12_school: ["12th school", "12th board school", "hsc school", "intermediate school", "school name (12", "class xii school", "class 12 school", "higher secondary school name", "senior secondary school name", "intermediate college", "junior college", "puc college", "diploma college", "diploma institute", "pre-university college"],
+  edu12_board: ["12th board", "hsc board", "intermediate board", "class xii board", "class 12 board", "higher secondary board", "senior secondary board", "intermediate board name", "puc board", "state board intermediate"],
+  edu12_year: ["12th passing year", "12th year", "hsc passing year", "intermediate passing year", "class xii passing year", "class 12 passing year", "year of passing (12", "year of completion (12", "higher secondary passing year", "diploma completion year"],
+  edu12_cgpa: ["12th cgpa", "12th percentage", "12th marks", "hsc cgpa", "hsc percentage", "hsc marks", "intermediate marks", "intermediate cgpa", "class xii marks", "class xii cgpa", "class 12 cgpa", "class 12 percentage", "diploma percentage", "diploma marks"],
   
-  edugrad_college: ["graduation college", "graduation university", "undergraduate college", "undergraduate university", "degree college", "bachelor college", "bachelor university", "college name", "university name"],
-  edugrad_degree: ["graduation degree", "undergraduate degree", "bachelor degree", "degree name", "bachelors degree"],
-  edugrad_stream: ["graduation stream", "graduation branch", "graduation discipline", "graduation major", "undergraduate major", "undergraduate stream", "undergraduate branch", "degree major", "degree stream", "degree branch", "branch/discipline", "specialization"],
-  edugrad_year: ["graduation passing year", "graduation year", "undergraduate passing year", "undergraduate year", "degree passing year", "degree year", "year of passing", "passing year", "completion year", "graduation date"],
-  edugrad_cgpa: ["graduation cgpa", "graduation percentage", "graduation marks", "undergraduate cgpa", "undergraduate percentage", "degree cgpa", "degree percentage", "gpa", "cgpa", "aggregate marks", "percentage of marks"],
+  edugrad_college: ["graduation college", "graduation university", "undergraduate college", "undergraduate university", "degree college", "bachelor college", "bachelor university", "college name", "university name", "institute of graduation", "ug college", "ug university"],
+  edugrad_degree: ["graduation degree", "undergraduate degree", "bachelor degree", "degree name", "bachelors degree", "ug degree", "first degree", "b.tech", "b.e", "b.sc", "bca"],
+  edugrad_stream: ["graduation stream", "graduation branch", "graduation discipline", "graduation major", "undergraduate major", "undergraduate stream", "undergraduate branch", "degree major", "degree stream", "degree branch", "branch/discipline", "specialization", "field of study"],
+  edugrad_year: ["graduation passing year", "graduation year", "undergraduate passing year", "undergraduate year", "degree passing year", "degree year", "year of passing", "passing year", "completion year", "graduation date", "ug passing year"],
+  edugrad_cgpa: ["graduation cgpa", "graduation percentage", "graduation marks", "undergraduate cgpa", "undergraduate percentage", "degree cgpa", "degree percentage", "gpa", "cgpa", "aggregate marks", "percentage of marks", "undergraduate gpa", "ug percentage"],
   edugrad_pursuing: ["graduation pursuing", "currently studying", "current student"],
   
-  edupg_college: ["pg college", "pg university", "post graduate college", "post graduate university", "post-graduate college", "postgraduate university"],
-  edupg_degree: ["pg degree", "post graduate degree", "post-graduate degree", "postgraduate degree"],
-  edupg_stream: ["pg stream", "pg branch", "pg discipline", "pg major", "post graduate major", "post graduate stream", "post graduate branch"],
-  edupg_year: ["pg passing year", "pg year", "post graduate passing year", "post graduate year"],
-  edupg_cgpa: ["pg cgpa", "pg percentage", "pg marks", "post graduate cgpa", "post graduate percentage"],
+  edupg_college: ["pg college", "pg university", "post graduate college", "post graduate university", "post-graduate college", "postgraduate university", "master college", "masters university"],
+  edupg_degree: ["pg degree", "post graduate degree", "post-graduate degree", "postgraduate degree", "master degree", "master's degree", "m.tech", "m.s", "mba"],
+  edupg_stream: ["pg stream", "pg branch", "pg discipline", "pg major", "post graduate major", "post graduate stream", "post graduate branch", "masters specialization"],
+  edupg_year: ["pg passing year", "pg year", "post graduate passing year", "post graduate year", "masters passing year"],
+  edupg_cgpa: ["pg cgpa", "pg percentage", "pg marks", "post graduate cgpa", "post graduate percentage", "masters cgpa"],
   edupg_pursuing: ["pg pursuing"],
   
   edumasters_college: ["masters college", "masters university", "master college", "master university"],
@@ -141,6 +142,98 @@ const FIELD_ALIASES = {
   hasrelativeshere: ["relatives employed", "relatives working", "family member at company", "any relatives working here"],
   securityclearance: ["security clearance", "clearance level", "active clearance", "government clearance"]
 };
+
+// Built-in ATS portal mapping definitions for content script execution
+const ATS_PORTAL_RULES = [
+  { match: /linkedin\.com/i, portal: "LinkedIn" },
+  { match: /naukri\.com/i, portal: "Naukri" },
+  { match: /wellfound\.com|angel\.co/i, portal: "Wellfound" },
+  { match: /indeed\.com/i, portal: "Indeed" },
+  { match: /boards\.greenhouse\.io|job-boards\.greenhouse\.io/i, portal: "Greenhouse" },
+  { match: /lever\.co|jobs\.lever\.co/i, portal: "Lever" },
+  { match: /myworkdayjobs\.com|workday\.com/i, portal: "Workday" },
+  { match: /ashbyhq\.com/i, portal: "Ashby" }
+];
+
+const ATS_PORTAL_MAPS = {
+  LinkedIn: {
+    fullName: "input[aria-label*='Full name' i], input[placeholder*='Full name' i], input[name*='fullName' i]",
+    firstName: "input[aria-label*='First name' i], input[placeholder*='First name' i], input[name*='firstName' i]",
+    lastName: "input[aria-label*='Last name' i], input[placeholder*='Last name' i], input[name*='lastName' i]",
+    email: "input[aria-label*='Email' i], input[placeholder*='Email' i], input[type='email']",
+    phone: "input[aria-label*='Phone' i], input[placeholder*='Phone' i], input[name*='phone' i]",
+    linkedin: "input[aria-label*='LinkedIn' i], input[placeholder*='LinkedIn' i]",
+    resume: "input[type='file'], input[accept*='pdf'], input[accept*='doc']"
+  },
+  Naukri: {
+    fullName: "input[placeholder*='Name' i], input[name*='name' i], input[aria-label*='Name' i]",
+    email: "input[placeholder*='Email' i], input[name*='email' i], input[type='email']",
+    phone: "input[placeholder*='Mobile' i], input[name*='mobile' i], input[name*='phone' i]",
+    resume: "input[type='file'][name*='resume' i], input[type='file']",
+    college: "input[placeholder*='College' i], input[name*='college' i]"
+  },
+  Wellfound: {
+    fullName: "input[name*='name' i], input[placeholder*='name' i], input[aria-label*='name' i]",
+    email: "input[name*='email' i], input[type='email']",
+    phone: "input[name*='phone' i], input[name*='mobile' i]",
+    resume: "input[type='file']",
+    linkedin: "input[name*='linkedin' i], input[placeholder*='linkedin' i]",
+    portfolio: "input[name*='portfolio' i], input[placeholder*='portfolio' i]"
+  },
+  Indeed: {
+    fullName: "input[id*='name' i], input[name*='name' i], input[placeholder*='name' i]",
+    email: "input[type='email'], input[id*='email' i], input[name*='email' i]",
+    phone: "input[type='tel'], input[id*='phone' i], input[name*='phone' i]",
+    resume: "input[type='file']",
+    city: "input[id*='city' i], input[name*='city' i]",
+    country: "input[id*='country' i], input[name*='country' i]"
+  },
+  Greenhouse: {
+    fullName: "#first_name, #last_name, #name, input[name*='name' i], input[name*='first_name' i]",
+    email: "#email, input[name*='email' i], input[type='email']",
+    phone: "#phone, input[name*='phone' i], input[type='tel']",
+    resume: "#resume_file, input[type='file']",
+    linkedin: "input[placeholder*='LinkedIn' i], input[name*='linkedin' i]"
+  },
+  Lever: {
+    fullName: "input[name='name'], input[name*='name' i]",
+    email: "input[name='email'], input[type='email']",
+    phone: "input[name='phone'], input[type='tel']",
+    currentCompany: "input[name='org'], input[name*='org' i]",
+    city: "input[name='location'], input[placeholder*='location' i]",
+    linkedin: "input[name*='urls[LinkedIn]' i], input[name*='linkedin' i], input[placeholder*='linkedin' i]",
+    github: "input[name*='urls[GitHub]' i], input[name*='github' i], input[placeholder*='github' i]",
+    portfolio: "input[name*='urls[Portfolio]' i], input[name*='urls[Other]' i], input[placeholder*='portfolio' i], input[placeholder*='website' i]",
+    resume: "input[type='file']"
+  },
+  Workday: {
+    fullName: "input[data-automation-id*='legalName' i], input[data-automation-id*='name' i]",
+    firstName: "input[data-automation-id*='firstName' i]",
+    lastName: "input[data-automation-id*='lastName' i]",
+    email: "input[data-automation-id*='email' i], input[type='email']",
+    phone: "input[data-automation-id*='phone' i]",
+    city: "input[data-automation-id*='city' i]",
+    resume: "input[type='file']"
+  },
+  Ashby: {
+    fullName: "input[name*='name' i], input[id*='name' i]",
+    email: "input[type='email'], input[name*='email' i]",
+    phone: "input[type='tel'], input[name*='phone' i]",
+    linkedin: "input[placeholder*='LinkedIn' i], input[name*='linkedin' i]",
+    github: "input[placeholder*='GitHub' i], input[name*='github' i]",
+    portfolio: "input[placeholder*='website' i], input[placeholder*='portfolio' i]",
+    resume: "input[type='file']"
+  }
+};
+
+function getActivePortalMap() {
+  const currentUrl = window.location.href || "";
+  const rule = ATS_PORTAL_RULES.find(r => r.match.test(currentUrl));
+  if (rule && ATS_PORTAL_MAPS[rule.portal]) {
+    return { ...ATS_PORTAL_MAPS[rule.portal] };
+  }
+  return {};
+}
 
 let extensionEnabled = true;
 chrome.storage.local.get("extensionEnabled", (res) => {
@@ -319,6 +412,13 @@ function scoreElementForKey(el, key) {
   if (isEduKey) {
     const hasEduContext = /(school|college|university|institute|degree|cgpa|gpa|percentage|marks|board|matric|hsc|ssc|graduation|bachelor|master|phd|education|academic)/i.test(combinedContext);
     if (!hasEduContext) return 0;
+    // An education institution field must NEVER claim a generic candidate name input
+    const isGenericPersonalNameOnly = /^(full name|name|applicant name|candidate name|legal name)$/i.test(checks[0]) ||
+                                      /^(name|applicant_name|candidate_name|full_name)$/i.test(el.name || "") ||
+                                      /^(name|applicant_name|candidate_name|full_name)$/i.test(el.id || "");
+    if (isGenericPersonalNameOnly && !/(school|college|university|institute)/i.test(el.name || "") && !/(school|college|university|institute)/i.test(el.id || "")) {
+      return 0;
+    }
   }
 
   // 2. Personal candidate name fields MUST NOT match company, school, or file inputs
@@ -359,7 +459,13 @@ function scoreElementForKey(el, key) {
       if (c === needle) {
         score = 10;
       } else if (c.includes(needle)) {
-        score = 8;
+        // Disqualify if c simply matches a generic token inside another token
+        if (needle.length < 5 && GENERIC_SUBSTRINGS.has(needle)) {
+          // e.g. "name" inside "school name" shouldn't grant full 8 points to a personal name
+          score = 0;
+        } else {
+          score = 8;
+        }
       } else if (needle.includes(c)) {
         // Only count if c is NOT a generic short word
         if (c.length >= 5 && !GENERIC_SUBSTRINGS.has(c)) {
@@ -915,18 +1021,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const rawProfile = message.payload?.payload ? message.payload.payload : (message.payload || {});
       const host = window.location.hostname.toLowerCase();
       const baseDomain = getBaseDomain(host);
+      const activeATSMap = getActivePortalMap();
       
       chrome.storage.local.get("portalMaps", (store) => {
         const portalMaps = store.portalMaps || {};
-        const portalMap = portalMaps[baseDomain] || {};
+        const portalMap = { ...activeATSMap, ...(portalMaps[baseDomain] || {}) };
         const payload = buildAutofillPayload(rawProfile, Object.keys(rawProfile));
         let filledCount = 0;
+        const claimedElements = new Set();
 
-        for (const [field, value] of Object.entries(payload.payload || {})) {
+        const PRIORITY_ORDER = [
+          "fullname", "firstname", "lastname",
+          "email", "phone", "phonecode",
+          "currentcompany", "company", "headline", "targetrole",
+          "city", "state", "country", "zip", "pincode", "address",
+          "linkedin", "github", "portfolio",
+          "totalexperience", "experience", "noticeperiod", "expectedsalary",
+          "resume", "resumedraft"
+        ];
+
+        const entries = Object.entries(payload.payload || {}).sort(([a], [b]) => {
+          const idxA = PRIORITY_ORDER.indexOf(a.toLowerCase());
+          const idxB = PRIORITY_ORDER.indexOf(b.toLowerCase());
+          const rankA = idxA === -1 ? 999 : idxA;
+          const rankB = idxB === -1 ? 999 : idxB;
+          return rankA - rankB;
+        });
+
+        for (const [field, value] of entries) {
           if (!value) continue;
           const mapSelector = portalMap[field] || portalMap[field.toLowerCase()];
-          const el = (mapSelector ? document.querySelector(mapSelector) : null) || findBestElementForKey(field) || findBestElementForKey(field.toLowerCase()) || null;
-          if (el) {
+          let el = null;
+          if (mapSelector) {
+            try {
+              const matchedEls = Array.from(document.querySelectorAll(mapSelector));
+              el = matchedEls.find(e => !claimedElements.has(e)) || null;
+            } catch (e) {}
+          }
+          if (!el) {
+            el = findBestElementForKey(field, claimedElements) || findBestElementForKey(field.toLowerCase(), claimedElements) || null;
+          }
+          if (el && !claimedElements.has(el)) {
+            claimedElements.add(el);
             setValue(el, value);
             try {
               const origOutline = el.style.outline;
@@ -1122,7 +1258,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     const payload = buildAutofillPayload(rawProfile, message.fields || Object.keys(rawProfile));
-    const portalMap = message.portalMap || {};
+    const activeATSMap = getActivePortalMap();
+    const portalMap = { ...activeATSMap, ...(message.portalMap || {}) };
     const results = [];
     let filledCount = 0;
     const claimedElements = new Set();
@@ -1706,9 +1843,10 @@ function injectFloatingQuickFill() {
       
       const host = window.location.hostname.toLowerCase();
       const baseDomain = getBaseDomain(host);
+      const activeATSMap = getActivePortalMap();
       chrome.storage.local.get("portalMaps", (store) => {
         const portalMaps = store.portalMaps || {};
-        const portalMap = portalMaps[baseDomain] || {};
+        const portalMap = { ...activeATSMap, ...(portalMaps[baseDomain] || {}) };
         
         chrome.runtime.sendMessage({
           type: "jobxapply:applyAutofill",
