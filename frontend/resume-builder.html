@@ -516,40 +516,54 @@
       background: rgba(0, 243, 255, 0.4);
     }
 
+    .preview-sheet,
+    #live-preview-sheet,
+    .preview-sheet *,
+    #live-preview-sheet * {
+      color: #000000 !important;
+      font-family: 'Times New Roman', Times, Georgia, serif !important;
+      box-sizing: border-box;
+    }
+
     .preview-sheet {
-      background: #ffffff;
-      color: #000000;
+      background: #ffffff !important;
+      color: #000000 !important;
       padding: 48px 52px;
       border-radius: 2px;
-      font-family: 'Times New Roman', Times, Georgia, serif;
+      font-family: 'Times New Roman', Times, Georgia, serif !important;
       width: 794px;
       min-height: 1123px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
       transform-origin: top center;
-      box-sizing: border-box;
       flex-shrink: 0;
       margin: 0 auto;
       transition: transform 0.15s ease-out;
     }
 
     .preview-header {
-      border-bottom: 1.5px solid #000000;
+      border-bottom: 1.5px solid #000000 !important;
       padding-bottom: 8px;
       margin-bottom: 14px;
       text-align: center;
     }
 
-    .preview-name {
-      margin: 0;
-      font-size: 1.7rem;
-      color: #000000;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
+    .preview-sheet h1,
+    #live-preview-sheet h1,
+    .preview-sheet .preview-name,
+    #live-preview-sheet .preview-name {
+      margin: 0 0 6px 0 !important;
+      font-size: 1.7rem !important;
+      color: #000000 !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px !important;
+      text-transform: uppercase !important;
+      text-align: center !important;
+      display: block !important;
+      font-family: 'Times New Roman', Times, Georgia, serif !important;
     }
 
     .preview-title {
-      display: none;
+      display: none !important;
     }
 
     .preview-contact {
@@ -558,7 +572,7 @@
       gap: 12px;
       flex-wrap: wrap;
       font-size: 0.85rem;
-      color: #000000;
+      color: #000000 !important;
       margin-top: 4px;
     }
 
@@ -566,15 +580,21 @@
       margin-bottom: 14px;
     }
 
-    .preview-section-title {
-      font-size: 0.95rem;
-      border-bottom: 1px solid #000000;
-      padding-bottom: 2px;
-      margin-bottom: 6px;
-      color: #000000;
-      text-transform: uppercase;
-      font-weight: 700;
-      letter-spacing: 0.5px;
+    .preview-sheet h3,
+    #live-preview-sheet h3,
+    .preview-sheet .preview-section-title,
+    #live-preview-sheet .preview-section-title {
+      font-size: 0.95rem !important;
+      border-bottom: 1.5px solid #000000 !important;
+      padding-bottom: 2px !important;
+      margin-top: 14px !important;
+      margin-bottom: 6px !important;
+      color: #000000 !important;
+      text-transform: uppercase !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.5px !important;
+      display: block !important;
+      font-family: 'Times New Roman', Times, Georgia, serif !important;
     }
 
     .preview-row {
@@ -582,24 +602,37 @@
       justify-content: space-between;
       margin-bottom: 4px;
       font-size: 0.9rem;
+      color: #000000 !important;
     }
 
     .preview-date {
-      color: #64748b;
-      font-size: 0.8rem;
+      color: #334155 !important;
+      font-size: 0.82rem !important;
+      font-weight: 500 !important;
     }
 
     .preview-summary {
       margin: 0 0 10px;
       font-size: 0.85rem;
-      color: #334155;
-      line-height: 1.4;
+      color: #111827 !important;
+      line-height: 1.45;
     }
 
     .preview-skills {
       font-size: 0.85rem;
-      color: #334155;
-      line-height: 1.4;
+      color: #111827 !important;
+      line-height: 1.45;
+    }
+
+    .preview-sheet p,
+    #live-preview-sheet p,
+    .preview-sheet span,
+    #live-preview-sheet span,
+    .preview-sheet div,
+    #live-preview-sheet div,
+    .preview-sheet strong,
+    #live-preview-sheet strong {
+      color: #000000 !important;
     }
 
     @media (max-width: 768px) {
@@ -1666,42 +1699,37 @@
         document.getElementById("res-skills").value = typeof skills === "string" ? skills : (Array.isArray(skills) ? skills.join(", ") : "");
       }
       
-      // Populate Experience (handles structured array, plain text, or resumeDraft fallback)
+      // Smart parsing of Experience & Projects (handles structured arrays or freeform blocks)
       const rawExp = profile.experience || profile.resumeDraft || "";
+      const rawProj = profile.projects || profile.projectsList || "";
+      const parsedExpProj = parseExperienceAndProjectText(typeof rawExp === 'string' ? rawExp : '');
+
       const expContainer = document.getElementById("experience-list");
       if (expContainer) {
         expContainer.innerHTML = "";
-        if (Array.isArray(profile.experience)) {
-          profile.experience.forEach(exp => addExperienceRow(exp));
-        } else if (typeof rawExp === "string" && rawExp.trim()) {
-          // Parse experience blocks or fallback to block text
-          const blocks = rawExp.split(/\n\s*\n/).filter(b => b.trim().length > 15);
-          if (blocks.length > 0) {
-            blocks.slice(0, 4).forEach(b => {
-              const lines = b.trim().split('\n');
-              const headerLine = lines[0] || '';
-              let pos = headerLine.trim();
-              let comp = '';
-              let dates = '';
-              if (headerLine.includes('@')) {
-                const parts = headerLine.split('@');
-                pos = parts[0].trim();
-                comp = parts[1].replace(/\(.*\)/, '').trim();
-                const dMatch = headerLine.match(/\((.*?)\)/);
-                if (dMatch) dates = dMatch[1].trim();
-              }
-              const desc = lines.slice(1).join('\n').trim();
-              addExperienceRow({
-                company: comp,
-                position: pos,
-                startDate: dates,
-                endDate: dates ? '' : 'Present',
-                summary: desc
+        if (Array.isArray(profile.experience) && profile.experience.length > 0) {
+          profile.experience.forEach(exp => {
+            const isProj = !exp.dates && (/^(technologies|built|developed|project|platform|app)\b/i.test(exp.summary || '') || /^\d+[\.\)]/i.test(exp.company || ''));
+            if (isProj) {
+              parsedExpProj.projects.push({
+                name: (exp.company || exp.role || 'Project').replace(/^\d+[\.\)]\s*/, ''),
+                tech: exp.tech || '',
+                summary: exp.summary || ''
               });
-            });
-          } else {
-            addExperienceRow({ summary: rawExp });
-          }
+            } else {
+              addExperienceRow({
+                company: exp.company || '',
+                position: exp.position || exp.role || '',
+                startDate: exp.startDate || exp.dates || '',
+                endDate: exp.endDate || (/present|current|now/i.test(exp.dates || '') ? 'Present' : ''),
+                summary: exp.summary || ''
+              });
+            }
+          });
+        } else if (parsedExpProj.experiences.length > 0) {
+          parsedExpProj.experiences.forEach(e => addExperienceRow(e));
+        } else if (typeof rawExp === "string" && rawExp.trim() && parsedExpProj.projects.length === 0) {
+          addExperienceRow({ summary: rawExp });
         }
       }
       
@@ -1744,15 +1772,30 @@
         }
       }
 
-      // Populate Projects
-      const projects = profile.projects;
+      // Populate Projects (includes direct profile projects & projects classified from resume)
       const projContainer = document.getElementById("projects-list");
       if (projContainer) {
         projContainer.innerHTML = "";
-        if (Array.isArray(projects)) {
-          projects.forEach(p => addProjectRow(p));
-        } else if (typeof projects === "string" && projects.trim()) {
-          addProjectRow({ name: "Project", summary: projects });
+        const allProjects = [];
+        if (Array.isArray(rawProj)) {
+          allProjects.push(...rawProj);
+        } else if (typeof rawProj === "string" && rawProj.trim()) {
+          const parsedDirect = parseExperienceAndProjectText(rawProj);
+          if (parsedDirect.projects.length > 0) {
+            allProjects.push(...parsedDirect.projects);
+          } else {
+            allProjects.push({ name: "Project", summary: rawProj });
+          }
+        }
+        // Include any projects extracted from experience text
+        parsedExpProj.projects.forEach(p => {
+          if (!allProjects.some(exist => exist.name && exist.name.toLowerCase() === p.name.toLowerCase())) {
+            allProjects.push(p);
+          }
+        });
+
+        if (allProjects.length > 0) {
+          allProjects.slice(0, 5).forEach(p => addProjectRow(p));
         }
       }
 
@@ -1782,6 +1825,98 @@
         .replace(/'/g, '&#39;');
     }
     const esc = escHtml;
+    function parseExperienceAndProjectText(rawText) {
+      if (!rawText || typeof rawText !== 'string') return { experiences: [], projects: [] };
+      
+      const experiences = [];
+      const projects = [];
+
+      let rawBlocks = [];
+      if (/(?:^|\n)\s*\d+[\.\)]\s+/.test(rawText)) {
+        rawBlocks = rawText.split(/(?:^|\n)\s*(?=\d+[\.\)]\s+)/).map(p => p.trim()).filter(Boolean);
+      } else {
+        rawBlocks = rawText.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+      }
+
+      rawBlocks.forEach(block => {
+        if (!block || block.length < 10) return;
+        const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+        const firstLine = lines[0] || '';
+
+        const hasTechLine = lines.some(l => /^(technologies|tech|stack|tools)\s*:\s*/i.test(l));
+        const isNumbered = /^\d+[\.\)]\s+/.test(firstLine);
+        const mentionsProject = /\b(project|platform|app|application|system|clone|portal|dashboard|tool)\b/i.test(firstLine);
+        const hasCompanyAt = /@\s*[A-Za-z0-9]/.test(firstLine);
+
+        if ((hasTechLine || mentionsProject || (isNumbered && !hasCompanyAt)) && !hasCompanyAt) {
+          let pName = firstLine.replace(/^\d+[\.\)]\s*/, '').trim();
+          let pTech = '';
+          const summaryLines = [];
+
+          for (let j = 1; j < lines.length; j++) {
+            const line = lines[j];
+            if (/^(technologies|tech|stack|tools)\s*:\s*/i.test(line)) {
+              pTech = line.replace(/^(technologies|tech|stack|tools)\s*:\s*/i, '').trim();
+            } else {
+              summaryLines.push(line.replace(/^[•\-*]\s*/, ''));
+            }
+          }
+
+          if (pName.includes('—') || pName.includes('–') || pName.includes('|')) {
+            const segs = pName.split(/—|–|\|/);
+            pName = segs[0].trim();
+            if (!pTech && segs[1]) {
+              pTech = segs.slice(1).join(' - ').trim();
+            }
+          }
+
+          projects.push({
+            name: pName,
+            tech: pTech,
+            summary: summaryLines.join('\n')
+          });
+        } else {
+          let pos = firstLine;
+          let comp = '';
+          let dates = '';
+          let startDate = '';
+          let endDate = '';
+
+          if (firstLine.includes('@')) {
+            const parts = firstLine.split('@');
+            pos = parts[0].trim();
+            comp = parts[1].replace(/\(.*\)/, '').trim();
+            const dMatch = firstLine.match(/\((.*?)\)/);
+            if (dMatch) dates = dMatch[1].trim();
+          }
+
+          if (dates) {
+            if (/present|current|now/i.test(dates)) {
+              endDate = 'Present';
+              startDate = dates.replace(/[-–—to\s]*(present|current|now)/i, '').trim();
+            } else if (dates.includes('-') || dates.includes('–') || dates.includes('to')) {
+              const dParts = dates.split(/[-–—]|to/);
+              startDate = dParts[0].trim();
+              endDate = (dParts[1] || '').trim();
+            } else {
+              startDate = dates;
+            }
+          }
+
+          const descLines = lines.slice(1).map(l => l.replace(/^[•\-*]\s*/, '')).join('\n');
+          experiences.push({
+            company: comp,
+            position: pos,
+            startDate: startDate,
+            endDate: endDate,
+            summary: descLines
+          });
+        }
+      });
+
+      return { experiences, projects };
+    }
+
     function addExperienceRow(data = {}) {
       const list = document.getElementById("experience-list");
       if (!list) return;
@@ -1862,16 +1997,16 @@
       document.querySelectorAll(".education-item").forEach(item => {
         const inputs = item.querySelectorAll("input");
         const inst = inputs[0]?.value || "";
-        const area = inputs[1]?.value || "";
-        const year = inputs[2]?.value || "";
+        const area = inputs[1]?.value.trim() || "";
+        const year = inputs[2]?.value.trim() || "";
         if (inst || area) {
           eduHtml += `
             <div style="margin-bottom: 8px;">
-              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${esc(area)}</span>
-                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(year)}</span>
+              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #000000 !important;">
+                <span style="color: #000000 !important; font-weight: 700;">${esc(area)}</span>
+                ${year ? `<span style="font-weight: 400; color: #334155 !important; font-size: 0.82rem;">${esc(year)}</span>` : ''}
               </div>
-              <div style="font-size: 0.85rem; color: #475569;">${esc(inst)}</div>
+              ${inst ? `<div style="font-size: 0.85rem; color: #334155 !important;">${esc(inst)}</div>` : ''}
             </div>
           `;
         }
@@ -1890,11 +2025,11 @@
           const dateRange = [startDate, endDate].filter(Boolean).join(" - ");
           expHtml += `
             <div style="margin-bottom: 12px;">
-              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${esc(titleLine)}</span>
-                ${dateRange ? `<span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(dateRange)}</span>` : ''}
+              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #000000 !important;">
+                <span style="color: #000000 !important; font-weight: 700;">${esc(titleLine)}</span>
+                ${dateRange ? `<span style="font-weight: 400; color: #334155 !important; font-size: 0.82rem;">${esc(dateRange)}</span>` : ''}
               </div>
-              ${expSummary ? `<p style="font-size: 0.85rem; color: #334155; margin-top: 4px; line-height: 1.4; white-space: pre-line;">${esc(expSummary)}</p>` : ''}
+              ${expSummary ? `<p style="font-size: 0.85rem; color: #000000 !important; margin-top: 4px; line-height: 1.4; white-space: pre-line;">${esc(expSummary)}</p>` : ''}
             </div>
           `;
         }
@@ -1903,17 +2038,17 @@
       let projHtml = "";
       document.querySelectorAll(".project-item").forEach(item => {
         const inputs = item.querySelectorAll("input, textarea");
-        const pName = inputs[0]?.value || "";
-        const pTech = inputs[1]?.value || "";
-        const pSum = inputs[2]?.value || "";
+        const pName = inputs[0]?.value.trim() || "";
+        const pTech = inputs[1]?.value.trim() || "";
+        const pSum = inputs[2]?.value.trim() || "";
         if (pName) {
           projHtml += `
-            <div style="margin-bottom: 8px;">
-              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #0f172a;">
-                <span>${esc(pName)}</span>
-                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">${esc(pTech)}</span>
+            <div style="margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9rem; color: #000000 !important;">
+                <span style="color: #000000 !important; font-weight: 700;">${esc(pName)}</span>
+                ${pTech ? `<span style="font-weight: 400; color: #334155 !important; font-size: 0.82rem; font-style: italic;">${esc(pTech)}</span>` : ''}
               </div>
-              <p style="font-size: 0.85rem; color: #334155; margin-top: 2px; line-height: 1.4; white-space: pre-line;">${esc(pSum)}</p>
+              ${pSum ? `<p style="font-size: 0.85rem; color: #000000 !important; margin-top: 3px; line-height: 1.4; white-space: pre-line;">${esc(pSum)}</p>` : ''}
             </div>
           `;
         }
@@ -1927,72 +2062,80 @@
       const interestVal = document.getElementById("res-interests")?.value.trim() || "";
 
       let addItems = [];
-      if (langVal) addItems.push(`<strong>Languages:</strong> ${esc(langVal)}`);
-      if (relocVal) addItems.push(`<strong>Availability:</strong> ${esc(relocVal)}`);
-      if (interestVal) addItems.push(`<strong>Key Highlights:</strong> ${esc(interestVal)}`);
+      if (langVal) addItems.push(`<strong style="color:#000000 !important;">Languages:</strong> ${esc(langVal)}`);
+      if (relocVal) addItems.push(`<strong style="color:#000000 !important;">Availability:</strong> ${esc(relocVal)}`);
+      if (interestVal) addItems.push(`<strong style="color:#000000 !important;">Key Highlights:</strong> ${esc(interestVal)}`);
 
       const sheet = document.getElementById("live-preview-sheet");
       if (!sheet) return;
 
+      const levelVal = document.getElementById("res-level")?.value || "";
+      const isFresher = levelVal.toLowerCase().includes("fresher") || !expHtml;
+
+      const summaryBlock = summary ? `
+        <div class="preview-section">
+          <h3 class="preview-section-title" style="color: #000000 !important; font-family: 'Times New Roman', serif !important;">Summary</h3>
+          <p style="font-size: 0.85rem; color: #000000 !important; line-height: 1.4; white-space: pre-line;">${esc(summary)}</p>
+        </div>
+      ` : "";
+
+      const eduBlock = eduHtml ? `
+        <div class="preview-section">
+          <h3 class="preview-section-title" style="color: #000000 !important; font-family: 'Times New Roman', serif !important;">Education</h3>
+          ${eduHtml}
+        </div>
+      ` : "";
+
+      const expBlock = expHtml ? `
+        <div class="preview-section">
+          <h3 class="preview-section-title" style="color: #000000 !important; font-family: 'Times New Roman', serif !important;">Experience</h3>
+          ${expHtml}
+        </div>
+      ` : "";
+
+      const skillsBlock = skills.length > 0 ? `
+        <div class="preview-section">
+          <h3 class="preview-section-title" style="color: #000000 !important; font-family: 'Times New Roman', serif !important;">Skills</h3>
+          <p class="preview-skills" style="color: #000000 !important;">${skills.map(esc).join(" • ")}</p>
+        </div>
+      ` : "";
+
+      const projBlock = projHtml ? `
+        <div class="preview-section">
+          <h3 class="preview-section-title" style="color: #000000 !important; font-family: 'Times New Roman', serif !important;">Projects</h3>
+          ${projHtml}
+        </div>
+      ` : "";
+
+      const certsBlock = certs.length > 0 ? `
+        <div class="preview-section">
+          <h3 class="preview-section-title" style="color: #000000 !important; font-family: 'Times New Roman', serif !important;">Certifications</h3>
+          <p class="preview-skills" style="color: #000000 !important;">${certs.map(esc).join(" • ")}</p>
+        </div>
+      ` : "";
+
+      const addBlock = addItems.length > 0 ? `
+        <div class="preview-section">
+          <h3 class="preview-section-title" style="color: #000000 !important; font-family: 'Times New Roman', serif !important;">Additional Information</h3>
+          <p style="font-size: 0.85rem; color: #000000 !important; line-height: 1.5;">${addItems.join("<br>")}</p>
+        </div>
+      ` : "";
+
+      const dynamicSections = isFresher
+        ? `${summaryBlock}${eduBlock}${skillsBlock}${projBlock}${expBlock}${certsBlock}${addBlock}`
+        : `${summaryBlock}${expBlock}${skillsBlock}${projBlock}${eduBlock}${certsBlock}${addBlock}`;
+
       sheet.innerHTML = `
-        <div class="preview-header">
-          <h1 class="preview-name">${esc(name || 'Your Name')}</h1>
-          <div class="preview-contact">
-            ${email ? `<span>${esc(email)}</span>` : ""}
-            ${phone ? `<span>${esc(phone)}</span>` : ""}
-            ${location ? `<span>${esc(location)}</span>` : ""}
-            ${website ? `<span>${esc(website)}</span>` : ""}
+        <div class="preview-header" style="border-bottom: 1.5px solid #000000; padding-bottom: 8px; margin-bottom: 14px; text-align: center;">
+          <h1 class="preview-name" style="margin: 0 0 6px 0; font-size: 1.7rem; color: #000000 !important; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; font-family: 'Times New Roman', serif !important;">${esc(name || 'Your Name')}</h1>
+          <div class="preview-contact" style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 0.85rem; color: #000000 !important;">
+            ${email ? `<span style="color: #000000 !important;">${esc(email)}</span>` : ""}
+            ${phone ? `<span style="color: #000000 !important;">${esc(phone)}</span>` : ""}
+            ${location ? `<span style="color: #000000 !important;">${esc(location)}</span>` : ""}
+            ${website ? `<span style="color: #000000 !important;">${esc(website)}</span>` : ""}
           </div>
         </div>
-        
-        ${summary ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Summary</h3>
-            <p style="font-size: 0.85rem; color: #000000; line-height: 1.4; white-space: pre-line;">${esc(summary)}</p>
-          </div>
-        ` : ""}
-
-        ${eduHtml ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Education</h3>
-            ${eduHtml}
-          </div>
-        ` : ""}
-
-        ${expHtml ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Experience</h3>
-            ${expHtml}
-          </div>
-        ` : ""}
-
-        ${skills.length > 0 ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Skills</h3>
-            <p class="preview-skills" style="color: #000000;">${skills.map(esc).join(" • ")}</p>
-          </div>
-        ` : ""}
-
-        ${projHtml ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Projects</h3>
-            ${projHtml}
-          </div>
-        ` : ""}
-
-        ${certs.length > 0 ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Certifications</h3>
-            <p class="preview-skills" style="color: #000000;">${certs.map(esc).join(" • ")}</p>
-          </div>
-        ` : ""}
-
-        ${addItems.length > 0 ? `
-          <div class="preview-section">
-            <h3 class="preview-section-title">Additional Information</h3>
-            <p style="font-size: 0.85rem; color: #000000; line-height: 1.5;">${addItems.join("<br>")}</p>
-          </div>
-        ` : ""}
+        ${dynamicSections}
       `;
       fitPreview();
     }

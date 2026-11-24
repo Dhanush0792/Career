@@ -2310,7 +2310,7 @@ function parseResumeToStructuredData(text) {
   }
 
   // 9. Work Experience Entries
-  const experienceEntries = [];
+  const rawExpEntries = [];
   const expLines = sections.experience;
   const DATE_REGEX = /\b(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4}\s*(?:-|–|to)\s*(?:present|(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4})\b/i;
 
@@ -2319,7 +2319,7 @@ function parseResumeToStructuredData(text) {
     const line = expLines[i];
     if (DATE_REGEX.test(line) || (line.length < 70 && /^[A-Z][a-zA-Z0-9\s,&.-]+$/.test(line) && !line.startsWith("•") && !line.startsWith("-"))) {
       if (currentExp && (currentExp.company || currentExp.role || currentExp.summary)) {
-        experienceEntries.push(currentExp);
+        rawExpEntries.push(currentExp);
       }
       currentExp = {
         company: line.replace(DATE_REGEX, "").trim() || "Company",
@@ -2332,18 +2332,91 @@ function parseResumeToStructuredData(text) {
     } else {
       currentExp = { company: "Work Experience", role: "Software Engineer", dates: "", summary: line };
     }
-    if (experienceEntries.length >= 6) break;
+    if (rawExpEntries.length >= 6) break;
   }
   if (currentExp && (currentExp.company || currentExp.summary)) {
-    experienceEntries.push(currentExp);
+    rawExpEntries.push(currentExp);
   }
+
+  // 10. Projects Extraction
+  const projectEntries = [];
+  const projLines = sections.projects;
+  let currentProj = null;
+
+  for (let i = 0; i < projLines.length; i++) {
+    const line = projLines[i].trim();
+    if (!line) continue;
+    const isHeader = /^(\d+[\.\)]\s*|[A-Z][A-Za-z0-9\s—–|-]{3,60}(?:\s*[-–—|]\s*[A-Za-z0-9\s]+)?$)/.test(line) &&
+      !line.toLowerCase().startsWith("technologies:") &&
+      !line.toLowerCase().startsWith("tech:") &&
+      !line.startsWith("•") &&
+      !line.startsWith("-");
+
+    if (isHeader) {
+      if (currentProj && (currentProj.name || currentProj.summary)) {
+        projectEntries.push(currentProj);
+      }
+      let pName = line.replace(/^\d+[\.\)]\s*/, '').trim();
+      let pTech = "";
+      if (pName.includes("—") || pName.includes("–") || pName.includes("|")) {
+        const segs = pName.split(/—|–|\|/);
+        pName = segs[0].trim();
+        pTech = segs.slice(1).join(" | ").trim();
+      }
+      currentProj = { name: pName, tech: pTech, summary: "" };
+    } else if (currentProj) {
+      if (/^(technologies|tech|stack|tools)\s*:\s*/i.test(line)) {
+        const extractedTech = line.replace(/^(technologies|tech|stack|tools)\s*:\s*/i, '').trim();
+        currentProj.tech = currentProj.tech ? `${currentProj.tech}, ${extractedTech}` : extractedTech;
+      } else {
+        currentProj.summary = (currentProj.summary ? currentProj.summary + "\n" : "") + line.replace(/^[•\-*]\s*/, "");
+      }
+    } else {
+      currentProj = { name: line.replace(/^\d+[\.\)]\s*/, ''), tech: "", summary: "" };
+    }
+    if (projectEntries.length >= 6) break;
+  }
+  if (currentProj && (currentProj.name || currentProj.summary)) {
+    projectEntries.push(currentProj);
+  }
+
+  // Separate true Work Experience from Projects misclassified into Experience
+  const experienceEntries = [];
+  rawExpEntries.forEach(item => {
+    const isProjectLike = /^(technologies|built|developed|project|platform|app|clone)\b/i.test(item.summary) ||
+      /^\d+[\.\)]/i.test(item.company) ||
+      /\b(platform|app|clone|website|system)\b/i.test(item.company);
+    if (isProjectLike && !item.dates) {
+      let pName = item.company.replace(/^\d+[\.\)]\s*/, '').trim();
+      let pTech = "";
+      if (pName.includes("—") || pName.includes("–") || pName.includes("|")) {
+        const segs = pName.split(/—|–|\|/);
+        pName = segs[0].trim();
+        pTech = segs.slice(1).join(" | ").trim();
+      }
+      projectEntries.push({
+        name: pName,
+        tech: pTech,
+        summary: item.summary
+      });
+    } else {
+      experienceEntries.push(item);
+    }
+  });
 
   // Experience text blob
   let formattedExperience = "";
   if (experienceEntries.length > 0) {
     formattedExperience = experienceEntries.map(e => `${e.role || "Role"} @ ${e.company || "Company"} (${e.dates || ""})\n${e.summary || ""}`.trim()).join("\n\n");
-  } else if (sections.experience.length > 0) {
+  } else if (sections.experience.length > 0 && experienceEntries.length === 0 && projectEntries.length === 0) {
     formattedExperience = sections.experience.join("\n");
+  }
+
+  let formattedProjects = "";
+  if (projectEntries.length > 0) {
+    formattedProjects = projectEntries.map(p => `${p.name}${p.tech ? ' — ' + p.tech : ''}\n${p.summary}`.trim()).join("\n\n");
+  } else if (sections.projects.length > 0) {
+    formattedProjects = sections.projects.join("\n");
   }
 
   // Total Experience Calculation
@@ -2415,6 +2488,8 @@ function parseResumeToStructuredData(text) {
     skillsArray: matchedSkills,
     experience: experienceEntries,
     experienceText: formattedExperience,
+    projects: projectEntries,
+    projectsText: formattedProjects,
     employmentStatus,
     totalExperience,
     education: educationEntries,

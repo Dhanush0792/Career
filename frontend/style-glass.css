@@ -456,11 +456,23 @@ a:hover span,
   transform: translateX(4px);
 }
 
-/* Ensure headings have distinct font family and colors */
-h1, h2, h3, h4, h5, h6 {
+/* Ensure headings have distinct font family and colors (excluding resume preview & print sheets) */
+h1:not(#live-preview-sheet *):not(.preview-sheet *),
+h2:not(#live-preview-sheet *):not(.preview-sheet *),
+h3:not(#live-preview-sheet *):not(.preview-sheet *),
+h4:not(#live-preview-sheet *):not(.preview-sheet *),
+h5:not(#live-preview-sheet *):not(.preview-sheet *),
+h6:not(#live-preview-sheet *):not(.preview-sheet *) {
   font-family: var(--display) !important;
   letter-spacing: 0.04em !important;
   color: var(--white) !important;
+}
+
+#live-preview-sheet,
+#live-preview-sheet *,
+.preview-sheet,
+.preview-sheet * {
+  color: #000000 !important;
 }
 
 .pane-title {

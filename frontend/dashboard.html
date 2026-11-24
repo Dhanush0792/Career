@@ -633,14 +633,7 @@ if (profileModalSave) {
   });
 }
 
-// ”€”€ SSE + Initial Load ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
-const syncDot = document.getElementById('sync-dot');
-const syncLabel = document.getElementById('sync-label');
 
-document.addEventListener('jobxapply:profile', (e) => {
-  renderProfileState(e.detail);
-  addLog('Profile updated via live sync.', 'success');
-});
 // ── Immediate Browser Extension Handshake (0ms Delay) ──────────────────────
 (function initExtensionHandshake() {
   const extDot = document.getElementById('ext-status-dot');
