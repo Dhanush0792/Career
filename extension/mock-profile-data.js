@@ -3,80 +3,81 @@
 
 export const MOCK_PROFILE_DATA = {
   id: "default",
-  profileName: "Senior Full Stack Engineer",
+  profileName: "Full Stack Engineer (Demo)",
   
   // ── Personal & Contact ──────────────────────────────────────────────────
-  fullName: "Alex R. Morgan",
-  firstName: "Alex",
-  lastName: "Morgan",
+  fullName: "Rahul Sharma",
+  firstName: "Rahul",
+  lastName: "Sharma",
   dob: "1998-05-14",
   age: 28,
-  fatherName: "Robert Morgan",
-  motherName: "Eleanor Morgan",
-  email: "alex.morgan.dev@gmail.com",
-  alternativeEmail: "alex.morgan.work@outlook.com",
-  phoneCode: "1",
-  phone: "5550192834",
-  address: "742 Evergreen Terrace, Apt 4B",
-  city: "San Francisco",
-  state: "California",
-  country: "United States",
-  pincode: "94107",
-  zip: "94107",
+  fatherName: "Suresh Sharma",
+  motherName: "Sunita Sharma",
+  email: "rahul.sharma.demo@gmail.com",
+  alternativeEmail: "rahul.sharma.work@outlook.com",
+  phoneCode: "91",
+  phone: "9876543210",
+  address: "Flat 402, Green Glen Layout, Bellandur",
+  city: "Bangalore",
+  state: "Karnataka",
+  country: "India",
+  pincode: "560103",
+  zip: "560103",
   maritalStatus: "Single",
 
   // ── Academics (10th, 12th, UG, PG, Masters, PhD) ────────────────────────
   // 10th Standard / Matriculation
-  edu10_school: "Westfield High School",
-  edu10_board: "State Board of Secondary Education",
+  edu10_school: "Kendriya Vidyalaya, Bangalore",
+  edu10_board: "CBSE",
   edu10_year: "2014",
   edu10_cgpa: "9.6 CGPA",
 
   // 12th Standard / Higher Secondary
-  edu12_school: "Westfield Senior Secondary College",
-  edu12_board: "State Higher Secondary Board",
+  edu12_school: "National Public Pre-University College",
+  edu12_board: "Karnataka State Pre-University Board",
   edu12_year: "2016",
   edu12_cgpa: "94.5%",
 
   // Undergraduate (UG)
-  eduGrad_college: "University of California, Berkeley",
-  eduGrad_degree: "Bachelor of Science",
+  eduGrad_college: "PES Institute of Technology, Bangalore",
+  eduGrad_degree: "Bachelor of Technology (B.Tech)",
   eduGrad_stream: "Computer Science and Engineering",
   eduGrad_year: "2020",
-  eduGrad_cgpa: "3.85 GPA",
+  eduGrad_cgpa: "8.85 CGPA",
   eduGrad_pursuing: false,
 
   // Postgraduate (PG)
-  eduPG_college: "Stanford University",
-  eduPG_degree: "Master of Science",
-  eduPG_stream: "Software Engineering & Distributed Systems",
+  eduPG_college: "Indian Institute of Science (IISc), Bangalore",
+  eduPG_degree: "Master of Technology (M.Tech)",
+  eduPG_stream: "Computer Science & Engineering",
   eduPG_year: "2022",
-  eduPG_cgpa: "3.92 GPA",
+  eduPG_cgpa: "9.2 CGPA",
   eduPG_pursuing: false,
 
   // Masters (Secondary / Alias)
-  eduMasters_college: "Stanford University",
-  eduMasters_degree: "Master of Science",
+  eduMasters_college: "Indian Institute of Science (IISc), Bangalore",
+  eduMasters_degree: "Master of Technology",
   eduMasters_stream: "Computer Science",
   eduMasters_year: "2022",
-  eduMasters_cgpa: "3.92 GPA",
+  eduMasters_cgpa: "9.2 CGPA",
   eduMasters_pursuing: false,
 
   // PhD / Doctorate
-  eduPhD_college: "Massachusetts Institute of Technology (Affiliate)",
-  eduPhD_degree: "Doctor of Philosophy (Hon. Candidate)",
-  eduPhD_stream: "Artificial Intelligence & Distributed Consensus",
-  eduPhD_year: "2026",
-  eduPhD_cgpa: "Honors",
+  eduPhD_college: "",
+  eduPhD_degree: "",
+  eduPhD_stream: "",
+  eduPhD_year: "",
+  eduPhD_cgpa: "",
   eduPhD_pursuing: false,
 
   // Generic Academic Fallbacks
-  education: "Master of Science in Software Engineering, Stanford University (2022); B.S. in Computer Science, UC Berkeley (2020)",
-  college: "Stanford University",
+  education: "Master of Technology, IISc Bangalore (2022); B.Tech in CSE, PESIT Bangalore (2020)",
+  college: "PES Institute of Technology, Bangalore",
 
   // ── Professional & Employment ───────────────────────────────────────────
+  currentCompany: "Tech Innovators Pvt Ltd",
   employmentStatus: "Experienced",
-  expectedSalary: "$145,000 / year",
+  expectedSalary: "₹24,00,000 / year",
   noticePeriod: "30",
   totalExperience: "4",
   targetRole: "Senior Full Stack Engineer",
@@ -84,9 +85,9 @@ export const MOCK_PROFILE_DATA = {
   headline: "Senior Full Stack Software Engineer | React, Node.js, TypeScript, Distributed Cloud Architecture",
   skills: "JavaScript, TypeScript, React.js, Node.js, Python, PostgreSQL, MongoDB, Redis, Docker, Kubernetes, AWS, REST APIs, GraphQL, Git, CI/CD",
   summary: "Results-driven Senior Full Stack Engineer with 4+ years of professional experience architecting scalable distributed systems and modern web applications. Proven track record leading product initiatives from concept to production, optimizing database queries by 45%, and building secure zero-knowledge encrypted applications.",
-  linkedin: "https://linkedin.com/in/alex-morgan-engineer",
-  github: "https://github.com/alexmorgan-dev",
-  portfolio: "https://alexmorgan-portfolio.io",
+  linkedin: "https://linkedin.com/in/rahul-sharma-dev",
+  github: "https://github.com/rahulsharma-dev",
+  portfolio: "https://rahulsharma-portfolio.dev",
 
   // ── Work History & Experience ───────────────────────────────────────────
   experience: `Senior Software Engineer @ TechMatrix Systems (2022 - Present)
@@ -101,9 +102,9 @@ Software Engineer @ CloudWave Solutions (2020 - 2022)
 - Collaborated cross-functionally with product managers and UX designers to roll out 12 major feature milestones on schedule.`,
 
   // ── Documents ───────────────────────────────────────────────────────────
-  resumeDraft: `ALEX R. MORGAN
-San Francisco, CA | (555) 019-2834 | alex.morgan.dev@gmail.com
-LinkedIn: linkedin.com/in/alex-morgan-engineer | GitHub: github.com/alexmorgan-dev | Portfolio: alexmorgan-portfolio.io
+  resumeDraft: `RAHUL SHARMA
+Bangalore, Karnataka | +91 9876543210 | rahul.sharma.demo@gmail.com
+LinkedIn: linkedin.com/in/rahul-sharma-dev | GitHub: github.com/rahulsharma-dev | Portfolio: rahulsharma-portfolio.dev
 
 PROFESSIONAL SUMMARY
 Senior Full Stack Engineer with 4+ years of experience building mission-critical distributed systems and performant cloud web applications. Proficient in React, Node.js, TypeScript, Python, and cloud infrastructure.
@@ -116,31 +117,31 @@ Cloud & DevOps: AWS (EC2, S3, RDS, Lambda), Docker, Kubernetes, GitHub Actions, 
 Architecture: Microservices, REST APIs, GraphQL, WebSocket, Event-Driven Systems
 
 EXPERIENCE
-Senior Software Engineer - TechMatrix Systems (San Francisco, CA) | 2022 - Present
+Senior Software Engineer - Tech Innovators Pvt Ltd (Bangalore, India) | 2022 - Present
 - Architected microservices supporting 500k+ active users with 99.99% uptime.
 - Spearheaded database query optimization reducing average P95 latency from 420ms to 95ms.
 - Built reusable UI component system adopted across 8 engineering teams.
 
-Software Engineer - CloudWave Solutions (Berkeley, CA) | 2020 - 2022
+Software Engineer - CloudWave Solutions (Bangalore, India) | 2020 - 2022
 - Engineered real-time telemetry streaming service using WebSockets and Node.js.
 - Automated deployment workflows via GitHub Actions cutting release times by 65%.
 
 EDUCATION
-Master of Science in Software Engineering - Stanford University (2022)
-Bachelor of Science in Computer Science - University of California, Berkeley (2020)`,
+Master of Technology (M.Tech) in CSE - Indian Institute of Science (IISc), Bangalore (2022)
+Bachelor of Technology (B.Tech) in CSE - PES Institute of Technology, Bangalore (2020)`,
 
   coverLetterDraft: `Dear Hiring Team,
 
 I am writing to express my enthusiastic interest in the Software Engineering position. With over four years of experience designing and scaling web applications across high-growth technology companies, I have honed the technical expertise and leadership necessary to make an immediate impact on your team.
 
-In my recent work at TechMatrix Systems, I architected distributed cloud backends and responsive interfaces serving over 500,000 monthly active users. My focus has consistently centered on writing clean, modular code, driving test automation, and collaborating closely with product designers to ship reliable features rapidly.
+In my recent work at Tech Innovators Pvt Ltd, I architected distributed cloud backends and responsive interfaces serving over 500,000 monthly active users. My focus has consistently centered on writing clean, modular code, driving test automation, and collaborating closely with product designers to ship reliable features rapidly.
 
 Your company's commitment to building impactful, reliable software resonates strongly with my engineering philosophy. I welcome the opportunity to discuss how my technical skills in full-stack architecture, API optimization, and team mentoring align with your current objectives.
 
 Thank you for your time and consideration.
 
 Sincerely,
-Alex R. Morgan`,
+Rahul Sharma`,
 
   otherDocuments: "AWS Certified Solutions Architect (Associate), Certified Kubernetes Application Developer (CKAD), Triplebyte Certified Generalist Software Engineer.",
 

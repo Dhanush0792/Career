@@ -457,17 +457,36 @@ async function handleDirectLogin() {
 
 // ── Active Web Session Detection ───────────────────────────────────────────
 async function detectActiveWebSession() {
+  const syncBtn = document.getElementById("syncActiveWebBtn");
+  if (syncBtn) {
+    syncBtn.style.display = "flex";
+    syncBtn.onclick = async () => {
+      setLoginStatus("Searching open JobXApply web tabs...", "warn");
+      const tab = await findJobXApplyTab();
+      if (tab?.id) {
+        pairWithTabSession(tab.id);
+      } else {
+        setLoginStatus("Opening JobXApply dashboard to sync...", "warn");
+        chrome.tabs.create({ url: "https://jobxapply.netlify.app/dashboard.html" });
+      }
+    };
+  }
+}
+
+async function findJobXApplyTab() {
   try {
     const tabs = await chrome.tabs.query({});
     for (const tab of tabs) {
       if (!tab.url) continue;
       const url = tab.url.toLowerCase();
-      if (url.includes(".netlify.app") || url.includes("jobxapply") || url.includes("localhost:") || url.includes("127.0.0.1:")) {
-        const syncBtn = document.getElementById("syncActiveWebBtn");
-        if (syncBtn) {
-          syncBtn.style.display = "block";
-          syncBtn.onclick = () => pairWithTabSession(tab.id);
-        }
+      if (
+        url.includes("jobxapply.netlify.app") ||
+        url.includes("localhost:") ||
+        url.includes("127.0.0.1:") ||
+        url.includes("extension-setup.html") ||
+        url.includes("profile-setup.html") ||
+        url.includes("dashboard.html")
+      ) {
         return tab;
       }
     }
