@@ -803,30 +803,40 @@ function handleAddToBrowser() {
 
 
 
-// ”€”€ Download Extension ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+// ─── Download Extension ─────────────────────────────────────────────────────────
 function downloadExtension() {
-  addLog('[DOWNLOAD] Requesting extension package from server...', 'info');
+  addLog('[DOWNLOAD] Fetching extension package...', 'info');
 
-  // Try server zip endpoint first
-  fetch(`${SYNC_API}/extension/download`, { method: 'HEAD' })
+  const staticUrl = 'jobxapply-extension.zip';
+  const apiFallbackUrl = `${SYNC_API}/extension/download`;
+
+  // Try static direct download from CDN first (instant, zero cold-start delay)
+  fetch(staticUrl, { method: 'HEAD' })
     .then(res => {
       if (res.ok) {
-        window.location.href = `${SYNC_API}/extension/download`;
-        addLog('[DOWNLOAD] Extension package downloaded successfully.', 'success');
+        window.location.href = staticUrl;
+        addLog('[DOWNLOAD] Extension package downloaded successfully from CDN.', 'success');
+        showToast('Extension downloaded! Extract the ZIP and load into your browser.', 'success');
       } else {
-        throw new Error('Server returned ' + res.status);
+        throw new Error('Static asset unavailable');
       }
     })
     .catch(() => {
-      addLog('[DOWNLOAD] Server offline. Please manually copy the extension/ folder from the project directory.', 'warn');
-      showToast('Server offline - copy the extension/ folder manually.', 'error');
-
-      // Show fallback instruction
-      const tip = document.createElement('div');
-      tip.className = 'console-line warn';
-      tip.textContent = '[PATH] Project extension folder: d:\\Projects\\JobXApply\\extension\\';
-      consoleBox.appendChild(tip);
-      consoleBox.scrollTop = consoleBox.scrollHeight;
+      // Fallback to backend sync server endpoint
+      fetch(apiFallbackUrl, { method: 'HEAD' })
+        .then(res => {
+          if (res.ok) {
+            window.location.href = apiFallbackUrl;
+            addLog('[DOWNLOAD] Extension package downloaded from sync server.', 'success');
+            showToast('Extension downloaded! Extract the ZIP and load into your browser.', 'success');
+          } else {
+            throw new Error('Sync server returned ' + res.status);
+          }
+        })
+        .catch(() => {
+          addLog('[DOWNLOAD] Unable to reach download server. Please check your connection and retry.', 'warn');
+          showToast('Download temporarily unavailable. Please retry in a moment.', 'error');
+        });
     });
 }
 

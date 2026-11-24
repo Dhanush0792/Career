@@ -1,4 +1,5 @@
 import { buildAutofillPayload, getPortalRule, PORTAL_MAPS } from "./shared.js";
+import { buildResumePdf, downloadResumePdf } from "./resume-pdf-builder.js";
 
 let popupActiveJob = { title: "", company: "", description: "", location: "", url: "" };
 let popupActiveProfile = {};
