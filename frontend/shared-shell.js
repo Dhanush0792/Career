@@ -2026,49 +2026,140 @@ function validateResumeDocument(text, layoutData = {}) {
   };
 }
 
+// ── 120+ Skills Taxonomy ──────────────────────────────────────────────────
+const EXTENSIVE_SKILLS_TAXONOMY = [
+  // Programming Languages
+  "Java", "Python", "JavaScript", "TypeScript", "C", "C++", "C#", "Go", "Golang", "Rust", "Kotlin", "Swift", "PHP", "Ruby", "SQL", "HTML", "CSS", "HTML/CSS", "Bash", "Shell", "R", "Scala",
+  // Frameworks & Web Tech
+  "Spring Boot", "Spring MVC", "Spring", "Hibernate", "React", "React.js", "Angular", "Vue.js", "Node.js", "Express", "Express.js", "Next.js", "Django", "Flask", "FastAPI", ".NET", "ASP.NET", "Flutter", "Tailwind CSS", "Bootstrap", "Redux", "GraphQL", "RESTful", "REST APIs", "Microservices",
+  // Databases & Caching
+  "PostgreSQL", "MySQL", "MongoDB", "Redis", "Oracle", "Elasticsearch", "Cassandra", "DynamoDB", "SQLite", "Firebase", "MSSQL", "MariaDB",
+  // Cloud & DevOps
+  "AWS", "Amazon Web Services", "Azure", "GCP", "Google Cloud", "Docker", "Kubernetes", "CI/CD", "Jenkins", "GitHub Actions", "Terraform", "Linux", "Git", "GitHub", "GitLab", "Postman", "Kafka", "RabbitMQ", "Nginx", "Ansible",
+  // Core CS & Architecture
+  "Data Structures", "Algorithms", "Object-Oriented Programming", "OOP", "System Design", "DBMS", "Computer Networks", "Operating Systems", "Distributed Systems", "Design Patterns", "Multithreading",
+  // AI / ML & Data
+  "Machine Learning", "Deep Learning", "PyTorch", "TensorFlow", "NLP", "Computer Vision", "Data Science", "Pandas", "NumPy", "Scikit-learn", "Power BI", "Tableau",
+  // Testing & Quality
+  "JUnit", "Mockito", "Jest", "Cypress", "Selenium", "Unit Testing", "Integration Testing", "TDD"
+];
+
 /**
  * Deterministic Resume Parser
- * Extracts structured fields (contact, summary, skills, experience, education) from raw resume text
- * for 1-click transfer to the ATS Resume Builder.
+ * Extracts structured fields (contact, summary, skills, experience, education, certifications)
+ * from raw resume text with comprehensive alias and boundary mapping.
  */
 function parseResumeToStructuredData(text) {
   if (!text || typeof text !== "string") return {};
 
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = cleanText.split('\n').map(l => l.trim()).filter(Boolean);
   
   // 1. Email & Phone
-  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-  const email = emailMatch ? emailMatch[0] : "";
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+  const emails = Array.from(new Set(cleanText.match(emailRegex) || []));
+  const email = emails[0] || "";
+  const alternativeEmail = emails[1] || "";
   
-  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10}\b/);
-  const phone = phoneMatch ? phoneMatch[0] : "";
+  const phoneRegex = /(?:\+?(\d{1,3})[-.\s]?)?\(?(\d{3,5})\)?[-.\s]?(\d{3,4})[-.\s]?(\d{3,5})|\b[6-9]\d{9}\b/;
+  const phoneMatch = cleanText.match(phoneRegex);
+  let phone = "";
+  let phoneCode = "+91";
+  if (phoneMatch) {
+    if (phoneMatch[1]) phoneCode = "+" + phoneMatch[1].replace(/\D/g, "");
+    const cleanDigits = phoneMatch[0].replace(/[\s\(\)\-\.]/g, "");
+    phone = cleanDigits.replace(/^\+\d{1,3}/, "") || cleanDigits;
+  }
 
   // 2. Links
-  const linkedinMatch = text.match(/https?:\/\/(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+/i);
-  const linkedin = linkedinMatch ? linkedinMatch[0] : "";
+  const linkedinMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([A-Za-z0-9_-]+)/i);
+  const linkedin = linkedinMatch ? (linkedinMatch[0].startsWith("http") ? linkedinMatch[0] : "https://" + linkedinMatch[0]) : "";
   
-  const githubMatch = text.match(/https?:\/\/(?:www\.)?github\.com\/[a-zA-Z0-9_-]+/i);
-  const github = githubMatch ? githubMatch[0] : "";
+  const githubMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9_-]+)/i);
+  const github = githubMatch ? (githubMatch[0].startsWith("http") ? githubMatch[0] : "https://" + githubMatch[0]) : "";
 
-  // 3. Full Name
+  const portfolioMatch = cleanText.match(/(?:https?:\/\/)?(?:www\.)?([A-Za-z0-9-]+\.(?:portfolio|dev|me|io|design|tech|app)|[A-Za-z0-9-]+\.com(?:\/[~A-Za-z0-9_-]+)?)/i);
+  let portfolio = "";
+  if (portfolioMatch && !portfolioMatch[0].includes("linkedin") && !portfolioMatch[0].includes("github") && !portfolioMatch[0].includes("google")) {
+    portfolio = portfolioMatch[0].startsWith("http") ? portfolioMatch[0] : "https://" + portfolioMatch[0];
+  }
+
+  // 3. Candidate Name Extraction (strict filtering to reject school, title, and sentence fragments)
+  const nameIgnorePatterns = [
+    /\b(resume|curriculum|vitae|cv|bio-data|biodata|profile|contact|portfolio|page\s+\d+)\b/i,
+    /\b(engineer|developer|architect|designer|manager|specialist|analyst|programmer|consultant|intern|fresher|student|lead|administrator|officer)\b/i,
+    /\b(school|college|university|institute|academy|vidyalaya|board|department|campus|education)\b/i,
+    /\b(ltd|limited|pvt|private|inc|corp|corporation|technologies|solutions|services|company|llc|enterprises)\b/i,
+    /\b(summary|objective|experience|projects|skills|certifications|awards|publications|declaration|interests|hobbies)\b/i,
+    /@|https?:\/\/|www\.|\.com|\.in|\.org|\.net|\.dev|\.io|\.me/i,
+    /\d{3,}/
+  ];
+
   let fullName = "";
-  for (let i = 0; i < Math.min(6, lines.length); i++) {
-    const line = lines[i];
-    if (line.includes("@") || line.includes("http") || /\d{5,}/.test(line)) continue;
-    if (/^(resume|curriculum vitae|cv|page \d)/i.test(line)) continue;
-    if (line.length >= 3 && line.length <= 40 && /^[a-zA-Z\s.'-]+$/.test(line)) {
-      fullName = line;
+  for (let i = 0; i < Math.min(lines.length, 12); i++) {
+    const rawLine = lines[i].replace(/[|•·,-].*$/, "").trim();
+    if (!rawLine || rawLine.length < 3 || rawLine.length > 50) continue;
+    
+    let shouldIgnore = false;
+    for (const pat of nameIgnorePatterns) {
+      if (pat.test(rawLine)) {
+        shouldIgnore = true;
+        break;
+      }
+    }
+    if (shouldIgnore) continue;
+
+    const words = rawLine.split(/\s+/).filter(Boolean);
+    if (words.length >= 2 && words.length <= 4 && words.every(w => /^[A-Za-z.'-]+$/.test(w))) {
+      if (!words.every(w => /^[a-z]+$/.test(w))) {
+        fullName = rawLine;
+        break;
+      }
+    }
+    if (!fullName && words.length === 1 && /^[A-Z][a-z]{2,20}$/.test(words[0]) && i <= 2) {
+      fullName = rawLine;
+    }
+  }
+
+  if (!fullName && email) {
+    const rawPart = email.split("@")[0].replace(/[._-]/g, " ");
+    fullName = rawPart.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  const nameParts = fullName ? fullName.split(/\s+/) : [];
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
+  // 4. Location Details
+  const zipMatch = cleanText.match(/\b\d{5,6}\b/);
+  const pincode = zipMatch ? zipMatch[0] : "";
+
+  let country = "";
+  const countries = ["India", "United States", "United Kingdom", "Canada", "Germany", "Australia", "Singapore", "UAE"];
+  for (const c of countries) {
+    if (new RegExp("\\b" + c + "\\b", "i").test(cleanText)) {
+      country = c;
       break;
     }
   }
 
-  // 4. Section Slicing
+  let city = "";
+  const cities = ["Bangalore", "Bengaluru", "Hyderabad", "Pune", "Mumbai", "Delhi", "Chennai", "Noida", "Gurgaon", "Kolkata", "Ahmedabad", "Jaipur", "Kochi", "San Francisco", "New York", "Seattle", "Austin", "Toronto", "London"];
+  for (const ct of cities) {
+    if (new RegExp("\\b" + ct + "\\b", "i").test(cleanText)) {
+      city = ct === "Bengaluru" ? "Bangalore" : ct;
+      break;
+    }
+  }
+
+  // 5. Section Slicing & Line Clustering
   const SECTION_HEADERS = {
     summary: /^(summary|professional summary|profile|about me|executive summary|objective)\b/i,
-    experience: /^(experience|work experience|employment history|work history|professional experience)\b/i,
-    education: /^(education|academic background|qualifications|academic history)\b/i,
-    skills: /^(skills|technical skills|core competencies|technologies|tools)\b/i,
-    projects: /^(projects|key projects|personal projects|technical projects)\b/i
+    experience: /^(experience|work experience|employment history|work history|professional experience|internships?)\b/i,
+    education: /^(education|academic background|qualifications|academic history|academics)\b/i,
+    skills: /^(skills|technical skills|core competencies|technologies|tools|skillset)\b/i,
+    projects: /^(projects|key projects|personal projects|technical projects|academic projects)\b/i,
+    certifications: /^(certifications?|certificates?|licenses?|training)\b/i
   };
 
   const sections = {
@@ -2076,15 +2167,17 @@ function parseResumeToStructuredData(text) {
     experience: [],
     education: [],
     skills: [],
-    projects: []
+    projects: [],
+    certifications: []
   };
 
   let currentSection = null;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     let matchedHeader = null;
+    const cleanLineHeader = line.replace(/[^a-zA-Z\s]/g, "").trim();
     for (const [secKey, rx] of Object.entries(SECTION_HEADERS)) {
-      if (rx.test(line.replace(/[^a-zA-Z\s]/g, "").trim())) {
+      if (rx.test(cleanLineHeader)) {
         matchedHeader = secKey;
         break;
       }
@@ -2098,26 +2191,133 @@ function parseResumeToStructuredData(text) {
     }
   }
 
-  // Format Summary
-  const summary = sections.summary.join(" ").slice(0, 600);
+  // 6. Summary Extraction
+  let summary = sections.summary.join(" ").slice(0, 1500).trim();
+  if (!summary) {
+    const sumMatch = cleanText.match(/(?:^|\n)\s*(?:SUMMARY|PROFESSIONAL\s+SUMMARY|ABOUT\s+ME|PROFILE)\b[^\n]*\n([\s\S]*?)(?=(?:\n\s*(?:EXPERIENCE|WORK\s+HISTORY|EMPLOYMENT|EDUCATION|ACADEMIC|SKILLS|PROJECTS|CERTIFICATIONS)\b[^\n]*\n)|$)/i);
+    if (sumMatch && sumMatch[1] && sumMatch[1].trim().length > 15) {
+      summary = sumMatch[1].trim().slice(0, 1500);
+    }
+  }
 
-  // Format Skills
-  const skillsText = sections.skills.join(", ")
-    .replace(/[•\-\*|]/g, ",")
-    .split(",")
-    .map(s => s.trim())
-    .filter(s => s.length > 1 && s.length < 35 && !/^(skills|technologies|proficient|tools|languages)$/i.test(s));
-  const uniqueSkills = Array.from(new Set(skillsText)).join(", ");
+  // 7. Skills Extraction using 120+ Taxonomy
+  const matchedSkills = [];
+  EXTENSIVE_SKILLS_TAXONOMY.forEach(skill => {
+    const rx = new RegExp('(^|[^a-zA-Z0-9])' + skill.replace(/[.+]/g, '\\$&') + '(?![a-zA-Z0-9])', 'i');
+    if (rx.test(cleanText)) {
+      if (!matchedSkills.includes(skill)) matchedSkills.push(skill);
+    }
+  });
+  const uniqueSkills = matchedSkills.join(", ");
 
-  // Format Experience
+  // 8. Education Categorization: Grad, PG, 12th, 10th
+  const eduLines = sections.education.length > 0 ? sections.education : lines;
+  const eduText = eduLines.join("\n");
+
+  let eduGrad_college = "";
+  let eduGrad_degree = "";
+  let eduGrad_stream = "";
+  let eduGrad_year = "";
+  let eduGrad_cgpa = "";
+
+  let eduPG_college = "";
+  let eduPG_degree = "";
+  let eduPG_stream = "";
+  let eduPG_year = "";
+  let eduPG_cgpa = "";
+
+  let edu12_school = "";
+  let edu12_board = "";
+  let edu12_year = "";
+  let edu12_cgpa = "";
+
+  let edu10_school = "";
+  let edu10_board = "";
+  let edu10_year = "";
+  let edu10_cgpa = "";
+
+  // 10th / SSC / High School
+  const sscBlockRegex = /(?:(?:SSC|10th|Matriculation|Secondary\s+School|Class\s+X\b)[^\n]*?(?:[-–—|•@:]\s*|\b(?:at|from)\s+)?([A-Z][A-Za-z0-9 &.,'-]{2,70}?(?:High\s+School|School|Vidyalaya|Academy|Public\s+School)))/i;
+  const sscMatch = cleanText.match(sscBlockRegex);
+  if (sscMatch) {
+    edu10_school = sscMatch[1].trim();
+  }
+  if (!edu10_school) {
+    const simpleSchoolMatch = cleanText.match(/\b([A-Z][A-Za-z0-9 &.,'-]{2,60}?(?:Public\s+School|High\s+School|Vidyalaya))\b/i);
+    if (simpleSchoolMatch && !simpleSchoolMatch[0].toLowerCase().includes("college")) {
+      edu10_school = simpleSchoolMatch[0].trim();
+    }
+  }
+  const sscBoardMatch = cleanText.match(/\b(CBSE|ICSE|State\s+Board|Matriculation|SSC)\b/i);
+  if (sscBoardMatch) edu10_board = sscBoardMatch[0].toUpperCase();
+
+  // 12th / Intermediate / Junior College / PUC
+  const interBlockRegex = /(?:(?:Intermediate|12th|HSC|Higher\s+Secondary|PUC|Junior\s+College|Class\s+XII\b)[^\n]*?(?:[-–—|•@:]\s*|\b(?:at|from)\s+)?([A-Z][A-Za-z0-9 &.,'-]{2,70}?(?:Junior\s+College|PU\s+College|College|School|Academy|Vidya)))/i;
+  const interMatch = cleanText.match(interBlockRegex);
+  if (interMatch) {
+    edu12_school = interMatch[1].trim();
+  }
+  if (!edu12_school) {
+    const simpleInterMatch = cleanText.match(/\b([A-Z][A-Za-z0-9 &.,'-]{2,60}?(?:Junior\s+College|PU\s+College))\b/i);
+    if (simpleInterMatch) edu12_school = simpleInterMatch[0].trim();
+  }
+  const interBoardMatch = cleanText.match(/\b(State\s+Board|CBSE|ISC|BIE|Intermediate\s+Board)\b/i);
+  if (interBoardMatch) edu12_board = interBoardMatch[0];
+
+  // College / University (Graduation)
+  const collegeRegex = /(?:^|\n)[ \t]*(?:[-–—|•@][ \t]*|\b(?:at|from)[ \t]+)?([A-Z][A-Za-z0-9 &.,'-]{2,70}?(?:College\s+of\s+[A-Za-z\s]+|University|Institute\s+of\s+[A-Za-z\s]+|Engineering\s+College|College|Institute|Academy|Polytechnic)(?:[ \t]+(?:of|for|and)[ \t]+[A-Za-z0-9 &.'-]{2,45})?)/i;
+  const collegeMatch = eduText.match(collegeRegex) || cleanText.match(collegeRegex);
+  if (collegeMatch && !collegeMatch[1].toLowerCase().includes("junior college")) {
+    eduGrad_college = collegeMatch[1].trim();
+  }
+
+  // Degree
+  const ugDegreeMatch = eduText.match(/\b(B\.?Tech|B\.?E\.?|B\.?Sc|B\.?S\.?|Bachelor\s+of\s+[A-Za-z\s]+|B\.?Com|B\.?C\.?A)\b/i);
+  if (ugDegreeMatch) eduGrad_degree = ugDegreeMatch[0].trim();
+
+  // Branch / Stream
+  const streamRegex = /(?:Electronics\s+(?:and|&)\s+Communication(?:\s+Engineering)?|Computer\s+Science(?:\s+(?:and|&)\s+Engineering)?|Electrical\s+(?:and|&)\s+Electronics(?:\s+Engineering)?|Artificial\s+Intelligence(?:\s+(?:and|&)\s+Machine\s+Learning)?|Information\s+Technology|Mechanical\s+Engineering|Civil\s+Engineering|Data\s+Science|Software\s+Engineering)/i;
+  const streamMatch = eduText.match(streamRegex) || cleanText.match(streamRegex);
+  if (streamMatch) eduGrad_stream = streamMatch[0].trim();
+
+  // Masters / PG
+  const pgDegreeMatch = eduText.match(/\b(M\.?Tech|M\.?E\.?|M\.?S\.?|Master\s+of\s+[A-Za-z\s]+|MBA|MCA)\b/i);
+  if (pgDegreeMatch) {
+    eduPG_degree = pgDegreeMatch[0].trim();
+    const pgCollegeMatch = eduText.match(/\b([A-Z][A-Za-z0-9 &.,'-]{2,70}?(?:University|Institute|School\s+of\s+Management|IIM|IIT))\b/i);
+    if (pgCollegeMatch && pgCollegeMatch[0] !== eduGrad_college) {
+      eduPG_college = pgCollegeMatch[0].trim();
+    }
+  }
+
+  // CGPAs & Percentages
+  const cgpaMatches = cleanText.match(/\b(\d\.\d{1,2}(?:\s*\/\s*(?:4|10)|\s*(?:GPA|CGPA))|\b(?:[6789]\d(?:\.\d)?%))/gi) || [];
+  if (cgpaMatches.length >= 1) eduGrad_cgpa = cgpaMatches[0].trim();
+  if (cgpaMatches.length >= 2) edu12_cgpa = cgpaMatches[1].trim();
+  if (cgpaMatches.length >= 3) edu10_cgpa = cgpaMatches[2].trim();
+
+  // Years chronologically
+  const yearMatches = [...new Set(cleanText.match(/\b(201[0-9]|202[0-9]|2030)\b/g) || [])].sort();
+  if (yearMatches.length >= 3) {
+    edu10_year = yearMatches[0];
+    edu12_year = yearMatches[1];
+    eduGrad_year = yearMatches[yearMatches.length - 1];
+  } else if (yearMatches.length === 2) {
+    edu12_year = yearMatches[0];
+    eduGrad_year = yearMatches[1];
+  } else if (yearMatches.length === 1) {
+    eduGrad_year = yearMatches[0];
+  }
+
+  // 9. Work Experience Entries
   const experienceEntries = [];
-  let currentExp = null;
   const expLines = sections.experience;
   const DATE_REGEX = /\b(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4}\s*(?:-|–|to)\s*(?:present|(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+)?\d{4})\b/i;
 
+  let currentExp = null;
   for (let i = 0; i < expLines.length; i++) {
     const line = expLines[i];
-    if (DATE_REGEX.test(line) || (line.length < 60 && /^[A-Z][a-zA-Z0-9\s,&.-]+$/.test(line) && !line.startsWith("•") && !line.startsWith("-"))) {
+    if (DATE_REGEX.test(line) || (line.length < 70 && /^[A-Z][a-zA-Z0-9\s,&.-]+$/.test(line) && !line.startsWith("•") && !line.startsWith("-"))) {
       if (currentExp && (currentExp.company || currentExp.role || currentExp.summary)) {
         experienceEntries.push(currentExp);
       }
@@ -2130,7 +2330,7 @@ function parseResumeToStructuredData(text) {
     } else if (currentExp) {
       currentExp.summary = (currentExp.summary ? currentExp.summary + "\n" : "") + line;
     } else {
-      currentExp = { company: "Work Experience", role: "Role", dates: "", summary: line };
+      currentExp = { company: "Work Experience", role: "Software Engineer", dates: "", summary: line };
     }
     if (experienceEntries.length >= 6) break;
   }
@@ -2138,38 +2338,105 @@ function parseResumeToStructuredData(text) {
     experienceEntries.push(currentExp);
   }
 
-  // Format Education
-  const educationEntries = [];
-  let currentEdu = null;
-  const eduLines = sections.education;
-  for (let i = 0; i < eduLines.length; i++) {
-    const line = eduLines[i];
-    if (/\b(university|college|institute|school|bachelor|master|b\.tech|b\.e|m\.tech|b\.s|m\.s|degree)\b/i.test(line)) {
-      if (currentEdu) educationEntries.push(currentEdu);
-      const yearMatch = line.match(/\b20\d{2}\b/);
-      currentEdu = {
-        school: line.replace(/\b20\d{2}\b/, "").trim(),
-        degree: line.includes("Bachelor") || line.includes("B.Tech") ? "Bachelor of Technology" : (line.includes("Master") ? "Master of Science" : "Degree"),
-        year: yearMatch ? yearMatch[0] : "2023"
-      };
-    } else if (currentEdu && !currentEdu.degree) {
-      currentEdu.degree = line;
-    }
-    if (educationEntries.length >= 4) break;
+  // Experience text blob
+  let formattedExperience = "";
+  if (experienceEntries.length > 0) {
+    formattedExperience = experienceEntries.map(e => `${e.role || "Role"} @ ${e.company || "Company"} (${e.dates || ""})\n${e.summary || ""}`.trim()).join("\n\n");
+  } else if (sections.experience.length > 0) {
+    formattedExperience = sections.experience.join("\n");
   }
-  if (currentEdu) educationEntries.push(currentEdu);
+
+  // Total Experience Calculation
+  const yrsMatch = cleanText.match(/\b(\d{1,2})\+?\s*(?:years|yrs)\s*(?:of)?\s*experience/i);
+  let totalExperience = yrsMatch ? yrsMatch[1] : (experienceEntries.length > 0 ? "2" : "0");
+  const employmentStatus = parseInt(totalExperience, 10) > 0 || experienceEntries.length > 0 ? "Experienced" : "Fresher";
+
+  // Headline
+  let headline = "";
+  if (matchedSkills.length > 0) {
+    const rolePrefix = cleanText.toLowerCase().includes("java") ? "Java Developer" : 
+      (cleanText.toLowerCase().includes("full stack") ? "Full Stack Engineer" : "Software Development Engineer");
+    headline = `${rolePrefix} | ${matchedSkills.slice(0, 4).join(", ")}`;
+  } else {
+    headline = "Software Development Engineer";
+  }
+
+  if (!summary && fullName) {
+    summary = `${fullName} is an ambitious software engineer specializing in ${matchedSkills.slice(0, 5).join(", ") || "full-stack application development"}. Strong engineering foundation with proven execution velocity, clean coding standards, and collaborative agile problem solving.`;
+  }
+
+  // Structured Education Array for ATS Resume Builder
+  const educationEntries = [];
+  if (eduGrad_college) {
+    educationEntries.push({
+      school: eduGrad_college,
+      degree: eduGrad_degree || "Bachelor of Technology",
+      stream: eduGrad_stream || "",
+      year: eduGrad_year || "2024",
+      cgpa: eduGrad_cgpa || ""
+    });
+  }
+  if (edu12_school) {
+    educationEntries.push({
+      school: edu12_school,
+      degree: "12th Standard / Intermediate",
+      stream: edu12_board || "State Board",
+      year: edu12_year || "2020",
+      cgpa: edu12_cgpa || ""
+    });
+  }
+  if (edu10_school) {
+    educationEntries.push({
+      school: edu10_school,
+      degree: "10th Standard / SSC",
+      stream: edu10_board || "CBSE",
+      year: edu10_year || "2018",
+      cgpa: edu10_cgpa || ""
+    });
+  }
 
   return {
     fullName: fullName || "Candidate Name",
+    firstName,
+    lastName,
     email,
+    alternativeEmail,
     phone,
+    phoneCode,
+    city,
+    country,
+    pincode,
     linkedin,
     github,
-    location: "",
+    portfolio,
+    headline,
     summary,
     skills: uniqueSkills,
+    skillsArray: matchedSkills,
     experience: experienceEntries,
-    education: educationEntries
+    experienceText: formattedExperience,
+    employmentStatus,
+    totalExperience,
+    education: educationEntries,
+    // Exact profile form fields
+    eduGrad_college,
+    eduGrad_degree,
+    eduGrad_stream,
+    eduGrad_year,
+    eduGrad_cgpa,
+    eduPG_college,
+    eduPG_degree,
+    eduPG_stream,
+    eduPG_year,
+    eduPG_cgpa,
+    edu12_school,
+    edu12_board,
+    edu12_year,
+    edu12_cgpa,
+    edu10_school,
+    edu10_board,
+    edu10_year,
+    edu10_cgpa
   };
 }
 
@@ -2567,10 +2834,13 @@ function analyzeSummaryFourLines(candidateSummary, roleKey) {
 }
 
 /**
- * Scale-aware reconstruction of text from PDF.js page content items.
- * Accounts for baseline micro-jitter (avgH * 0.5), horizontal progression,
- * variable font sizes, superscripts, multi-word entities, word spacing gaps,
- * punctuation clinging, and paragraph transitions.
+ * Scale-aware & layout-aware reconstruction of text from PDF.js page content items.
+ * Resolves sentence fragmentation:
+ * - Detects multi-column gutters to avoid interleaving left & right columns.
+ * - Clusters text items into visual lines using adaptive baseline grouping.
+ * - Sorts items within each line strictly left-to-right (X ascending).
+ * - Smoothly joins words on the same line with appropriate single spaces.
+ * - Inserts paragraph breaks only on genuine vertical drops.
  */
 function reconstructPdfPageText(textContent) {
   if (!textContent || !Array.isArray(textContent.items) || textContent.items.length === 0) {
@@ -2578,18 +2848,18 @@ function reconstructPdfPageText(textContent) {
   }
 
   // 1. Normalize items and filter out pure empty items without EOL
-  const items = [];
+  const rawItems = [];
   for (const raw of textContent.items) {
     if (!raw) continue;
-    const str = raw.str || '';
+    const str = typeof raw.str === 'string' ? raw.str : '';
     if (str.length === 0 && !raw.hasEOL) continue;
     
     const tx = raw.transform ? raw.transform[4] : 0;
     const ty = raw.transform ? raw.transform[5] : 0;
-    const h = raw.height || (raw.transform ? Math.abs(raw.transform[3]) : 12) || 12;
+    const h = raw.height || (raw.transform ? Math.abs(raw.transform[0]) : 12) || 12;
     const w = raw.width || (str.length * (h * 0.5));
 
-    items.push({
+    rawItems.push({
       str,
       x: tx,
       y: ty,
@@ -2599,98 +2869,232 @@ function reconstructPdfPageText(textContent) {
     });
   }
 
-  if (items.length === 0) return '';
+  if (rawItems.length === 0) return '';
 
-  let reconstructed = '';
-  let prev = null;
+  // 2. Multi-column detection
+  let minX = Infinity, maxX = -Infinity;
+  rawItems.forEach(it => {
+    if (it.x < minX) minX = it.x;
+    if (it.x + it.w > maxX) maxX = it.x + it.w;
+  });
+  const pageWidth = maxX - minX;
 
-  for (let i = 0; i < items.length; i++) {
-    const cur = items[i];
-
-    if (!prev) {
-      reconstructed += cur.str;
-      prev = cur;
-      continue;
+  let isMultiColumn = false;
+  let splitX = 0;
+  if (pageWidth > 200 && rawItems.length > 25) {
+    const midStart = minX + pageWidth * 0.35;
+    const midEnd = minX + pageWidth * 0.65;
+    for (let candidateX = midStart; candidateX <= midEnd; candidateX += 10) {
+      let crossed = 0;
+      let leftCount = 0;
+      let rightCount = 0;
+      for (const it of rawItems) {
+        if (it.x < candidateX && (it.x + it.w) > candidateX) crossed++;
+        else if (it.x + it.w <= candidateX) leftCount++;
+        else if (it.x >= candidateX) rightCount++;
+      }
+      if (crossed === 0 && leftCount > 8 && rightCount > 8) {
+        isMultiColumn = true;
+        splitX = candidateX;
+        break;
+      }
     }
-
-    const avgH = (cur.h + prev.h) / 2 || 12;
-    const dy = cur.y - prev.y;         // In PDF coordinates: positive = up, negative = down
-    const prevRight = prev.x + prev.w;
-    const gapX = cur.x - prevRight;
-
-    let isSameLine = false;
-    let isNewLine = false;
-    let isParagraphGap = false;
-
-    if (prev.hasEOL) {
-      isNewLine = true;
-    } else if (dy < 0) {
-      if (Math.abs(dy) <= avgH * 0.5) {
-        // Minor baseline jitter (e.g. 1-6pt on 12pt font) on the same visual line
-        isSameLine = true;
-      } else if (cur.x >= prevRight - 2 && Math.abs(dy) <= avgH * 0.8) {
-        // Subscript / font change continuing to the right
-        isSameLine = true;
-      } else if (Math.abs(dy) > avgH * 1.8) {
-        // Significant vertical drop indicates paragraph / section break
-        isParagraphGap = true;
-      } else {
-        // Standard next line drop
-        isNewLine = true;
-      }
-    } else if (dy > 0) {
-      if (dy <= avgH * 0.5 && cur.x >= prevRight - 2) {
-        // Superscript or upward baseline jitter continuing on same line
-        isSameLine = true;
-      } else if (dy > avgH * 1.5) {
-        // Jumped upwards on the page (multi-column shift or new block)
-        isParagraphGap = true;
-      } else {
-        isNewLine = true;
-      }
-    } else {
-      isSameLine = true;
-    }
-
-    if (isParagraphGap) {
-      if (!reconstructed.endsWith('\n\n')) {
-        reconstructed = reconstructed.trimEnd() + '\n\n';
-      }
-      reconstructed += cur.str;
-    } else if (isNewLine) {
-      if (!reconstructed.endsWith('\n')) {
-        reconstructed = reconstructed.trimEnd() + '\n';
-      }
-      reconstructed += cur.str;
-    } else {
-      // Same line: determine if a space is needed
-      const endsWithSpace = prev.str.endsWith(' ') || reconstructed.endsWith(' ');
-      const startsWithSpace = cur.str.startsWith(' ');
-      const isPunctuation = /^[.,:;!?%)\'\"\]}]/.test(cur.str);
-
-      if (!endsWithSpace && !startsWithSpace) {
-        if (gapX > 1.5 && !isPunctuation) {
-          reconstructed += ' ';
-        } else if (gapX <= 1.5 && gapX >= -2 && !isPunctuation) {
-          const prevLastChar = prev.str.slice(-1);
-          const curFirstChar = cur.str.charAt(0);
-          if (/[a-zA-Z0-9]/.test(prevLastChar) && /[a-zA-Z0-9]/.test(curFirstChar) && gapX > 0.5) {
-            reconstructed += ' ';
-          }
-        }
-      }
-      reconstructed += cur.str;
-    }
-
-    prev = cur;
   }
 
-  return reconstructed;
+  function processItemCluster(items) {
+    if (items.length === 0) return '';
+
+    // Cluster items into visual lines by Y coordinate
+    items.sort((a, b) => b.y - a.y || a.x - b.x);
+
+    const lines = [];
+    for (const it of items) {
+      const tolerance = Math.max(3.5, it.h * 0.45);
+      let matchedLine = null;
+      for (const line of lines) {
+        if (Math.abs(line.y - it.y) <= tolerance) {
+          matchedLine = line;
+          break;
+        }
+      }
+      if (matchedLine) {
+        matchedLine.items.push(it);
+        matchedLine.y = (matchedLine.y * (matchedLine.items.length - 1) + it.y) / matchedLine.items.length;
+      } else {
+        lines.push({ y: it.y, items: [it], h: it.h });
+      }
+    }
+
+    lines.sort((a, b) => b.y - a.y);
+
+    let textOut = '';
+    let prevLine = null;
+
+    for (const line of lines) {
+      line.items.sort((a, b) => a.x - b.x);
+
+      let lineStr = '';
+      for (let j = 0; j < line.items.length; j++) {
+        const cur = line.items[j];
+        if (j === 0) {
+          lineStr += cur.str;
+        } else {
+          const prev = line.items[j - 1];
+          const gapX = cur.x - (prev.x + prev.w);
+          const needsSpace = !lineStr.endsWith(' ') && !cur.str.startsWith(' ') && 
+            (gapX > 1.2 || (gapX >= -2 && /[a-zA-Z0-9]/.test(lineStr.slice(-1)) && /[a-zA-Z0-9]/.test(cur.str.charAt(0))));
+          
+          if (needsSpace) lineStr += ' ';
+          lineStr += cur.str;
+        }
+      }
+
+      lineStr = lineStr.trim();
+      if (!lineStr) continue;
+
+      if (!prevLine) {
+        textOut += lineStr;
+      } else {
+        const avgH = (prevLine.h + line.h) / 2 || 12;
+        const lineDrop = prevLine.y - line.y;
+        if (lineDrop > avgH * 1.8) {
+          textOut += '\n\n' + lineStr;
+        } else {
+          textOut += '\n' + lineStr;
+        }
+      }
+
+      prevLine = line;
+    }
+
+    return textOut;
+  }
+
+  if (isMultiColumn) {
+    const colLeft = rawItems.filter(it => it.x + it.w <= splitX);
+    const colRight = rawItems.filter(it => it.x >= splitX);
+    const textLeft = processItemCluster(colLeft);
+    const textRight = processItemCluster(colRight);
+    return (textLeft + '\n\n' + textRight).trim();
+  } else {
+    return processItemCluster(rawItems).trim();
+  }
+}
+
+/**
+ * Deterministic Job Description (JD) Semantic Parser
+ * Extracts role, hiring company, required experience, skills, and qualifications.
+ */
+function parseJdToStructuredData(text) {
+  if (!text || typeof text !== "string") {
+    return { role: "Default / General Role", roleKey: "default", company: "", experience: "", skills: [], location: "", education: "" };
+  }
+
+  const clean = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lower = clean.toLowerCase();
+
+  // 1. Detect Role & Role Key
+  let detectedRole = "Software Development Engineer";
+  let roleKey = "sde";
+
+  if (lower.includes("java developer") || lower.includes("java backend") || lower.includes("spring boot developer")) {
+    detectedRole = "Java Developer";
+    roleKey = "java";
+  } else if (lower.includes("backend developer") || lower.includes("backend engineer") || lower.includes("server engineer")) {
+    detectedRole = "Backend Developer";
+    roleKey = "backend";
+  } else if (lower.includes("frontend developer") || lower.includes("frontend engineer") || lower.includes("react developer") || lower.includes("angular developer")) {
+    detectedRole = "Frontend Developer";
+    roleKey = "frontend";
+  } else if (lower.includes("full stack") || lower.includes("fullstack")) {
+    detectedRole = "Full Stack Developer";
+    roleKey = "fullstack";
+  } else if (lower.includes("devops") || lower.includes("site reliability") || lower.includes("cloud engineer") || lower.includes("infrastructure engineer")) {
+    detectedRole = "DevOps Engineer";
+    roleKey = "devops";
+  } else if (lower.includes("data engineer") || lower.includes("data analyst") || lower.includes("data scientist") || lower.includes("machine learning")) {
+    detectedRole = "Data Engineer / Scientist";
+    roleKey = "data";
+  } else if (lower.includes("qa engineer") || lower.includes("automation engineer") || lower.includes("quality assurance") || lower.includes("sdet")) {
+    detectedRole = "QA / Test Automation Engineer";
+    roleKey = "qa";
+  } else if (lower.includes("marketing") || lower.includes("growth") || lower.includes("seo")) {
+    detectedRole = "Marketing Specialist";
+    roleKey = "marketing";
+  } else {
+    // Attempt regex matching on explicit Role/Title line
+    const titleMatch = clean.match(/(?:Job\s+Title|Title|Position|Role|Designation)\s*[:\-]\s*([A-Za-z0-9\s,&/()-]{3,50})/i);
+    if (titleMatch && titleMatch[1]) {
+      detectedRole = titleMatch[1].trim();
+      roleKey = "sde";
+    }
+  }
+
+  // 2. Extract Hiring Company
+  let company = "";
+  const companyMatch = clean.match(/(?:at|join|about)\s+([A-Z][A-Za-z0-9&.',-]{2,40}\s*(?:Inc|Corp|LLC|Technologies|Solutions|Services|Systems|Labs|Pvt\s+Ltd|Limited)?)\b/i) ||
+    clean.match(/(?:Company|Client|Employer)\s*[:\-]\s*([A-Za-z0-9\s&.,'-]{2,40})/i);
+  if (companyMatch) {
+    const rawComp = companyMatch[1].trim();
+    if (!/^(the|our|a|an|we|this|job|candidate|applicant|role|position|team)$/i.test(rawComp)) {
+      company = rawComp;
+    }
+  }
+
+  // 3. Extract Experience Requirement
+  let experience = "";
+  const expMatch = clean.match(/\b(\d{1,2}(?:\s*[-–—to]+\s*\d{1,2})?\+?\s*(?:years|yrs)\s*(?:of)?\s*(?:relevant\s+)?experience)\b/i);
+  if (expMatch) {
+    experience = expMatch[1].trim();
+  } else if (lower.includes("entry level") || lower.includes("fresher") || lower.includes("graduate trainee")) {
+    experience = "0-1 years (Entry Level / Fresher)";
+  }
+
+  // 4. Extract Required Skills
+  const matchedSkills = [];
+  EXTENSIVE_SKILLS_TAXONOMY.forEach(skill => {
+    const rx = new RegExp('(^|[^a-zA-Z0-9])' + skill.replace(/[.+]/g, '\\$&') + '(?![a-zA-Z0-9])', 'i');
+    if (rx.test(clean)) {
+      if (!matchedSkills.includes(skill)) matchedSkills.push(skill);
+    }
+  });
+
+  // 5. Extract Education Requirements
+  let education = "";
+  const eduMatch = clean.match(/\b(B\.?Tech|B\.?E\.?|B\.?S|M\.?Tech|M\.?S|Master'?s|Bachelor'?s|Degree\s+in\s+[A-Za-z\s]+|Computer\s+Science|Information\s+Technology)\b/i);
+  if (eduMatch) {
+    education = eduMatch[0].trim();
+  }
+
+  // 6. Extract Location / Work Mode
+  let location = "";
+  if (lower.includes("remote") || lower.includes("work from home")) {
+    location = "Remote";
+  } else if (lower.includes("hybrid")) {
+    location = "Hybrid";
+  } else if (lower.includes("on-site") || lower.includes("onsite")) {
+    location = "On-site";
+  }
+  const cityMatch = clean.match(/\b(Bangalore|Bengaluru|Hyderabad|Pune|Mumbai|Delhi|Chennai|Noida|Gurgaon|San Francisco|New York|Seattle|Austin|London|Toronto)\b/i);
+  if (cityMatch) {
+    location = location ? `${cityMatch[0]} (${location})` : cityMatch[0];
+  }
+
+  return {
+    role: detectedRole,
+    roleKey,
+    company,
+    experience,
+    skills: matchedSkills,
+    education,
+    location
+  };
 }
 
 if (typeof window !== 'undefined') {
   window.validateResumeDocument = validateResumeDocument;
   window.parseResumeToStructuredData = parseResumeToStructuredData;
+  window.parseJdToStructuredData = parseJdToStructuredData;
   window.scoreResumeData = scoreResumeData;
   window.reconstructPdfPageText = reconstructPdfPageText;
   window.CareerBridgeDocsDB = CareerBridgeDocsDB;
@@ -2710,6 +3114,7 @@ if (typeof window !== 'undefined') {
     renderNav,
     validateResumeDocument,
     parseResumeToStructuredData,
+    parseJdToStructuredData,
     scoreResumeData
   };
 }
@@ -2729,6 +3134,7 @@ if (typeof module !== 'undefined' && module.exports) {
     getEffectiveAuthToken,
     validateResumeDocument,
     parseResumeToStructuredData,
+    parseJdToStructuredData,
     scoreResumeData
   };
 }

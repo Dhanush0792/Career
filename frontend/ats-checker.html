@@ -837,10 +837,16 @@ mark.kw-miss {
                 </div>
               </div>
 
-              <button type="button" onclick="transferToResumeBuilder()" style="background:var(--primary); color:#020617; border:none; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:12px 24px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 0 20px rgba(0,243,255,0.35); transition:all .2s; white-space:nowrap;">
-                <span>Fix in ATS Builder</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
+              <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <button type="button" onclick="transferToResumeBuilder()" style="background:var(--primary); color:#020617; border:none; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:12px 24px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 0 20px rgba(0,243,255,0.35); transition:all .2s; white-space:nowrap;">
+                  <span>Fix in ATS Builder</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <button type="button" onclick="applyResumeToProfile()" style="background:rgba(47,221,196,0.15); color:var(--success); border:1px solid rgba(47,221,196,0.4); font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:12px 20px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all .2s; white-space:nowrap;">
+                  <span>Auto-Fill Profile</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -972,11 +978,16 @@ async function handleJdFile(file) {
       let jdText = '';
       if (name.endsWith('.pdf')) {
         const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pageTexts = [];
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i);
-          const content = await page.getTextContent();
-          jdText += content.items.map(it => it.str).join(' ') + '\n';
+          const content = await page.getTextContent({ normalizeWhitespace: true });
+          const pageStr = typeof reconstructPdfPageText === 'function' 
+            ? reconstructPdfPageText(content) 
+            : content.items.map(it => it.str).join(' ');
+          if (pageStr && pageStr.trim()) pageTexts.push(pageStr);
         }
+        jdText = pageTexts.join('\n\n');
       } else if (name.endsWith('.docx')) {
         const result = await mammoth.extractRawText({ arrayBuffer });
         jdText = result.value || '';
@@ -1012,58 +1023,23 @@ function extractJdDetails(explicitText) {
     return;
   }
 
-  const clean = text.toLowerCase();
-  let detectedRole = 'Default / General Role';
-  let roleVal = 'default';
-
-  if (clean.includes('software development engineer') || clean.includes('sde')) {
-    detectedRole = 'Software Development Engineer (SDE)';
-    roleVal = 'sde';
-  } else if (clean.includes('java developer') || clean.includes('java engineer')) {
-    detectedRole = 'Java Developer';
-    roleVal = 'java';
-  } else if (clean.includes('backend developer') || clean.includes('backend engineer')) {
-    detectedRole = 'Backend Developer';
-    roleVal = 'backend';
-  } else if (clean.includes('frontend developer') || clean.includes('frontend engineer') || clean.includes('react')) {
-    detectedRole = 'Frontend Developer';
-    roleVal = 'frontend';
-  } else if (clean.includes('full stack') || clean.includes('fullstack')) {
-    detectedRole = 'Full Stack Developer';
-    roleVal = 'fullstack';
-  } else if (clean.includes('devops') || clean.includes('site reliability')) {
-    detectedRole = 'DevOps Engineer';
-    roleVal = 'devops';
-  } else if (clean.includes('data analyst') || clean.includes('data scientist')) {
-    detectedRole = 'Data Analyst / Scientist';
-    roleVal = 'data';
-  }
+  // Use centralized deterministic parser
+  const parsedJd = typeof parseJdToStructuredData === 'function' 
+    ? parseJdToStructuredData(text) 
+    : { role: 'Software Development Engineer', roleKey: 'sde', company: '', experience: '', skills: [] };
 
   const roleSelect = document.getElementById('select-role');
-  if (roleSelect && roleVal !== 'default') {
-    roleSelect.value = roleVal;
+  if (roleSelect && parsedJd.roleKey && parsedJd.roleKey !== 'default') {
+    roleSelect.value = parsedJd.roleKey;
   }
 
-  // Detect Core Skills
-  const commonTech = [
-    'java', 'python', 'spring boot', 'sql', 'postgresql', 'mysql', 'redis', 'docker', 'kubernetes',
-    'aws', 'azure', 'gcp', 'git', 'restful', 'microservices', 'ci/cd', 'linux', 'c++', 'c#', 'react', 'node.js',
-    'data structures', 'algorithms', 'unit testing', 'agile'
-  ];
-
-  const foundSkills = [];
-  commonTech.forEach(skill => {
-    const rx = new RegExp('(^|[^a-zA-Z0-9])' + skill.replace(/[.+]/g, '\\$&') + '(?![a-zA-Z0-9])', 'i');
-    if (rx.test(text)) foundSkills.push(skill);
-  });
-
-  // Detect Experience
-  const expMatch = text.match(/\b(\d{1,2})\+?\s*(?:years|yrs)\s*(?:of)?\s*experience/i);
-  const expStr = expMatch ? ` (${expMatch[0]})` : '';
+  const expStr = parsedJd.experience ? ` (${parsedJd.experience})` : '';
+  const compStr = parsedJd.company ? ` @ ${parsedJd.company}` : '';
 
   if (jdExtractedPreview && jdRoleDetectedBadge && jdSkillsPreviewTags) {
-    jdRoleDetectedBadge.textContent = `${detectedRole}${expStr}`;
-    jdSkillsPreviewTags.innerHTML = foundSkills.slice(0, 12).map(s => 
+    jdRoleDetectedBadge.textContent = `${parsedJd.role}${compStr}${expStr}`;
+    const skillsToShow = parsedJd.skills && parsedJd.skills.length > 0 ? parsedJd.skills : ['Java', 'SQL', 'Git', 'REST APIs'];
+    jdSkillsPreviewTags.innerHTML = skillsToShow.slice(0, 12).map(s => 
       `<span style="background:rgba(47,221,196,0.15); border:1px solid rgba(47,221,196,0.4); color:var(--success); font-family:var(--mono); font-size:9px; padding:2px 8px; border-radius:12px; text-transform:uppercase;">${s}</span>`
     ).join('');
     jdExtractedPreview.style.display = 'block';
@@ -1156,23 +1132,26 @@ async function parsePdfTextAndLayout(arrayBuffer) {
   const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let textItemsCount = 0;
   let imageCount = 0;
-  let textStr = "";
+  const pageTexts = [];
   const multiWordBlocks = [];
 
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
-    const textContent = await page.getTextContent();
+    const textContent = await page.getTextContent({ normalizeWhitespace: true });
     const viewport = page.getViewport({ scale: 1.0 });
     const pageWidth = viewport.width;
+
+    textItemsCount += (textContent.items || []).length;
+    const pageStr = typeof reconstructPdfPageText === 'function' 
+      ? reconstructPdfPageText(textContent) 
+      : (textContent.items || []).map(it => it.str).join(' ');
+    if (pageStr && pageStr.trim()) pageTexts.push(pageStr);
 
     textContent.items.forEach(item => {
       const text = item.str.trim();
       if (text) {
-        textItemsCount++;
-        textStr += item.str + " ";
-        
-        const x = item.transform[4];
-        const y = item.transform[5];
+        const x = item.transform ? item.transform[4] : 0;
+        const y = item.transform ? item.transform[5] : 0;
         const ratio = x / pageWidth;
         
         // Track multi-word blocks (ignoring short dates/numbers/icons)
@@ -1192,6 +1171,8 @@ async function parsePdfTextAndLayout(arrayBuffer) {
       }
     }
   }
+
+  const textStr = pageTexts.join('\n\n');
 
   // Scanned image PDF detection
   const isScanned = textItemsCount < 15 || textStr.trim().length < 60;
@@ -1500,6 +1481,32 @@ function transferToResumeBuilder() {
 
   // Direct navigation into builder so user can edit their imported resume immediately
   window.location.href = "resume-builder.html?mode=import";
+}
+
+// 1-Click transfer from scanned resume directly into profile setup
+function applyResumeToProfile() {
+  if (!lastParsedResumePayload) {
+    window.location.href = "profile-setup.html";
+    return;
+  }
+  try {
+    const rawState = localStorage.getItem("jxa_local_state");
+    let state = null;
+    try { state = rawState ? JSON.parse(rawState) : {}; } catch(e) {}
+    if (!state) state = {};
+    const existing = state.profile || {};
+    const merged = { ...existing, ...lastParsedResumePayload };
+    localStorage.setItem("jxa_local_profile", JSON.stringify(merged));
+    localStorage.setItem("jxa_profile_cache", JSON.stringify(merged));
+    state.profile = merged;
+    localStorage.setItem("jxa_local_state", JSON.stringify(state));
+    showToast("Profile auto-filled from resume! Redirecting...", "success");
+    setTimeout(() => {
+      window.location.href = "profile-setup.html";
+    }, 400);
+  } catch(e) {
+    window.location.href = "profile-setup.html";
+  }
 }
 
 function switchAtsView(view) {
