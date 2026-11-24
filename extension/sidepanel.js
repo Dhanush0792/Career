@@ -75,14 +75,17 @@ async function updateActivePortalInfo() {
 // ── Profile Storage & Management ───────────────────────────────────────────
 async function loadStoredProfiles() {
   return new Promise((resolve) => {
-    chrome.storage.local.get(["jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyProfile", "jobxapplyPasscode"], (res) => {
+    chrome.storage.local.get(["jobxapplyProfiles", "jobxapplyActiveProfileId", "jobxapplyProfile", "jobxapply_profile", "jobxapplyPasscode"], (res) => {
       allProfiles = res.jobxapplyProfiles || {};
       activeProfileId = res.jobxapplyActiveProfileId || "default";
 
-      if (allProfiles[activeProfileId]) {
+      if (allProfiles[activeProfileId] && Object.keys(allProfiles[activeProfileId]).length) {
         activeProfile = allProfiles[activeProfileId];
-      } else if (res.jobxapplyProfile) {
+      } else if (res.jobxapplyProfile && Object.keys(res.jobxapplyProfile).length) {
         activeProfile = res.jobxapplyProfile;
+        allProfiles[activeProfileId] = activeProfile;
+      } else if (res.jobxapply_profile && Object.keys(res.jobxapply_profile).length) {
+        activeProfile = res.jobxapply_profile.payload ? res.jobxapply_profile.payload : res.jobxapply_profile;
         allProfiles[activeProfileId] = activeProfile;
       } else {
         activeProfile = {};
@@ -802,6 +805,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("dashFillBtn")?.addEventListener("click", executeAutofill);
   document.getElementById("spOpenFullTabBtn")?.addEventListener("click", () => {
     chrome.tabs.create({ url: chrome.runtime.getURL("sidepanel.html") });
+  });
+
+  // 1-Click Sync from Website / Cloud
+  document.getElementById("spSyncBtn")?.addEventListener("click", async () => {
+    showToast("Syncing profile...");
+    chrome.runtime.sendMessage({ type: "jobxapply:getProfile", force: true }, async (res) => {
+      if (res?.profile && Object.keys(res.profile).length) {
+        activeProfile = res.profile.payload ? res.profile.payload : res.profile;
+        allProfiles[activeProfileId] = activeProfile;
+        populateProfileForm();
+        updateDashboardUI();
+        showToast("✓ Profile synced!");
+      } else {
+        // Query active web tab for website profile
+        const tab = await getActiveTab();
+        if (tab?.id) {
+          chrome.tabs.sendMessage(tab.id, { type: "jobxapply:getProfile" }, (webRes) => {
+            if (webRes?.profile) {
+              activeProfile = webRes.profile.payload ? webRes.profile.payload : webRes.profile;
+              allProfiles[activeProfileId] = activeProfile;
+              populateProfileForm();
+              updateDashboardUI();
+              showToast("✓ Profile synced from web tab!");
+            } else {
+              showToast("Please save your profile on JobXApply web app first");
+            }
+          });
+        }
+      }
+    });
   });
 
   // Persona Switching
