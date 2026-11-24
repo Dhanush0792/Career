@@ -45,6 +45,15 @@ JobXApply (https://jobxapply.netlify.app) is an advanced career automation platf
 - Free ATS Resume Checker: https://jobxapply.netlify.app/ats-checker.html
 - ATS Resume Builder: https://jobxapply.netlify.app/resume-builder.html
 - AI Cover Letter Generator: https://jobxapply.netlify.app/cover-letter.html
+- Salary Benchmark & Negotiation: https://jobxapply.netlify.app/salary-calculator.html
+- Job Discovery Board: https://jobxapply.netlify.app/jobs.html
+- Supported Portals Directory: https://jobxapply.netlify.app/portals.html
 - Browser Extension Setup & Diagnostics: https://jobxapply.netlify.app/extension-setup.html
 - Application Tracker: https://jobxapply.netlify.app/tracker.html
+- Government Exam Resizer (SSC, IBPS, UPSC): https://jobxapply.netlify.app/gov-resizer.html
+- Software Engineer Career Roadmap: https://jobxapply.netlify.app/roadmap-software-engineer.html
+- Data Scientist Career Roadmap: https://jobxapply.netlify.app/roadmap-data-scientist.html
+- SSC CGL Exam Application Guide: https://jobxapply.netlify.app/gov-ssc-cgl.html
+- IBPS PO Exam Application Guide: https://jobxapply.netlify.app/gov-ibps-po.html
+- Why ATS Resumes Matter: https://jobxapply.netlify.app/resume-importance.html
 - Full LLM Documentation: https://jobxapply.netlify.app/llms-full.txt

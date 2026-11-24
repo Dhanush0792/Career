@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JobXApply // Authentication Callback</title>
+<meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -82,7 +83,7 @@ function parseJwtEmail(token) {
 }
 
 let isProcessing = false;
-async function processSession(token, userEmail = "") {
+async function processSession(token, userEmail = "", refreshToken = "") {
   if (isProcessing || !token) return;
   isProcessing = true;
 
@@ -92,6 +93,9 @@ async function processSession(token, userEmail = "") {
     
     // Store credentials safely and clear logged-out flag
     localStorage.setItem("jxa_token", token);
+    if (refreshToken) {
+      localStorage.setItem("jxa_refresh_token", refreshToken);
+    }
     localStorage.setItem("jxa_last_active", String(Date.now()));
     sessionStorage.removeItem("jxa_logged_out");
     if (email) localStorage.setItem("jxa_user_email", email);
@@ -196,22 +200,24 @@ async function processSession(token, userEmail = "") {
 }
 
 async function handleCallback() {
-  // 1. Direct Hash Check (access_token in URL hash)
+  // 1. Direct Hash Check (access_token & refresh_token in URL hash)
   const hash = window.location.hash.substring(1);
   if (hash) {
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
+    const refreshToken = params.get("refresh_token") || "";
     if (token) {
-      await processSession(token);
+      await processSession(token, "", refreshToken);
       return;
     }
   }
 
-  // 2. Query Param Check (code or token)
+  // 2. Query Param Check (code, token, refresh_token)
   const searchParams = new URLSearchParams(window.location.search);
   const queryToken = searchParams.get("access_token");
+  const queryRefreshToken = searchParams.get("refresh_token") || "";
   if (queryToken) {
-    await processSession(queryToken);
+    await processSession(queryToken, "", queryRefreshToken);
     return;
   }
 
@@ -222,13 +228,13 @@ async function handleCallback() {
       
       supabaseClient.auth.onAuthStateChange((event, session) => {
         if (session?.access_token) {
-          processSession(session.access_token, session.user?.email);
+          processSession(session.access_token, session.user?.email, session.refresh_token || "");
         }
       });
 
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session?.access_token) {
-        await processSession(session.access_token, session.user?.email);
+        await processSession(session.access_token, session.user?.email, session.refresh_token || "");
         return;
       }
     }

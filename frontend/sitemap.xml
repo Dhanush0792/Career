@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  <!-- Core Platform & Landing -->
   <url>
     <loc>https://jobxapply.netlify.app/</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -12,85 +11,141 @@
       <image:title>JobXApply - Autonomous Career Automation &amp; AI Job Application Assistant</image:title>
     </image:image>
   </url>
-
-  <!-- Core Tools (Highest Organic & AI Search Intent) -->
   <url>
     <loc>https://jobxapply.netlify.app/ats-checker.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://jobxapply.netlify.app/resume-builder.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://jobxapply.netlify.app/cover-letter.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://jobxapply.netlify.app/extension-setup.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <loc>https://jobxapply.netlify.app/salary-calculator.html</loc>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
+    <loc>https://jobxapply.netlify.app/jobs.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/extension-landing.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/extension-setup.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://jobxapply.netlify.app/tracker.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://jobxapply.netlify.app/tools.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
-
-  <!-- Informational, Features & Discovery Pages -->
+  <url>
+    <loc>https://jobxapply.netlify.app/portals.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/gov-resizer.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/gov-ssc-cgl.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/gov-ibps-po.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/roadmap-software-engineer.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/roadmap-data-scientist.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://jobxapply.netlify.app/resume-importance.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
   <url>
     <loc>https://jobxapply.netlify.app/how-it-works.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://jobxapply.netlify.app/features.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://jobxapply.netlify.app/about.html</loc>
-    <lastmod>2026-09-25</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
     <loc>https://jobxapply.netlify.app/pricing.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://jobxapply.netlify.app/blog.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
+    <loc>https://jobxapply.netlify.app/about.html</loc>
+    <lastmod>2026-11-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
     <loc>https://jobxapply.netlify.app/contact.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
     <loc>https://jobxapply.netlify.app/privacy-terms.html</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-11-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>

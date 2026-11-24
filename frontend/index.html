@@ -94,13 +94,7 @@
         "Live dual-pane A4 ATS resume builder with vector PDF export",
         "Context-aware AI tailored cover letter generator",
         "Unified job application tracking dashboard"
-      ],
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "ratingCount": "1280",
-        "bestRating": "5"
-      }
+      ]
     },
     {
       "@type": "FAQPage",
@@ -170,9 +164,8 @@
   ]
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson@3"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson@3" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -213,11 +206,10 @@ body {
   color: var(--text);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
-  cursor: none;
 }
 a    { color: inherit; text-decoration: none; }
 ul   { list-style: none; }
-button { cursor: none; border: none; background: none; font-family: inherit; color: inherit; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; color: inherit; }
 ::selection { background: var(--orange); color: #000; }
 :focus-visible { outline: 1px solid var(--orange); outline-offset: 2px; }
 
@@ -459,7 +451,7 @@ body.on-interactive #cur-ring {
   padding: 0 24px; height: 44px;
   border: 1px solid;
   transition: background .1s, color .1s, border-color .1s;
-  cursor: none;
+  cursor: pointer;
   white-space: nowrap;
 }
 .btn--primary {
@@ -851,7 +843,7 @@ body.on-interactive #cur-ring {
   padding: 8px 16px;
   border: 1px solid var(--border2);
   color: var(--muted);
-  cursor: none;
+  cursor: pointer;
   background: transparent;
   transition: all 0.1s;
 }
@@ -1118,7 +1110,7 @@ body.on-interactive #cur-ring {
   gap: 20px; width: 100%; padding: 20px 28px;
   font-family: var(--mono); font-size: 12px; font-weight: 700;
   letter-spacing: .06em; text-transform: uppercase;
-  color: var(--text); text-align: left; cursor: none;
+  color: var(--text); text-align: left; cursor: pointer;
   transition: background .1s, color .1s;
 }
 .fq-btn::before {
@@ -1183,7 +1175,42 @@ body.on-interactive #cur-ring {
 ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••• */
 footer {
   border-top: 1px solid var(--border);
-  padding: 40px 0;
+  padding: 48px 0 40px;
+}
+.foot__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 36px;
+  padding-bottom: 40px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+@media (max-width: 900px) {
+  .foot__grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+}
+@media (max-width: 540px) {
+  .foot__grid { grid-template-columns: 1fr; gap: 20px; }
+}
+.foot__col { display: flex; flex-direction: column; gap: 10px; }
+.foot__col-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 6px;
+}
+.foot__col a {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .15s ease;
+  line-height: 1.5;
+}
+.foot__col a:hover {
+  color: var(--white);
 }
 .foot__inner {
   display: flex; align-items: center; justify-content: space-between;
@@ -2071,6 +2098,43 @@ footer {
 ••••••••••••••••••••••••••••••••••••••• -->
 <footer>
   <div class="container">
+    <div class="foot__grid">
+      <div class="foot__col">
+        <span class="foot__col-title">Platform &amp; Ecosystem</span>
+        <a href="features.html">Core Features &amp; Engine</a>
+        <a href="how-it-works.html">How Autofill Works</a>
+        <a href="jobs.html">Live Job Discovery Board</a>
+        <a href="portals.html">50+ Supported Job Portals</a>
+        <a href="pricing.html">Plans &amp; Free Access</a>
+        <a href="extension-setup.html">Chrome Extension Setup</a>
+      </div>
+      <div class="foot__col">
+        <span class="foot__col-title">Free Career Tools</span>
+        <a href="ats-checker.html">Free ATS Resume Checker</a>
+        <a href="resume-builder.html">Dual-Pane Resume Builder</a>
+        <a href="cover-letter.html">AI Cover Letter Generator</a>
+        <a href="salary-calculator.html">Salary Benchmark &amp; Negotiation</a>
+        <a href="tracker.html">Universal Application Tracker</a>
+        <a href="gov-resizer.html">Gov Exam Photo &amp; Sign Resizer</a>
+      </div>
+      <div class="foot__col">
+        <span class="foot__col-title">Guides &amp; Roadmaps</span>
+        <a href="blog.html">Career Knowledge &amp; Strategy</a>
+        <a href="resume-importance.html">Why Resume Formatting Matters</a>
+        <a href="roadmap-software-engineer.html">Software Engineer Career Path</a>
+        <a href="roadmap-data-scientist.html">Data Science Career Path</a>
+        <a href="gov-ssc-cgl.html">SSC CGL Complete Application Guide</a>
+        <a href="gov-ibps-po.html">IBPS PO Complete Application Guide</a>
+      </div>
+      <div class="foot__col">
+        <span class="foot__col-title">Company &amp; Legal</span>
+        <a href="about.html">About JobXApply Mission</a>
+        <a href="contact.html">Support &amp; Feedback</a>
+        <a href="privacy-terms.html">Privacy Policy &amp; Data Security</a>
+        <a href="privacy-terms.html">Terms of Service</a>
+        <a href="llms.txt" rel="help">LLM &amp; AI Agent Documentation</a>
+      </div>
+    </div>
     <div class="foot__inner">
       <a href="#" class="logo" aria-label="JobXApply" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
         <div style="width:28px;height:28px;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;">

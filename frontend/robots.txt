@@ -6,50 +6,49 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 Disallow: /database/
+Disallow: /dashboard.html
+Disallow: /settings.html
+Disallow: /profile-setup.html
+Disallow: /auth.html
+Disallow: /auth-callback.html
+Disallow: /reset-password.html
+Disallow: /apply-sandbox.html
+Disallow: /autofill-lab.html
+Disallow: /maintenance.html
+Disallow: /onboarding.html
+Disallow: /404.html
 
 # ── Generative Engine Optimization (GEO) & AI Search Agents ──
-# Explicitly allowing AI search bots, answer engines, and LLM web retrievers
+# Explicitly allowing AI search bots, answer engines, and LLM web retrievers with protected routes
 User-agent: GPTBot
-Allow: /
-
 User-agent: ChatGPT-User
-Allow: /
-
 User-agent: OAI-SearchBot
-Allow: /
-
 User-agent: ClaudeBot
-Allow: /
-
 User-agent: Claude-Web
-Allow: /
-
 User-agent: anthropic-ai
-Allow: /
-
 User-agent: PerplexityBot
-Allow: /
-
 User-agent: Google-Extended
-Allow: /
-
 User-agent: Googlebot
-Allow: /
-
 User-agent: Googlebot-Image
-Allow: /
-
 User-agent: Bingbot
-Allow: /
-
 User-agent: Applebot-Extended
-Allow: /
-
 User-agent: cohere-ai
-Allow: /
-
 User-agent: DuckAssistBot
 Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /database/
+Disallow: /dashboard.html
+Disallow: /settings.html
+Disallow: /profile-setup.html
+Disallow: /auth.html
+Disallow: /auth-callback.html
+Disallow: /reset-password.html
+Disallow: /apply-sandbox.html
+Disallow: /autofill-lab.html
+Disallow: /maintenance.html
+Disallow: /onboarding.html
+Disallow: /404.html
 
 # Canonical Sitemaps & LLM Context Documents
 Sitemap: https://jobxapply.netlify.app/sitemap.xml
