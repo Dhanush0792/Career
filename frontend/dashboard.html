@@ -328,6 +328,7 @@ const consoleBox = document.getElementById('console');
 let sseConnected = false;
 
 function addLog(text, cls = '') {
+  if (!consoleBox) return;
   const line = document.createElement('div');
   line.className = 'console-line ' + cls;
   line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
@@ -335,23 +336,45 @@ function addLog(text, cls = '') {
   consoleBox.scrollTop = consoleBox.scrollHeight;
 }
 
-// ”€”€ Profile rendering ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
+// ── Profile rendering ────────────────────────────────────────────────────────
 function renderProfileState(state) {
-  const profile = state?.profile || {};
-  const { count, total, pct } = calcCompleteness(profile);
-  const name = profile.fullName ? profile.fullName.toUpperCase() : '-';
+  if (!state) return;
+  const profile = state.profile || (state.profiles && state.profiles[state.activeProfileId]) || {};
+  const { count, total, pct } = (typeof calcCompleteness === 'function') 
+    ? calcCompleteness(profile) 
+    : { count: 0, total: 15, pct: 0 };
 
-  document.getElementById('op-name').textContent = name;
-  document.getElementById('op-version').textContent = state?.version ?? '-';
-  document.getElementById('op-updated').textContent = state?.updatedAt
-    ? new Date(state.updatedAt).toLocaleString() : '-';
+  // Resolve candidate name
+  const rawName = (profile.fullName || profile.name || 
+    (profile.firstName ? `${profile.firstName} ${profile.lastName || ''}`.trim() : '') ||
+    localStorage.getItem('jxa_user_name') || 
+    (localStorage.getItem('jxa_user_email') || '').split('@')[0] || 
+    'CANDIDATE').trim();
+  const displayName = rawName ? rawName.toUpperCase() : 'USER';
 
-  // Completeness
-  document.getElementById('comp-pct').textContent = (count > 0) ? pct + '%' : '0%';
-  document.getElementById('comp-sub').textContent = `${count} / ${total} fields filled`;
+  const opNameEl = document.getElementById('op-name');
+  if (opNameEl) opNameEl.textContent = displayName;
+
+  const opVerEl = document.getElementById('op-version');
+  if (opVerEl) opVerEl.textContent = state.version ?? '1';
+
+  const opUpEl = document.getElementById('op-updated');
+  if (opUpEl) {
+    opUpEl.textContent = state.updatedAt ? new Date(state.updatedAt).toLocaleString() : 'Just now';
+  }
+
+  // Completeness Metrics
+  const compPctEl = document.getElementById('comp-pct');
+  if (compPctEl) compPctEl.textContent = `${pct}%`;
+
+  const compSubEl = document.getElementById('comp-sub');
+  if (compSubEl) compSubEl.textContent = `${count} / ${total} fields filled`;
+
   const bar = document.getElementById('comp-bar');
-  setTimeout(() => { bar.style.width = pct + '%'; }, 100);
-  if (pct === 100) bar.classList.add('complete');
+  if (bar) {
+    setTimeout(() => { bar.style.width = pct + '%'; }, 80);
+    if (pct === 100) bar.classList.add('complete');
+  }
 
   // Hint & Action Checklist
   const hint = document.getElementById('comp-hint');
@@ -359,46 +382,59 @@ function renderProfileState(state) {
   if (checklist) checklist.innerHTML = '';
 
   const missingTasks = [];
-  if (!profile.fullName || !profile.email) missingTasks.push({ label: 'Fill basic contact info', tab: 'tab-basics', weight: '+25%' });
-  if (!profile.skills || profile.skills.length < 3) missingTasks.push({ label: 'Add key technical skills', tab: 'tab-professional', weight: '+20%' });
-  if (!profile.experience || profile.experience.length < 10) missingTasks.push({ label: 'Add work experience or projects', tab: 'tab-experience', weight: '+20%' });
-  if (!profile.education && !profile.edu10_school) missingTasks.push({ label: 'Add academic qualifications', tab: 'tab-academic', weight: '+15%' });
-  if (!profile.resumeDraft) missingTasks.push({ label: 'Upload or draft resume', tab: 'tab-documents', weight: '+10%' });
-  if (!profile.q_why_hire && !profile.q_challenge) missingTasks.push({ label: 'Answer portal screening questions', tab: 'tab-vault', weight: '+10%' });
+  if (!profile.fullName && !profile.name) missingTasks.push({ label: 'Fill basic contact info', tab: 'section-basics', weight: '+25%' });
+  if (!profile.skills || (Array.isArray(profile.skills) ? profile.skills.length < 3 : String(profile.skills).length < 5)) missingTasks.push({ label: 'Add key technical skills', tab: 'section-skills', weight: '+20%' });
+  if (!profile.experience || String(profile.experience).length < 10) missingTasks.push({ label: 'Add work experience or projects', tab: 'section-experience', weight: '+20%' });
+  if (!profile.education && !profile.edu10_school && !profile.eduGrad_college) missingTasks.push({ label: 'Add academic qualifications', tab: 'section-academic', weight: '+15%' });
+  if (!profile.resumeDraft) missingTasks.push({ label: 'Upload or draft resume', tab: 'section-certifications', weight: '+10%' });
 
-  if (missingTasks.length === 0) {
-    hint.innerHTML = '<span style="color:var(--success)">[OK] Profile 100% complete.</span> You\'re ready for every portal.';
-  } else {
-    hint.textContent = 'Recommended steps to reach 100% portal readiness:';
-    missingTasks.slice(0, 3).forEach(task => {
-      const item = document.createElement('a');
-      item.href = `profile-setup.html#${task.tab}`;
-      item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--text);text-decoration:none;transition:border-color .15s;';
-      item.innerHTML = `<span>+ ${task.label}</span><span style="color:var(--primary);font-weight:700;">${task.weight}</span>`;
-      item.onmouseenter = () => { item.style.borderColor = 'var(--primary)'; };
-      item.onmouseleave = () => { item.style.borderColor = 'var(--glass-border)'; };
-      checklist.appendChild(item);
-    });
+  if (hint) {
+    if (missingTasks.length === 0) {
+      hint.innerHTML = '<span style="color:var(--success)">[OK] Profile complete.</span> Ready for 1-click autofill across all portals.';
+    } else {
+      hint.textContent = 'Recommended steps to reach 100% portal readiness:';
+      if (checklist) {
+        missingTasks.slice(0, 3).forEach(task => {
+          const item = document.createElement('a');
+          item.href = `profile-setup.html#${task.tab}`;
+          item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:6px;font-family:var(--mono);font-size:10px;color:var(--text);text-decoration:none;transition:border-color .15s;';
+          item.innerHTML = `<span>+ ${task.label}</span><span style="color:var(--primary);font-weight:700;">${task.weight}</span>`;
+          item.onmouseenter = () => { item.style.borderColor = 'var(--primary)'; };
+          item.onmouseleave = () => { item.style.borderColor = 'var(--glass-border)'; };
+          checklist.appendChild(item);
+        });
+      }
+    }
   }
 
-  // Sync metrics
-  document.getElementById('m-version').textContent = state?.version ?? '-';
-  document.getElementById('m-updated').textContent = state?.updatedAt
-    ? new Date(state.updatedAt).toLocaleString() : '-';
-  document.getElementById('m-fields').textContent = `${count} / ${total}`;
-  document.getElementById('m-apps').textContent = loadApplications().length;
-  document.getElementById('m-origin').textContent = state?.origin || '-';
-  document.getElementById('m-tier').textContent = (state?.tier || 'free').toUpperCase();
+  // Sync metrics (safe element updates)
+  const mVer = document.getElementById('m-version');
+  if (mVer) mVer.textContent = state.version ?? '1';
+
+  const mUp = document.getElementById('m-updated');
+  if (mUp) mUp.textContent = state.updatedAt ? new Date(state.updatedAt).toLocaleString() : 'Just now';
+
+  const mFields = document.getElementById('m-fields');
+  if (mFields) mFields.textContent = `${count} / ${total}`;
+
+  const mApps = document.getElementById('m-apps');
+  if (mApps) mApps.textContent = typeof loadApplications === 'function' ? loadApplications().length : 0;
+
+  const mTier = document.getElementById('m-tier');
+  if (mTier) mTier.textContent = (state.tier || 'free').toUpperCase();
+
+  const mOrigin = document.getElementById('m-origin');
+  if (mOrigin) mOrigin.textContent = state.origin || 'Synced';
 
   // Populate profiles select dropdown
   const select = document.getElementById('active-profile-select');
-  if (select && state?.profiles) {
+  if (select && state.profiles) {
     select.innerHTML = '';
     for (const key of Object.keys(state.profiles)) {
       const opt = document.createElement('option');
       opt.value = key;
       opt.textContent = state.profiles[key].profileName || key;
-      if (key === state.activeProfileId) {
+      if (key === (state.activeProfileId || 'default')) {
         opt.selected = true;
       }
       select.appendChild(opt);
@@ -593,12 +629,30 @@ document.addEventListener('jobxapply:offline', () => {
 
 (async () => {
   // 1. Instant optimistic UI render from cache (0ms delay)
-  const cachedState = getCachedProfileState();
+  let cachedState = (typeof getCachedProfileState === 'function') ? getCachedProfileState() : null;
+  if (!cachedState && typeof localStorage !== 'undefined') {
+    const rawProfile = localStorage.getItem('jxa_local_profile') || localStorage.getItem('jxa_profile_cache');
+    if (rawProfile) {
+      try {
+        const p = JSON.parse(rawProfile);
+        cachedState = { profile: p, version: 1, updatedAt: Date.now(), origin: 'local' };
+      } catch(e) {}
+    }
+  }
+
   if (cachedState) {
-    renderProfileState(cachedState);
-    renderTracker();
-    syncDot.classList.remove('offline');
-    syncLabel.textContent = 'Restored from cache...';
+    try {
+      renderProfileState(cachedState);
+      renderTracker();
+      if (syncDot) syncDot.classList.remove('offline');
+      if (syncLabel) syncLabel.textContent = 'Synced (Ready)';
+      // Broadcast cached profile to extension immediately
+      window.dispatchEvent(new CustomEvent("jobxapply:saveWebProfileToExtension", {
+        detail: { profile: cachedState.profile }
+      }));
+    } catch(renderErr) {
+      console.warn("Optimistic cache render notice:", renderErr);
+    }
   }
 
   // Telemetry page view hit
@@ -617,29 +671,31 @@ document.addEventListener('jobxapply:offline', () => {
         const bEl = document.getElementById('sys-broadcast-banner');
         const bTag = document.getElementById('sys-broadcast-tag');
         const bTxt = document.getElementById('sys-broadcast-text');
-        bTxt.textContent = bData.banner.text;
+        if (bTxt) bTxt.textContent = bData.banner.text;
         
         const sev = bData.banner.severity || 'info';
-        if (sev === 'critical') {
-          bEl.style.background = 'rgba(245, 90, 35, 0.12)';
-          bEl.style.borderColor = 'rgba(245, 90, 35, 0.4)';
-          bTag.style.background = 'rgba(245, 90, 35, 0.2)';
-          bTag.style.color = '#F55A23';
-          bTag.textContent = 'CRITICAL';
-        } else if (sev === 'warning') {
-          bEl.style.background = 'rgba(245, 166, 35, 0.12)';
-          bEl.style.borderColor = 'rgba(245, 166, 35, 0.4)';
-          bTag.style.background = 'rgba(245, 166, 35, 0.2)';
-          bTag.style.color = '#F5A623';
-          bTag.textContent = 'NOTICE';
-        } else {
-          bEl.style.background = 'rgba(91, 79, 232, 0.12)';
-          bEl.style.borderColor = 'rgba(91, 79, 232, 0.4)';
-          bTag.style.background = 'rgba(91, 79, 232, 0.2)';
-          bTag.style.color = '#5B4FE8';
-          bTag.textContent = 'UPDATE';
+        if (bEl && bTag) {
+          if (sev === 'critical') {
+            bEl.style.background = 'rgba(245, 90, 35, 0.12)';
+            bEl.style.borderColor = 'rgba(245, 90, 35, 0.4)';
+            bTag.style.background = 'rgba(245, 90, 35, 0.2)';
+            bTag.style.color = '#F55A23';
+            bTag.textContent = 'CRITICAL';
+          } else if (sev === 'warning') {
+            bEl.style.background = 'rgba(245, 166, 35, 0.12)';
+            bEl.style.borderColor = 'rgba(245, 166, 35, 0.4)';
+            bTag.style.background = 'rgba(245, 166, 35, 0.2)';
+            bTag.style.color = '#F5A623';
+            bTag.textContent = 'NOTICE';
+          } else {
+            bEl.style.background = 'rgba(91, 79, 232, 0.12)';
+            bEl.style.borderColor = 'rgba(91, 79, 232, 0.4)';
+            bTag.style.background = 'rgba(91, 79, 232, 0.2)';
+            bTag.style.color = '#5B4FE8';
+            bTag.textContent = 'UPDATE';
+          }
+          bEl.style.display = 'flex';
         }
-        bEl.style.display = 'flex';
       }
     }
   } catch(e) {}
@@ -651,28 +707,37 @@ document.addEventListener('jobxapply:offline', () => {
     renderTracker();
 
     if (state.origin !== 'none') {
-      syncDot.classList.remove('offline');
-      syncLabel.textContent = state.origin === 'local' ? 'Cached (server offline)' : 'Synced';
+      if (syncDot) syncDot.classList.remove('offline');
+      if (syncLabel) syncLabel.textContent = state.origin === 'local' ? 'Cached (Ready)' : 'Synced';
       if (!cachedState || cachedState.version !== state.version || cachedState.updatedAt !== state.updatedAt) {
         addLog('Profile state synchronized with server.', 'success');
       }
     } else {
-      syncLabel.textContent = 'No profile yet';
-      addLog('No profile data found. Visit Profile to get started.', 'warn');
+      if (syncLabel) syncLabel.textContent = cachedState ? 'Synced (Ready)' : 'No profile yet';
     }
   } catch (e) {
-    console.error("Background sync failed:", e);
-    syncDot.classList.add('offline');
-    syncLabel.textContent = 'Sync offline';
+    console.warn("Background cloud sync notice:", e.message);
+    if (!cachedState) {
+      if (syncDot) syncDot.classList.add('offline');
+      if (syncLabel) syncLabel.textContent = 'Sync offline';
+    } else {
+      if (syncLabel) syncLabel.textContent = 'Cached (Ready)';
+    }
   }
 
   connectSSE();
-  
-  const snapModal = document.getElementById('snapshot-modal');
-  document.getElementById('close-modal').addEventListener('click', () => snapModal.style.display = 'none');
-  snapModal.addEventListener('click', (e) => { if (e.target === snapModal) snapModal.style.display = 'none'; });
+})();
 
-  // Browser Extension Detection Handshake
+// Modal handlers
+const snapModal = document.getElementById('snapshot-modal');
+const closeModalBtn = document.getElementById('close-modal');
+if (closeModalBtn && snapModal) {
+  closeModalBtn.addEventListener('click', () => snapModal.style.display = 'none');
+  snapModal.addEventListener('click', (e) => { if (e.target === snapModal) snapModal.style.display = 'none'; });
+}
+
+// ── Immediate Browser Extension Handshake (0ms Delay) ──────────────────────
+(function initExtensionHandshake() {
   const extDot = document.getElementById('ext-status-dot');
   const extText = document.getElementById('ext-status-text');
 
@@ -696,7 +761,7 @@ document.addEventListener('jobxapply:offline', () => {
           if (extDot) extDot.style.background = '#94a3b8';
           if (extText) extText.textContent = 'Extension Not Detected';
         }
-      }, 1500);
+      }, 1200);
     }
   }
 
@@ -715,10 +780,11 @@ document.addEventListener('jobxapply:offline', () => {
     window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PING' }, '*');
   }
 
-  pingExtension();
-  setTimeout(pingExtension, 600);
-  setTimeout(pingExtension, 1500);
+  // Ping immediately and check state
   checkExtension();
+  pingExtension();
+  setTimeout(pingExtension, 300);
+  setTimeout(pingExtension, 1000);
 })();
 </script>
 

@@ -1667,6 +1667,14 @@ function triggerAutoSave() {
         activeProfileId: currentPersonaId,
         cachedAt: Date.now()
       }));
+      localStorage.setItem('jxa_local_state', JSON.stringify({
+        profile: current,
+        profiles: allPersonas,
+        activeProfileId: currentPersonaId,
+        version: 1,
+        updatedAt: Date.now(),
+        origin: 'local'
+      }));
 
       // Proactively notify extension
       try {

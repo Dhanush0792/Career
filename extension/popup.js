@@ -69,27 +69,52 @@ async function trySyncFromActiveWebTab() {
     for (const tab of tabs) {
       if (!tab.url) continue;
       const u = tab.url.toLowerCase();
-      if (u.includes(".netlify.app") || u.includes("jobxapply") || u.includes("careerhub") || u.includes("localhost:") || u.includes("127.0.0.1:")) {
+      if (
+        u.includes(".netlify.app") ||
+        u.includes("jobxapply") ||
+        u.includes("careerhub") ||
+        u.includes("careerbridge") ||
+        u.includes(".onrender.com") ||
+        u.includes(".vercel.app") ||
+        u.includes(".github.io") ||
+        u.includes("localhost:") ||
+        u.includes("127.0.0.1:") ||
+        u.startsWith("file://")
+      ) {
         const results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          func: () => ({
-            token: localStorage.getItem("jxa_token") || "",
-            email: localStorage.getItem("jxa_user_email") || "",
-            passcode: localStorage.getItem("jxa_passcode") || "",
-            profile: localStorage.getItem("jxa_local_profile") || localStorage.getItem("jxa_profile_cache") || ""
-          })
+          func: () => {
+            let profileStr = localStorage.getItem("jxa_local_profile") || localStorage.getItem("jxa_profile_cache") || "";
+            if (!profileStr) {
+              const rawState = localStorage.getItem("jxa_local_state");
+              if (rawState) {
+                try {
+                  const s = JSON.parse(rawState);
+                  const p = s.profile || s.candidate_profile || s;
+                  if (p && typeof p === "object") profileStr = JSON.stringify(p);
+                } catch(e) {}
+              }
+            }
+            return {
+              token: localStorage.getItem("jxa_token") || "",
+              email: localStorage.getItem("jxa_user_email") || "",
+              passcode: localStorage.getItem("jxa_passcode") || "",
+              profile: profileStr
+            };
+          }
         });
         const session = results?.[0]?.result;
         if (session && session.profile) {
           let parsed = null;
           try { parsed = JSON.parse(session.profile); } catch(e) {}
-          if (parsed && (parsed.fullName || parsed.firstName || parsed.email)) {
+          const candidate = parsed?.profile || parsed?.candidate_profile || parsed;
+          if (candidate && (candidate.fullName || candidate.firstName || candidate.name || candidate.email)) {
             // Found real user profile in web tab!
             const toSet = {
-              jobxapplyProfile: parsed,
-              jobxapplyProfiles: { "default": parsed },
+              jobxapplyProfile: candidate,
+              jobxapplyProfiles: { "default": candidate },
               jobxapplyActiveProfileId: "default",
-              jobxapplyEmail: session.email || parsed.email || ""
+              jobxapplyEmail: session.email || candidate.email || ""
             };
             if (session.token) toSet.jobxapplyToken = session.token;
             if (session.passcode) toSet.jobxapplyPasscode = session.passcode;

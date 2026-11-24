@@ -960,20 +960,45 @@ async function loadProfile() {
 
 /**
  * Synchronously retrieves the cached profile state from localStorage.
+ * Resilient fallback: checks jxa_local_state, jxa_local_profiles, jxa_local_profile, and jxa_profile_cache.
  */
 function getCachedProfileState() {
   try {
-    const localState = typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_local_state') : null;
-    if (localState) {
-      const state = JSON.parse(localState);
-      const localProfiles = localStorage.getItem('jxa_local_profiles');
-      const activeId = localStorage.getItem('jxa_active_profile_id') || "default";
-      if (localProfiles) {
-        state.profiles = JSON.parse(localProfiles);
-        state.profile = state.profiles[activeId] || {};
-      }
-      state.origin = 'local';
-      return state;
+    if (typeof localStorage === 'undefined') return null;
+    const localStateRaw = localStorage.getItem('jxa_local_state');
+    const localProfilesRaw = localStorage.getItem('jxa_local_profiles');
+    const localProfileRaw = localStorage.getItem('jxa_local_profile') || localStorage.getItem('jxa_profile_cache');
+    const activeId = localStorage.getItem('jxa_active_profile_id') || "default";
+
+    let state = null;
+    try { state = localStateRaw ? JSON.parse(localStateRaw) : null; } catch(e) {}
+    let profiles = null;
+    try { profiles = localProfilesRaw ? JSON.parse(localProfilesRaw) : null; } catch(e) {}
+    let profile = null;
+    try { profile = localProfileRaw ? JSON.parse(localProfileRaw) : null; } catch(e) {}
+
+    // Fallbacks to resolve active candidate profile
+    if (!profile && profiles && profiles[activeId]) {
+      profile = profiles[activeId];
+    }
+    if (!profile && state?.profile) {
+      profile = state.profile;
+    }
+    if (!profiles && profile) {
+      profiles = { [activeId]: profile };
+    }
+
+    if (profile || profiles || state) {
+      const resolvedProfile = profile || (profiles && profiles[activeId]) || {};
+      return {
+        profile: resolvedProfile,
+        profiles: profiles || { [activeId]: resolvedProfile },
+        activeProfileId: activeId,
+        version: state?.version || 1,
+        updatedAt: state?.updatedAt || Date.now(),
+        tier: state?.tier || 'free',
+        origin: 'local'
+      };
     }
   } catch (e) {
     console.error("Failed to load cached profile:", e);
@@ -1262,15 +1287,40 @@ const PROFILE_FIELDS = [
 ];
 
 function calcCompleteness(profile = {}) {
-  // If the profile has no name, it is uninitialized
-  if (!profile.fullName || String(profile.fullName).trim().length === 0) {
+  if (!profile || typeof profile !== 'object') {
     return { count: 0, total: PROFILE_FIELDS.length, pct: 0 };
   }
+
+  // Unified alias resolution across all sections (Identity, Academics, Skills, Experience)
+  const resolved = {
+    fullName: profile.fullName || profile.name || 
+      (profile.firstName ? `${profile.firstName} ${profile.lastName || ''}`.trim() : '') ||
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_user_name') : ''),
+    email: profile.email || (typeof localStorage !== 'undefined' ? localStorage.getItem('jxa_user_email') : '') || '',
+    phone: profile.phone || '',
+    dob: profile.dob || '',
+    country: profile.country || '',
+    city: profile.city || '',
+    address: profile.address || '',
+    targetRole: profile.targetRole || profile.targetRoles || profile.headline || '',
+    headline: profile.headline || profile.targetRole || '',
+    summary: profile.summary || '',
+    linkedin: profile.linkedin || '',
+    education: profile.education || profile.eduGrad_degree || profile.eduGrad_stream || profile.edu12_board || profile.edu10_board || '',
+    experience: profile.experience || (profile.totalExperience ? `${profile.totalExperience} years` : ''),
+    skills: (Array.isArray(profile.skills) ? profile.skills.join(',') : profile.skills) || '',
+    college: profile.college || profile.eduGrad_college || profile.edu12_school || profile.edu10_school || ''
+  };
+
   const filled = PROFILE_FIELDS.filter(f => {
-    const v = profile[f];
+    const v = resolved[f];
     return v !== null && v !== undefined && String(v).trim().length > 0;
   });
-  return { count: filled.length, total: PROFILE_FIELDS.length, pct: Math.round((filled.length / PROFILE_FIELDS.length) * 100) };
+
+  const count = filled.length;
+  const total = PROFILE_FIELDS.length;
+  const pct = Math.round((count / total) * 100);
+  return { count, total, pct };
 }
 
 // ─── SSE ──────────────────────────────────────────────────────────────────

@@ -1,3 +1,29 @@
+// Immediately stamp active marker on authorized JobXApply / CareerBridge web pages
+try {
+  if (typeof document !== 'undefined' && document.documentElement) {
+    const isApp = (typeof window !== 'undefined' && (
+      (window.location.protocol === 'file:' && (window.location.href.toLowerCase().includes('careerbridge') || window.location.href.toLowerCase().includes('jobxapply'))) ||
+      (window.location.origin && (
+        window.location.origin.includes('localhost') ||
+        window.location.origin.includes('127.0.0.1') ||
+        window.location.origin.includes('jobxapply') ||
+        window.location.origin.includes('careerbridge') ||
+        window.location.origin.includes('careerhub') ||
+        window.location.origin.endsWith('.netlify.app') ||
+        window.location.origin.endsWith('.vercel.app') ||
+        window.location.origin.endsWith('.onrender.com') ||
+        window.location.origin.endsWith('.github.io')
+      ))
+    ));
+    if (isApp) {
+      document.documentElement.setAttribute('data-jobxapply-extension', 'active');
+      window.__JOBXAPPLY_EXTENSION_ACTIVE__ = true;
+      window.dispatchEvent(new CustomEvent('jobxapply:pongExtension', { detail: { version: '1.0.0', active: true } }));
+      window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PONG', active: true }, '*');
+    }
+  }
+} catch (e) {}
+
 // Enhanced content script: heuristic field matching and floating autofill button
 
 const FIELD_ALIASES = {
@@ -1488,8 +1514,23 @@ function handleFieldClick(e) {
 function isAuthorizedAppOrigin() {
   try {
     const origin = window.location.origin;
+    const href = window.location.href || '';
+    if (window.location.protocol === 'file:') {
+      if (href.toLowerCase().includes('careerbridge') || href.toLowerCase().includes('jobxapply')) {
+        return true;
+      }
+    }
     if (!origin) return false;
-    if (origin.endsWith(".netlify.app") || origin === "https://jobxapply.netlify.app" || origin === "https://careerhub-app.netlify.app") {
+    const lowerOrigin = origin.toLowerCase();
+    if (
+      lowerOrigin.endsWith(".netlify.app") ||
+      lowerOrigin.endsWith(".vercel.app") ||
+      lowerOrigin.endsWith(".onrender.com") ||
+      lowerOrigin.endsWith(".github.io") ||
+      lowerOrigin.includes("jobxapply") ||
+      lowerOrigin.includes("careerhub") ||
+      lowerOrigin.includes("careerbridge")
+    ) {
       return true;
     }
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
@@ -1502,12 +1543,27 @@ function isAuthorizedAppOrigin() {
 }
 const isAuthorizedWebOrigin = isAuthorizedAppOrigin;
 
-// Listen for ping check from extension setup page
+// Listen for ping check from extension setup page & dashboard
 window.addEventListener("jobxapply:pingExtension", () => {
   if (!isAuthorizedAppOrigin()) return;
   window.dispatchEvent(new CustomEvent("jobxapply:pongExtension", {
     detail: { version: "1.0.0", active: true }
   }));
+  try {
+    window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PONG', active: true, version: '1.0.0' }, '*');
+  } catch(e) {}
+});
+
+window.addEventListener("message", (e) => {
+  if (e.data && e.data.type === 'JOBXAPPLY_EXTENSION_PING') {
+    if (!isAuthorizedAppOrigin()) return;
+    try {
+      window.postMessage({ type: 'JOBXAPPLY_EXTENSION_PONG', active: true, version: '1.0.0' }, '*');
+    } catch(err) {}
+    window.dispatchEvent(new CustomEvent("jobxapply:pongExtension", {
+      detail: { version: "1.0.0", active: true }
+    }));
+  }
 });
 
 // Listen for pairing event from the JobXApply website
