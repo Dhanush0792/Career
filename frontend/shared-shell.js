@@ -62,25 +62,28 @@ let _activeSSE = null;
 let _lastActivityUpdate = 0;
 let _isRefreshingToken = false;
 
-// Silent background token refresh using Supabase refresh_token
+// Silent background or foreground token refresh using Supabase refresh_token
 async function triggerSilentTokenRefresh() {
-  if (_isRefreshingToken) return;
+  if (_isRefreshingToken) return null;
   _isRefreshingToken = true;
   try {
     let refreshToken = "";
     let storageKey = "";
     if (typeof localStorage !== 'undefined') {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
-          const raw = localStorage.getItem(k);
-          if (raw) {
-            try {
-              const parsed = JSON.parse(raw);
-              refreshToken = parsed?.refresh_token || parsed?.session?.refresh_token;
-              storageKey = k;
-              if (refreshToken) break;
-            } catch(e) {}
+      refreshToken = localStorage.getItem('jxa_refresh_token') || "";
+      if (!refreshToken) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              try {
+                const parsed = JSON.parse(raw);
+                refreshToken = parsed?.refresh_token || parsed?.session?.refresh_token;
+                storageKey = k;
+                if (refreshToken) break;
+              } catch(e) {}
+            }
           }
         }
       }
@@ -101,6 +104,9 @@ async function triggerSilentTokenRefresh() {
         const data = await res.json();
         if (data && data.access_token) {
           localStorage.setItem('jxa_token', data.access_token);
+          if (data.refresh_token) {
+            localStorage.setItem('jxa_refresh_token', data.refresh_token);
+          }
           if (data.refresh_token && storageKey) {
             try {
               const current = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -109,6 +115,7 @@ async function triggerSilentTokenRefresh() {
               localStorage.setItem(storageKey, JSON.stringify(current));
             } catch(e) {}
           }
+          return data.access_token;
         }
       }
     }
@@ -117,6 +124,7 @@ async function triggerSilentTokenRefresh() {
   } finally {
     _isRefreshingToken = false;
   }
+  return null;
 }
 
 function recordUserActivity() {
@@ -224,10 +232,12 @@ function getEffectiveAuthToken() {
     if (!payload || !payload.exp || (payload.exp * 1000 > now + 30000)) {
       isValid = true;
     } else {
-      // Token expired or nearing expiry; if within 5-day active session, trigger silent background refresh
+      // Token expired or nearing expiry; if within 5-day active session, trigger background refresh
       const lastActive = Number((typeof localStorage !== 'undefined' && localStorage.getItem('jxa_last_active')) || 0);
       if (lastActive && (now - lastActive < INACTIVITY_TIMEOUT_MS)) {
         triggerSilentTokenRefresh();
+        // Allow the session to remain active within the 5-day window
+        isValid = true;
       }
     }
   }
