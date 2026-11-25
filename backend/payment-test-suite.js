@@ -226,20 +226,45 @@ async function runTests() {
     const prevEnablePub = process.env.ENABLE_PUBLIC_CHECKOUT;
     const prevTestEmails = process.env.TEST_CHECKOUT_EMAILS;
     const prevReqPg = process.env.REQUIRE_PG_FOR_PAYMENTS;
-    process.env.NODE_ENV = "test"; // keep in-memory store active for test while testing gate via helper?
-    // Simulate production checkout gate with TEST_CHECKOUT_EMAILS
+
     process.env.NODE_ENV = "production";
     process.env.ENABLE_PUBLIC_CHECKOUT = "false";
-    process.env.TEST_CHECKOUT_EMAILS = userA.email;
 
+    // Missing/empty allowlist denies access
+    process.env.TEST_CHECKOUT_EMAILS = "";
+    let errEmptyAllow = null;
+    try {
+      await paymentService.createOrderForUser({ user: userA, planId: "pro", rzpClient: mockRzp });
+    } catch (e) { errEmptyAllow = e; }
+    assert(errEmptyAllow && errEmptyAllow.statusCode === 503 && errEmptyAllow.message.includes("Public paid checkout is disabled"),
+      "Missing/empty TEST_CHECKOUT_EMAILS denies checkout (503)");
+
+    // Whitespace & uppercase normalization on TEST_CHECKOUT_EMAILS
+    process.env.TEST_CHECKOUT_EMAILS = `  ${userA.email.toUpperCase()}  , other@example.com `;
+
+    // Allowlisted user passes the public checkout gate (hits DB fail-closed check since !usePg locally)
+    let errAllowlistedPassGate = null;
+    try {
+      await paymentService.createOrderForUser({ user: userA, planId: "pro", rzpClient: mockRzp });
+    } catch (e) { errAllowlistedPassGate = e; }
+    assert(errAllowlistedPassGate && errAllowlistedPassGate.message.includes("PostgreSQL database is unavailable"),
+      "Allowlisted test account passes checkout gate (email normalized) while public checkout stays disabled");
+
+    // Unverified email rejected even if email matches allowlist
+    let errUnverifiedEmail = null;
+    try {
+      await paymentService.createOrderForUser({ user: { ...userA, emailVerified: false }, planId: "pro", rzpClient: mockRzp });
+    } catch (e) { errUnverifiedEmail = e; }
+    assert(errUnverifiedEmail && errUnverifiedEmail.statusCode === 503 && errUnverifiedEmail.message.includes("Public paid checkout is disabled"),
+      "Unverified email rejected by checkout allowlist gate (503)");
+
+    // Non-allowlisted user rejected (even if payload attempts to pass allowlisted email, only user.email is trusted)
     let errNonAllowlisted = null;
     try {
-      // Note: assertPaymentPersistenceAvailable fails closed with 503 if !usePg in production,
-      // so test non-allowlisted user first (should hit 503 gate before DB)
       await paymentService.createOrderForUser({ user: userB, planId: "pro", rzpClient: mockRzp });
     } catch (e) { errNonAllowlisted = e; }
     assert(errNonAllowlisted && errNonAllowlisted.statusCode === 503 && errNonAllowlisted.message.includes("Public paid checkout is disabled"),
-      "Non-allowlisted user blocked by public checkout gate (503)");
+      "Non-allowlisted account rejected by public checkout gate (503)");
 
     // In live mode, even allowlisted TEST_CHECKOUT_EMAILS is blocked when public checkout is disabled
     process.env.RAZORPAY_KEY_ID = "rzp_live_mock_key_id";
@@ -361,7 +386,7 @@ async function runTests() {
 
     // Expired Pro account automatically downgraded to free
     await db.withPaymentTransaction(async (tx) => {
-      const ent = await tx.getEntitlementForUpdate(userB.id);
+      const ent = await tx.getEntitlementForUpdate(userB.id, "test");
       await tx.upsertEntitlement({ ...ent, expiresAt: Date.now() - 10000 });
     });
     const expiredEntB = await paymentService.getEffectiveEntitlement(userB.id, userB);
@@ -410,6 +435,52 @@ async function runTests() {
       rawBodyBuffer: fullRef2Buf, signatureHeader: signWebhook(fullRef2Buf), eventIdHeader: "evt_rfnd_full_2"
     });
     assert(dupRefRes.ok && dupRefRes.duplicate === true, "Duplicate refund event deduplicated safely");
+
+    // ── 7. Live vs Test Coexistence & Cross-Env Isolation ─────
+    console.log("\n--- 7. Live vs Test Coexistence & Cross-Environment Isolation ---");
+
+    const liveOrigExpires = Date.now() + 20 * 86400000;
+    await db.withPaymentTransaction(async (tx) => {
+      await tx.upsertEntitlement({
+        userId: userA.id,
+        planId: "pro",
+        status: "active",
+        startedAt: Date.now() - 10 * 86400000,
+        expiresAt: liveOrigExpires,
+        sourcePaymentId: "pay_live_orig_999",
+        environment: "live",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    });
+
+    const orderTestCoexist = await paymentService.createOrderForUser({ user: userA, planId: "pro", rzpClient: mockRzp });
+    paymentsMap["pay_test_coexist"] = {
+      id: "pay_test_coexist", order_id: orderTestCoexist.order_id, amount: 19900, currency: "INR", status: "captured", method: "upi"
+    };
+    await paymentService.verifyCheckoutAndFulfill({
+      user: userA, razorpayOrderId: orderTestCoexist.order_id, razorpayPaymentId: "pay_test_coexist",
+      razorpaySignature: signCheckout(orderTestCoexist.order_id, "pay_test_coexist"), rzpClient: mockRzp
+    });
+
+    process.env.RAZORPAY_KEY_ID = "rzp_live_mock_key_id";
+    const liveEntAfterTestPurchase = await paymentService.getEffectiveEntitlement(userA.id, userA);
+    process.env.RAZORPAY_KEY_ID = prevKeyId;
+    assert(liveEntAfterTestPurchase.tier === "pro" && liveEntAfterTestPurchase.expiresAt === liveOrigExpires && liveEntAfterTestPurchase.lastPaymentId === "pay_live_orig_999",
+      "Test purchase did NOT overwrite or extend legitimate Live entitlement");
+
+    const testRefundBuf = Buffer.from(JSON.stringify({
+      event: "refund.processed",
+      payload: { refund: { entity: { id: "rfnd_test_coexist", payment_id: "pay_test_coexist", amount: 19900, currency: "INR", status: "processed" } } }
+    }), "utf8");
+    await paymentService.handleWebhook({
+      rawBodyBuffer: testRefundBuf, signatureHeader: signWebhook(testRefundBuf), eventIdHeader: "evt_rfnd_test_coexist"
+    });
+    process.env.RAZORPAY_KEY_ID = "rzp_live_mock_key_id";
+    const liveEntAfterTestRefund = await paymentService.getEffectiveEntitlement(userA.id, userA);
+    process.env.RAZORPAY_KEY_ID = prevKeyId;
+    assert(liveEntAfterTestRefund.tier === "pro" && liveEntAfterTestRefund.expiresAt === liveOrigExpires && liveEntAfterTestRefund.lastPaymentId === "pay_live_orig_999",
+      "Test refund did NOT modify or revoke legitimate Live entitlement");
 
   } finally {
     await db.deleteUser(userA.id);

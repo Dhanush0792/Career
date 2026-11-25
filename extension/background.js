@@ -51,10 +51,12 @@ async function fetchAuthoritativeEntitlement() {
           tier: data.tier === "pro" ? "pro" : "free",
           planId: sub.planId || (data.tier === "pro" ? "pro" : "free"),
           status: sub.status || (data.tier === "pro" ? "active" : "inactive"),
+          environment: sub.environment || "live",
           expiresAt: sub.expiresAt || null,
           daysRemaining: typeof sub.daysRemaining === "number" ? sub.daysRemaining : 0,
           fetchedAt: Date.now()
         };
+        // Invalidate/replace cache whenever environment or entitlement changes
         chrome.storage.local.set({ jobxapplyEntitlement: ent });
         resolve(ent);
       } catch (e) {
