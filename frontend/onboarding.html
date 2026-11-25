@@ -846,8 +846,11 @@ requireAuth();
       return;
     }
 
+    if (typeof Razorpay === 'undefined' && typeof ensureRazorpaySDK === 'function') {
+      await ensureRazorpaySDK();
+    }
     if (typeof Razorpay === 'undefined') {
-      showPaymentError('Razorpay Checkout could not load. Please check your internet connection and try again.');
+      showPaymentError('Razorpay SDK blocked or unavailable. Disable any ad-blocker or check your internet connection.');
       return;
     }
 

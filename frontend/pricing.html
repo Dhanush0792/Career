@@ -265,8 +265,15 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
       return;
     }
 
+    upgradeBtn.disabled = true;
+    upgradeBtn.textContent = 'Loading Checkout...';
+
+    if (typeof Razorpay === 'undefined' && typeof ensureRazorpaySDK === 'function') {
+      await ensureRazorpaySDK();
+    }
     if (typeof Razorpay === 'undefined') {
-      notify('Razorpay payment gateway failed to load. Please check your internet connection.', 'error');
+      resetBtn();
+      notify('Razorpay SDK blocked or unavailable. Disable ad-blocker or check connection.', 'error');
       return;
     }
 
@@ -274,7 +281,6 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
       ? SYNC_API
       : 'http://localhost:8787/api';
 
-    upgradeBtn.disabled = true;
     upgradeBtn.textContent = 'Initializing Checkout...';
 
     try {

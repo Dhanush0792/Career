@@ -487,12 +487,11 @@ function renderSubscriptionCard(tierVal, subMeta) {
 async function triggerRazorpayUpgrade(btnEl) {
   const token = (typeof getEffectiveAuthToken === 'function' ? getEffectiveAuthToken() : '') || localStorage.getItem('jxa_token') || '';
   if (!token) return showToast('Please sign in again to continue.', 'error');
-  if (typeof Razorpay === 'undefined') return showToast('Razorpay SDK failed to load. Check internet connection.', 'error');
 
   const origText = btnEl ? btnEl.textContent : '';
   if (btnEl) {
     btnEl.disabled = true;
-    btnEl.textContent = 'Opening Checkout...';
+    btnEl.textContent = 'Loading Checkout...';
   }
   const reset = () => {
     if (btnEl) {
@@ -500,6 +499,16 @@ async function triggerRazorpayUpgrade(btnEl) {
       btnEl.textContent = origText;
     }
   };
+
+  if (typeof Razorpay === 'undefined' && typeof ensureRazorpaySDK === 'function') {
+    await ensureRazorpaySDK();
+  }
+  if (typeof Razorpay === 'undefined') {
+    reset();
+    return showToast('Razorpay SDK blocked or unavailable. Disable ad-blocker or check connection.', 'error');
+  }
+
+  if (btnEl) btnEl.textContent = 'Opening Checkout...';
 
   const apiBase = (typeof SYNC_API !== 'undefined' && SYNC_API) ? SYNC_API : 'http://localhost:8787/api';
 

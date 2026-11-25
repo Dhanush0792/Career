@@ -3204,6 +3204,40 @@ if (typeof window !== 'undefined') {
   };
 }
 
+function ensureRazorpaySDK() {
+  if (typeof window !== 'undefined' && typeof window.Razorpay !== 'undefined') {
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    if (typeof document === 'undefined') return resolve(false);
+    const existing = document.querySelector('script[src*="checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      let checks = 0;
+      const timer = setInterval(() => {
+        checks++;
+        if (typeof window.Razorpay !== 'undefined') {
+          clearInterval(timer);
+          resolve(true);
+        } else if (checks > 25) {
+          clearInterval(timer);
+          resolve(false);
+        }
+      }, 150);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(typeof window.Razorpay !== 'undefined');
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.ensureRazorpaySDK = ensureRazorpaySDK;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     requireAuth,
