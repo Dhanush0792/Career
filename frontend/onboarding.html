@@ -910,6 +910,9 @@ requireAuth();
             const verifyData = await verifyRes.json();
 
             if (verifyRes.ok && verifyData.ok) {
+              if (verifyData.subscription) {
+                localStorage.setItem('jxa_subscription', JSON.stringify(verifyData.subscription));
+              }
               await persistOnboardingChoice('pro');
               if (payTitle) payTitle.textContent = 'PRO ACCOUNT ACTIVATED!';
               if (payMsg) payMsg.textContent = 'Payment verified and synced. Opening your profile setup...';

@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="style-glass.css">
 <link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
 <script src="shared-shell.js?v=2"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
 body { padding-top: 76px; }
 .container {
@@ -171,6 +172,67 @@ body { padding-top: 76px; }
 
 .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
 .toast { background: #0B1020; border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 8px; color: var(--white); font-family: var(--mono); font-size: 12px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+/* Subscription Card Styles */
+.sub-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sub-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sub-badge.free {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.sub-badge.pro {
+  background: rgba(47, 221, 196, 0.14);
+  color: var(--success);
+  border: 1px solid rgba(47, 221, 196, 0.45);
+}
+.sub-upgrade-banner {
+  background: linear-gradient(135deg, rgba(91, 79, 232, 0.16), rgba(0, 243, 255, 0.06));
+  border: 1px solid rgba(91, 79, 232, 0.45);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.sub-pro-panel {
+  background: rgba(47, 221, 196, 0.05);
+  border: 1px solid rgba(47, 221, 196, 0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-top: 8px;
+}
+.renew-bar-bg {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 10px 0 6px;
+}
+.renew-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--success));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
 </style>
 </head>
 <body>
@@ -184,6 +246,64 @@ body { padding-top: 76px; }
   </div>
 
   <div class="settings-grid">
+    <!-- Card 0: Subscription & Plan -->
+    <div class="settings-card span-2" id="subscription-card">
+      <div class="card-title">00 // Subscription &amp; Plan</div>
+      <div class="sub-header-row">
+        <div>
+          <div class="item-label" id="sub-plan-name" style="font-size:15px; font-weight:700;">Checking subscription...</div>
+          <div class="item-sub" id="sub-plan-desc">Syncing your account tier with server...</div>
+        </div>
+        <span class="sub-badge free" id="sub-plan-badge">LOADING</span>
+      </div>
+
+      <!-- Free User View -->
+      <div id="sub-free-view" style="display:none;">
+        <div class="item-row">
+          <div>
+            <div class="item-label">Current Allowance</div>
+            <div class="item-sub">10 Autofills/mo • LinkedIn &amp; Naukri • Basic ATS Checker • 20 Tracked Jobs</div>
+          </div>
+          <span style="font-family:var(--mono); font-size:11px; color:var(--muted);">₹0 / mo</span>
+        </div>
+        <div class="sub-upgrade-banner">
+          <div>
+            <div style="font-size:13.5px; font-weight:700; color:var(--white); margin-bottom:4px;">
+              Unlock Unlimited Autofill &amp; All 50+ Portals
+              <span style="background:rgba(245,166,35,0.2); color:#F5A623; font-family:var(--mono); font-size:9px; padding:2px 7px; border-radius:999px; margin-left:6px;">LAUNCH OFFER -33%</span>
+            </div>
+            <div style="font-size:11.5px; color:var(--muted);">
+              Unlimited Workday, Greenhouse &amp; Lever autofills, unlimited PDF resume &amp; cover letter exports, and priority sync for <span style="text-decoration:line-through; opacity:0.6;">₹299</span> <strong style="color:var(--success);">₹199/mo</strong>.
+            </div>
+          </div>
+          <button type="button" class="btn-sm btn-sm-primary" id="btn-settings-upgrade" style="padding:10px 18px; font-size:11px;">Upgrade to Pro — ₹199 &rarr;</button>
+        </div>
+      </div>
+
+      <!-- Pro / Paid User View -->
+      <div id="sub-pro-view" style="display:none;">
+        <div class="sub-pro-panel">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <div style="font-size:13px; font-weight:700; color:var(--white);">JobXApply Pro Plan</div>
+              <div style="font-size:11.5px; color:var(--muted); margin-top:2px;">Unlimited Autofills • 50+ Portals • Unlimited PDF Exports • Priority Sync</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:var(--mono); font-size:14px; font-weight:800; color:var(--success);" id="sub-days-left">30 days remaining</div>
+              <div style="font-family:var(--mono); font-size:10px; color:var(--muted);" id="sub-renew-date">Active Subscription</div>
+            </div>
+          </div>
+          <div class="renew-bar-bg">
+            <div class="renew-bar-fill" id="sub-renew-bar" style="width:100%;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:10px;">
+            <span style="font-family:var(--mono); font-size:10px; color:var(--dim);" id="sub-payment-ref">Verified Pro Access</span>
+            <button type="button" class="btn-sm btn-sm-ghost" id="btn-settings-renew">Extend / Renew (+30 Days)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Card 1: Sync Vault Key -->
     <div class="settings-card span-2">
       <div class="card-title">01 // Zero-Knowledge Sync Vault Key</div>
@@ -303,10 +423,214 @@ function showToast(msg, type='success') {
   setTimeout(() => toast.remove(), 3000);
 }
 
+function renderSubscriptionCard(tierVal, subMeta) {
+  const tier = String(tierVal || 'free').toLowerCase();
+  const isPro = tier === 'pro' || tier === 'paid' || tier === 'premium';
+
+  const nameEl = document.getElementById('sub-plan-name');
+  const descEl = document.getElementById('sub-plan-desc');
+  const badgeEl = document.getElementById('sub-plan-badge');
+  const freeView = document.getElementById('sub-free-view');
+  const proView = document.getElementById('sub-pro-view');
+
+  if (isPro) {
+    if (nameEl) nameEl.textContent = 'JobXApply Pro Plan';
+    if (descEl) descEl.textContent = 'Full access to unlimited autofill, all 50+ portal maps, and PDF exports.';
+    if (badgeEl) {
+      badgeEl.textContent = 'PRO • ACTIVE';
+      badgeEl.className = 'sub-badge pro';
+    }
+    if (freeView) freeView.style.display = 'none';
+    if (proView) proView.style.display = 'block';
+
+    const expiresAt = subMeta?.expiresAt ? Number(subMeta.expiresAt) : null;
+    let daysLeft = typeof subMeta?.daysRemaining === 'number' ? subMeta.daysRemaining : 30;
+    if (expiresAt) {
+      daysLeft = Math.max(0, Math.ceil((expiresAt - Date.now()) / 86400000));
+    }
+
+    const daysEl = document.getElementById('sub-days-left');
+    const renewDateEl = document.getElementById('sub-renew-date');
+    const barEl = document.getElementById('sub-renew-bar');
+    const refEl = document.getElementById('sub-payment-ref');
+
+    if (daysEl) {
+      daysEl.textContent = daysLeft === 1 ? '1 day remaining' : `${daysLeft} days remaining`;
+      daysEl.style.color = daysLeft <= 5 ? '#F5A623' : 'var(--success)';
+    }
+    if (renewDateEl) {
+      renewDateEl.textContent = expiresAt
+        ? `Renews on ${new Date(expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
+        : 'Active Pro Membership';
+    }
+    if (barEl) {
+      const pct = Math.min(100, Math.max(4, Math.round((daysLeft / 30) * 100)));
+      barEl.style.width = `${pct}%`;
+    }
+    if (refEl) {
+      refEl.textContent = subMeta?.lastPaymentId
+        ? `Last Payment ID: ${subMeta.lastPaymentId}`
+        : 'Verified Pro Access';
+    }
+  } else {
+    if (nameEl) nameEl.textContent = 'JobXApply Free Plan';
+    if (descEl) descEl.textContent = 'Upgrade anytime to unlock unlimited autofills across 50+ job portals.';
+    if (badgeEl) {
+      badgeEl.textContent = 'FREE TIER';
+      badgeEl.className = 'sub-badge free';
+    }
+    if (freeView) freeView.style.display = 'block';
+    if (proView) proView.style.display = 'none';
+  }
+}
+
+async function triggerRazorpayUpgrade(btnEl) {
+  const token = (typeof getEffectiveAuthToken === 'function' ? getEffectiveAuthToken() : '') || localStorage.getItem('jxa_token') || '';
+  if (!token) return showToast('Please sign in again to continue.', 'error');
+  if (typeof Razorpay === 'undefined') return showToast('Razorpay SDK failed to load. Check internet connection.', 'error');
+
+  const origText = btnEl ? btnEl.textContent : '';
+  if (btnEl) {
+    btnEl.disabled = true;
+    btnEl.textContent = 'Opening Checkout...';
+  }
+  const reset = () => {
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = origText;
+    }
+  };
+
+  const apiBase = (typeof SYNC_API !== 'undefined' && SYNC_API) ? SYNC_API : 'http://localhost:8787/api';
+
+  try {
+    const orderRes = await fetch(`${apiBase}/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ amount: 19900, currency: 'INR', plan: 'pro' })
+    });
+    const orderData = await orderRes.json();
+    if (!orderRes.ok || !orderData.ok || !orderData.order_id) {
+      reset();
+      return showToast(orderData.error || 'Could not create payment order.', 'error');
+    }
+
+    const rzp = new Razorpay({
+      key: orderData.key_id,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: 'JobXApply',
+      description: 'Pro Tier Subscription (30 Days)',
+      order_id: orderData.order_id,
+      prefill: {
+        name: localStorage.getItem('jxa_user_name') || '',
+        email: localStorage.getItem('jxa_user_email') || ''
+      },
+      theme: { color: '#5B4FE8' },
+      modal: {
+        ondismiss: function () {
+          reset();
+          showToast('Payment cancelled.');
+        }
+      },
+      handler: async function (response) {
+        if (btnEl) btnEl.textContent = 'Verifying...';
+        try {
+          const verifyRes = await fetch(`${apiBase}/verify-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok && verifyData.ok) {
+            localStorage.setItem('jxa_tier', 'pro');
+            if (verifyData.subscription) {
+              localStorage.setItem('jxa_subscription', JSON.stringify(verifyData.subscription));
+            }
+            renderSubscriptionCard('pro', verifyData.subscription);
+            showToast('Pro Plan activated! Synced across your workspace.');
+          } else {
+            showToast(verifyData.error || 'Payment verification failed.', 'error');
+          }
+        } catch (err) {
+          showToast('Network error verifying payment.', 'error');
+        } finally {
+          reset();
+        }
+      }
+    });
+
+    rzp.on('payment.failed', function (resp) {
+      reset();
+      showToast((resp && resp.error && resp.error.description) || 'Payment failed.', 'error');
+    });
+    rzp.open();
+  } catch (err) {
+    reset();
+    showToast('Unable to reach payment server.', 'error');
+  }
+}
+
 async function loadSettings() {
   const email = localStorage.getItem('jxa_user_email') || '';
   document.getElementById('disp-email').textContent = email || 'Authenticated User';
   document.getElementById('disp-passcode').textContent = '••••••••';
+
+  // Instant optimistic subscription render from localStorage
+  let cachedTier = localStorage.getItem('jxa_tier') || 'free';
+  let cachedSub = null;
+  try {
+    const rawSub = localStorage.getItem('jxa_subscription');
+    if (rawSub) cachedSub = JSON.parse(rawSub);
+    const rawState = localStorage.getItem('jxa_local_state');
+    if (rawState) {
+      const parsed = JSON.parse(rawState);
+      if (parsed.tier) cachedTier = parsed.tier;
+      if (parsed.subscription && !cachedSub) cachedSub = parsed.subscription;
+    }
+  } catch (e) {}
+  renderSubscriptionCard(cachedTier, cachedSub);
+
+  // Wire upgrade & renew buttons
+  const upgradeBtn = document.getElementById('btn-settings-upgrade');
+  if (upgradeBtn) upgradeBtn.addEventListener('click', () => triggerRazorpayUpgrade(upgradeBtn));
+  const renewBtn = document.getElementById('btn-settings-renew');
+  if (renewBtn) renewBtn.addEventListener('click', () => triggerRazorpayUpgrade(renewBtn));
+
+  // Silent server sync for authoritative tier & days remaining
+  try {
+    const token = (typeof getEffectiveAuthToken === 'function' ? getEffectiveAuthToken() : '') || localStorage.getItem('jxa_token') || '';
+    const apiBase = (typeof SYNC_API !== 'undefined' && SYNC_API) ? SYNC_API : '';
+    if (token && apiBase) {
+      const res = await fetch(`${apiBase}/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const serverTier = data.tier || (data.subscription && data.subscription.tier) || 'free';
+        localStorage.setItem('jxa_tier', serverTier);
+        if (data.subscription) {
+          localStorage.setItem('jxa_subscription', JSON.stringify(data.subscription));
+        }
+        renderSubscriptionCard(serverTier, data.subscription || cachedSub);
+        const dispSync = document.getElementById('disp-sync');
+        if (dispSync) dispSync.textContent = 'Synced';
+      }
+    }
+  } catch (err) {
+    console.warn('Settings sync notice:', err);
+  }
 }
 
 async function savePasscode() {

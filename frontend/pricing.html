@@ -336,6 +336,10 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
 
             const verifyData = await verifyRes.json();
             if (verifyRes.ok && verifyData.ok) {
+              localStorage.setItem('jxa_tier', 'pro');
+              if (verifyData.subscription) {
+                localStorage.setItem('jxa_subscription', JSON.stringify(verifyData.subscription));
+              }
               notify('Payment verified! Welcome to JobXApply Pro.', 'success');
               setTimeout(() => {
                 window.location.href = 'dashboard.html';
