@@ -370,7 +370,7 @@
       <select class="filter-select" id="filter-tier">
         <option value="all">All Tiers (Free &amp; Paid)</option>
         <option value="free">Free Tier Only</option>
-        <option value="paid">Paid / Pro Only</option>
+        <option value="pro">Pro / Paid Only</option>
       </select>
       <select class="filter-select" id="filter-role">
         <option value="all">All Roles</option>
@@ -424,7 +424,7 @@
       </button>
       <select class="filter-select" id="drawerTierSelect" style="padding:4px 8px; font-size:11px;">
         <option value="free">FREE</option>
-        <option value="paid">PAID / PRO</option>
+        <option value="pro">PRO / PAID</option>
       </select>
       <button class="btn-sm warn" id="drawerRoleBtn" style="padding:4px 10px;"></button>
     </div>
@@ -516,7 +516,8 @@
       const safeRole = escHtml(u.role || 'user');
       const safeTarget = escHtml(u.targetRole || 'Software Development Engineer');
       const isSuspended = u.status === 'suspended';
-      const safeTier = escHtml(u.tier || 'free');
+      const isPaid = u.tier === 'pro' || u.tier === 'paid' || u.tier === 'premium' || u.tier === 'operative' || u.tier === 'command';
+      const safeTier = isPaid ? 'pro' : 'free';
       const syncTime = timeSince(u.lastSync || u.createdAt);
       const appsCount = Number(u.applicationsCount || 0);
 
@@ -542,9 +543,9 @@
           </div>
         </td>
         <td>
-          <select class="filter-select" style="padding:3px 8px; font-size:11px;" onchange="changeTier('${safeId}', this.value)">
-            <option value="free" ${safeTier === 'free' ? 'selected' : ''}>FREE</option>
-            <option value="paid" ${safeTier === 'paid' ? 'selected' : ''}>PAID</option>
+          <select class="filter-select" style="padding:3px 8px; font-size:11px; font-weight:700; ${isPaid ? 'color:#2FDDC4; border-color:rgba(47,221,196,0.4); background:rgba(47,221,196,0.08);' : 'color:#94a3b8;'}" onchange="changeTier('${safeId}', this.value)">
+            <option value="free" ${!isPaid ? 'selected' : ''}>FREE</option>
+            <option value="pro" ${isPaid ? 'selected' : ''}>PRO / PAID</option>
           </select>
         </td>
         <td>
@@ -625,7 +626,8 @@
         impBtn.onclick = () => impersonateUser(userId);
 
         const tierSelect = document.getElementById('drawerTierSelect');
-        tierSelect.value = currentActiveDrawerUser.tier || 'free';
+        const isUserPaid = currentActiveDrawerUser.tier === 'pro' || currentActiveDrawerUser.tier === 'paid' || currentActiveDrawerUser.tier === 'premium';
+        tierSelect.value = isUserPaid ? 'pro' : 'free';
         tierSelect.onchange = (e) => changeTier(userId, e.target.value);
 
         const roleBtn = document.getElementById('drawerRoleBtn');
@@ -684,7 +686,9 @@
                      (u.name || '').toLowerCase().includes(q) || 
                      (u.targetRole || '').toLowerCase().includes(q) || 
                      (u.id || '').toLowerCase().includes(q);
-      const matchT = t === 'all' || (u.tier || 'free') === t;
+      const isPaid = u.tier === 'pro' || u.tier === 'paid' || u.tier === 'premium' || u.tier === 'operative' || u.tier === 'command';
+      const userTierNorm = isPaid ? 'pro' : 'free';
+      const matchT = t === 'all' || userTierNorm === t;
       const matchR = r === 'all' || (u.role || 'user') === r;
       const matchS = s === 'all' || (s === 'suspended' ? u.status === 'suspended' : u.status !== 'suspended');
       return matchQ && matchT && matchR && matchS;

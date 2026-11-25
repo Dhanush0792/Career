@@ -131,7 +131,7 @@ async function initializeDatabase(p) {
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS subscription_entitlements (
-      user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       plan_id VARCHAR(64) NOT NULL DEFAULT 'free',
       status VARCHAR(32) NOT NULL DEFAULT 'inactive',
       started_at BIGINT,
@@ -139,9 +139,34 @@ async function initializeDatabase(p) {
       source_payment_id VARCHAR(128),
       environment VARCHAR(16) NOT NULL DEFAULT 'live',
       created_at BIGINT NOT NULL,
-      updated_at BIGINT NOT NULL
+      updated_at BIGINT NOT NULL,
+      PRIMARY KEY (user_id, environment)
     )
   `);
+
+  // Safe non-destructive migration: upgrade legacy single-column PK (user_id) -> composite PK (user_id, environment)
+  try {
+    await p.query(`
+      DO $$
+      DECLARE
+        pk_name TEXT;
+        pk_cols INT;
+      BEGIN
+        SELECT c.conname, array_length(c.conkey, 1)
+          INTO pk_name, pk_cols
+          FROM pg_constraint c
+          JOIN pg_class t ON c.conrelid = t.oid
+         WHERE t.relname = 'subscription_entitlements' AND c.contype = 'p'
+         LIMIT 1;
+        IF pk_name IS NOT NULL AND pk_cols = 1 THEN
+          EXECUTE format('ALTER TABLE subscription_entitlements DROP CONSTRAINT %I', pk_name);
+          EXECUTE 'ALTER TABLE subscription_entitlements ADD PRIMARY KEY (user_id, environment)';
+        END IF;
+      END $$;
+    `);
+  } catch (e) {
+    // Non-fatal if already migrated
+  }
 
   await p.query(`
     CREATE TABLE IF NOT EXISTS refunds (
@@ -172,6 +197,7 @@ async function initializeDatabase(p) {
       ALTER TABLE webhook_events ENABLE ROW LEVEL SECURITY;
       ALTER TABLE subscription_entitlements ENABLE ROW LEVEL SECURITY;
       ALTER TABLE refunds ENABLE ROW LEVEL SECURITY;
+      REVOKE ALL ON payment_orders, payments, webhook_events, subscription_entitlements, refunds FROM anon, authenticated;
     `);
   } catch (e) {
     // Non-fatal if DB role lacks superuser/owner privileges in dev
@@ -1111,13 +1137,16 @@ module.exports = {
     return await runInMemoryTx(fn, this);
   },
 
-  async getEntitlement(userId) {
+  async getEntitlement(userId, environment = "live") {
     if (usePg && pool) {
-      const res = await pool.query("SELECT * FROM subscription_entitlements WHERE user_id = $1", [userId]);
+      const res = await pool.query(
+        "SELECT * FROM subscription_entitlements WHERE user_id = $1 AND environment = $2",
+        [userId, environment]
+      );
       if (res.rows.length === 0) return null;
       return mapPgEntitlement(res.rows[0]);
     }
-    return memPaymentStore.entitlements.get(userId) || null;
+    return memPaymentStore.entitlements.get(`${userId}:${environment}`) || null;
   },
 
   async getPendingOrdersByUser(userId, environment) {
@@ -1281,10 +1310,10 @@ function createPgPaymentTx(client) {
       );
       return p;
     },
-    async getEntitlementForUpdate(userId) {
+    async getEntitlementForUpdate(userId, environment = "live") {
       const res = await client.query(
-        "SELECT * FROM subscription_entitlements WHERE user_id = $1 FOR UPDATE",
-        [userId]
+        "SELECT * FROM subscription_entitlements WHERE user_id = $1 AND environment = $2 FOR UPDATE",
+        [userId, environment]
       );
       return res.rows.length ? mapPgEntitlement(res.rows[0]) : null;
     },
@@ -1292,13 +1321,12 @@ function createPgPaymentTx(client) {
       await client.query(
         `INSERT INTO subscription_entitlements (user_id, plan_id, status, started_at, expires_at, source_payment_id, environment, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         ON CONFLICT (user_id) DO UPDATE SET
+         ON CONFLICT (user_id, environment) DO UPDATE SET
            plan_id = EXCLUDED.plan_id,
            status = EXCLUDED.status,
            started_at = COALESCE(EXCLUDED.started_at, subscription_entitlements.started_at),
            expires_at = EXCLUDED.expires_at,
            source_payment_id = EXCLUDED.source_payment_id,
-           environment = EXCLUDED.environment,
            updated_at = EXCLUDED.updated_at`,
         [e.userId, e.planId, e.status, e.startedAt, e.expiresAt, e.sourcePaymentId, e.environment, e.createdAt, e.updatedAt]
       );
@@ -1411,12 +1439,12 @@ async function runInMemoryTx(fn, dbApi) {
         memPaymentStore.payments.set(key, existing ? { ...existing, ...p } : { ...p });
         return { ...p };
       },
-      async getEntitlementForUpdate(userId) {
-        const v = memPaymentStore.entitlements.get(userId);
+      async getEntitlementForUpdate(userId, environment = "live") {
+        const v = memPaymentStore.entitlements.get(`${userId}:${environment}`);
         return v ? { ...v } : null;
       },
       async upsertEntitlement(e) {
-        memPaymentStore.entitlements.set(e.userId, { ...e });
+        memPaymentStore.entitlements.set(`${e.userId}:${e.environment}`, { ...e });
         return { ...e };
       },
       async updateUserTier(userId, tier) {

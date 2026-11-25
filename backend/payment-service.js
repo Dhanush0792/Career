@@ -61,6 +61,7 @@ async function createOrderForUser({ user, planId = "pro", clientAmount, clientCu
   const isAuthorizedTestUser =
     environment === "test" &&
     Boolean(user.email) &&
+    user.emailVerified !== false &&
     allowedTestEmails.has(String(user.email).trim().toLowerCase());
 
   if (process.env.NODE_ENV === "production" && process.env.ENABLE_PUBLIC_CHECKOUT !== "true" && !isAuthorizedTestUser) {
@@ -155,7 +156,7 @@ async function fulfillCapturedPaymentTx(tx, { environment, order, rzpPayment, so
   // Idempotency lock: check if this payment has already been fulfilled
   const existingPayment = await tx.getPaymentByRazorpayIdForUpdate(environment, rzpPaymentId);
   if (existingPayment && existingPayment.entitlementStatus === "fulfilled") {
-    const currentEnt = await tx.getEntitlementForUpdate(existingPayment.userId);
+    const currentEnt = await tx.getEntitlementForUpdate(existingPayment.userId, environment);
     const daysRemaining = currentEnt && currentEnt.expiresAt
       ? Math.max(0, Math.ceil((currentEnt.expiresAt - now) / 86400000))
       : 0;
@@ -170,6 +171,7 @@ async function fulfillCapturedPaymentTx(tx, { environment, order, rzpPayment, so
         startedAt: currentEnt.startedAt,
         expiresAt: currentEnt.expiresAt,
         daysRemaining,
+        environment,
         lastPaymentId: existingPayment.razorpayPaymentId
       } : null
     };
@@ -213,8 +215,8 @@ async function fulfillCapturedPaymentTx(tx, { environment, order, rzpPayment, so
   await tx.upsertPayment(paymentRecord);
   await tx.updateOrderStatus(order.internalOrderId, "paid");
 
-  // Grant or extend entitlement atomically
-  const existingEnt = await tx.getEntitlementForUpdate(order.userId);
+  // Grant or extend entitlement atomically within this payment environment only
+  const existingEnt = await tx.getEntitlementForUpdate(order.userId, environment);
   const currentExpires = existingEnt && existingEnt.status === "active" && existingEnt.expiresAt ? Number(existingEnt.expiresAt) : 0;
   const durationMs = Number(order.durationDays || 30) * 86400000;
   const newExpiresAt = Math.max(now, currentExpires) + durationMs;
@@ -232,7 +234,10 @@ async function fulfillCapturedPaymentTx(tx, { environment, order, rzpPayment, so
     updatedAt: now
   };
   await tx.upsertEntitlement(newEntitlement);
-  await tx.updateUserTier(order.userId, "pro");
+  const activeGatewayEnv = getPaymentEnvironment(process.env.RAZORPAY_KEY_ID);
+  if (environment === activeGatewayEnv) {
+    await tx.updateUserTier(order.userId, "pro");
+  }
 
   return {
     ok: true,
@@ -246,6 +251,7 @@ async function fulfillCapturedPaymentTx(tx, { environment, order, rzpPayment, so
       startedAt,
       expiresAt: newExpiresAt,
       daysRemaining: Math.max(1, Math.ceil((newExpiresAt - now) / 86400000)),
+      environment,
       lastPaymentId: rzpPaymentId
     }
   };
@@ -353,28 +359,16 @@ async function verifyCheckoutAndFulfill({ user, razorpayOrderId, razorpayPayment
  */
 async function getEffectiveEntitlement(userId, userRow = null) {
   const now = Date.now();
-  const ent = await db.getEntitlement(userId);
+  const rawEnv = getPaymentEnvironment(process.env.RAZORPAY_KEY_ID);
+  const currentGatewayEnv = (rawEnv === "test" || rawEnv === "live") ? rawEnv : "live";
+  const ent = await db.getEntitlement(userId, currentGatewayEnv);
 
   if (ent) {
-    const currentGatewayEnv = getPaymentEnvironment(process.env.RAZORPAY_KEY_ID);
-    if (currentGatewayEnv === "live" && ent.environment !== "live") {
-      return {
-        tier: "free",
-        planId: "free",
-        status: "inactive_test_only",
-        startedAt: null,
-        expiresAt: null,
-        daysRemaining: 0,
-        environment: currentGatewayEnv,
-        lastPaymentId: null
-      };
-    }
-
     if (ent.status === "active" && ent.expiresAt && now > Number(ent.expiresAt)) {
-      // Automatically enforce expiry downgrade
+      // Automatically enforce expiry downgrade for current environment only
       try {
         await db.withPaymentTransaction(async (tx) => {
-          const locked = await tx.getEntitlementForUpdate(userId);
+          const locked = await tx.getEntitlementForUpdate(userId, currentGatewayEnv);
           if (locked && locked.status === "active" && locked.expiresAt && now > Number(locked.expiresAt)) {
             await tx.upsertEntitlement({ ...locked, status: "expired", updatedAt: now });
             await tx.updateUserTier(userId, "free");
@@ -423,6 +417,23 @@ async function getEffectiveEntitlement(userId, userRow = null) {
     };
   }
 
+  // If in live mode and user only has a test entitlement, never fall back to users.tier
+  if (currentGatewayEnv === "live") {
+    const testEnt = await db.getEntitlement(userId, "test");
+    if (testEnt) {
+      return {
+        tier: "free",
+        planId: "free",
+        status: "inactive_test_only",
+        startedAt: null,
+        expiresAt: null,
+        daysRemaining: 0,
+        environment: "live",
+        lastPaymentId: null
+      };
+    }
+  }
+
   // Fallback for legacy/admin-elevated users without a subscription_entitlements row
   const normalized = normalizeTierName(userRow ? userRow.tier : "free");
   return {
@@ -432,7 +443,7 @@ async function getEffectiveEntitlement(userId, userRow = null) {
     startedAt: null,
     expiresAt: null,
     daysRemaining: normalized === "pro" ? 30 : 0,
-    environment: getPaymentEnvironment(process.env.RAZORPAY_KEY_ID),
+    environment: currentGatewayEnv,
     lastPaymentId: null
   };
 }
@@ -488,7 +499,8 @@ async function processRefundEventTx(tx, { environment, refundEntity }) {
       const allFulfilled = await tx.getActiveFulfilledPaymentsForUser(environment, payment.userId);
       const otherValid = allFulfilled.filter(p => p.razorpayPaymentId !== rzpPaymentId);
 
-      const ent = await tx.getEntitlementForUpdate(payment.userId);
+      const ent = await tx.getEntitlementForUpdate(payment.userId, environment);
+      const activeGatewayEnv = getPaymentEnvironment(process.env.RAZORPAY_KEY_ID);
       if (otherValid.length === 0) {
         if (ent) {
           await tx.upsertEntitlement({
@@ -498,7 +510,9 @@ async function processRefundEventTx(tx, { environment, refundEntity }) {
             updatedAt: now
           });
         }
-        await tx.updateUserTier(payment.userId, "free");
+        if (environment === activeGatewayEnv) {
+          await tx.updateUserTier(payment.userId, "free");
+        }
       } else if (ent && ent.sourcePaymentId === rzpPaymentId) {
         // Re-anchor entitlement to the latest remaining valid purchase without wiping unrelated purchases
         const latestValid = otherValid[0];
@@ -510,7 +524,9 @@ async function processRefundEventTx(tx, { environment, refundEntity }) {
           status: remainingExpires > now ? "active" : "expired",
           updatedAt: now
         });
-        await tx.updateUserTier(payment.userId, remainingExpires > now ? "pro" : "free");
+        if (environment === activeGatewayEnv) {
+          await tx.updateUserTier(payment.userId, remainingExpires > now ? "pro" : "free");
+        }
       }
     }
   }
