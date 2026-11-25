@@ -72,6 +72,94 @@ async function initializeDatabase(p) {
     )
   `);
 
+  // ── Durable Payment, Webhook, Entitlement & Refund Tables ──
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS payment_orders (
+      internal_order_id VARCHAR(128) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      razorpay_order_id VARCHAR(128) NOT NULL,
+      plan_id VARCHAR(64) NOT NULL,
+      expected_amount INT NOT NULL,
+      currency VARCHAR(16) NOT NULL,
+      duration_days INT NOT NULL,
+      environment VARCHAR(16) NOT NULL,
+      status VARCHAR(32) NOT NULL DEFAULT 'created',
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL,
+      UNIQUE (environment, razorpay_order_id)
+    )
+  `);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_payment_orders_user ON payment_orders (user_id, created_at DESC)`);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS payments (
+      internal_payment_id VARCHAR(128) PRIMARY KEY,
+      internal_order_id VARCHAR(128) REFERENCES payment_orders(internal_order_id) ON DELETE SET NULL,
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      razorpay_order_id VARCHAR(128) NOT NULL,
+      razorpay_payment_id VARCHAR(128) NOT NULL,
+      amount INT NOT NULL,
+      currency VARCHAR(16) NOT NULL,
+      payment_status VARCHAR(32) NOT NULL,
+      capture_status VARCHAR(32) NOT NULL,
+      method VARCHAR(64),
+      environment VARCHAR(16) NOT NULL,
+      verified_at BIGINT,
+      entitlement_status VARCHAR(32) NOT NULL DEFAULT 'pending',
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL,
+      UNIQUE (environment, razorpay_payment_id)
+    )
+  `);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_payments_user ON payments (user_id, created_at DESC)`);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_payments_order ON payments (environment, razorpay_order_id)`);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS webhook_events (
+      id VARCHAR(128) PRIMARY KEY,
+      event_id VARCHAR(128) NOT NULL,
+      event_type VARCHAR(128) NOT NULL,
+      environment VARCHAR(16) NOT NULL,
+      processing_status VARCHAR(32) NOT NULL DEFAULT 'received',
+      attempts INT NOT NULL DEFAULT 1,
+      received_at BIGINT NOT NULL,
+      processed_at BIGINT,
+      error_message TEXT,
+      UNIQUE (environment, event_id)
+    )
+  `);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS subscription_entitlements (
+      user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      plan_id VARCHAR(64) NOT NULL DEFAULT 'free',
+      status VARCHAR(32) NOT NULL DEFAULT 'inactive',
+      started_at BIGINT,
+      expires_at BIGINT,
+      source_payment_id VARCHAR(128),
+      environment VARCHAR(16) NOT NULL DEFAULT 'live',
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL
+    )
+  `);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS refunds (
+      internal_refund_id VARCHAR(128) PRIMARY KEY,
+      razorpay_refund_id VARCHAR(128) NOT NULL,
+      razorpay_payment_id VARCHAR(128) NOT NULL,
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      amount INT NOT NULL,
+      currency VARCHAR(16) NOT NULL,
+      refund_status VARCHAR(32) NOT NULL,
+      environment VARCHAR(16) NOT NULL,
+      processed_at BIGINT,
+      created_at BIGINT NOT NULL,
+      UNIQUE (environment, razorpay_refund_id)
+    )
+  `);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_refunds_payment ON refunds (environment, razorpay_payment_id)`);
+
   // Enable Row Level Security (RLS) on all tables (SEC-RLS)
   try {
     await p.query(`
@@ -79,6 +167,11 @@ async function initializeDatabase(p) {
       ALTER TABLE userdata ENABLE ROW LEVEL SECURITY;
       ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
       ALTER TABLE telemetry ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE payment_orders ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE webhook_events ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE subscription_entitlements ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE refunds ENABLE ROW LEVEL SECURITY;
     `);
   } catch (e) {
     // Non-fatal if DB role lacks superuser/owner privileges in dev
@@ -980,6 +1073,408 @@ module.exports = {
       telemetry,
       cms
     };
+  },
+
+  // ── Transactional Payment, Webhook, Entitlement & Refund Repository ──
+  isPgAvailable() {
+    return usePg && Boolean(pool);
+  },
+
+  assertPaymentPersistenceAvailable() {
+    if (!usePg && (process.env.NODE_ENV === "production" || process.env.REQUIRE_PG_FOR_PAYMENTS === "true")) {
+      const err = new Error("PostgreSQL database is unavailable. Financial operations are disabled (fail-closed).");
+      err.statusCode = 503;
+      throw err;
+    }
+  },
+
+  async withPaymentTransaction(fn) {
+    this.assertPaymentPersistenceAvailable();
+
+    if (usePg && pool) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const tx = createPgPaymentTx(client);
+        const result = await fn(tx);
+        await client.query("COMMIT");
+        return result;
+      } catch (err) {
+        try { await client.query("ROLLBACK"); } catch (rbErr) {}
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+
+    // Non-production serialized in-memory transaction with snapshot rollback
+    return await runInMemoryTx(fn, this);
+  },
+
+  async getEntitlement(userId) {
+    if (usePg && pool) {
+      const res = await pool.query("SELECT * FROM subscription_entitlements WHERE user_id = $1", [userId]);
+      if (res.rows.length === 0) return null;
+      return mapPgEntitlement(res.rows[0]);
+    }
+    return memPaymentStore.entitlements.get(userId) || null;
+  },
+
+  async getPendingOrdersByUser(userId, environment) {
+    this.assertPaymentPersistenceAvailable();
+    if (usePg && pool) {
+      const res = await pool.query(
+        "SELECT * FROM payment_orders WHERE user_id = $1 AND environment = $2 AND status IN ('created', 'attempted') ORDER BY created_at DESC LIMIT 10",
+        [userId, environment]
+      );
+      return res.rows.map(mapPgOrder);
+    }
+    return Array.from(memPaymentStore.orders.values())
+      .filter(o => o.userId === userId && o.environment === environment && (o.status === "created" || o.status === "attempted"))
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 10);
+  },
+
+  async getPaymentsByUser(userId) {
+    if (usePg && pool) {
+      const res = await pool.query("SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20", [userId]);
+      return res.rows.map(mapPgPayment);
+    }
+    return Array.from(memPaymentStore.payments.values())
+      .filter(p => p.userId === userId)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 20);
+  },
+
+  async resetInMemoryPaymentStoreForTests() {
+    if (process.env.NODE_ENV === "production") return;
+    memPaymentStore.orders.clear();
+    memPaymentStore.payments.clear();
+    memPaymentStore.webhooks.clear();
+    memPaymentStore.entitlements.clear();
+    memPaymentStore.refunds.clear();
   }
 };
+
+// ── PostgreSQL Row Mappers & Transaction Adapter ──
+function mapPgOrder(r) {
+  return {
+    internalOrderId: r.internal_order_id,
+    userId: r.user_id,
+    razorpayOrderId: r.razorpay_order_id,
+    planId: r.plan_id,
+    expectedAmount: Number(r.expected_amount),
+    currency: r.currency,
+    durationDays: Number(r.duration_days),
+    environment: r.environment,
+    status: r.status,
+    createdAt: Number(r.created_at),
+    updatedAt: Number(r.updated_at)
+  };
+}
+
+function mapPgPayment(r) {
+  return {
+    internalPaymentId: r.internal_payment_id,
+    internalOrderId: r.internal_order_id,
+    userId: r.user_id,
+    razorpayOrderId: r.razorpay_order_id,
+    razorpayPaymentId: r.razorpay_payment_id,
+    amount: Number(r.amount),
+    currency: r.currency,
+    paymentStatus: r.payment_status,
+    captureStatus: r.capture_status,
+    method: r.method,
+    environment: r.environment,
+    verifiedAt: r.verified_at ? Number(r.verified_at) : null,
+    entitlementStatus: r.entitlement_status,
+    createdAt: Number(r.created_at),
+    updatedAt: Number(r.updated_at)
+  };
+}
+
+function mapPgEntitlement(r) {
+  return {
+    userId: r.user_id,
+    planId: r.plan_id,
+    status: r.status,
+    startedAt: r.started_at ? Number(r.started_at) : null,
+    expiresAt: r.expires_at ? Number(r.expires_at) : null,
+    sourcePaymentId: r.source_payment_id || null,
+    environment: r.environment,
+    createdAt: Number(r.created_at),
+    updatedAt: Number(r.updated_at)
+  };
+}
+
+function mapPgWebhook(r) {
+  return {
+    id: r.id,
+    eventId: r.event_id,
+    eventType: r.event_type,
+    environment: r.environment,
+    processingStatus: r.processing_status,
+    attempts: Number(r.attempts),
+    receivedAt: Number(r.received_at),
+    processedAt: r.processed_at ? Number(r.processed_at) : null,
+    errorMessage: r.error_message || null
+  };
+}
+
+function mapPgRefund(r) {
+  return {
+    internalRefundId: r.internal_refund_id,
+    razorpayRefundId: r.razorpay_refund_id,
+    razorpayPaymentId: r.razorpay_payment_id,
+    userId: r.user_id,
+    amount: Number(r.amount),
+    currency: r.currency,
+    refundStatus: r.refund_status,
+    environment: r.environment,
+    processedAt: r.processed_at ? Number(r.processed_at) : null,
+    createdAt: Number(r.created_at)
+  };
+}
+
+function createPgPaymentTx(client) {
+  return {
+    async insertOrder(o) {
+      await client.query(
+        `INSERT INTO payment_orders (internal_order_id, user_id, razorpay_order_id, plan_id, expected_amount, currency, duration_days, environment, status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [o.internalOrderId, o.userId, o.razorpayOrderId, o.planId, o.expectedAmount, o.currency, o.durationDays, o.environment, o.status, o.createdAt, o.updatedAt]
+      );
+      return o;
+    },
+    async getOrderByRazorpayIdForUpdate(environment, razorpayOrderId) {
+      const res = await client.query(
+        "SELECT * FROM payment_orders WHERE environment = $1 AND razorpay_order_id = $2 FOR UPDATE",
+        [environment, razorpayOrderId]
+      );
+      return res.rows.length ? mapPgOrder(res.rows[0]) : null;
+    },
+    async updateOrderStatus(internalOrderId, status) {
+      await client.query(
+        "UPDATE payment_orders SET status = $1, updated_at = $2 WHERE internal_order_id = $3",
+        [status, Date.now(), internalOrderId]
+      );
+    },
+    async getPaymentByRazorpayIdForUpdate(environment, razorpayPaymentId) {
+      const res = await client.query(
+        "SELECT * FROM payments WHERE environment = $1 AND razorpay_payment_id = $2 FOR UPDATE",
+        [environment, razorpayPaymentId]
+      );
+      return res.rows.length ? mapPgPayment(res.rows[0]) : null;
+    },
+    async upsertPayment(p) {
+      await client.query(
+        `INSERT INTO payments (internal_payment_id, internal_order_id, user_id, razorpay_order_id, razorpay_payment_id, amount, currency, payment_status, capture_status, method, environment, verified_at, entitlement_status, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+         ON CONFLICT (environment, razorpay_payment_id) DO UPDATE SET
+           payment_status = EXCLUDED.payment_status,
+           capture_status = EXCLUDED.capture_status,
+           method = COALESCE(EXCLUDED.method, payments.method),
+           verified_at = COALESCE(EXCLUDED.verified_at, payments.verified_at),
+           entitlement_status = EXCLUDED.entitlement_status,
+           updated_at = EXCLUDED.updated_at`,
+        [p.internalPaymentId, p.internalOrderId, p.userId, p.razorpayOrderId, p.razorpayPaymentId, p.amount, p.currency, p.paymentStatus, p.captureStatus, p.method || null, p.environment, p.verifiedAt || null, p.entitlementStatus, p.createdAt, p.updatedAt]
+      );
+      return p;
+    },
+    async getEntitlementForUpdate(userId) {
+      const res = await client.query(
+        "SELECT * FROM subscription_entitlements WHERE user_id = $1 FOR UPDATE",
+        [userId]
+      );
+      return res.rows.length ? mapPgEntitlement(res.rows[0]) : null;
+    },
+    async upsertEntitlement(e) {
+      await client.query(
+        `INSERT INTO subscription_entitlements (user_id, plan_id, status, started_at, expires_at, source_payment_id, environment, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (user_id) DO UPDATE SET
+           plan_id = EXCLUDED.plan_id,
+           status = EXCLUDED.status,
+           started_at = COALESCE(EXCLUDED.started_at, subscription_entitlements.started_at),
+           expires_at = EXCLUDED.expires_at,
+           source_payment_id = EXCLUDED.source_payment_id,
+           environment = EXCLUDED.environment,
+           updated_at = EXCLUDED.updated_at`,
+        [e.userId, e.planId, e.status, e.startedAt, e.expiresAt, e.sourcePaymentId, e.environment, e.createdAt, e.updatedAt]
+      );
+      return e;
+    },
+    async updateUserTier(userId, tier) {
+      await client.query("UPDATE users SET tier = $1 WHERE id = $2", [tier, userId]);
+    },
+    async getWebhookEventForUpdate(environment, eventId) {
+      const res = await client.query(
+        "SELECT * FROM webhook_events WHERE environment = $1 AND event_id = $2 FOR UPDATE",
+        [environment, eventId]
+      );
+      return res.rows.length ? mapPgWebhook(res.rows[0]) : null;
+    },
+    async upsertWebhookEvent(w) {
+      await client.query(
+        `INSERT INTO webhook_events (id, event_id, event_type, environment, processing_status, attempts, received_at, processed_at, error_message)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (environment, event_id) DO UPDATE SET
+           processing_status = EXCLUDED.processing_status,
+           attempts = webhook_events.attempts + 1,
+           processed_at = EXCLUDED.processed_at,
+           error_message = EXCLUDED.error_message`,
+        [w.id, w.eventId, w.eventType, w.environment, w.processingStatus, w.attempts || 1, w.receivedAt, w.processedAt || null, w.errorMessage || null]
+      );
+      return w;
+    },
+    async getRefundByRazorpayIdForUpdate(environment, razorpayRefundId) {
+      const res = await client.query(
+        "SELECT * FROM refunds WHERE environment = $1 AND razorpay_refund_id = $2 FOR UPDATE",
+        [environment, razorpayRefundId]
+      );
+      return res.rows.length ? mapPgRefund(res.rows[0]) : null;
+    },
+    async upsertRefund(r) {
+      await client.query(
+        `INSERT INTO refunds (internal_refund_id, razorpay_refund_id, razorpay_payment_id, user_id, amount, currency, refund_status, environment, processed_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         ON CONFLICT (environment, razorpay_refund_id) DO UPDATE SET
+           refund_status = EXCLUDED.refund_status,
+           processed_at = COALESCE(EXCLUDED.processed_at, refunds.processed_at)`,
+        [r.internalRefundId, r.razorpayRefundId, r.razorpayPaymentId, r.userId, r.amount, r.currency, r.refundStatus, r.environment, r.processedAt || null, r.createdAt]
+      );
+      return r;
+    },
+    async getTotalRefundedForPayment(environment, razorpayPaymentId) {
+      const res = await client.query(
+        "SELECT COALESCE(SUM(amount), 0) AS total FROM refunds WHERE environment = $1 AND razorpay_payment_id = $2 AND refund_status IN ('processed', 'created')",
+        [environment, razorpayPaymentId]
+      );
+      return Number(res.rows[0].total || 0);
+    },
+    async getActiveFulfilledPaymentsForUser(environment, userId) {
+      const res = await client.query(
+        "SELECT * FROM payments WHERE environment = $1 AND user_id = $2 AND entitlement_status = 'fulfilled' ORDER BY created_at DESC",
+        [environment, userId]
+      );
+      return res.rows.map(mapPgPayment);
+    }
+  };
+}
+
+// ── Non-Production In-Memory Transactional Store (for automated tests without PG) ──
+const memPaymentStore = {
+  orders: new Map(),
+  payments: new Map(),
+  webhooks: new Map(),
+  entitlements: new Map(),
+  refunds: new Map()
+};
+
+let memTxQueue = Promise.resolve();
+
+async function runInMemoryTx(fn, dbApi) {
+  const run = async () => {
+    const snap = {
+      orders: new Map(Array.from(memPaymentStore.orders.entries()).map(([k, v]) => [k, { ...v }])),
+      payments: new Map(Array.from(memPaymentStore.payments.entries()).map(([k, v]) => [k, { ...v }])),
+      webhooks: new Map(Array.from(memPaymentStore.webhooks.entries()).map(([k, v]) => [k, { ...v }])),
+      entitlements: new Map(Array.from(memPaymentStore.entitlements.entries()).map(([k, v]) => [k, { ...v }])),
+      refunds: new Map(Array.from(memPaymentStore.refunds.entries()).map(([k, v]) => [k, { ...v }]))
+    };
+
+    const tx = {
+      async insertOrder(o) {
+        const key = `${o.environment}:${o.razorpayOrderId}`;
+        if (memPaymentStore.orders.has(key)) throw new Error("Duplicate razorpay_order_id");
+        memPaymentStore.orders.set(key, { ...o });
+        return { ...o };
+      },
+      async getOrderByRazorpayIdForUpdate(environment, razorpayOrderId) {
+        const v = memPaymentStore.orders.get(`${environment}:${razorpayOrderId}`);
+        return v ? { ...v } : null;
+      },
+      async updateOrderStatus(internalOrderId, status) {
+        for (const [k, v] of memPaymentStore.orders.entries()) {
+          if (v.internalOrderId === internalOrderId) {
+            memPaymentStore.orders.set(k, { ...v, status, updatedAt: Date.now() });
+          }
+        }
+      },
+      async getPaymentByRazorpayIdForUpdate(environment, razorpayPaymentId) {
+        const v = memPaymentStore.payments.get(`${environment}:${razorpayPaymentId}`);
+        return v ? { ...v } : null;
+      },
+      async upsertPayment(p) {
+        const key = `${p.environment}:${p.razorpayPaymentId}`;
+        const existing = memPaymentStore.payments.get(key);
+        memPaymentStore.payments.set(key, existing ? { ...existing, ...p } : { ...p });
+        return { ...p };
+      },
+      async getEntitlementForUpdate(userId) {
+        const v = memPaymentStore.entitlements.get(userId);
+        return v ? { ...v } : null;
+      },
+      async upsertEntitlement(e) {
+        memPaymentStore.entitlements.set(e.userId, { ...e });
+        return { ...e };
+      },
+      async updateUserTier(userId, tier) {
+        await dbApi.updateUserTier(userId, tier);
+      },
+      async getWebhookEventForUpdate(environment, eventId) {
+        const v = memPaymentStore.webhooks.get(`${environment}:${eventId}`);
+        return v ? { ...v } : null;
+      },
+      async upsertWebhookEvent(w) {
+        const key = `${w.environment}:${w.eventId}`;
+        const existing = memPaymentStore.webhooks.get(key);
+        memPaymentStore.webhooks.set(key, {
+          ...w,
+          attempts: existing ? existing.attempts + 1 : (w.attempts || 1)
+        });
+        return { ...w };
+      },
+      async getRefundByRazorpayIdForUpdate(environment, razorpayRefundId) {
+        const v = memPaymentStore.refunds.get(`${environment}:${razorpayRefundId}`);
+        return v ? { ...v } : null;
+      },
+      async upsertRefund(r) {
+        const key = `${r.environment}:${r.razorpayRefundId}`;
+        const existing = memPaymentStore.refunds.get(key);
+        memPaymentStore.refunds.set(key, existing ? { ...existing, ...r } : { ...r });
+        return { ...r };
+      },
+      async getTotalRefundedForPayment(environment, razorpayPaymentId) {
+        let sum = 0;
+        for (const r of memPaymentStore.refunds.values()) {
+          if (r.environment === environment && r.razorpayPaymentId === razorpayPaymentId && (r.refundStatus === "processed" || r.refundStatus === "created")) {
+            sum += Number(r.amount || 0);
+          }
+        }
+        return sum;
+      },
+      async getActiveFulfilledPaymentsForUser(environment, userId) {
+        return Array.from(memPaymentStore.payments.values())
+          .filter(p => p.environment === environment && p.userId === userId && p.entitlementStatus === "fulfilled")
+          .sort((a, b) => b.createdAt - a.createdAt);
+      }
+    };
+
+    try {
+      return await fn(tx);
+    } catch (err) {
+      memPaymentStore.orders = snap.orders;
+      memPaymentStore.payments = snap.payments;
+      memPaymentStore.webhooks = snap.webhooks;
+      memPaymentStore.entitlements = snap.entitlements;
+      memPaymentStore.refunds = snap.refunds;
+      throw err;
+    }
+  };
+
+  const next = memTxQueue.then(run, run);
+  memTxQueue = next.catch(() => {});
+  return next;
+}
 

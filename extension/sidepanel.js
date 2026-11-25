@@ -929,6 +929,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  // Refresh authoritative subscription entitlement from backend
+  function refreshSidePanelEntitlement(force = false) {
+    chrome.runtime.sendMessage({ type: "jobxapply:getEntitlement", force }, (res) => {
+      if (chrome.runtime.lastError || !res?.entitlement) return;
+      const ent = res.entitlement;
+      const badge = document.getElementById("spPlanBadge");
+      if (badge) {
+        if (ent.tier === "pro") {
+          badge.textContent = ent.daysRemaining ? `PRO · ${ent.daysRemaining}d` : "PRO";
+          badge.style.color = "var(--success)";
+          badge.title = ent.expiresAt
+            ? `Pro active until ${new Date(ent.expiresAt).toLocaleDateString()}`
+            : "Pro Plan Active";
+        } else {
+          badge.textContent = "FREE";
+          badge.style.color = "var(--muted)";
+          badge.title = "Free Tier (10 autofills/mo)";
+        }
+      }
+    });
+  }
+  refreshSidePanelEntitlement(false);
+  document.getElementById("spSyncBtn")?.addEventListener("click", () => refreshSidePanelEntitlement(true));
+
   // Listen to tab events to update detected portal live in the side panel
   if (chrome.tabs && chrome.tabs.onActivated) {
     chrome.tabs.onActivated.addListener(updateActivePortalInfo);

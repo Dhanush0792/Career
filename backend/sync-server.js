@@ -12,12 +12,14 @@ try {
 } catch (e) {}
 
 const Razorpay = require("razorpay");
+const { validatePaymentEnv } = require("./plan-catalog");
+const paymentService = require("./payment-service");
 
-function getRazorpayInstance() {
-  const key_id = process.env.RAZORPAY_KEY_ID;
-  const key_secret = process.env.RAZORPAY_KEY_SECRET;
-  if (!key_id || !key_secret) return null;
-  return new Razorpay({ key_id, key_secret });
+const paymentEnvCheck = validatePaymentEnv();
+if (paymentEnvCheck.warnings.length > 0) {
+  console.warn("[PAYMENT_CONFIG]", paymentEnvCheck.warnings.join(" "));
+} else {
+  console.log(`[PAYMENT_CONFIG] Razorpay configured in '${paymentEnvCheck.environment}' mode.`);
 }
 
 if (typeof dns.setDefaultResultOrder === "function") {
@@ -617,6 +619,25 @@ function readBody(req, maxBytes = MAX_BODY_BYTES) {
   });
 }
 
+function readRawBody(req, maxBytes = 256 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", chunk => {
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      size += buf.length;
+      if (size > maxBytes) {
+        req.destroy();
+        reject(new Error("Request body too large"));
+        return;
+      }
+      chunks.push(buf);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
 function writeCorsHeaders(req, res) {
   const origin = req.headers.origin;
   if (origin && isAllowedOrigin(origin)) {
@@ -935,6 +956,30 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // POST /api/payment/webhook (Public Razorpay Webhook - Raw Body Signature Verified)
+  if (req.method === "POST" && urlObj.pathname === "/api/payment/webhook") {
+    let rawBodyBuffer;
+    try {
+      rawBodyBuffer = await readRawBody(req, 256 * 1024);
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Webhook payload too large" });
+    }
+    try {
+      const result = await paymentService.handleWebhook({
+        rawBodyBuffer,
+        signatureHeader: req.headers["x-razorpay-signature"],
+        eventIdHeader: req.headers["x-razorpay-event-id"],
+        rzpClient: global.__RAZORPAY_TEST_CLIENT__ || null
+      });
+      console.log(`[WEBHOOK] event=${result.eventType || "unknown"} id=${result.eventId || "-"} status=${result.duplicate ? "duplicate" : (result.ignored ? "ignored" : "processed")}`);
+      return sendJson(res, 200, result);
+    } catch (err) {
+      const code = err.statusCode || 500;
+      console.warn(`[WEBHOOK_ERROR] status=${code} msg=${err.message}`);
+      return sendJson(res, code, { ok: false, error: err.message || "Webhook processing failed" });
+    }
+  }
+
   // GET / HEAD /health, /api/health, / (Public Health & Root check)
   if ((req.method === "GET" || req.method === "HEAD") && (urlObj.pathname === "/health" || urlObj.pathname === "/api/health" || urlObj.pathname === "/")) {
     sendJson(res, 200, { ok: true, status: "healthy", timestamp: Date.now() });
@@ -944,7 +989,20 @@ const server = http.createServer(async (req, res) => {
   // Static Health check
   if ((req.method === "GET" || req.method === "HEAD") && urlObj.pathname === "/api/status") {
     const stats = await db.getStats();
-    sendJson(res, 200, { ok: true, status: "online", users: stats.totalUsers, version: "1.2.0" });
+    const pHealth = validatePaymentEnv();
+    sendJson(res, 200, {
+      ok: true,
+      status: "online",
+      users: stats.totalUsers,
+      version: "1.2.0",
+      paymentHealth: {
+        configured: pHealth.configured,
+        webhookConfigured: pHealth.webhookConfigured,
+        environment: pHealth.environment,
+        pgPersistence: db.isPgAvailable(),
+        publicCheckoutEnabled: process.env.NODE_ENV !== "production" || process.env.ENABLE_PUBLIC_CHECKOUT === "true"
+      }
+    });
     return;
   }
 
@@ -1233,13 +1291,7 @@ const server = http.createServer(async (req, res) => {
         });
         return;
       }
-      const userTier = activeUser.tier || "free";
-      const isPaidTier = userTier === "pro" || userTier === "paid" || userTier === "premium";
-      const subExpiresAt = profile.subscriptionExpiresAt || null;
-      const subStartedAt = profile.subscriptionStartedAt || null;
-      const daysRemaining = isPaidTier
-        ? (subExpiresAt ? Math.max(0, Math.ceil((subExpiresAt - Date.now()) / 86400000)) : 30)
-        : 0;
+      const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
 
       sendJson(res, 200, {
         profiles: redactSensitiveUserData(profile.profiles),
@@ -1248,26 +1300,46 @@ const server = http.createServer(async (req, res) => {
         version: profile.version || 1,
         updatedAt: profile.updatedAt || Date.now(),
         origin: profile.origin || "server",
-        tier: userTier,
+        tier: effectiveEnt.tier,
         role: activeUser.role || "user",
-        subscription: {
-          tier: userTier,
-          startedAt: subStartedAt,
-          expiresAt: subExpiresAt,
-          daysRemaining,
-          lastPaymentId: profile.lastPaymentId || null
-        }
+        subscription: effectiveEnt
       });
     } else {
+      const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
       sendJson(res, 200, {
         profile: { fullName: "", email: activeUser.email },
         version: 0,
         updatedAt: Date.now(),
-        tier: activeUser.tier || "free",
-        role: activeUser.role || "user"
+        tier: effectiveEnt.tier,
+        role: activeUser.role || "user",
+        subscription: effectiveEnt
       });
     }
     return;
+  }
+
+  // GET /api/subscription (Authoritative Entitlement & Payment History)
+  if (req.method === "GET" && urlObj.pathname === "/api/subscription") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, error: "Authentication required" });
+    }
+    const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
+    const payments = await db.getPaymentsByUser(activeUser.id);
+    return sendJson(res, 200, {
+      ok: true,
+      tier: effectiveEnt.tier,
+      subscription: effectiveEnt,
+      payments: payments.map(p => ({
+        orderId: p.razorpayOrderId,
+        paymentId: p.razorpayPaymentId,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.paymentStatus,
+        entitlementStatus: p.entitlementStatus,
+        environment: p.environment,
+        createdAt: p.createdAt
+      }))
+    });
   }
 
   // POST Update Profile
@@ -1303,7 +1375,23 @@ const server = http.createServer(async (req, res) => {
         activeUser = defaultUser;
       }
 
+      // Strip server-managed financial & entitlement fields from client-editable profile state
+      const PROTECTED_ENTITLEMENT_KEYS = [
+        "tier", "subscriptionTier", "subscriptionStartedAt", "subscriptionExpiresAt",
+        "lastPaymentId", "lastOrderId", "entitlementStatus", "refundStatus", "rateLimitPrivileges"
+      ];
+      PROTECTED_ENTITLEMENT_KEYS.forEach(k => {
+        delete incoming[k];
+        if (incoming.profile && typeof incoming.profile === "object") delete incoming.profile[k];
+        if (incoming.profiles && typeof incoming.profiles === "object") {
+          Object.values(incoming.profiles).forEach(p => {
+            if (p && typeof p === "object") delete p[k];
+          });
+        }
+      });
+
       const stateData = normalizeState(incoming);
+      PROTECTED_ENTITLEMENT_KEYS.forEach(k => delete stateData[k]);
       stateData.version = (stateData.version || 0) + 1;
       stateData.updatedAt = Date.now();
       stateData.origin = incoming.origin || "server";
@@ -2217,7 +2305,8 @@ const server = http.createServer(async (req, res) => {
   // POST /api/resume/generate
   if (req.method === "POST" && urlObj.pathname === "/api/resume/generate") {
     if (activeUser) {
-      const limit = (activeUser.tier === "paid" || activeUser.tier === "premium") ? 50 : 5;
+      const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
+      const limit = effectiveEnt.tier === "pro" ? 50 : 5;
       if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
         sendJson(res, 429, { ok: false, error: `Too many resume generation attempts. Limit is ${limit} per hour.` });
         return;
@@ -2452,7 +2541,8 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && urlObj.pathname === "/api/cover-letter/generate") {
     if (activeUser) {
-      const limit = (activeUser.tier === "paid" || activeUser.tier === "premium") ? 50 : 5;
+      const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
+      const limit = effectiveEnt.tier === "pro" ? 50 : 5;
       if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
         sendJson(res, 429, { ok: false, error: `Too many cover letter generation attempts. Limit is ${limit} per hour.` });
         return;
@@ -2552,7 +2642,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ── Razorpay Standard Checkout Routes ──────────────────────────────────────
+  // ── Razorpay Standard Checkout & Reconciliation Routes ──────────────────────
 
   // POST /api/create-order
   if (req.method === "POST" && urlObj.pathname === "/api/create-order") {
@@ -2563,127 +2653,67 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody(req, 16384);
       const payload = JSON.parse(body || "{}");
 
-      const amount = payload.amount !== undefined ? Number(payload.amount) : 19900;
-      if (!Number.isFinite(amount) || amount < 100) {
-        return sendJson(res, 400, { ok: false, error: "Minimum order amount is 100 paise" });
-      }
-
-      const currency = (typeof payload.currency === "string" && payload.currency.trim()) ? payload.currency.trim().toUpperCase() : "INR";
-      const receipt = (typeof payload.receipt === "string" && payload.receipt.trim())
-        ? payload.receipt.trim().slice(0, 40)
-        : `rcpt_${String(activeUser.id).slice(0, 12)}_${Date.now()}`;
-
-      const rzp = getRazorpayInstance();
-      if (!rzp) {
-        return sendJson(res, 500, { ok: false, error: "Payment gateway credentials not configured" });
-      }
-
-      const order = await rzp.orders.create({
-        amount: Math.round(amount),
-        currency,
-        receipt,
-        notes: {
-          userId: String(activeUser.id),
-          email: String(activeUser.email || ""),
-          plan: String(payload.plan || "pro")
-        }
+      const result = await paymentService.createOrderForUser({
+        user: activeUser,
+        planId: payload.plan || payload.planId || "pro",
+        clientAmount: payload.amount,
+        clientCurrency: payload.currency,
+        receipt: payload.receipt,
+        rzpClient: global.__RAZORPAY_TEST_CLIENT__ || null
       });
 
-      logAdminActivity(`Razorpay order created (${order.id}) for ${activeUser.email}`);
-      return sendJson(res, 200, {
-        ok: true,
-        order_id: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        key_id: process.env.RAZORPAY_KEY_ID
-      });
+      logAdminActivity(`Razorpay order created (${result.order_id}) for ${activeUser.email}`);
+      return sendJson(res, 200, result);
     } catch (err) {
-      const statusCode = err && err.statusCode === 401 ? 401 : 500;
-      const errMsg = (err && err.error && err.error.description) || err.message || "Failed to create Razorpay order";
-      return sendJson(res, statusCode, { ok: false, error: errMsg });
+      const statusCode = err.statusCode || 500;
+      return sendJson(res, statusCode, { ok: false, error: err.message || "Failed to create Razorpay order" });
     }
   }
 
   // POST /api/verify-payment
   if (req.method === "POST" && urlObj.pathname === "/api/verify-payment") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, error: "Authentication required" });
+    }
     try {
       const body = await readBody(req, 16384);
       const payload = JSON.parse(body || "{}");
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = payload;
 
-      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-        return sendJson(res, 400, { ok: false, error: "Missing required fields: razorpay_order_id, razorpay_payment_id, razorpay_signature" });
-      }
-
-      const keySecret = process.env.RAZORPAY_KEY_SECRET;
-      if (!keySecret) {
-        return sendJson(res, 500, { ok: false, error: "Payment gateway secret not configured" });
-      }
-
-      const expectedSignature = crypto
-        .createHmac("sha256", keySecret)
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest("hex");
-
-      const sigStr = String(razorpay_signature);
-      const isValid =
-        expectedSignature.length === sigStr.length &&
-        crypto.timingSafeEqual(Buffer.from(expectedSignature, "utf8"), Buffer.from(sigStr, "utf8"));
-
-      if (!isValid) {
-        return sendJson(res, 400, { ok: false, error: "Invalid payment signature" });
-      }
-
-      let subMeta = {
-        tier: "pro",
-        startedAt: Date.now(),
-        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-        daysRemaining: 30,
-        lastPaymentId: razorpay_payment_id
-      };
-
-      if (activeUser) {
-        await db.updateUserTier(activeUser.id, "pro");
-        const now = Date.now();
-        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-        const existingState = (await db.getProfile(activeUser.id)) || {
-          profiles: { default: {} },
-          activeProfileId: "default",
-          profile: {},
-          version: 1
-        };
-        const currentExpires = Number(existingState.subscriptionExpiresAt || 0);
-        const newExpiresAt = Math.max(now, currentExpires) + thirtyDaysMs;
-        const startedAt = existingState.subscriptionStartedAt || now;
-
-        existingState.subscriptionStartedAt = startedAt;
-        existingState.subscriptionExpiresAt = newExpiresAt;
-        existingState.lastPaymentId = razorpay_payment_id;
-        existingState.lastOrderId = razorpay_order_id;
-        existingState.updatedAt = now;
-
-        await db.saveProfile(activeUser.id, existingState);
-        subMeta = {
-          tier: "pro",
-          startedAt,
-          expiresAt: newExpiresAt,
-          daysRemaining: Math.max(1, Math.ceil((newExpiresAt - now) / 86400000)),
-          lastPaymentId: razorpay_payment_id
-        };
-        logAdminActivity(`Payment verified (${razorpay_payment_id}) - upgraded ${activeUser.email} to Pro`);
-      }
-
-      return sendJson(res, 200, {
-        ok: true,
-        verified: true,
-        tier: "pro",
-        order_id: razorpay_order_id,
-        payment_id: razorpay_payment_id,
-        subscription: subMeta,
-        message: "Payment verified and Pro tier activated."
+      const result = await paymentService.verifyCheckoutAndFulfill({
+        user: activeUser,
+        razorpayOrderId: payload.razorpay_order_id,
+        razorpayPaymentId: payload.razorpay_payment_id,
+        razorpaySignature: payload.razorpay_signature,
+        rzpClient: global.__RAZORPAY_TEST_CLIENT__ || null
       });
+
+      if (!result.alreadyProcessed) {
+        logAdminActivity(`Payment verified (${result.payment_id}) - upgraded ${activeUser.email} to Pro`);
+      }
+      return sendJson(res, 200, result);
     } catch (err) {
-      return sendJson(res, 500, { ok: false, error: err.message || "Payment verification failed" });
+      const statusCode = err.statusCode || 500;
+      return sendJson(res, statusCode, { ok: false, error: err.message || "Payment verification failed" });
+    }
+  }
+
+  // POST /api/payment/reconcile (Authenticated Customer Recovery)
+  if (req.method === "POST" && urlObj.pathname === "/api/payment/reconcile") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, error: "Authentication required" });
+    }
+    try {
+      const body = await readBody(req, 8192);
+      const payload = JSON.parse(body || "{}");
+      const result = await paymentService.reconcileUserOrders({
+        user: activeUser,
+        orderId: payload.order_id || null,
+        rzpClient: global.__RAZORPAY_TEST_CLIENT__ || null
+      });
+      return sendJson(res, 200, result);
+    } catch (err) {
+      const statusCode = err.statusCode || 500;
+      return sendJson(res, statusCode, { ok: false, error: err.message || "Reconciliation failed" });
     }
   }
 

@@ -539,7 +539,7 @@
           <div class="price-row">
             <span class="price-old">₹299</span>
             <span class="price-now">₹199</span>
-            <span class="price-unit">/ month</span>
+            <span class="price-unit">/ 30 days (prepaid, no auto-renewal)</span>
           </div>
           <p class="plan-usecase">
             <strong>Best for:</strong> Active job seekers applying daily who want to save hours and get more interviews.
@@ -829,121 +829,48 @@ requireAuth();
     if (payFallbackActions) payFallbackActions.style.display = 'flex';
   }
 
-  async function startRazorpayProFlow() {
+  function startRazorpayProFlow() {
     showStage('payment', 'STEP 5 // PRO CHECKOUT');
     if (paySpinner) paySpinner.style.display = 'block';
     if (payErrorBox) payErrorBox.style.display = 'none';
     if (payFallbackActions) payFallbackActions.style.display = 'none';
-    if (payTitle) payTitle.textContent = 'PREPARING YOUR PRO UPGRADE...';
-    if (payMsg) payMsg.textContent = 'Creating secure Razorpay checkout order (₹199 Launch Offer)...';
 
-    const token = typeof getEffectiveAuthToken === 'function'
-      ? getEffectiveAuthToken()
-      : (localStorage.getItem('jxa_token') || '');
-
-    if (!token) {
-      showPaymentError('Your session expired. Please sign in again.');
+    if (typeof JobXApplyCheckout === 'undefined') {
+      showPaymentError('Checkout module failed to load. Please refresh and try again.');
       return;
     }
 
-    if (typeof Razorpay === 'undefined' && typeof ensureRazorpaySDK === 'function') {
-      await ensureRazorpaySDK();
-    }
-    if (typeof Razorpay === 'undefined') {
-      showPaymentError('Razorpay SDK blocked or unavailable. Disable any ad-blocker or check your internet connection.');
-      return;
-    }
-
-    const apiBase = (typeof SYNC_API !== 'undefined' && SYNC_API) ? SYNC_API : 'http://localhost:8787/api';
-
-    try {
-      const orderRes = await fetch(`${apiBase}/create-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ amount: 19900, currency: 'INR', plan: 'pro' })
-      });
-      const orderData = await orderRes.json();
-
-      if (!orderRes.ok || !orderData.ok || !orderData.order_id) {
-        showPaymentError(orderData.error || 'Could not create Razorpay payment order.');
-        return;
-      }
-
-      if (payTitle) payTitle.textContent = 'COMPLETE PAYMENT IN POPUP';
-      if (payMsg) payMsg.textContent = 'Choose UPI, Card, or NetBanking inside the Razorpay window...';
-
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'JobXApply',
-        description: 'Pro Tier Launch Offer (₹199/mo)',
-        order_id: orderData.order_id,
-        prefill: {
-          name: rawName,
-          email: userEmail
-        },
-        theme: { color: '#5B4FE8' },
-        modal: {
-          ondismiss: function () {
-            showPaymentError('Payment modal was closed before completion.');
-          }
-        },
-        handler: async function (response) {
+    JobXApplyCheckout.startProCheckout({
+      onState: (state, msg) => {
+        if (state === 'checkout_loading' || state === 'creating_order') {
+          if (paySpinner) paySpinner.style.display = 'block';
+          if (payTitle) payTitle.textContent = 'PREPARING YOUR PRO UPGRADE...';
+          if (payMsg) payMsg.textContent = msg;
+        } else if (state === 'payment_pending') {
+          if (payTitle) payTitle.textContent = 'COMPLETE PAYMENT IN POPUP';
+          if (payMsg) payMsg.textContent = msg;
+        } else if (state === 'verifying') {
           if (paySpinner) paySpinner.style.display = 'block';
           if (payTitle) payTitle.textContent = 'VERIFYING & SYNCING PRO ACCESS...';
-          if (payMsg) payMsg.textContent = 'Validating payment signature and unlocking all Pro tools...';
-
-          try {
-            const verifyRes = await fetch(`${apiBase}/verify-payment`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
-              })
-            });
-            const verifyData = await verifyRes.json();
-
-            if (verifyRes.ok && verifyData.ok) {
-              if (verifyData.subscription) {
-                localStorage.setItem('jxa_subscription', JSON.stringify(verifyData.subscription));
-              }
-              await persistOnboardingChoice('pro');
-              if (payTitle) payTitle.textContent = 'PRO ACCOUNT ACTIVATED!';
-              if (payMsg) payMsg.textContent = 'Payment verified and synced. Opening your profile setup...';
-              sessionStorage.setItem('jxa_welcome_type', 'new');
-              if (typeof showToast === 'function') {
-                showToast('Welcome to JobXApply Pro! Payment verified.', 'success');
-              }
-              setTimeout(() => {
-                window.location.replace('profile-setup.html?onboarding=1&welcome=pro');
-              }, 1200);
-            } else {
-              showPaymentError(verifyData.error || 'Payment signature verification failed.');
-            }
-          } catch (verifyErr) {
-            showPaymentError('Network error while verifying your payment. Please contact support if amount was deducted.');
-          }
+          if (payMsg) payMsg.textContent = msg;
         }
-      };
-
-      const rzp = new Razorpay(options);
-      rzp.on('payment.failed', function (resp) {
-        const desc = (resp && resp.error && resp.error.description) || 'Payment failed. Please try another method.';
-        showPaymentError(desc);
-      });
-      rzp.open();
-    } catch (err) {
-      showPaymentError('Unable to reach payment server. Please try again.');
-    }
+      },
+      onSuccess: async () => {
+        await persistOnboardingChoice('pro');
+        if (payTitle) payTitle.textContent = 'PRO ACCOUNT ACTIVATED!';
+        if (payMsg) payMsg.textContent = '30-day prepaid Pro access verified and synced. Opening profile setup...';
+        sessionStorage.setItem('jxa_welcome_type', 'new');
+        if (typeof showToast === 'function') {
+          showToast('Welcome to JobXApply Pro! Payment verified.', 'success');
+        }
+        setTimeout(() => {
+          window.location.replace('profile-setup.html?onboarding=1&welcome=pro');
+        }, 1200);
+      },
+      onError: (errMsg) => {
+        showPaymentError(errMsg);
+      }
+    });
   }
 
   document.getElementById('btn-choose-pro').addEventListener('click', startRazorpayProFlow);

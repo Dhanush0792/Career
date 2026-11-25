@@ -451,18 +451,30 @@ async function runTestSuite() {
     logTest(adminSysRes.statusCode === 200 && adminSysRes.json?.ok === true,
       'Admin token grants authorized access to /api/admin/system/health', `status: ${adminSysRes.statusCode}`);
 
-    // ── 7. RAZORPAY CHECKOUT & VERIFICATION ────────────────────
-    console.log('\n--- 7. Razorpay Payment Integration ---');
+    // ── 7. RAZORPAY CHECKOUT, SECURITY & ENTITLEMENT HARDENING ──
+    console.log('\n--- 7. Razorpay Payment Integration & Security ---');
 
     // Unauthenticated create-order rejected
-    const unauthOrder = await request({ path: '/api/create-order', method: 'POST' }, { amount: 19900 });
+    const unauthOrder = await request({ path: '/api/create-order', method: 'POST' }, { plan: 'pro' });
     logTest(unauthOrder.statusCode === 401,
       'POST /api/create-order without auth correctly rejected with 401', `status: ${unauthOrder.statusCode}`);
 
-    // Minimum amount validation (< 100 paise)
-    const minAmtOrder = await request({ path: '/api/create-order', method: 'POST', headers: authHeaders }, { amount: 50 });
-    logTest(minAmtOrder.statusCode === 400,
-      'POST /api/create-order rejects amount < 100 paise with 400', `status: ${minAmtOrder.statusCode}`);
+    // Client price tampering rejected (amount != 19900)
+    const tamperAmtOrder = await request({ path: '/api/create-order', method: 'POST', headers: authHeaders }, { plan: 'pro', amount: 50 });
+    logTest(tamperAmtOrder.statusCode === 400,
+      'POST /api/create-order rejects client price tampering with 400', `status: ${tamperAmtOrder.statusCode}`);
+
+    // Unknown plan rejected
+    const badPlanOrder = await request({ path: '/api/create-order', method: 'POST', headers: authHeaders }, { plan: 'enterprise_free' });
+    logTest(badPlanOrder.statusCode === 400,
+      'POST /api/create-order rejects invalid plan with 400', `status: ${badPlanOrder.statusCode}`);
+
+    // Unauthenticated verify-payment rejected
+    const unauthVerify = await request({ path: '/api/verify-payment', method: 'POST' }, {
+      razorpay_order_id: 'order_x', razorpay_payment_id: 'pay_x', razorpay_signature: 'sig_x'
+    });
+    logTest(unauthVerify.statusCode === 401,
+      'POST /api/verify-payment without auth correctly rejected with 401', `status: ${unauthVerify.statusCode}`);
 
     // Missing fields in verify-payment
     const missingVerify = await request({ path: '/api/verify-payment', method: 'POST', headers: authHeaders }, {
@@ -471,31 +483,33 @@ async function runTestSuite() {
     logTest(missingVerify.statusCode === 400,
       'POST /api/verify-payment rejects missing fields with 400', `status: ${missingVerify.statusCode}`);
 
-    // Invalid signature in verify-payment
-    const badSigVerify = await request({ path: '/api/verify-payment', method: 'POST', headers: authHeaders }, {
-      razorpay_order_id: 'order_test_123',
+    // Unknown order rejected in verify-payment
+    const unknownOrderVerify = await request({ path: '/api/verify-payment', method: 'POST', headers: authHeaders }, {
+      razorpay_order_id: 'order_unknown_999',
       razorpay_payment_id: 'pay_test_456',
       razorpay_signature: 'tampered_signature_invalid_hex'
     });
-    logTest(badSigVerify.statusCode === 400,
-      'POST /api/verify-payment rejects invalid HMAC signature with 400', `status: ${badSigVerify.statusCode}`);
+    logTest(unknownOrderVerify.statusCode === 404,
+      'POST /api/verify-payment rejects unknown order with 404', `status: ${unknownOrderVerify.statusCode}`);
 
-    // Valid signature in verify-payment
-    const crypto = require('crypto');
-    const mockOrderId = 'order_test_valid_123';
-    const mockPaymentId = 'pay_test_valid_456';
-    const validSig = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-      .update(`${mockOrderId}|${mockPaymentId}`)
-      .digest('hex');
+    // GET /api/subscription requires auth and returns free tier
+    const unauthSub = await request({ path: '/api/subscription' });
+    logTest(unauthSub.statusCode === 401,
+      'GET /api/subscription without auth rejected with 401', `status: ${unauthSub.statusCode}`);
 
-    const validVerify = await request({ path: '/api/verify-payment', method: 'POST', headers: authHeaders }, {
-      razorpay_order_id: mockOrderId,
-      razorpay_payment_id: mockPaymentId,
-      razorpay_signature: validSig
+    const authSub = await request({ path: '/api/subscription', headers: authHeaders });
+    logTest(authSub.statusCode === 200 && authSub.json?.ok === true && authSub.json?.tier === 'free',
+      'GET /api/subscription returns authoritative free tier', `status: ${authSub.statusCode}`);
+
+    // Profile update cannot escalate tier
+    await request({ path: '/api/profile', method: 'POST', headers: authHeaders }, {
+      tier: 'pro',
+      subscriptionExpiresAt: Date.now() + 999999999,
+      profile: { fullName: 'Privilege Test', tier: 'pro' }
     });
-    logTest(validVerify.statusCode === 200 && validVerify.json?.ok === true && validVerify.json?.tier === 'pro',
-      'POST /api/verify-payment accepts valid HMAC-SHA256 signature and upgrades tier', `status: ${validVerify.statusCode}`);
+    const subAfterProfileTamper = await request({ path: '/api/subscription', headers: authHeaders });
+    logTest(subAfterProfileTamper.statusCode === 200 && subAfterProfileTamper.json?.tier === 'free',
+      'POST /api/profile cannot overwrite or escalate user tier', `tier: ${subAfterProfileTamper.json?.tier}`);
 
     // Clean up test user
     const deleteRes = await request({ path: '/api/profile', method: 'DELETE', headers: authHeaders });

@@ -108,8 +108,7 @@ async function processSession(token, userEmail = "", refreshToken = "") {
       window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
         detail: {
           token: token,
-          email: email,
-          passcode: localStorage.getItem("jxa_passcode") || ""
+          email: email
         }
       }));
     } catch (e) {

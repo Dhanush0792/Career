@@ -949,9 +949,29 @@ function handlePopupDownloadCoverLetter() {
     document.getElementById("syncCloud")?.addEventListener("click", async () => {
       await syncFromCloud();
       await syncToWebTab();
+      refreshPopupEntitlement(true);
     });
     document.getElementById("syncWebTabBtn")?.addEventListener("click", syncToWebTab);
     document.getElementById("disconnectBtn")?.addEventListener("click", handleDisconnect);
+
+    function refreshPopupEntitlement(force = false) {
+      chrome.runtime.sendMessage({ type: "jobxapply:getEntitlement", force }, (res) => {
+        if (chrome.runtime.lastError || !res?.entitlement) return;
+        const ent = res.entitlement;
+        const badge = document.getElementById("popupPlanBadge");
+        const sub = document.getElementById("popupPlanSub");
+        if (badge) {
+          badge.textContent = ent.tier === "pro" ? "PRO" : "FREE";
+          badge.style.color = ent.tier === "pro" ? "var(--teal)" : "var(--text-muted)";
+        }
+        if (sub) {
+          sub.textContent = ent.tier === "pro" && ent.daysRemaining
+            ? `Pro · ${ent.daysRemaining}d left`
+            : "Free Tier";
+        }
+      });
+    }
+    refreshPopupEntitlement(false);
   } catch (globalErr) {
     console.error("Popup init failed:", globalErr);
     const loginView = document.getElementById("loginView");

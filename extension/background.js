@@ -3,6 +3,71 @@ import { MOCK_PROFILE_DATA } from "./mock-profile-data.js";
 
 const SYNC_API = "https://jobxapply-backend.onrender.com/api";
 
+const ENTITLEMENT_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h max offline grace
+
+function resolveEffectiveCachedEntitlement(cached) {
+  const now = Date.now();
+  if (!cached || typeof cached !== "object") {
+    return { tier: "free", planId: "free", status: "inactive", expiresAt: null, daysRemaining: 0, offlineFallback: true };
+  }
+  const cacheExpired = !cached.fetchedAt || (now - Number(cached.fetchedAt) > ENTITLEMENT_CACHE_MAX_AGE_MS);
+  const subExpired = cached.expiresAt && now > Number(cached.expiresAt);
+  if (cacheExpired || subExpired || cached.tier !== "pro") {
+    return {
+      tier: "free",
+      planId: "free",
+      status: subExpired ? "expired" : "inactive",
+      expiresAt: cached.expiresAt || null,
+      daysRemaining: 0,
+      offlineFallback: cacheExpired
+    };
+  }
+  return {
+    ...cached,
+    daysRemaining: cached.expiresAt ? Math.max(0, Math.ceil((Number(cached.expiresAt) - now) / 86400000)) : 30
+  };
+}
+
+async function fetchAuthoritativeEntitlement() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["jobxapplyToken", "jobxapplyEntitlement"], async (res) => {
+      const token = res.jobxapplyToken || "";
+      if (!token) {
+        const freeEnt = { tier: "free", planId: "free", status: "unauthenticated", expiresAt: null, daysRemaining: 0, fetchedAt: Date.now() };
+        chrome.storage.local.set({ jobxapplyEntitlement: freeEnt });
+        return resolve(freeEnt);
+      }
+      try {
+        const resp = await fetch(`${SYNC_API}/subscription`, {
+          headers: { "Authorization": `Bearer ${token}` },
+          cache: "no-store"
+        });
+        if (!resp.ok) {
+          return resolve(resolveEffectiveCachedEntitlement(res.jobxapplyEntitlement));
+        }
+        const data = await resp.json();
+        const sub = data.subscription || {};
+        const ent = {
+          tier: data.tier === "pro" ? "pro" : "free",
+          planId: sub.planId || (data.tier === "pro" ? "pro" : "free"),
+          status: sub.status || (data.tier === "pro" ? "active" : "inactive"),
+          expiresAt: sub.expiresAt || null,
+          daysRemaining: typeof sub.daysRemaining === "number" ? sub.daysRemaining : 0,
+          fetchedAt: Date.now()
+        };
+        chrome.storage.local.set({ jobxapplyEntitlement: ent });
+        resolve(ent);
+      } catch (e) {
+        resolve(resolveEffectiveCachedEntitlement(res.jobxapplyEntitlement));
+      }
+    });
+  });
+}
+
+chrome.runtime.onStartup.addListener(() => {
+  fetchAuthoritativeEntitlement().catch(() => {});
+});
+
 async function authenticatedFetch(url, options = {}) {
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(["jobxapplyToken", "jobxapplyPasscode"], async (result) => {
@@ -191,20 +256,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message?.type === "jobxapply:saveAuth") {
-    const { token, passcode, email } = message;
+    const { token, email } = message;
     chrome.storage.local.set({
       jobxapplyToken: token || "",
-      jobxapplyPasscode: passcode || "",
       jobxapplyEmail: email || "",
       jobxapplyProfile: {},
       jobxapplyProfiles: {},
       jobxapplyState: null
     }, () => {
-      // Trigger profile sync immediately
-      syncProfileFromServer(passcode || "").catch((err) => {
+      // Trigger authoritative entitlement & profile sync immediately
+      fetchAuthoritativeEntitlement().catch(() => {});
+      syncProfileFromServer("").catch((err) => {
         console.error("Auto-sync profile failed after saveAuth:", err);
       });
       sendResponse({ ok: true });
+    });
+    return true;
+  }
+  if (message?.type === "jobxapply:refreshEntitlement") {
+    fetchAuthoritativeEntitlement().then((ent) => sendResponse({ ok: true, entitlement: ent }));
+    return true;
+  }
+  if (message?.type === "jobxapply:getEntitlement") {
+    chrome.storage.local.get(["jobxapplyEntitlement"], async (res) => {
+      const cached = res.jobxapplyEntitlement;
+      const isStale = !cached || !cached.fetchedAt || (Date.now() - Number(cached.fetchedAt) > 15 * 60 * 1000);
+      if (isStale || message.force) {
+        const fresh = await fetchAuthoritativeEntitlement();
+        sendResponse({ ok: true, entitlement: fresh });
+      } else {
+        sendResponse({ ok: true, entitlement: resolveEffectiveCachedEntitlement(cached) });
+      }
     });
     return true;
   }

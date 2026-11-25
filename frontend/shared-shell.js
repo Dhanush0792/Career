@@ -200,7 +200,7 @@ function triggerSessionLogout(reason = 'logged_out', navigate = true) {
         detail: { paired: false, email: "" }
       }));
       window.dispatchEvent(new CustomEvent("jobxapply:shareAuth", {
-        detail: { token: "", email: "", passcode: "" }
+        detail: { token: "", email: "" }
       }));
     } catch(e) {}
   }
@@ -391,8 +391,7 @@ function requireAuth() {
         window.dispatchEvent(new CustomEvent('jobxapply:shareAuth', {
           detail: {
             token: token,
-            email: (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_user_email')) || '',
-            passcode: (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_passcode')) || ''
+            email: (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_user_email')) || ''
           }
         }));
       }
@@ -3234,8 +3233,188 @@ function ensureRazorpaySDK() {
   });
 }
 
+let _checkoutInFlight = false;
+
+const JobXApplyCheckout = {
+  isBusy() {
+    return _checkoutInFlight;
+  },
+
+  async recoverPendingPayment(orderId = null, callbacks = {}) {
+    const onState = callbacks.onState || (() => {});
+    const onSuccess = callbacks.onSuccess || (() => {});
+    const onError = callbacks.onError || (() => {});
+
+    const token = getEffectiveAuthToken();
+    if (!token) {
+      onState('failed', 'Please sign in first.');
+      onError('Authentication required.');
+      return;
+    }
+
+    onState('recovering', 'Checking payment status with Razorpay...');
+    try {
+      const targetOrder = orderId || sessionStorage.getItem('jxa_pending_order_id') || null;
+      const res = await fetch(`${SYNC_API}/payment/reconcile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ order_id: targetOrder })
+      });
+      const data = await res.json();
+      if (res.ok && data.ok && (data.reconciled || data.alreadyPaid || data.tier === 'pro')) {
+        sessionStorage.removeItem('jxa_pending_order_id');
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('jxa_tier', 'pro');
+          if (data.subscription) localStorage.setItem('jxa_subscription', JSON.stringify(data.subscription));
+        }
+        window.dispatchEvent(new CustomEvent('jobxapply:refreshEntitlement'));
+        onState('success', 'Pro entitlement verified and synced!');
+        onSuccess(data);
+      } else {
+        onState('entitlement_pending', 'Payment not yet captured. If amount was deducted, wait a moment and retry recovery.');
+        onError(data.error || 'No captured payment found for pending order.');
+      }
+    } catch (err) {
+      onState('network_error', 'Network error while checking payment status.');
+      onError('Network error while checking payment status.');
+    }
+  },
+
+  async startProCheckout(callbacks = {}) {
+    if (_checkoutInFlight) return;
+    _checkoutInFlight = true;
+
+    const onState = callbacks.onState || (() => {});
+    const onSuccess = callbacks.onSuccess || (() => {});
+    const onError = callbacks.onError || (() => {});
+    const release = () => { _checkoutInFlight = false; };
+
+    const token = getEffectiveAuthToken();
+    if (!token) {
+      release();
+      onState('failed', 'Please sign in first to upgrade.');
+      onError('Authentication required.', { requiresAuth: true });
+      return;
+    }
+
+    try {
+      onState('checkout_loading', 'Loading Razorpay secure checkout...');
+      const sdkReady = await ensureRazorpaySDK();
+      if (!sdkReady || typeof window.Razorpay === 'undefined') {
+        release();
+        onState('failed', 'Razorpay SDK blocked or unavailable.');
+        onError('Razorpay SDK blocked or unavailable. Disable ad-blocker or check connection.');
+        return;
+      }
+
+      onState('creating_order', 'Creating secure payment order (₹199 for 30 days)...');
+      const orderRes = await fetch(`${SYNC_API}/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ plan: 'pro' })
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderRes.ok || !orderData.ok || !orderData.order_id) {
+        release();
+        onState('failed', orderData.error || 'Unable to create order.');
+        onError(orderData.error || 'Unable to create payment order.');
+        return;
+      }
+
+      sessionStorage.setItem('jxa_pending_order_id', orderData.order_id);
+      onState('payment_pending', 'Complete your ₹199 payment in the Razorpay window...');
+
+      const rzp = new window.Razorpay({
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'JobXApply',
+        description: 'Pro Plan — 30-day prepaid access (no auto-renewal)',
+        order_id: orderData.order_id,
+        prefill: {
+          name: (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_user_name')) || '',
+          email: (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_user_email')) || ''
+        },
+        theme: { color: '#5B4FE8' },
+        modal: {
+          ondismiss: function () {
+            release();
+            onState('cancelled', 'Checkout closed before payment completion.');
+            onError('Payment cancelled.', { cancelled: true, orderId: orderData.order_id });
+          }
+        },
+        handler: async function (response) {
+          onState('verifying', 'Verifying payment signature & activating Pro...');
+          try {
+            const verifyRes = await fetch(`${SYNC_API}/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+            const verifyData = await verifyRes.json();
+
+            if (verifyRes.ok && verifyData.ok && verifyData.verified) {
+              sessionStorage.removeItem('jxa_pending_order_id');
+              if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('jxa_tier', verifyData.tier || 'pro');
+                if (verifyData.subscription) {
+                  localStorage.setItem('jxa_subscription', JSON.stringify(verifyData.subscription));
+                }
+              }
+              window.dispatchEvent(new CustomEvent('jobxapply:refreshEntitlement'));
+              release();
+              onState('success', 'Payment verified! Pro access is now active.');
+              onSuccess(verifyData);
+            } else if (verifyRes.status === 402) {
+              release();
+              onState('entitlement_pending', 'Payment authorized, awaiting capture. You can verify recovery shortly.');
+              onError(verifyData.error || 'Payment awaiting capture.', { recoverable: true, orderId: orderData.order_id });
+            } else {
+              release();
+              onState('failed', verifyData.error || 'Payment verification failed.');
+              onError(verifyData.error || 'Payment verification failed.', { recoverable: true, orderId: orderData.order_id });
+            }
+          } catch (err) {
+            release();
+            onState('network_error', 'Network error during verification. Use Recover Payment instead of paying again.');
+            onError('Network error during verification.', { recoverable: true, orderId: orderData.order_id });
+          }
+        }
+      });
+
+      rzp.on('payment.failed', function (resp) {
+        release();
+        const reason = (resp && resp.error && resp.error.description) || 'Payment failed. Please try again.';
+        onState('failed', reason);
+        onError(reason, { failed: true, orderId: orderData.order_id });
+      });
+
+      rzp.open();
+    } catch (err) {
+      release();
+      onState('network_error', 'Unable to connect to payment server.');
+      onError('Unable to connect to payment server.');
+    }
+  }
+};
+
 if (typeof window !== 'undefined') {
   window.ensureRazorpaySDK = ensureRazorpaySDK;
+  window.JobXApplyCheckout = JobXApplyCheckout;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

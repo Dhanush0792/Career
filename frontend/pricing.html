@@ -132,8 +132,8 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
     <div class="plan-card highlight">
       <div class="plan-badge">RECOMMENDED</div>
       <div class="plan-name">Pro Tier</div>
-      <h2 class="plan-price">₹199<span> /mo</span></h2>
-      <p class="plan-desc">Full-throttle job hunt automation. Unlimited power to land interviews.</p>
+      <h2 class="plan-price">₹199<span> / 30 days</span></h2>
+      <p class="plan-desc">30-day prepaid access with no automatic renewal. Full-throttle job hunt automation.</p>
       <ul class="plan-features">
         <li>Unlimited Autofills</li>
         <li>All 50+ portal maps</li>
@@ -252,127 +252,42 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
     upgradeBtn.textContent = 'Upgrade to Pro';
   }
 
-  upgradeBtn.addEventListener('click', async () => {
-    const token = typeof getEffectiveAuthToken === 'function'
-      ? getEffectiveAuthToken()
-      : (localStorage.getItem('jxa_token') || localStorage.getItem('token') || '');
-
-    if (!token) {
-      notify('Please sign in first to upgrade to Pro.', 'info');
-      setTimeout(() => {
-        window.location.href = 'auth.html?redirect=pricing.html';
-      }, 1000);
+  upgradeBtn.addEventListener('click', () => {
+    if (typeof JobXApplyCheckout === 'undefined') {
+      notify('Payment module not loaded.', 'error');
       return;
     }
-
-    upgradeBtn.disabled = true;
-    upgradeBtn.textContent = 'Loading Checkout...';
-
-    if (typeof Razorpay === 'undefined' && typeof ensureRazorpaySDK === 'function') {
-      await ensureRazorpaySDK();
-    }
-    if (typeof Razorpay === 'undefined') {
-      resetBtn();
-      notify('Razorpay SDK blocked or unavailable. Disable ad-blocker or check connection.', 'error');
-      return;
-    }
-
-    const apiBase = (typeof SYNC_API !== 'undefined' && SYNC_API)
-      ? SYNC_API
-      : 'http://localhost:8787/api';
-
-    upgradeBtn.textContent = 'Initializing Checkout...';
-
-    try {
-      const orderRes = await fetch(`${apiBase}/create-order`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount: 19900,
-          currency: 'INR',
-          plan: 'pro'
-        })
-      });
-
-      const orderData = await orderRes.json();
-      if (!orderRes.ok || !orderData.ok || !orderData.order_id) {
-        resetBtn();
-        notify(orderData.error || 'Unable to create payment order.', 'error');
-        return;
-      }
-
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'JobXApply',
-        description: 'Pro Tier Subscription (Monthly)',
-        order_id: orderData.order_id,
-        prefill: {
-          name: localStorage.getItem('jxa_user_name') || '',
-          email: localStorage.getItem('jxa_user_email') || ''
-        },
-        theme: {
-          color: '#5B4FE8'
-        },
-        modal: {
-          ondismiss: function () {
-            resetBtn();
-            notify('Payment cancelled.', 'info');
-          }
-        },
-        handler: async function (response) {
+    JobXApplyCheckout.startProCheckout({
+      onState: (state, msg) => {
+        if (state === 'checkout_loading' || state === 'creating_order') {
+          upgradeBtn.disabled = true;
+          upgradeBtn.textContent = state === 'creating_order' ? 'Creating Order...' : 'Loading Checkout...';
+        } else if (state === 'verifying') {
           upgradeBtn.textContent = 'Verifying Payment...';
-          try {
-            const verifyRes = await fetch(`${apiBase}/verify-payment`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
-              })
-            });
-
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok && verifyData.ok) {
-              localStorage.setItem('jxa_tier', 'pro');
-              if (verifyData.subscription) {
-                localStorage.setItem('jxa_subscription', JSON.stringify(verifyData.subscription));
-              }
-              notify('Payment verified! Welcome to JobXApply Pro.', 'success');
-              setTimeout(() => {
-                window.location.href = 'dashboard.html';
-              }, 1400);
-            } else {
-              resetBtn();
-              notify(verifyData.error || 'Payment verification failed. Please contact support.', 'error');
-            }
-          } catch (err) {
-            resetBtn();
-            notify('Network error while verifying payment.', 'error');
-          }
+        } else if (state === 'recovering') {
+          upgradeBtn.textContent = 'Recovering Payment...';
+        } else if (state !== 'payment_pending') {
+          resetBtn();
         }
-      };
-
-      const rzp = new Razorpay(options);
-      rzp.on('payment.failed', function (response) {
+      },
+      onSuccess: () => {
+        notify('Payment verified! Welcome to JobXApply Pro (30-day prepaid access).', 'success');
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1400);
+      },
+      onError: (errMsg, meta = {}) => {
         resetBtn();
-        const reason = (response && response.error && response.error.description) || 'Payment failed. Please try again.';
-        notify(reason, 'error');
-      });
-
-      rzp.open();
-    } catch (err) {
-      resetBtn();
-      notify('Unable to connect to payment server.', 'error');
-    }
+        if (meta.requiresAuth) {
+          notify('Please sign in first to upgrade to Pro.', 'info');
+          setTimeout(() => { window.location.href = 'auth.html?redirect=pricing.html'; }, 1000);
+          return;
+        }
+        if (meta.recoverable) {
+          notify(errMsg + ' Click Upgrade again or check Settings to recover your payment.', 'info');
+        } else {
+          notify(errMsg, meta.cancelled ? 'info' : 'error');
+        }
+      }
+    });
   });
 })();
 </script>

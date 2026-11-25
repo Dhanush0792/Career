@@ -1575,20 +1575,26 @@ window.addEventListener("message", (e) => {
 function handleShareAuth(e) {
   if (!checkContext()) return;
   if (!isAuthorizedAppOrigin()) return;
-  const { token, passcode, email } = e.detail || {};
-  if (token || passcode || email) {
+  const { token, email } = e.detail || {};
+  if (token || email) {
     chrome.runtime.sendMessage({
       type: "jobxapply:saveAuth",
       token: token || "",
-      passcode: passcode || "",
       email: email || ""
     }, () => {
-      // Catch context error silently if extension got disabled during message send
       if (chrome.runtime.lastError) {}
     });
   }
 }
 window.addEventListener("jobxapply:shareAuth", handleShareAuth);
+
+window.addEventListener("jobxapply:refreshEntitlement", () => {
+  if (!checkContext()) return;
+  if (!isAuthorizedAppOrigin()) return;
+  chrome.runtime.sendMessage({ type: "jobxapply:refreshEntitlement" }, () => {
+    if (chrome.runtime.lastError) {}
+  });
+});
 
 // Listen for profile request from web page
 window.addEventListener("jobxapply:requestExtensionProfile", () => {
