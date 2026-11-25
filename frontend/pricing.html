@@ -141,7 +141,7 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
         <li>Unlimited App Tracker</li>
         <li>Priority Sync & Resume Export</li>
       </ul>
-      <a href="auth.html" class="btn-primary">Upgrade to Pro</a>
+      <button type="button" id="btn-upgrade-pro" class="btn-primary" style="cursor:pointer; border:none;">Upgrade to Pro</button>
     </div>
     
     <div class="plan-card">
@@ -231,5 +231,140 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
     <a href="auth.html" class="btn-primary" style="padding: 18px 40px; font-size: 1.1rem;">Start Free - No Credit Card Required</a>
   </section>
 </div>
+
+<script src="shared-shell.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+(function initRazorpayCheckout() {
+  const upgradeBtn = document.getElementById('btn-upgrade-pro');
+  if (!upgradeBtn) return;
+
+  const notify = (msg, type) => {
+    if (typeof showToast === 'function') {
+      showToast(msg, type);
+    } else {
+      alert(msg);
+    }
+  };
+
+  function resetBtn() {
+    upgradeBtn.disabled = false;
+    upgradeBtn.textContent = 'Upgrade to Pro';
+  }
+
+  upgradeBtn.addEventListener('click', async () => {
+    const token = typeof getEffectiveAuthToken === 'function'
+      ? getEffectiveAuthToken()
+      : (localStorage.getItem('jxa_token') || localStorage.getItem('token') || '');
+
+    if (!token) {
+      notify('Please sign in first to upgrade to Pro.', 'info');
+      setTimeout(() => {
+        window.location.href = 'auth.html?redirect=pricing.html';
+      }, 1000);
+      return;
+    }
+
+    if (typeof Razorpay === 'undefined') {
+      notify('Razorpay payment gateway failed to load. Please check your internet connection.', 'error');
+      return;
+    }
+
+    const apiBase = (typeof SYNC_API !== 'undefined' && SYNC_API)
+      ? SYNC_API
+      : 'http://localhost:8787/api';
+
+    upgradeBtn.disabled = true;
+    upgradeBtn.textContent = 'Initializing Checkout...';
+
+    try {
+      const orderRes = await fetch(`${apiBase}/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: 19900,
+          currency: 'INR',
+          plan: 'pro'
+        })
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderRes.ok || !orderData.ok || !orderData.order_id) {
+        resetBtn();
+        notify(orderData.error || 'Unable to create payment order.', 'error');
+        return;
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'JobXApply',
+        description: 'Pro Tier Subscription (Monthly)',
+        order_id: orderData.order_id,
+        prefill: {
+          name: localStorage.getItem('jxa_user_name') || '',
+          email: localStorage.getItem('jxa_user_email') || ''
+        },
+        theme: {
+          color: '#5B4FE8'
+        },
+        modal: {
+          ondismiss: function () {
+            resetBtn();
+            notify('Payment cancelled.', 'info');
+          }
+        },
+        handler: async function (response) {
+          upgradeBtn.textContent = 'Verifying Payment...';
+          try {
+            const verifyRes = await fetch(`${apiBase}/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.ok) {
+              notify('Payment verified! Welcome to JobXApply Pro.', 'success');
+              setTimeout(() => {
+                window.location.href = 'dashboard.html';
+              }, 1400);
+            } else {
+              resetBtn();
+              notify(verifyData.error || 'Payment verification failed. Please contact support.', 'error');
+            }
+          } catch (err) {
+            resetBtn();
+            notify('Network error while verifying payment.', 'error');
+          }
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        resetBtn();
+        const reason = (response && response.error && response.error.description) || 'Payment failed. Please try again.';
+        notify(reason, 'error');
+      });
+
+      rzp.open();
+    } catch (err) {
+      resetBtn();
+      notify('Unable to connect to payment server.', 'error');
+    }
+  });
+})();
+</script>
 </body>
 </html>

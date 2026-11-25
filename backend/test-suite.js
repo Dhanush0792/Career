@@ -436,6 +436,52 @@ async function runTestSuite() {
     logTest(adminSysRes.statusCode === 200 && adminSysRes.json?.ok === true,
       'Admin token grants authorized access to /api/admin/system/health', `status: ${adminSysRes.statusCode}`);
 
+    // ── 7. RAZORPAY CHECKOUT & VERIFICATION ────────────────────
+    console.log('\n--- 7. Razorpay Payment Integration ---');
+
+    // Unauthenticated create-order rejected
+    const unauthOrder = await request({ path: '/api/create-order', method: 'POST' }, { amount: 19900 });
+    logTest(unauthOrder.statusCode === 401,
+      'POST /api/create-order without auth correctly rejected with 401', `status: ${unauthOrder.statusCode}`);
+
+    // Minimum amount validation (< 100 paise)
+    const minAmtOrder = await request({ path: '/api/create-order', method: 'POST', headers: authHeaders }, { amount: 50 });
+    logTest(minAmtOrder.statusCode === 400,
+      'POST /api/create-order rejects amount < 100 paise with 400', `status: ${minAmtOrder.statusCode}`);
+
+    // Missing fields in verify-payment
+    const missingVerify = await request({ path: '/api/verify-payment', method: 'POST', headers: authHeaders }, {
+      razorpay_order_id: 'order_test_123'
+    });
+    logTest(missingVerify.statusCode === 400,
+      'POST /api/verify-payment rejects missing fields with 400', `status: ${missingVerify.statusCode}`);
+
+    // Invalid signature in verify-payment
+    const badSigVerify = await request({ path: '/api/verify-payment', method: 'POST', headers: authHeaders }, {
+      razorpay_order_id: 'order_test_123',
+      razorpay_payment_id: 'pay_test_456',
+      razorpay_signature: 'tampered_signature_invalid_hex'
+    });
+    logTest(badSigVerify.statusCode === 400,
+      'POST /api/verify-payment rejects invalid HMAC signature with 400', `status: ${badSigVerify.statusCode}`);
+
+    // Valid signature in verify-payment
+    const crypto = require('crypto');
+    const mockOrderId = 'order_test_valid_123';
+    const mockPaymentId = 'pay_test_valid_456';
+    const validSig = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(`${mockOrderId}|${mockPaymentId}`)
+      .digest('hex');
+
+    const validVerify = await request({ path: '/api/verify-payment', method: 'POST', headers: authHeaders }, {
+      razorpay_order_id: mockOrderId,
+      razorpay_payment_id: mockPaymentId,
+      razorpay_signature: validSig
+    });
+    logTest(validVerify.statusCode === 200 && validVerify.json?.ok === true && validVerify.json?.tier === 'pro',
+      'POST /api/verify-payment accepts valid HMAC-SHA256 signature and upgrades tier', `status: ${validVerify.statusCode}`);
+
     // Clean up test user
     const deleteRes = await request({ path: '/api/profile', method: 'DELETE', headers: authHeaders });
     logTest(deleteRes.statusCode === 200 && deleteRes.json?.ok === true,

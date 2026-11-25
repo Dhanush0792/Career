@@ -3,7 +3,22 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const dns = require("dns");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+
+try {
+  require("dotenv").config({ path: path.join(__dirname, ".env") });
+  require("dotenv").config();
+} catch (e) {}
+
+const Razorpay = require("razorpay");
+
+function getRazorpayInstance() {
+  const key_id = process.env.RAZORPAY_KEY_ID;
+  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!key_id || !key_secret) return null;
+  return new Razorpay({ key_id, key_secret });
+}
 
 if (typeof dns.setDefaultResultOrder === "function") {
   dns.setDefaultResultOrder("ipv4first");
@@ -2520,6 +2535,106 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, 500, { ok: false, error: err.message });
     }
     return;
+  }
+
+  // ── Razorpay Standard Checkout Routes ──────────────────────────────────────
+
+  // POST /api/create-order
+  if (req.method === "POST" && urlObj.pathname === "/api/create-order") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, error: "Authentication required" });
+    }
+    try {
+      const body = await readBody(req, 16384);
+      const payload = JSON.parse(body || "{}");
+
+      const amount = payload.amount !== undefined ? Number(payload.amount) : 19900;
+      if (!Number.isFinite(amount) || amount < 100) {
+        return sendJson(res, 400, { ok: false, error: "Minimum order amount is 100 paise" });
+      }
+
+      const currency = (typeof payload.currency === "string" && payload.currency.trim()) ? payload.currency.trim().toUpperCase() : "INR";
+      const receipt = (typeof payload.receipt === "string" && payload.receipt.trim())
+        ? payload.receipt.trim().slice(0, 40)
+        : `rcpt_${String(activeUser.id).slice(0, 12)}_${Date.now()}`;
+
+      const rzp = getRazorpayInstance();
+      if (!rzp) {
+        return sendJson(res, 500, { ok: false, error: "Payment gateway credentials not configured" });
+      }
+
+      const order = await rzp.orders.create({
+        amount: Math.round(amount),
+        currency,
+        receipt,
+        notes: {
+          userId: String(activeUser.id),
+          email: String(activeUser.email || ""),
+          plan: String(payload.plan || "pro")
+        }
+      });
+
+      logAdminActivity(`Razorpay order created (${order.id}) for ${activeUser.email}`);
+      return sendJson(res, 200, {
+        ok: true,
+        order_id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        key_id: process.env.RAZORPAY_KEY_ID
+      });
+    } catch (err) {
+      const statusCode = err && err.statusCode === 401 ? 401 : 500;
+      const errMsg = (err && err.error && err.error.description) || err.message || "Failed to create Razorpay order";
+      return sendJson(res, statusCode, { ok: false, error: errMsg });
+    }
+  }
+
+  // POST /api/verify-payment
+  if (req.method === "POST" && urlObj.pathname === "/api/verify-payment") {
+    try {
+      const body = await readBody(req, 16384);
+      const payload = JSON.parse(body || "{}");
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = payload;
+
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        return sendJson(res, 400, { ok: false, error: "Missing required fields: razorpay_order_id, razorpay_payment_id, razorpay_signature" });
+      }
+
+      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+      if (!keySecret) {
+        return sendJson(res, 500, { ok: false, error: "Payment gateway secret not configured" });
+      }
+
+      const expectedSignature = crypto
+        .createHmac("sha256", keySecret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest("hex");
+
+      const sigStr = String(razorpay_signature);
+      const isValid =
+        expectedSignature.length === sigStr.length &&
+        crypto.timingSafeEqual(Buffer.from(expectedSignature, "utf8"), Buffer.from(sigStr, "utf8"));
+
+      if (!isValid) {
+        return sendJson(res, 400, { ok: false, error: "Invalid payment signature" });
+      }
+
+      if (activeUser) {
+        await db.updateUserTier(activeUser.id, "pro");
+        logAdminActivity(`Payment verified (${razorpay_payment_id}) - upgraded ${activeUser.email} to Pro`);
+      }
+
+      return sendJson(res, 200, {
+        ok: true,
+        verified: true,
+        tier: "pro",
+        order_id: razorpay_order_id,
+        payment_id: razorpay_payment_id,
+        message: "Payment verified and Pro tier activated."
+      });
+    } catch (err) {
+      return sendJson(res, 500, { ok: false, error: err.message || "Payment verification failed" });
+    }
   }
 
   sendJson(res, 404, { ok: false, error: "Not found" });
