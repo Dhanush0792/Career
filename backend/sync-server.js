@@ -935,14 +935,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET /health (Public Health check)
-  if (req.method === "GET" && (urlObj.pathname === "/health" || urlObj.pathname === "/api/health")) {
+  // GET / HEAD /health, /api/health, / (Public Health & Root check)
+  if ((req.method === "GET" || req.method === "HEAD") && (urlObj.pathname === "/health" || urlObj.pathname === "/api/health" || urlObj.pathname === "/")) {
     sendJson(res, 200, { ok: true, status: "healthy", timestamp: Date.now() });
     return;
   }
 
   // Static Health check
-  if (req.method === "GET" && urlObj.pathname === "/api/status") {
+  if ((req.method === "GET" || req.method === "HEAD") && urlObj.pathname === "/api/status") {
     const stats = await db.getStats();
     sendJson(res, 200, { ok: true, status: "online", users: stats.totalUsers, version: "1.2.0" });
     return;

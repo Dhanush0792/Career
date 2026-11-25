@@ -148,6 +148,21 @@ async function runTestSuite() {
     logTest(healthRes.statusCode === 200 && healthRes.json?.ok === true && healthRes.json?.status === 'healthy',
       'GET /health returns 200 with status healthy', `status: ${healthRes.statusCode}`);
 
+    // HEAD /health (for Uptime monitoring tools like UptimeRobot)
+    const healthHeadRes = await request({ path: '/health', method: 'HEAD' });
+    logTest(healthHeadRes.statusCode === 200,
+      'HEAD /health returns 200 for uptime monitors', `status: ${healthHeadRes.statusCode}`);
+
+    // GET / (Root health check)
+    const rootRes = await request({ path: '/' });
+    logTest(rootRes.statusCode === 200 && rootRes.json?.ok === true,
+      'GET / returns 200 with ok: true', `status: ${rootRes.statusCode}`);
+
+    // HEAD / (Root HEAD check)
+    const rootHeadRes = await request({ path: '/', method: 'HEAD' });
+    logTest(rootHeadRes.statusCode === 200,
+      'HEAD / returns 200 for uptime monitors', `status: ${rootHeadRes.statusCode}`);
+
     // GET /api/health
     const apiHealthRes = await request({ path: '/api/health' });
     logTest(apiHealthRes.statusCode === 200 && apiHealthRes.json?.ok === true,
