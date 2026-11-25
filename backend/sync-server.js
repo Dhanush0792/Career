@@ -66,6 +66,13 @@ const DEFAULT_PROFILE = {
   maritalStatus: "",
   employmentStatus: "",
   expectedSalary: "",
+  currentSalary: "",
+  preferredLocations: "",
+  preferredWorkMode: "Hybrid / Flexible",
+  currentCompany: "",
+  servingNoticePeriod: "No",
+  lastWorkingDay: "",
+  shiftPreference: "Day / Flexible",
   handicapped: "",
   healthIssues: "",
   targetRoles: "",
@@ -194,6 +201,26 @@ function normalizeProfile(profile = {}) {
         normalized[key] = typeof val === "string" ? val.trim() : (val == null ? "" : String(val));
       }
     }
+  }
+
+  // Normalize preferredLocations (accept array or comma-separated string)
+  if (Array.isArray(profile.preferredLocations)) {
+    normalized.preferredLocations = profile.preferredLocations.map(s => String(s || "").trim()).filter(Boolean).join(", ");
+  }
+
+  // Bidirectional compatibility fallbacks for salary & notice period
+  if (!normalized.expectedSalary && normalized.expectedFixedSalary) {
+    normalized.expectedSalary = normalized.expectedFixedSalary;
+  } else if (!normalized.expectedFixedSalary && normalized.expectedSalary) {
+    normalized.expectedFixedSalary = normalized.expectedSalary;
+  }
+  if (!normalized.currentSalary && normalized.currentFixedSalary && normalized.currentFixedSalary !== "0") {
+    normalized.currentSalary = normalized.currentFixedSalary;
+  } else if ((!normalized.currentFixedSalary || normalized.currentFixedSalary === "0") && normalized.currentSalary) {
+    normalized.currentFixedSalary = normalized.currentSalary;
+  }
+  if (!normalized.noticePeriodDays && normalized.noticePeriod !== undefined && normalized.noticePeriod !== "") {
+    normalized.noticePeriodDays = Number(normalized.noticePeriod) === 0 ? "Immediate" : `${normalized.noticePeriod} days`;
   }
 
   // Preserve any additional custom properties on profile

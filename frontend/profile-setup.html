@@ -467,12 +467,12 @@ body::after {
 
         <div class="form-row">
           <div class="form-group">
-            <label for="f-city">Current City</label>
-            <input type="text" id="f-city" placeholder="e.g. Bangalore, Hyderabad, Chennai">
+            <label for="f-city">Current City / Location</label>
+            <input type="text" id="f-city" placeholder="e.g. Hyderabad, Bangalore, Chennai">
           </div>
           <div class="form-group">
             <label for="f-state">State / Province</label>
-            <input type="text" id="f-state" placeholder="e.g. Karnataka, Andhra Pradesh, California">
+            <input type="text" id="f-state" placeholder="e.g. Telangana, Karnataka, Haryana">
           </div>
         </div>
 
@@ -483,8 +483,57 @@ body::after {
           </div>
           <div class="form-group">
             <label for="f-pincode">Postal / Zip Code</label>
-            <input type="text" id="f-pincode" placeholder="e.g. 560001">
+            <input type="text" id="f-pincode" placeholder="e.g. 500081">
           </div>
+        </div>
+
+        <div class="form-group full" style="margin-top: 8px;">
+          <label>Preferred Work Locations (Select all that apply)</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;" id="preferred-locations-container">
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Hyderabad" style="width:auto; margin:0;" class="loc-chip-cb"> Hyderabad
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Gurgaon" style="width:auto; margin:0;" class="loc-chip-cb"> Gurgaon / Gurugram
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Chennai" style="width:auto; margin:0;" class="loc-chip-cb"> Chennai
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Bangalore" style="width:auto; margin:0;" class="loc-chip-cb"> Bangalore / Bengaluru
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Pune" style="width:auto; margin:0;" class="loc-chip-cb"> Pune
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Mumbai" style="width:auto; margin:0;" class="loc-chip-cb"> Mumbai
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Noida / Delhi NCR" style="width:auto; margin:0;" class="loc-chip-cb"> Noida / Delhi NCR
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Kolkata" style="width:auto; margin:0;" class="loc-chip-cb"> Kolkata
+            </label>
+            <label style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 20px; cursor: pointer; font-size: 11px;">
+              <input type="checkbox" value="Remote" style="width:auto; margin:0;" class="loc-chip-cb"> Remote
+            </label>
+          </div>
+          <div class="form-row" style="margin-top: 10px;">
+            <div class="form-group">
+              <label for="f-preferredLocationsCustom">Other Preferred Cities (comma-separated)</label>
+              <input type="text" id="f-preferredLocationsCustom" placeholder="e.g. Ahmedabad, Kochi, Jaipur">
+            </div>
+            <div class="form-group">
+              <label for="f-preferredWorkMode">Preferred Work Mode</label>
+              <select id="f-preferredWorkMode">
+                <option value="Hybrid / Flexible">Hybrid / Flexible (Any)</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="Remote">Remote</option>
+                <option value="On-site">On-site / Work from Office</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" id="f-preferredLocations">
         </div>
 
         <div class="form-row">
@@ -852,15 +901,26 @@ body::after {
             </select>
           </div>
           <div class="form-group">
-            <label for="f-expectedSalary">Expected Salary / CTC</label>
-            <input type="text" id="f-expectedSalary" placeholder="e.g. 10 LPA or $85,000 / Year">
+            <label for="f-currentCompany">Current / Most Recent Company</label>
+            <input type="text" id="f-currentCompany" placeholder="e.g. Infosys, Google, Fresher">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-currentSalary">Current Annual CTC / Salary</label>
+            <input type="text" id="f-currentSalary" placeholder="e.g. 800000 or 8 LPA (0 if Fresher)" oninput="syncSalaryPair('current', 'simple')">
+          </div>
+          <div class="form-group">
+            <label for="f-expectedSalary">Expected Annual CTC / Salary</label>
+            <input type="text" id="f-expectedSalary" placeholder="e.g. 1200000 or 12 LPA" oninput="syncSalaryPair('expected', 'simple')">
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group" id="group-noticePeriod">
             <label for="f-noticePeriod">Notice Period (Days)</label>
-            <select id="f-noticePeriod">
+            <select id="f-noticePeriod" onchange="syncNoticePair('select')">
               <option value="0">Immediate / 0 Days</option>
               <option value="15">15 Days</option>
               <option value="30">30 Days</option>
@@ -871,6 +931,20 @@ body::after {
           <div class="form-group" id="group-totalExperience">
             <label for="f-totalExperience">Total Experience (Years)</label>
             <input type="number" id="f-totalExperience" min="0" max="50" value="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-servingNoticePeriod">Currently Serving Notice Period?</label>
+            <select id="f-servingNoticePeriod">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="f-lastWorkingDay">Last Working Day (if serving notice)</label>
+            <input type="date" id="f-lastWorkingDay">
           </div>
         </div>
 
@@ -1049,22 +1123,58 @@ body::after {
           </div>
           <div class="form-group">
             <label for="f-noticePeriodDays">Earliest Availability / Notice Period</label>
-            <input type="text" id="f-noticePeriodDays" placeholder="e.g. Immediately or 30 days">
+            <input type="text" id="f-noticePeriodDays" placeholder="e.g. Immediately or 30 days" oninput="syncNoticePair('text')">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-currentFixedSalary">Current Fixed Annual CTC</label>
+            <input type="text" id="f-currentFixedSalary" placeholder="e.g. 800000 (0 if Fresher)" oninput="syncSalaryPair('current', 'fixed')">
+          </div>
+          <div class="form-group">
+            <label for="f-currentSalaryCurrency">Current Salary Currency</label>
+            <select id="f-currentSalaryCurrency">
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label for="f-expectedFixedSalary">Expected Annual CTC / Salary</label>
-            <input type="text" id="f-expectedFixedSalary" placeholder="e.g. 1000000">
+            <input type="text" id="f-expectedFixedSalary" placeholder="e.g. 1200000" oninput="syncSalaryPair('expected', 'fixed')">
           </div>
           <div class="form-group">
-            <label for="f-expectedSalaryCurrency">Salary Currency</label>
+            <label for="f-expectedSalaryCurrency">Expected Salary Currency</label>
             <select id="f-expectedSalaryCurrency">
               <option value="INR">INR (₹)</option>
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
               <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-salaryNegotiable">Salary Negotiable?</label>
+            <select id="f-salaryNegotiable">
+              <option value="Flexible">Flexible / Negotiable</option>
+              <option value="Slightly Negotiable">Slightly Negotiable</option>
+              <option value="Fixed">Fixed (Non-negotiable)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="f-shiftPreference">Shift Preference</label>
+            <select id="f-shiftPreference">
+              <option value="Day / Flexible">Day / Flexible</option>
+              <option value="Day Shift">Day Shift Only</option>
+              <option value="US / Night Shift">US / Night Shift</option>
+              <option value="Rotational">Rotational Shifts</option>
             </select>
           </div>
         </div>
@@ -1113,9 +1223,6 @@ body::after {
         <input type="hidden" id="f-visaType" value="Citizen">
         <input type="hidden" id="f-willingToTravel" value="25%">
         <input type="hidden" id="f-earliestStartDate" value="Immediately">
-        <input type="hidden" id="f-currentFixedSalary" value="0">
-        <input type="hidden" id="f-currentSalaryCurrency" value="INR">
-        <input type="hidden" id="f-salaryNegotiable" value="Flexible">
         <input type="hidden" id="f-raceEthnicity" value="Decline to specify">
         <input type="hidden" id="f-previouslyEmployedHere" value="No">
         <input type="hidden" id="f-hasRelativesHere" value="No">
@@ -1517,7 +1624,9 @@ function escapeHtml(str) {
 // ── Persona & Fields State Engine ───────────────────────────────────────────
 const FIELDS = [
   'fullName', 'firstName', 'lastName', 'email', 'phoneCode', 'phone', 'dob', 'city', 'state', 'country',
-  'alternativeEmail', 'pincode', 'maritalStatus', 'employmentStatus', 'expectedSalary', 'noticePeriod',
+  'alternativeEmail', 'pincode', 'maritalStatus', 'preferredLocations', 'preferredWorkMode',
+  'employmentStatus', 'currentCompany', 'currentSalary', 'expectedSalary', 'noticePeriod',
+  'servingNoticePeriod', 'lastWorkingDay', 'shiftPreference',
   'totalExperience', 'headline', 'skills', 'summary', 'linkedin', 'github', 'portfolio',
   'experience', 'resumeDraft', 'coverLetterDraft', 'otherDocuments', 'handicapped', 'healthIssues',
   'q_why_hire', 'q_why_company', 'q_achievement', 'q_challenge',
@@ -1572,8 +1681,53 @@ function extractCurrentFormProfile() {
     activeRoles.push(cb.value);
   });
   profile.targetRoles = activeRoles.join(", ");
+
+  // Synchronize preferred work locations (chips + custom cities)
+  const activeLocs = [];
+  document.querySelectorAll(".loc-chip-cb:checked").forEach(cb => {
+    if (!activeLocs.includes(cb.value)) activeLocs.push(cb.value);
+  });
+  const customLocRaw = document.getElementById("f-preferredLocationsCustom")?.value || "";
+  customLocRaw.split(",").map(s => s.trim()).filter(Boolean).forEach(c => {
+    if (!activeLocs.some(x => x.toLowerCase() === c.toLowerCase())) activeLocs.push(c);
+  });
+  profile.preferredLocations = activeLocs.join(", ");
+  const hiddenLocEl = document.getElementById("f-preferredLocations");
+  if (hiddenLocEl) hiddenLocEl.value = profile.preferredLocations;
+
+  // Bidirectional salary & notice period compatibility
+  if (!profile.expectedSalary && profile.expectedFixedSalary) profile.expectedSalary = profile.expectedFixedSalary;
+  if (!profile.expectedFixedSalary && profile.expectedSalary) profile.expectedFixedSalary = profile.expectedSalary;
+  if (!profile.currentSalary && profile.currentFixedSalary) profile.currentSalary = profile.currentFixedSalary;
+  if (!profile.currentFixedSalary && profile.currentSalary) profile.currentFixedSalary = profile.currentSalary;
+
   profile.profileName = allPersonas[currentPersonaId]?.profileName || profile.targetRole || "Primary Profile";
   return profile;
+}
+
+function syncSalaryPair(kind, source) {
+  const simpleId = kind === 'current' ? 'f-currentSalary' : 'f-expectedSalary';
+  const fixedId = kind === 'current' ? 'f-currentFixedSalary' : 'f-expectedFixedSalary';
+  const simpleEl = document.getElementById(simpleId);
+  const fixedEl = document.getElementById(fixedId);
+  if (!simpleEl || !fixedEl) return;
+  if (source === 'simple') fixedEl.value = simpleEl.value;
+  else simpleEl.value = fixedEl.value;
+}
+
+function syncNoticePair(source) {
+  const selEl = document.getElementById('f-noticePeriod');
+  const txtEl = document.getElementById('f-noticePeriodDays');
+  if (!selEl || !txtEl) return;
+  if (source === 'select') {
+    const days = Number(selEl.value || 0);
+    txtEl.value = days === 0 ? 'Immediate' : `${days} days`;
+  } else {
+    const m = String(txtEl.value || '').match(/\d+/);
+    if (m && ['0', '15', '30', '60', '90'].includes(m[0])) {
+      selEl.value = m[0];
+    }
+  }
 }
 
 function populateFormFields(p) {
@@ -1638,6 +1792,33 @@ function populateFormFields(p) {
   document.querySelectorAll(".role-chip-cb").forEach(cb => {
     cb.checked = activeRoles.includes(cb.value);
   });
+
+  // Preferred Locations checkboxes + custom field
+  const rawLocs = Array.isArray(p.preferredLocations)
+    ? p.preferredLocations
+    : String(p.preferredLocations || "").split(",").map(s => s.trim()).filter(Boolean);
+  const chipValues = new Set();
+  document.querySelectorAll(".loc-chip-cb").forEach(cb => {
+    chipValues.add(cb.value.toLowerCase());
+    cb.checked = rawLocs.some(loc => loc.toLowerCase() === cb.value.toLowerCase());
+  });
+  const customLocs = rawLocs.filter(loc => !chipValues.has(loc.toLowerCase()));
+  const customLocEl = document.getElementById("f-preferredLocationsCustom");
+  if (customLocEl) customLocEl.value = customLocs.join(", ");
+
+  // Populate cross-synced salary & notice fields if only one side was stored
+  const expSimple = document.getElementById("f-expectedSalary");
+  const expFixed = document.getElementById("f-expectedFixedSalary");
+  if (expSimple && expFixed) {
+    if (!expSimple.value && expFixed.value) expSimple.value = expFixed.value;
+    if (!expFixed.value && expSimple.value) expFixed.value = expSimple.value;
+  }
+  const curSimple = document.getElementById("f-currentSalary");
+  const curFixed = document.getElementById("f-currentFixedSalary");
+  if (curSimple && curFixed) {
+    if (!curSimple.value && curFixed.value && curFixed.value !== "0") curSimple.value = curFixed.value;
+    if ((!curFixed.value || curFixed.value === "0") && curSimple.value) curFixed.value = curSimple.value;
+  }
 
   toggleEmploymentFields();
 }

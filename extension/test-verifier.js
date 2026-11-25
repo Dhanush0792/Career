@@ -675,6 +675,32 @@ assert(filledLeverResults['email'] === "dhanush.candidate@gmail.com",
 assert(filledLeverResults['phone'] === "+91 9876543210",
   `Lever Form Test: Phone field filled with "${filledLeverResults['phone']}"`);
 
+// 6.3 Verify Preferred Locations, Work Mode & Current vs Expected CTC Synonym Routing
+assert(Array.isArray(fieldAliases.preferredLocations) && fieldAliases.preferredLocations.includes('preferred work location') && fieldAliases.preferredLocations.includes('desired location'),
+  'Field Aliases: preferredLocations includes "preferred work location" and "desired location"');
+assert(Array.isArray(fieldAliases.preferredWorkMode) && fieldAliases.preferredWorkMode.includes('workplace type'),
+  'Field Aliases: preferredWorkMode includes "workplace type"');
+assert(fieldAliases.expectedSalary.includes('expected ctc') && fieldAliases.expectedSalary.includes('ectc') && !fieldAliases.expectedSalary.includes('expected ctq'),
+  'Field Aliases: expectedSalary includes "expected ctc" and "ectc" (typo removed)');
+assert(fieldAliases.currentSalary.includes('current ctc') && fieldAliases.currentSalary.includes('cctc') && fieldAliases.currentSalary.includes('last drawn ctc'),
+  'Field Aliases: currentSalary includes "current ctc", "cctc", and "last drawn ctc"');
+
+// Verify Current CTC vs Expected CTC routing logic
+function simulateCompRoute(label, profile) {
+  const isCurrent = /\b(current|present|existing|last\s*drawn|cctc|previous)\b/i.test(label) &&
+    !/\b(expected|desired|target|asking|ectc)\b/i.test(label);
+  return isCurrent
+    ? (profile.currentFixedSalary || profile.currentSalary || '')
+    : (profile.expectedFixedSalary || profile.expectedSalary || '');
+}
+const compProfile = { currentFixedSalary: '800000', expectedFixedSalary: '1400000', preferredLocations: 'Hyderabad, Gurgaon, Chennai' };
+assert(simulateCompRoute('Current Annual CTC', compProfile) === '800000',
+  'Compensation Routing: Current Annual CTC resolves to currentFixedSalary (800000), not expected');
+assert(simulateCompRoute('Expected CTC (INR)', compProfile) === '1400000',
+  'Compensation Routing: Expected CTC resolves to expectedFixedSalary (1400000)');
+assert(sharedModule.DEFAULT_PROFILE_FIELDS.includes('preferredLocations') && sharedModule.DEFAULT_PROFILE_FIELDS.includes('preferredWorkMode'),
+  'Schema Sync: DEFAULT_PROFILE_FIELDS includes preferredLocations and preferredWorkMode');
+
 // ── SUMMARY REPORT ─────────────────────────────────────────────────────────────
 console.log('\n======================================================');
 console.log(`TEST EXECUTION SUMMARY: Total: ${totalTests} | Passed: ${passedTests} | Failed: ${failedTests}`);

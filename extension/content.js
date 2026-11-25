@@ -43,7 +43,9 @@ const FIELD_ALIASES = {
   phone: ["phone", "phone number", "mobile", "mobile number", "telephone", "cell", "cell phone", "contact number", "primary phone", "cand_phone", "applicant phone", "contact no", "mobile no", "phone no", "cell number"],
   phonecode: ["phone code", "country code", "country/region code", "dial code", "calling code", "phone prefix", "isd code", "dialling code", "std code"],
   address: ["address", "street", "address1", "address line 1", "residential address", "permanent address", "current address", "street address", "line 1", "house no"],
-  city: ["city", "town", "district", "current city", "current location", "location", "present location", "present city", "residential city", "where are you located", "city, state", "base location"],
+  city: ["city", "town", "district", "current city", "current location", "location", "present location", "present city", "residing city", "residing in", "currently located", "where are you currently located", "where are you located", "city, state", "base location"],
+  preferredlocations: ["preferred location", "preferred locations", "preferred work location", "preferred work locations", "preferred job location", "preferred job locations", "desired location", "desired locations", "work location preference", "location preference", "preferred city", "preferred cities"],
+  preferredworkmode: ["work mode", "preferred work mode", "workplace type", "work arrangement", "remote or onsite", "remote hybrid onsite", "preferred work type"],
   state: ["state", "province", "region", "state/province", "state / province"],
   country: ["country", "nation", "citizenship country", "country/region", "nationality"],
   zip: ["zip", "postal", "postal code", "zipcode", "zip code", "pin", "pincode", "pin code", "area code"],
@@ -63,8 +65,11 @@ const FIELD_ALIASES = {
   pincode: ["pincode", "pin code", "postal code", "zip", "zip code", "area pincode"],
   maritalstatus: ["marital status", "marital", "marriage status", "single/married", "marital_status"],
   employmentstatus: ["employment status", "employment", "job status", "current status", "current employment status", "work status"],
-  expectedsalary: ["expected salary", "expected package", "salary expectation", "expected ctq", "expected ctc", "desired salary", "expected remuneration", "expected fixed salary"],
-  currentsalary: ["current salary", "current package", "current ctc", "present salary", "present ctc", "current fixed salary"],
+  expectedsalary: ["expected salary", "expected package", "salary expectation", "salary expectations", "expected ctc", "expected annual ctc", "expected ctc in lpa", "expected salary in lpa", "expected salary (lpa)", "expected package (lpa)", "ectc", "desired salary", "desired ctc", "expected remuneration", "expected compensation", "desired compensation", "asking salary", "target ctc", "expected fixed salary"],
+  currentsalary: ["current salary", "current package", "current ctc", "current annual ctc", "current ctc in lpa", "current salary in lpa", "current salary (lpa)", "cctc", "present salary", "present ctc", "present annual ctc", "current compensation", "last drawn salary", "last drawn ctc", "existing ctc", "current fixed salary"],
+  servingnoticeperiod: ["serving notice", "serving notice period", "currently serving notice", "on notice period", "are you serving notice period"],
+  lastworkingday: ["last working day", "lwd", "last working date", "end of notice period"],
+  shiftpreference: ["shift preference", "preferred shift", "comfortable with night shift", "work shift"],
   handicapped: ["handicapped", "physically handicapped", "disability", "disabled", "special ability", "pwd", "person with disability"],
   healthissues: ["health issues", "medical history", "health status", "medical conditions", "major illness"],
   targetroles: ["target roles", "preferred roles", "desired roles"],
@@ -542,6 +547,55 @@ function fillConfirmationFields(originalEl, value) {
   }
 }
 
+const CITY_SYNONYMS = {
+  gurgaon: ["gurgaon", "gurugram"],
+  gurugram: ["gurugram", "gurgaon"],
+  bangalore: ["bangalore", "bengaluru", "blr"],
+  bengaluru: ["bengaluru", "bangalore", "blr"],
+  mumbai: ["mumbai", "bombay"],
+  chennai: ["chennai", "madras"],
+  kolkata: ["kolkata", "calcutta"],
+  delhi: ["delhi", "new delhi", "delhi ncr", "ncr"],
+  noida: ["noida", "greater noida", "delhi ncr"],
+  hyderabad: ["hyderabad", "hyd", "secunderabad"]
+};
+
+function expandLocationCandidates(rawVal) {
+  const parts = String(rawVal || "").split(",").map(s => normalize(s)).filter(Boolean);
+  const candidates = [];
+  for (const p of parts) {
+    candidates.push(p);
+    const base = p.split("/")[0].trim();
+    if (base && base !== p) candidates.push(base);
+    const syns = CITY_SYNONYMS[base] || CITY_SYNONYMS[p] || [];
+    for (const s of syns) {
+      if (!candidates.includes(s)) candidates.push(s);
+    }
+  }
+  return candidates;
+}
+
+function formatCompensationForField(rawVal, contextText = "") {
+  const str = String(rawVal ?? "").trim();
+  if (!str) return "";
+  const wantsLpa = /\b(lpa|lakhs?|lac)\b/i.test(contextText);
+  const lpaMatch = str.match(/^(\d+(?:\.\d+)?)\s*(?:lpa|lakhs?|lacs?)$/i);
+  if (lpaMatch) {
+    const lpaNum = parseFloat(lpaMatch[1]);
+    return wantsLpa ? String(lpaNum) : String(Math.round(lpaNum * 100000));
+  }
+  const numericOnly = str.replace(/[,\s₹$€£]/g, "");
+  if (/^\d+(?:\.\d+)?$/.test(numericOnly)) {
+    const num = parseFloat(numericOnly);
+    if (wantsLpa && num >= 100000) {
+      const lpa = num / 100000;
+      return Number.isInteger(lpa) ? String(lpa) : lpa.toFixed(1);
+    }
+    return numericOnly;
+  }
+  return str;
+}
+
 function setValueRaw(el, value) {
   if (!el) return false;
   if (el.isContentEditable) {
@@ -588,16 +642,20 @@ function setValueRaw(el, value) {
       }
     }
 
-    // 3. Fallback to partial match (only if prefix matches or options contain value)
-    for (const opt of options) {
-      const optText = normalize(opt.text);
-      if (optText.startsWith(normVal) || optText.includes(normVal) || normalize(opt.value).includes(normVal)) {
-        el.focus();
-        el.value = opt.value;
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        el.dispatchEvent(new Event("change", { bubbles: true }));
-        el.blur();
-        return true;
+    // 3. Fallback to partial & city-synonym match (supports comma-separated preferred locations)
+    const candidates = expandLocationCandidates(value);
+    for (const cand of candidates) {
+      for (const opt of options) {
+        const optText = normalize(opt.text);
+        const optVal = normalize(opt.value);
+        if (optText === cand || optVal === cand || optText.startsWith(cand) || optText.includes(cand) || optVal.includes(cand)) {
+          el.focus();
+          el.value = opt.value;
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+          el.blur();
+          return true;
+        }
       }
     }
     return false;
@@ -816,6 +874,15 @@ function buildAutofillPayload(profile, requestedFields) {
   activeFields.add("maritalstatus");
   activeFields.add("employmentstatus");
   activeFields.add("expectedsalary");
+  activeFields.add("currentsalary");
+  activeFields.add("currentfixedsalary");
+  activeFields.add("expectedfixedsalary");
+  activeFields.add("preferredlocations");
+  activeFields.add("preferredworkmode");
+  activeFields.add("currentcompany");
+  activeFields.add("servingnoticeperiod");
+  activeFields.add("lastworkingday");
+  activeFields.add("shiftpreference");
   activeFields.add("handicapped");
   activeFields.add("healthissues");
   // Multi-part split fields: dob -> dob_day, dob_month, dob_year
@@ -1691,8 +1758,11 @@ function performAutofill(rawProfile, customPortalMap, requestedFields) {
     'email', 'phone', 'phonecode',
     'currentcompany', 'company', 'headline', 'targetrole',
     'city', 'state', 'country', 'zip', 'pincode', 'address',
+    'preferredlocations', 'preferredworkmode',
     'linkedin', 'github', 'portfolio',
-    'totalexperience', 'experience', 'noticeperiod', 'expectedsalary',
+    'totalexperience', 'experience', 'noticeperiod', 'noticeperioddays',
+    'servingnoticeperiod', 'lastworkingday',
+    'currentsalary', 'currentfixedsalary', 'expectedsalary', 'expectedfixedsalary', 'salarynegotiable',
     'resume', 'resumedraft'
   ];
 
@@ -1730,11 +1800,17 @@ function performAutofill(rawProfile, customPortalMap, requestedFields) {
         showKnockoutSuggestion(el, value);
         results.push({ field, status: 'suggested', via: 'knockout-rule' });
       } else if (category === 'compensation') {
-        const expected = rawProfile.expectedSalary || rawProfile.preferences?.expectedSalary || '';
-        if (expected) {
-          setValue(el, expected);
+        const compContext = `${labelText} ${el.name || ''} ${el.id || ''} ${el.placeholder || ''}`.toLowerCase();
+        const isCurrentComp = /\b(current|present|existing|last\s*drawn|cctc|previous)\b/i.test(compContext) &&
+          !/\b(expected|desired|target|asking|ectc)\b/i.test(compContext);
+        const rawCompVal = isCurrentComp
+          ? (rawProfile.currentFixedSalary || rawProfile.currentSalary || '')
+          : (rawProfile.expectedFixedSalary || rawProfile.expectedSalary || '');
+        const formattedCompVal = formatCompensationForField(rawCompVal, compContext);
+        if (formattedCompVal !== '') {
+          setValue(el, formattedCompVal);
           filledCount++;
-          results.push({ field, status: 'filled', via: 'compensation-rule' });
+          results.push({ field, status: 'filled', via: isCurrentComp ? 'compensation-current-rule' : 'compensation-expected-rule' });
         } else {
           el.style.border = '1px solid #eb5757';
           results.push({ field, status: 'empty-flagged', via: 'compensation-rule' });
