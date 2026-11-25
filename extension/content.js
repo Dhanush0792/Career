@@ -435,17 +435,18 @@ function scoreElementForKey(el, key) {
   // 1. Education fields MUST have explicit educational context in label/attributes
   const isEduKey = normKey.includes('edu') || normKey.includes('school') || normKey.includes('college') || normKey.includes('degree') || normKey.includes('cgpa') || normKey.includes('board');
   if (isEduKey) {
-    const hasEduContext = /(school|college|university|institute|degree|cgpa|gpa|percentage|marks|board|matric|hsc|ssc|graduation|bachelor|master|phd|education|academic)/i.test(directLabelText) ||
-                          /(school|college|university|institute|degree|cgpa|gpa|percentage|marks|board|matric|hsc|ssc|graduation|bachelor|master|phd|education|academic)/i.test(combinedContext);
-    if (!hasEduContext) return 0;
     // An education institution field must NEVER claim a generic candidate name input
-    const isGenericPersonalNameOnly = /^(full name|name|applicant name|candidate name|legal name)$/i.test(normalize(el.getAttribute('name') || '')) ||
-                                      /^(full name|name|applicant name|candidate name|legal name)$/i.test(normalize(el.getAttribute('id') || '')) ||
-                                      /^(full name|name|applicant name|candidate name|legal name)$/i.test(normalize(el.getAttribute('aria-label') || '')) ||
-                                      /^(full name|name|applicant name|candidate name|legal name)$/i.test(normalize(closestLabelEl ? closestLabelEl.textContent : ''));
+    const isGenericPersonalNameOnly = /^(full name|name|applicant name|candidate name|legal name|your name)$/i.test(normalize(el.getAttribute('name') || '')) ||
+                                      /^(full name|name|applicant name|candidate name|legal name|your name)$/i.test(normalize(el.getAttribute('id') || '')) ||
+                                      /^(full name|name|applicant name|candidate name|legal name|your name)$/i.test(normalize(el.getAttribute('aria-label') || '')) ||
+                                      /^(full name|name|applicant name|candidate name|legal name|your name)$/i.test(normalize(closestLabelEl ? closestLabelEl.textContent : '')) ||
+                                      /full name|applicant name|candidate name|legal name/i.test(directLabelText);
     if (isGenericPersonalNameOnly && !/(school|college|university|institute)/i.test(elAttrText)) {
       return 0;
     }
+    const hasEduContext = /(school|college|university|institute|degree|cgpa|gpa|percentage|marks|board|matric|hsc|ssc|graduation|bachelor|master|phd|education|academic)/i.test(directLabelText) ||
+                          /(school|college|university|institute|degree|cgpa|gpa|percentage|marks|board|matric|hsc|ssc|graduation|bachelor|master|phd|education|academic)/i.test(combinedContext);
+    if (!hasEduContext) return 0;
   }
 
   // 2. Personal candidate name fields MUST NOT match company, school, or file inputs
@@ -1787,6 +1788,81 @@ function performAutofill(rawProfile, customPortalMap, requestedFields) {
       results.push({ field, status: 'not-found' });
     }
   }
+
+  // Phase 3: Automatic Document & Marksheet File Input Uploads
+  try {
+    const fileInputs = Array.from(document.querySelectorAll('input[type="file"]:not([disabled])'));
+    if (fileInputs.length > 0) {
+      // Find candidate documents from profile
+      const docs = rawProfile.uploadedDocs || rawProfile.documents || {};
+      const resumeCandidate = docs.resume || rawProfile.resumeDraft || rawProfile.resume || null;
+      const coverCandidate = docs.coverLetter || rawProfile.coverLetterDraft || null;
+      const marksheet10Candidate = docs.marksheet10 || docs.edu10_marksheet || null;
+      const marksheet12Candidate = docs.marksheet12 || docs.edu12_marksheet || null;
+      const degreeCandidate = docs.degreeCertificate || docs.eduGrad_certificate || null;
+
+      for (const fi of fileInputs) {
+        if (claimedElements.has(fi)) continue;
+        const fiId = fi.id || '';
+        const fiName = fi.name || '';
+        const fiAria = fi.getAttribute('aria-label') || '';
+        const fiLabels = fi.labels ? Array.from(fi.labels).map(l => l.innerText).join(' ') : '';
+        const fiContainer = fi.closest('label, div, section')?.innerText || '';
+        const fiContext = `${fiId} ${fiName} ${fiAria} ${fiLabels} ${fiContainer}`.toLowerCase();
+
+        let targetDoc = null;
+        let defaultFileName = 'Document.pdf';
+
+        if (/resume|cv|curriculum|vitae/i.test(fiContext)) {
+          targetDoc = resumeCandidate;
+          defaultFileName = `${rawProfile.fullName ? rawProfile.fullName.replace(/\s+/g, '_') : 'Candidate'}_Resume.pdf`;
+        } else if (/cover\s*letter/i.test(fiContext)) {
+          targetDoc = coverCandidate;
+          defaultFileName = `${rawProfile.fullName ? rawProfile.fullName.replace(/\s+/g, '_') : 'Candidate'}_Cover_Letter.pdf`;
+        } else if (/10th|ssc|matric/i.test(fiContext)) {
+          targetDoc = marksheet10Candidate;
+          defaultFileName = `${rawProfile.fullName ? rawProfile.fullName.replace(/\s+/g, '_') : 'Candidate'}_10th_Marksheet.pdf`;
+        } else if (/12th|hsc|intermediate|puc/i.test(fiContext)) {
+          targetDoc = marksheet12Candidate;
+          defaultFileName = `${rawProfile.fullName ? rawProfile.fullName.replace(/\s+/g, '_') : 'Candidate'}_12th_Marksheet.pdf`;
+        } else if (/degree|graduation|marksheet|transcript|certificate/i.test(fiContext)) {
+          targetDoc = degreeCandidate || marksheet12Candidate || marksheet10Candidate;
+          defaultFileName = `${rawProfile.fullName ? rawProfile.fullName.replace(/\s+/g, '_') : 'Candidate'}_Degree_Certificate.pdf`;
+        }
+
+        // If target doc exists as base64 or file object
+        if (targetDoc) {
+          try {
+            let fileObj = null;
+            if (typeof targetDoc === 'string' && targetDoc.startsWith('data:')) {
+              const parts = targetDoc.split(',');
+              const mime = parts[0].match(/:(.*?);/)?.[1] || 'application/pdf';
+              const binary = atob(parts[1]);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              fileObj = new File([bytes], defaultFileName, { type: mime });
+            } else if (typeof targetDoc === 'string' && targetDoc.length > 100) {
+              const binary = atob(targetDoc);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              fileObj = new File([bytes], defaultFileName, { type: 'application/pdf' });
+            }
+
+            if (fileObj && typeof DataTransfer !== 'undefined') {
+              const dt = new DataTransfer();
+              dt.items.add(fileObj);
+              fi.files = dt.files;
+              fi.dispatchEvent(new Event('input', { bubbles: true }));
+              fi.dispatchEvent(new Event('change', { bubbles: true }));
+              claimedElements.add(fi);
+              filledCount++;
+              results.push({ field: defaultFileName, status: 'uploaded', via: 'datatransfer-file-injection' });
+            }
+          } catch (docErr) {}
+        }
+      }
+    }
+  } catch (fileErr) {}
 
   return { ok: true, filled: filledCount, filledCount, payload, results };
 }

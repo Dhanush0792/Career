@@ -93,12 +93,12 @@ textarea.form-control { resize: vertical; min-height: 120px; }
 
 <div class="container">
   <header class="hero">
-    <h1>Open Channel</h1>
+    <h1>Contact &amp; Support</h1>
   </header>
 
   <div class="contact-layout">
     <div class="contact-card">
-      <h2>Send Transmission</h2>
+      <h2>Send a Message</h2>
       <form id="contact-form">
         <div class="form-group">
           <label>Name</label>
@@ -122,7 +122,7 @@ textarea.form-control { resize: vertical; min-height: 120px; }
           <label>Message</label>
           <textarea class="form-control" required placeholder="Enter your message..."></textarea>
         </div>
-        <button type="submit" class="btn-primary">Initiate Send</button>
+        <button type="submit" class="btn-primary">Send Message</button>
         <div id="form-status" class="status-message"></div>
       </form>
     </div>
@@ -130,7 +130,7 @@ textarea.form-control { resize: vertical; min-height: 120px; }
     <div>
       <div class="info-box">
         <h3>Request a Portal</h3>
-        <p>Encountered a job board that our extension doesn't currently support? Request a map deployment.</p>
+        <p>Encountered a job board that our extension doesn't currently support? Let us know and we'll add support for it.</p>
         <div class="form-group">
           <label>Portal Name</label>
           <input type="text" id="portal-name" class="form-control" placeholder="e.g. Workday Custom">
@@ -139,15 +139,15 @@ textarea.form-control { resize: vertical; min-height: 120px; }
           <label>Portal URL</label>
           <input type="url" id="portal-url" class="form-control" placeholder="https://...">
         </div>
-        <button type="button" class="btn-primary" style="background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="requestPortal()">Submit Map Request</button>
+        <button type="button" class="btn-primary" style="background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="requestPortal()">Submit Portal Request</button>
         <div id="portal-status" class="status-message" style="margin-top:10px;"></div>
       </div>
 
       <div class="contact-card" style="padding:30px;">
-        <h2 style="font-size:1.5rem;margin-bottom:16px;">Support Specs</h2>
+        <h2 style="font-size:1.5rem;margin-bottom:16px;">Support Channels</h2>
         <div class="support-info">
-          <p><strong>Direct Link:</strong> <a href="mailto:missionhousehq@gmail.com" style="color:var(--text);">missionhousehq@gmail.com</a></p>
-          <p><strong>Response Time:</strong> Target SLA is under 24 hours for Operative and Command tiers. 48-72 hours for Recruit tier inquiries.</p>
+          <p><strong>Support Email:</strong> <a href="mailto:support@jobxapply.app" style="color:var(--text);">support@jobxapply.app</a></p>
+          <p><strong>Response Time:</strong> We typically respond within 24 hours for Pro and Enterprise users, and 48 hours for Free tier users.</p>
         </div>
       </div>
     </div>
@@ -164,11 +164,11 @@ textarea.form-control { resize: vertical; min-height: 120px; }
     // Simulate network delay
     setTimeout(() => {
       this.reset();
-      btn.textContent = 'Initiate Send';
+      btn.textContent = 'Send Message';
       btn.disabled = false;
       
       const status = document.getElementById('form-status');
-      status.textContent = '> Transmission successful. We will respond shortly.';
+      status.textContent = 'Message sent successfully. We will respond shortly.';
       status.className = 'status-message success';
       
       setTimeout(() => {
