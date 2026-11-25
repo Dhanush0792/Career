@@ -1233,6 +1233,14 @@ const server = http.createServer(async (req, res) => {
         });
         return;
       }
+      const userTier = activeUser.tier || "free";
+      const isPaidTier = userTier === "pro" || userTier === "paid" || userTier === "premium";
+      const subExpiresAt = profile.subscriptionExpiresAt || null;
+      const subStartedAt = profile.subscriptionStartedAt || null;
+      const daysRemaining = isPaidTier
+        ? (subExpiresAt ? Math.max(0, Math.ceil((subExpiresAt - Date.now()) / 86400000)) : 30)
+        : 0;
+
       sendJson(res, 200, {
         profiles: redactSensitiveUserData(profile.profiles),
         activeProfileId: profile.activeProfileId,
@@ -1240,8 +1248,15 @@ const server = http.createServer(async (req, res) => {
         version: profile.version || 1,
         updatedAt: profile.updatedAt || Date.now(),
         origin: profile.origin || "server",
-        tier: activeUser.tier || "free",
-        role: activeUser.role || "user"
+        tier: userTier,
+        role: activeUser.role || "user",
+        subscription: {
+          tier: userTier,
+          startedAt: subStartedAt,
+          expiresAt: subExpiresAt,
+          daysRemaining,
+          lastPaymentId: profile.lastPaymentId || null
+        }
       });
     } else {
       sendJson(res, 200, {
@@ -2619,8 +2634,42 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 400, { ok: false, error: "Invalid payment signature" });
       }
 
+      let subMeta = {
+        tier: "pro",
+        startedAt: Date.now(),
+        expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+        daysRemaining: 30,
+        lastPaymentId: razorpay_payment_id
+      };
+
       if (activeUser) {
         await db.updateUserTier(activeUser.id, "pro");
+        const now = Date.now();
+        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+        const existingState = (await db.getProfile(activeUser.id)) || {
+          profiles: { default: {} },
+          activeProfileId: "default",
+          profile: {},
+          version: 1
+        };
+        const currentExpires = Number(existingState.subscriptionExpiresAt || 0);
+        const newExpiresAt = Math.max(now, currentExpires) + thirtyDaysMs;
+        const startedAt = existingState.subscriptionStartedAt || now;
+
+        existingState.subscriptionStartedAt = startedAt;
+        existingState.subscriptionExpiresAt = newExpiresAt;
+        existingState.lastPaymentId = razorpay_payment_id;
+        existingState.lastOrderId = razorpay_order_id;
+        existingState.updatedAt = now;
+
+        await db.saveProfile(activeUser.id, existingState);
+        subMeta = {
+          tier: "pro",
+          startedAt,
+          expiresAt: newExpiresAt,
+          daysRemaining: Math.max(1, Math.ceil((newExpiresAt - now) / 86400000)),
+          lastPaymentId: razorpay_payment_id
+        };
         logAdminActivity(`Payment verified (${razorpay_payment_id}) - upgraded ${activeUser.email} to Pro`);
       }
 
@@ -2630,6 +2679,7 @@ const server = http.createServer(async (req, res) => {
         tier: "pro",
         order_id: razorpay_order_id,
         payment_id: razorpay_payment_id,
+        subscription: subMeta,
         message: "Payment verified and Pro tier activated."
       });
     } catch (err) {
