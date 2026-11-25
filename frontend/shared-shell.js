@@ -293,6 +293,7 @@ function requireAuth() {
     '', 'auth', 'auth-callback', 'reset-password', 'extension-landing',
     'index', 'about', 'features', 'pricing', 'blog', 'contact', 'how-it-works', 'privacy-terms', 'portals',
     'tools', 'ats-checker', 'salary-calculator',
+    'resume-builder-info', 'cover-letter-info', 'autofill-lab-info',
     'gov-resizer', 'roadmap-software-engineer', 'roadmap-data-scientist', 'gov-ssc-cgl', 'gov-ibps-po', 'resume-importance'
   ];
   if (publicPages.includes(page)) {

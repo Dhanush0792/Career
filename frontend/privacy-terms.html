@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JobXApply // Privacy Policy &amp; Terms of Service</title>
-<meta name="description" content="JobXApply Privacy Policy and Terms of Service. Learn how we protect your career data with zero-tracking, client-side processing, and AES-256 encryption.">
+<meta name="description" content="JobXApply Privacy Policy and Terms of Service. Learn how we protect your career data with client-side AES-GCM encryption, Supabase authentication, and zero ad tracking.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://jobxapply.netlify.app/privacy-terms.html">
 
@@ -13,7 +13,7 @@
 <meta property="og:site_name" content="JobXApply">
 <meta property="og:url" content="https://jobxapply.netlify.app/privacy-terms.html">
 <meta property="og:title" content="Privacy Policy &amp; Terms of Service - JobXApply">
-<meta property="og:description" content="JobXApply Privacy Policy and Terms of Service. Learn how we protect your career data with zero-tracking and AES-256 encryption.">
+<meta property="og:description" content="JobXApply Privacy Policy and Terms of Service. Learn how we protect your career data with client-side AES-GCM encryption and zero ad tracking.">
 <meta property="og:image" content="https://jobxapply.netlify.app/assets/app-logo.png">
 
 <!-- Twitter -->
@@ -32,8 +32,8 @@
   --alert:   #F5A623;
   --white:   #ffffff;
   --text:    #f4f7ff;
-  --muted:   rgba(244,247,255,0.65);
-  --dim:     rgba(244,247,255,0.4);
+  --muted:   rgba(244,247,255,0.68);
+  --dim:     rgba(244,247,255,0.45);
   --glass-border: rgba(255,255,255,0.15);
   --mono:    'JetBrains Mono', monospace;
   --display: 'Barlow Condensed', sans-serif;
@@ -51,41 +51,8 @@ body {
                     radial-gradient(circle at 85% 75%, rgba(47,221,196,0.06) 0%, transparent 45%);
   -webkit-font-smoothing: antialiased;
 }
-a { color: var(--primary); text-decoration: none; }
+a { color: var(--success); text-decoration: none; }
 a:hover { text-decoration: underline; }
-
-/* Nav */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; height: 60px;
-  background: rgba(11,16,32,0.9);
-  border-bottom: 1px solid var(--glass-border);
-  backdrop-filter: blur(16px); z-index: 1000;
-  display: flex; align-items: center;
-}
-.nav-inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 24px;
-  width: 100%; display: flex; align-items: center; justify-content: space-between;
-}
-.nav-logo {
-  font-family: var(--mono); font-size: 13px; font-weight: 700;
-  color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 4px;
-}
-.nav-logo em { color: var(--primary); font-style: normal; }
-.nav-links { display: flex; gap: 4px; }
-.nav-link {
-  font-family: var(--mono); font-size: 11px; color: var(--muted);
-  padding: 8px 14px; text-decoration: none; text-transform: uppercase;
-  transition: color .2s;
-}
-.nav-link:hover { color: var(--white); text-decoration: none; }
-.btn-nav {
-  display: inline-flex; align-items: center; height: 38px; padding: 0 20px;
-  background: var(--primary); color: var(--white);
-  font-family: var(--mono); font-size: 10px; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase; border-radius: 10px;
-  text-decoration: none; transition: opacity .2s;
-}
-.btn-nav:hover { opacity: .85; text-decoration: none; }
 
 /* Layout */
 .container { max-width: 860px; margin: 0 auto; padding: 48px 24px 80px; }
@@ -98,7 +65,7 @@ nav {
   text-transform: uppercase; color: var(--white); margin-bottom: 8px;
 }
 .page-updated {
-  font-family: var(--mono); font-size: 10px; color: var(--dim); margin-bottom: 48px;
+  font-family: var(--mono); font-size: 11px; color: var(--dim); margin-bottom: 40px;
 }
 
 /* Tab switcher */
@@ -121,7 +88,7 @@ nav {
   padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .doc-section h3 {
-  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--muted);
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--white);
   margin: 16px 0 8px; letter-spacing: .08em; text-transform: uppercase;
 }
 .doc-section p {
@@ -135,16 +102,20 @@ nav {
   list-style: none; padding-left: 4px;
 }
 .doc-section li::before { content: '>'; color: var(--primary); margin-right: 8px; }
+code {
+  font-family: var(--mono); font-size: 12px;
+  background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: var(--text);
+}
 
 /* Highlight box */
 .highlight-box {
   background: rgba(91,79,232,0.08);
-  border: 1px solid rgba(91,79,232,0.25);
+  border: 1px solid rgba(91,79,232,0.28);
   border-radius: 10px; padding: 16px 20px; margin: 20px 0;
-  font-family: var(--mono); font-size: 11px; color: rgba(244,247,255,0.8);
+  font-family: var(--mono); font-size: 11px; color: rgba(244,247,255,0.85);
   line-height: 1.65;
 }
-.highlight-box strong { color: var(--primary); }
+.highlight-box strong { color: var(--success); }
 
 .warn-box {
   background: rgba(245,166,35,0.07);
@@ -161,15 +132,14 @@ nav {
   display: flex; justify-content: space-between; align-items: center;
   flex-wrap: wrap; gap: 12px;
 }
-.doc-footer-text { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+.doc-footer-text { font-family: var(--mono); font-size: 11px; color: var(--dim); }
 .doc-footer-links { display: flex; gap: 16px; }
-.doc-footer-links a { font-family: var(--mono); font-size: 10px; color: var(--muted); text-decoration: none; }
+.doc-footer-links a { font-family: var(--mono); font-size: 11px; color: var(--muted); text-decoration: none; }
 .doc-footer-links a:hover { color: var(--primary); }
 
 @media (max-width: 600px) {
   .page-title { font-size: 28px; }
   .tabs { flex-wrap: wrap; }
-  .nav-links { display: none; }
 }
 </style>
 
@@ -182,232 +152,200 @@ nav {
 <div class="container">
   <div class="page-meta">LEGAL DOCUMENTS</div>
   <h1 class="page-title">Privacy &amp; Terms</h1>
-  <div class="page-updated">Last updated: August 2026 &nbsp;-&nbsp; Version 1.2</div>
+  <div class="page-updated">Last updated: November 2026 &nbsp;-&nbsp; Version 2.0</div>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('privacy', this)">Privacy Policy</button>
     <button class="tab-btn" onclick="switchTab('terms', this)">Terms of Service</button>
-    <button class="tab-btn" onclick="switchTab('cookies', this)">Cookie Policy</button>
+    <button class="tab-btn" onclick="switchTab('cookies', this)">Storage, Billing &amp; Refunds</button>
   </div>
 
-  <!-- ”€”€ PRIVACY POLICY ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
+  <!-- PRIVACY POLICY -->
   <div class="tab-panel active" id="tab-privacy">
 
     <div class="highlight-box">
-      <strong>TL;DR - Privacy First Architecture</strong><br>
-      JobXApply is built on a <strong>local-first, zero-knowledge</strong> architecture. Your profile data is encrypted on your device using AES-GCM 256-bit encryption before being stored or synced. We do not read your profile data. The sync server only receives an encrypted blob it cannot decrypt.
+      <strong>TL;DR - Privacy-First Architecture</strong><br>
+      JobXApply encrypts your master career profile on your device using Web Crypto AES-GCM 256-bit encryption before syncing. We never sell your personal data, never inject ads, and never track which external job sites you browse.
     </div>
 
     <div class="doc-section">
       <h2>01 // Information We Collect</h2>
-      <h3>Profile Data (Encrypted)</h3>
-      <p>When you build your JobXApply master profile, the following data is stored locally on your device in your browser's <code>localStorage</code>, encrypted with AES-GCM using a key derived from your personal passcode:</p>
+      <h3>Account &amp; Authentication Information</h3>
+      <p>When you create a JobXApply account via email/password or Google OAuth, we store your account email address, authentication identifier, and subscription tier status so you can sign in securely across devices.</p>
+
+      <h3>Career Profile Data (Client-Side Encrypted)</h3>
+      <p>When you complete your JobXApply master profile, your details are stored locally in your browser and encrypted on your device before syncing to our cloud database:</p>
       <ul>
-        <li>Full name, date of birth, family names</li>
-        <li>Email address, phone number, physical address</li>
-        <li>Education history, work experience, skills</li>
-        <li>LinkedIn, GitHub, and portfolio URLs</li>
-        <li>Resume draft text and cover letter preferences</li>
-        <li>Target role and career headline</li>
+        <li>Full name, contact email, phone number, and city/address details</li>
+        <li>Education history, work experience, projects, and skills</li>
+        <li>LinkedIn, GitHub, and portfolio links</li>
+        <li>Resume content, ATS scan inputs, and cover letter drafts</li>
+        <li>Target roles and application pipeline entries in the Job Tracker</li>
       </ul>
-      <h3>Technical Data</h3>
-      <p>When you use our sync server, our backend receives and stores:</p>
-      <ul>
-        <li>Your encrypted profile blob (ciphertext only - unreadable without your passcode)</li>
-        <li>Profile version number and last-update timestamp</li>
-        <li>A SHA-256 hash of your sync passcode (for authentication only - not the passcode itself)</li>
-      </ul>
-      <h3>What We Do Not Collect</h3>
-      <p>JobXApply does <strong>not</strong> collect analytics, tracking identifiers, cookies, IP addresses for surveillance, or any data about which job portals you visit or apply to.</p>
+
+      <h3>Payment &amp; Billing Metadata</h3>
+      <p>If you purchase the optional Pro Pass (₹199 one-time pass for 30 days), payment is processed directly through Razorpay. JobXApply stores only your Razorpay order ID, payment ID, and Pro Pass expiry timestamp. We never collect or store credit/debit card numbers, CVVs, UPI PINs, or bank credentials.</p>
+
+      <h3>Privacy-Preserving Usage Metrics</h3>
+      <p>We record non-identifying aggregate counters (such as total ATS checks or resume exports) to monitor platform health and enforce daily free-tier limits. We do not use advertising trackers or third-party behavioral analytics.</p>
     </div>
 
     <div class="doc-section">
       <h2>02 // How We Use Your Data</h2>
-      <p>Your data is used solely to operate JobXApply's core features:</p>
+      <p>Your information is used strictly to deliver JobXApply features:</p>
       <ul>
-        <li>Autofilling job application forms on portals you navigate to</li>
-        <li>Generating resume documents and cover letters from your profile</li>
-        <li>Scoring your resume against job descriptions</li>
-        <li>Tracking your job applications in your local pipeline</li>
-        <li>Syncing your profile across your devices via the local sync server</li>
+        <li>Autofilling job application forms when you trigger the JobXApply browser extension</li>
+        <li>Generating ATS-friendly resumes, cover letters, and government exam resized photos</li>
+        <li>Scoring your resume against job descriptions you provide</li>
+        <li>Syncing your encrypted profile and job tracker across your signed-in sessions</li>
+        <li>Verifying Pro Pass payments and responding to support requests</li>
       </ul>
-      <p>We do not sell your data, share it with third parties, or use it for advertising purposes.</p>
+      <p>We never sell, rent, or trade your personal information to recruiters, advertisers, or data brokers.</p>
     </div>
 
     <div class="doc-section">
-      <h2>03 // Data Storage &amp; Encryption</h2>
+      <h2>03 // Storage, Sync &amp; Encryption</h2>
       <div class="highlight-box">
-        <strong>Encryption Model:</strong> Your profile is encrypted client-side using the Web Crypto API with AES-GCM 256-bit encryption. The encryption key is derived from your sync passcode using PBKDF2 with 100,000 iterations and SHA-256. Your passcode never leaves your device in plaintext.
+        <strong>Encryption Model:</strong> Profile sync payloads can be encrypted client-side using the Web Crypto API (AES-GCM 256-bit) with keys derived from your sync passcode via PBKDF2 (100,000 iterations, SHA-256). All network communication runs over HTTPS/TLS.
       </div>
-      <h3>Local Storage</h3>
-      <p>Your profile and application data is stored in your browser's <code>localStorage</code>. This data remains on your device unless you explicitly use the sync server feature.</p>
-      <h3>Sync Server (Optional)</h3>
-      <p>If you configure a sync server (default: <code>localhost:8787</code>), only your encrypted profile blob is transmitted. The server cannot read your profile without your passcode, which never leaves your browser.</p>
-      <h3>Extension Storage</h3>
-      <p>The browser extension uses <code>chrome.storage.local</code> to cache your profile for fast autofill. This data stays on your device and is cleared when you disconnect the extension.</p>
+      <h3>Browser &amp; Extension Storage</h3>
+      <p>Your browser stores session tokens and cached profile fields in <code>localStorage</code>, and the Chrome/Edge extension uses <code>chrome.storage.local</code> so autofill works instantly on job portals without waiting for network calls.</p>
+      <h3>Cloud Database</h3>
+      <p>Authentication and encrypted cloud persistence are powered by Supabase PostgreSQL so your account, application tracker, and profile remain accessible across sessions and devices.</p>
     </div>
 
     <div class="doc-section">
-      <h2>04 // Your Rights</h2>
+      <h2>04 // Your Rights &amp; Controls</h2>
       <ul>
-        <li><strong>Access</strong> - Export all your data anytime from Settings -> Data Export</li>
-        <li><strong>Delete</strong> - Clear all data from Settings -> Danger Zone -> Clear All Local Data</li>
-        <li><strong>Portability</strong> - Export your profile as JSON for use in other systems</li>
-        <li><strong>Correction</strong> - Edit your profile at any time via the Profile Setup wizard</li>
+        <li><strong>Export:</strong> Download a complete JSON copy of your profile and tracker data anytime from <code>Settings -&gt; Data Export</code>.</li>
+        <li><strong>Edit:</strong> Update or clear individual profile fields anytime via <code>Profile Setup</code>.</li>
+        <li><strong>Delete Local Data:</strong> Clear all browser-cached data from <code>Settings -&gt; Danger Zone</code>.</li>
+        <li><strong>Delete Account:</strong> Permanently delete your cloud account and associated profile records from <code>Settings</code> or by emailing <a href="mailto:missionhousehq@gmail.com">missionhousehq@gmail.com</a>.</li>
       </ul>
     </div>
 
     <div class="doc-section">
-      <h2>05 // Third-Party Services</h2>
-      <p>JobXApply uses the following external services for the web application:</p>
+      <h2>05 // Service Providers &amp; Infrastructure</h2>
+      <p>JobXApply relies on the following trusted infrastructure providers solely to operate the application:</p>
       <ul>
-        <li><strong>Google Fonts</strong> - to load JetBrains Mono, Inter, and Barlow Condensed typefaces. Google may log font delivery requests per their <a href="https://policies.google.com/privacy" target="_blank">Privacy Policy</a>.</li>
+        <li><strong>Supabase</strong> — User authentication (Email/Google OAuth) and managed PostgreSQL database hosting.</li>
+        <li><strong>Razorpay</strong> — Secure payment checkout and transaction verification for the Pro Pass.</li>
+        <li><strong>Netlify &amp; Render</strong> — Web frontend hosting and backend API hosting over HTTPS.</li>
+        <li><strong>Google Fonts</strong> — Typography delivery (Barlow Condensed, Inter, JetBrains Mono).</li>
       </ul>
-      <p>No other third-party analytics, tracking, or data sharing services are used.</p>
     </div>
 
     <div class="doc-section">
-      <h2>06 // Contact</h2>
-      <p>For privacy-related inquiries, contact us via the <a href="contact.html">Contact page</a>. We respond within 5 business days.</p>
+      <h2>06 // Contact for Privacy Inquiries</h2>
+      <p>For any privacy questions, data export assistance, or account deletion requests, email us at <a href="mailto:missionhousehq@gmail.com">missionhousehq@gmail.com</a> or use our <a href="contact.html">Contact page</a>. We respond within 5 business days.</p>
     </div>
   </div>
 
-  <!-- ”€”€ TERMS OF SERVICE ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
+  <!-- TERMS OF SERVICE -->
   <div class="tab-panel" id="tab-terms">
 
     <div class="doc-section">
       <h2>01 // Acceptance of Terms</h2>
-      <p>By accessing or using JobXApply ("the Service"), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use the Service.</p>
+      <p>By accessing or using the JobXApply web application or browser extension ("the Service"), you agree to these Terms of Service. If you do not agree, please discontinue use of the Service.</p>
     </div>
 
     <div class="doc-section">
       <h2>02 // Description of Service</h2>
-      <p>JobXApply is a career automation platform that helps job seekers:</p>
+      <p>JobXApply provides career productivity tools for job seekers, including:</p>
       <ul>
-        <li>Maintain a master professional profile</li>
-        <li>Automatically fill job application forms on supported portals</li>
-        <li>Generate ATS-optimised resumes and cover letters</li>
-        <li>Score their resume against job descriptions</li>
-        <li>Track their job application pipeline</li>
+        <li>Centralized master profile management and encrypted cloud sync</li>
+        <li>1-click browser extension autofill across supported job portals</li>
+        <li>ATS resume scoring, LaTeX resume generation, and cover letter builders</li>
+        <li>Government exam photo/signature resizer and job application pipeline tracker</li>
       </ul>
     </div>
 
     <div class="doc-section">
       <h2>03 // Acceptable Use</h2>
-      <p>You agree to use JobXApply only for lawful purposes and in accordance with these Terms. You must not:</p>
+      <p>You agree to use JobXApply responsibly and lawfully. You must not:</p>
       <ul>
-        <li>Use the Service to provide false information on job applications</li>
-        <li>Attempt to circumvent security measures or authentication</li>
-        <li>Reverse-engineer, decompile, or disassemble the extension or web application</li>
-        <li>Use automated bots or scripts to submit applications without human review</li>
-        <li>Misrepresent your qualifications, experience, or identity</li>
-        <li>Use the Service in violation of any applicable laws or regulations</li>
+        <li>Submit fabricated credentials, false identities, or fraudulent applications</li>
+        <li>Attempt to bypass rate limits, authentication checks, or payment verification</li>
+        <li>Scrape, reverse-engineer, or abuse backend APIs</li>
+        <li>Use automated bots to mass-submit applications without human review</li>
       </ul>
       <div class="warn-box">
-        [!] JobXApply is designed to assist human applicants - not to replace human judgment. You remain responsible for the accuracy of all information submitted in job applications.
+        [!] JobXApply assists human applicants — it does not replace your review. Always verify every autofilled field and attached document before submitting an application.
       </div>
     </div>
 
     <div class="doc-section">
       <h2>04 // User Responsibilities</h2>
-      <p>You are responsible for:</p>
       <ul>
-        <li>Maintaining the security of your sync passcode</li>
-        <li>Ensuring all profile data you enter is accurate and truthful</li>
-        <li>Reviewing every autofilled form field before submitting any job application</li>
-        <li>Backing up your profile data (Export JSON from Settings)</li>
+        <li>Keep your account password and sync passcode confidential</li>
+        <li>Ensure all resume and profile information you enter is accurate</li>
+        <li>Review portal terms and verify autofilled answers prior to submission</li>
       </ul>
     </div>
 
     <div class="doc-section">
       <h2>05 // Intellectual Property</h2>
-      <p>All content, code, and design elements of JobXApply are the intellectual property of JobXApply and its creators. You may not reproduce, distribute, or create derivative works without explicit written permission.</p>
+      <p>All JobXApply branding, interface designs, extension code, and original templates remain the property of JobXApply. Your personal resume data, career history, and generated documents belong entirely to you.</p>
     </div>
 
     <div class="doc-section">
-      <h2>06 // Disclaimer of Warranties</h2>
-      <p>JobXApply is provided "as is" without warranties of any kind. We do not guarantee that:</p>
-      <ul>
-        <li>The autofill will work on every portal at all times (portal structures change frequently)</li>
-        <li>The Service will be uninterrupted or error-free</li>
-        <li>Using JobXApply will result in successful job applications or employment</li>
-      </ul>
+      <h2>06 // Disclaimer &amp; Limitation of Liability</h2>
+      <p>JobXApply is provided on an "as is" basis. Because external job portals frequently change their form layouts, we cannot guarantee 100% autofill compatibility on every website at all times, nor can we guarantee interview or employment outcomes.</p>
     </div>
 
     <div class="doc-section">
-      <h2>07 // Limitation of Liability</h2>
-      <p>JobXApply and its creators shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the Service, including but not limited to job application outcomes, data loss, or portal compatibility issues.</p>
-    </div>
-
-    <div class="doc-section">
-      <h2>08 // Termination</h2>
-      <p>You may stop using JobXApply at any time by clearing your browser data and uninstalling the extension. All your data is stored locally and will be deleted automatically when you clear <code>localStorage</code>.</p>
-    </div>
-
-    <div class="doc-section">
-      <h2>09 // Changes to Terms</h2>
-      <p>We may update these Terms from time to time. Continued use of the Service after changes constitutes acceptance of the new terms. Material changes will be communicated via the website.</p>
+      <h2>07 // Termination &amp; Updates</h2>
+      <p>You may stop using JobXApply and delete your account at any time. We may update these Terms periodically; material updates will be reflected on this page with an updated version date.</p>
     </div>
   </div>
 
-  <!-- ”€”€ COOKIES ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€ -->
+  <!-- STORAGE, BILLING & REFUNDS -->
   <div class="tab-panel" id="tab-cookies">
 
     <div class="highlight-box">
-      <strong>Short version:</strong> JobXApply does not use cookies. We use <code>localStorage</code> and <code>chrome.storage.local</code> for all data persistence. No third-party tracking cookies are set.
+      <strong>No Advertising Cookies:</strong> JobXApply does not set third-party advertising or cross-site tracking cookies. Session state and local caches are stored in browser <code>localStorage</code> and <code>chrome.storage.local</code>.
     </div>
 
     <div class="doc-section">
-      <h2>01 // What We Use Instead of Cookies</h2>
-      <p>JobXApply uses your browser's <strong>localStorage API</strong> to store session and profile data. This is fundamentally different from cookies:</p>
+      <h2>01 // Browser Storage (<code>jxa_*</code> Keys)</h2>
+      <p>Unlike traditional tracking cookies, <code>localStorage</code> data stays strictly on your device and is never automatically attached to third-party web requests. JobXApply uses prefixed keys:</p>
       <ul>
-        <li>localStorage data is never sent to servers automatically (unlike cookies)</li>
-        <li>It cannot be accessed by third-party websites</li>
-        <li>It is scoped strictly to the JobXApply origin</li>
-      </ul>
-
-      <h3>Keys We Store in localStorage</h3>
-      <p>All keys are prefixed with <code>jxa_</code> to prevent conflicts:</p>
-      <ul>
-        <li><code>jxa_token</code> - session authentication token (cleared on logout)</li>
-        <li><code>jxa_passcode</code> - your sync vault passcode (local device only)</li>
-        <li><code>jxa_local_profile</code> - plaintext profile cache (local device only)</li>
-        <li><code>jxa_user_email</code> - your account email</li>
-        <li><code>jxa_role</code> - your account role (user/admin)</li>
-        <li><code>jxa_tier</code> &amp; <code>jxa_subscription</code> - cached plan status synced from server</li>
-        <li><code>jxa_applications</code> - your application pipeline data</li>
-        <li><code>jxa_extension_coupled</code> - whether extension is paired</li>
+        <li><code>jxa_token</code> — Session authentication token (cleared on sign-out)</li>
+        <li><code>jxa_passcode</code> — Local sync encryption passcode</li>
+        <li><code>jxa_local_profile</code> — Cached profile object for fast offline access</li>
+        <li><code>jxa_user_email</code> &amp; <code>jxa_role</code> — Signed-in account email and role</li>
+        <li><code>jxa_tier</code> &amp; <code>jxa_subscription</code> — Active Free or Pro Pass status</li>
+        <li><code>jxa_applications</code> — Local cache of your application tracker entries</li>
+        <li><code>jxa_extension_coupled</code> — Extension pairing state</li>
       </ul>
     </div>
 
     <div class="doc-section">
-      <h2>02 // Billing, Payments &amp; Refund Policy</h2>
-      <p>JobXApply Pro is offered as a one-time ₹199 prepaid pass valid for 30 calendar days, processed securely via Razorpay. Pro does not auto-renew and no recurring card mandates are stored by JobXApply. Authentication and cloud database persistence are powered by Supabase PostgreSQL.</p>
-      <p>Duplicate charges or failed activations where funds were debited are eligible for full resolution or refund within 5–7 business days by contacting <a href="mailto:support@jobxapply.app">support@jobxapply.app</a> with your payment ID.</p>
-    </div>
-
-    <div class="doc-section">
-      <h2>03 // Google Fonts</h2>
-      <p>Our pages load fonts from Google Fonts (fonts.googleapis.com). Google may set browser cache entries and log font delivery requests. This is governed by <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>. We do not control this behaviour.</p>
-    </div>
-
-    <div class="doc-section">
-      <h2>04 // Clearing Your Data</h2>
-      <p>To remove all JobXApply data from your browser:</p>
+      <h2>02 // Billing, Pro Pass &amp; Refund Policy</h2>
+      <p>JobXApply offers a permanently Free tier alongside an optional <strong>Pro Pass</strong> (₹199 one-time prepaid pass valid for 30 calendar days), processed securely via Razorpay.</p>
       <ul>
-        <li>Go to Settings -> Danger Zone -> Clear All Local Data</li>
-        <li>Or: Open DevTools -> Application -> Local Storage -> Delete all <code>jxa_*</code> entries</li>
-        <li>Or: Open DevTools -> Console -> run <code>Object.keys(localStorage).filter(k => k.startsWith('jxa_')).forEach(k => localStorage.removeItem(k))</code></li>
+        <li><strong>No Auto-Renewal:</strong> Pro Pass does not automatically renew or store recurring card mandates.</li>
+        <li><strong>Refund Eligibility:</strong> Duplicate charges or failed activations where funds were debited are eligible for a full refund within 5–7 business days.</li>
+        <li><strong>How to Request:</strong> Email <a href="mailto:missionhousehq@gmail.com">missionhousehq@gmail.com</a> with your account email and Razorpay payment ID.</li>
+      </ul>
+    </div>
+
+    <div class="doc-section">
+      <h2>03 // Clearing Your Browser Data</h2>
+      <p>To remove all JobXApply data from your browser at any time:</p>
+      <ul>
+        <li>Go to <code>Settings -&gt; Danger Zone -&gt; Clear All Local Data</code></li>
+        <li>Or clear <code>jxa_*</code> keys via browser DevTools (<code>Application -&gt; Local Storage</code>)</li>
       </ul>
     </div>
   </div>
 
   <div class="doc-footer">
-    <div class="doc-footer-text"> 2026 JobXApply. All rights reserved.</div>
+    <div class="doc-footer-text">&copy; 2026 JobXApply. Support: <a href="mailto:missionhousehq@gmail.com">missionhousehq@gmail.com</a></div>
     <div class="doc-footer-links">
       <a href="index.html">Home</a>
-      <a href="contact.html">Contact</a>
       <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
       <a href="auth.html">Sign Up</a>
     </div>
   </div>

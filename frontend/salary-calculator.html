@@ -492,8 +492,18 @@ body::after {
 </div>
 
 <script>
-// 100% Free Public Access: No requireAuth() gate required
-if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav'), 'salary-calculator.html');
+// 100% Free Public Access: Unify public header with public-nav.js when logged out
+(function initToolNav() {
+  const navEl = document.getElementById('main-nav');
+  if (localStorage.getItem('jxa_token')) {
+    if (typeof renderNav === 'function') renderNav(navEl, 'salary-calculator.html');
+  } else {
+    if (navEl) navEl.style.display = 'none';
+    const s = document.createElement('script');
+    s.src = 'public-nav.js';
+    document.body.appendChild(s);
+  }
+})();
 
 // Dynamic header badge & guest CTA check
 (function() {

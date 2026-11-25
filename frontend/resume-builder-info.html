@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // ATS Resume Builder</title>
+<meta name="description" content="Build recruiter-ready, single-column ATS resumes across 10 LaTeX templates synced directly from your master profile.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
+<style>
+:root {
+  --base: #0B1020; --primary: #5B4FE8; --success: #2FDDC4; --alert: #F5A623;
+  --white: #ffffff; --text: #f4f7ff; --muted: rgba(244,247,255,0.68);
+  --glass-bg: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.14);
+  --mono: 'JetBrains Mono', monospace; --display: 'Barlow Condensed', sans-serif; --body: 'Inter', sans-serif;
+}
+body {
+  margin: 0; background-color: var(--base); color: var(--text); font-family: var(--body);
+  padding: 104px 0 80px;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { font-family: var(--display); text-transform: uppercase; margin-top: 0; color: var(--white); }
+h1 { font-size: clamp(42px, 6vw, 64px); letter-spacing: 0.02em; margin-bottom: 16px; text-align: center; line-height: 1.05; }
+.hero-subtitle { text-align: center; font-size: 18px; color: var(--muted); max-width: 680px; margin: 0 auto 36px; line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+.hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--primary); color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700;
+  padding: 15px 28px; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s ease;
+}
+.btn-primary:hover { background: #4a3fd6; transform: translateY(-2px); }
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700;
+  padding: 15px 28px; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s ease;
+}
+.btn-ghost:hover { background: var(--glass-bg); transform: translateY(-2px); }
+.pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 64px; }
+.pillar-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 28px; }
+.pillar-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(91,79,232,0.14); border: 1px solid rgba(91,79,232,0.35); color: var(--success); font-family: var(--mono); font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+.pillar-title { font-size: 24px; margin-bottom: 10px; }
+.pillar-desc { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0; }
+.showcase-box {
+  background: linear-gradient(135deg, rgba(16,22,44,0.92), rgba(91,79,232,0.1));
+  border: 1px solid var(--glass-border); border-radius: 18px; padding: 36px; margin-bottom: 56px;
+  display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; align-items: center;
+}
+.checklist { display: flex; flex-direction: column; gap: 12px; font-family: var(--mono); font-size: 12.5px; color: var(--text); }
+.checklist span::before { content: '[OK]'; color: var(--success); margin-right: 8px; }
+.preview-mock {
+  background: #ffffff; color: #111827; border-radius: 8px; padding: 22px; font-family: Georgia, serif;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.45); font-size: 12px; line-height: 1.45;
+}
+.bottom-cta {
+  text-align: center; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 40px 24px;
+}
+@media (max-width: 850px) {
+  .pillars { grid-template-columns: 1fr; }
+  .showcase-box { grid-template-columns: 1fr; padding: 24px; }
+}
+</style>
+</head>
+<body>
+<script src="public-nav.js"></script>
+<div class="container">
+  <div style="text-align:center; font-family:var(--mono); font-size:11px; color:var(--success); letter-spacing:.12em; margin-bottom:12px;">ATS-FIRST RESUME ENGINE // 10 LATEX TEMPLATES</div>
+  <h1>BUILD AN <span style="color:var(--primary)">ATS-PROOF</span> RESUME IN MINUTES</h1>
+  <p class="hero-subtitle">
+    Stop fighting broken Word margins. JobXApply compiles your Master Profile into clean, single-column LaTeX &amp; vector PDF resumes tailored to your target job description.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="auth.html?redirect=resume-builder.html" id="rb-primary-cta" class="btn-primary">Sign Up Free to Build Resume →</a>
+    <a href="ats-checker.html" class="btn-ghost">Test Existing Resume in ATS Checker</a>
+  </div>
+
+  <div class="pillars">
+    <div class="pillar-card">
+      <div class="pillar-icon">01</div>
+      <h3 class="pillar-title">Single-Column Strict</h3>
+      <p class="pillar-desc">All 10 templates enforce clean single-column parsing order so Workday, Greenhouse, Lever, and Taleo extract 100% of your experience accurately.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon">02</div>
+      <h3 class="pillar-title">JD Keyword Tailoring</h3>
+      <p class="pillar-desc">Paste any target job description to highlight missing skills, reorder relevant keywords, and verify live preview density before exporting.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon">03</div>
+      <h3 class="pillar-title">Synced From Profile</h3>
+      <p class="pillar-desc">Enter your education, projects, and work history once in your Master Profile — your Resume Builder, Cover Letter, and Autofill stay automatically in sync.</p>
+    </div>
+  </div>
+
+  <div class="showcase-box">
+    <div>
+      <h2 style="font-size:32px; margin-bottom:14px;">What You Get Inside the Workspace</h2>
+      <p style="color:var(--muted); font-size:15px; line-height:1.6; margin-bottom:20px;">
+        Free accounts include 2 monthly resume exports and live preview editing. Pro unlocks unlimited exports across all 10 LaTeX archetypes.
+      </p>
+      <div class="checklist">
+        <span>10 ATS-verified LaTeX &amp; vector PDF templates</span>
+        <span>Live zoomable preview + instant reorderable sections</span>
+        <span>One-click sync with your Master Profile &amp; Extension</span>
+        <span>Zero multi-column tables or graphics that break parsers</span>
+      </div>
+    </div>
+    <div class="preview-mock" aria-hidden="true">
+      <div style="font-weight:700; font-size:16px; border-bottom:1.5px solid #111; padding-bottom:6px; margin-bottom:8px;">ARJUN SHARMA</div>
+      <div style="font-size:10px; color:#4b5563; margin-bottom:10px;">Bengaluru, IN • arjun@example.com • +91 98765 43210</div>
+      <div style="font-weight:700; font-size:11px; border-bottom:1px solid #d1d5db; margin-bottom:4px;">EXPERIENCE</div>
+      <div style="font-weight:700;">Senior Software Engineer — TechCorp</div>
+      <div style="font-size:10.5px; color:#374151; margin-bottom:8px;">• Reduced API p95 latency by 42% across distributed Node.js &amp; PostgreSQL pipelines.</div>
+      <div style="font-weight:700; font-size:11px; border-bottom:1px solid #d1d5db; margin-bottom:4px;">SKILLS</div>
+      <div style="font-size:10.5px; color:#374151;">TypeScript, Node.js, PostgreSQL, Docker, AWS</div>
+    </div>
+  </div>
+
+  <div class="bottom-cta">
+    <h2 style="font-size:34px; margin-bottom:10px;">Ready to Build Your Tailored Resume?</h2>
+    <p style="color:var(--muted); font-size:15px; margin-bottom:24px;">Create a free account in 30 seconds to test the live Resume Builder workspace.</p>
+    <a href="auth.html?redirect=resume-builder.html" id="rb-bottom-cta" class="btn-primary">Sign Up Free &amp; Open Builder →</a>
+  </div>
+</div>
+<script>
+if (localStorage.getItem('jxa_token')) {
+  ['rb-primary-cta', 'rb-bottom-cta'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.href = 'resume-builder.html'; el.textContent = 'Open Resume Builder →'; }
+  });
+}
+</script>
+</body>
+</html>

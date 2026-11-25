@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JobXApply // About Us &amp; Our Mission</title>
-<meta name="description" content="Built for job seekers, by job seekers. Learn about JobXApply's mission to level the playing field against automated recruiting systems.">
+<meta name="description" content="Built for job seekers, by job seekers. Learn how JobXApply automates repetitive job applications, checks ATS resume compatibility, and protects your career data.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://jobxapply.netlify.app/about.html">
 
@@ -13,13 +13,13 @@
 <meta property="og:site_name" content="JobXApply">
 <meta property="og:url" content="https://jobxapply.netlify.app/about.html">
 <meta property="og:title" content="About Us &amp; Mission - JobXApply">
-<meta property="og:description" content="Built for job seekers, by job seekers. Learn about JobXApply's mission to level the playing field against automated recruiting systems.">
+<meta property="og:description" content="Built for job seekers, by job seekers. Learn how JobXApply automates repetitive job applications and protects your career data.">
 <meta property="og:image" content="https://jobxapply.netlify.app/assets/app-logo.png">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="About JobXApply Mission">
-<meta name="twitter:description" content="Built for job seekers, by job seekers. Learn about JobXApply's mission to level the playing field against automated recruiting systems.">
+<meta name="twitter:title" content="About JobXApply">
+<meta name="twitter:description" content="Built for job seekers, by job seekers. Learn how JobXApply automates repetitive job applications and protects your career data.">
 <meta name="twitter:image" content="https://jobxapply.netlify.app/assets/app-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,8 +32,8 @@
   --alert: #F5A623;
   --white: #ffffff;
   --text: #f4f7ff;
-  --muted: rgba(244,247,255,0.65);
-  --dim: rgba(244,247,255,0.4);
+  --muted: rgba(244,247,255,0.68);
+  --dim: rgba(244,247,255,0.45);
   --glass-bg: rgba(255,255,255,0.05);
   --glass-border: rgba(255,255,255,0.15);
   --mono: 'JetBrains Mono', monospace;
@@ -46,6 +46,7 @@ body {
   color: var(--text); 
   font-family: var(--body); 
   margin: 0;
+  padding-top: 70px;
   min-height: 100vh; 
   background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%); 
 }
@@ -53,27 +54,45 @@ body::after {
   content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.container { max-width: 1000px; margin: 0 auto; padding: 60px 24px; position: relative; z-index: 10; }
-.hero { text-align: center; margin-bottom: 80px; }
-.hero h1 { font-family: var(--display); font-size: 4rem; margin: 0 0 16px; color: var(--white); text-transform: uppercase; letter-spacing: 2px; }
-.hero p { font-size: 1.25rem; color: var(--muted); margin: 0 auto; max-width: 600px; }
+.container { max-width: 1000px; margin: 0 auto; padding: 60px 24px 80px; position: relative; z-index: 10; }
+.hero { text-align: center; margin-bottom: 56px; }
+.hero-tag { font-family: var(--mono); font-size: 0.78rem; color: var(--success); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 14px; }
+.hero h1 { font-family: var(--display); font-size: 4rem; line-height: 1.02; margin: 0 0 18px; color: var(--white); text-transform: uppercase; letter-spacing: 2px; }
+.hero p { font-size: 1.12rem; line-height: 1.65; color: var(--muted); margin: 0 auto; max-width: 660px; }
 
-.section-title { font-family: var(--display); font-size: 2.5rem; color: var(--white); text-transform: uppercase; margin-bottom: 24px; text-align: center; }
-.mission-text { font-size: 1.1rem; line-height: 1.8; color: var(--text); text-align: center; margin-bottom: 80px; background: var(--glass-bg); padding: 40px; border-radius: 14px; border: 1px solid var(--glass-border); backdrop-filter: blur(16px); }
+.section-title { font-family: var(--display); font-size: 2.35rem; color: var(--white); text-transform: uppercase; margin: 0 0 14px; text-align: center; letter-spacing: 1px; }
+.section-sub { text-align: center; color: var(--muted); font-size: 0.98rem; max-width: 620px; margin: 0 auto 32px; line-height: 1.6; }
 
-.team-grid { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-bottom: 80px; }
-.team-card { width: 300px; flex-shrink: 0; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 32px 24px; text-align: center; backdrop-filter: blur(16px); transition: transform 0.3s ease; }
-.team-card:hover { transform: translateY(-4px); border-color: var(--primary); }
-.team-card h3 { font-family: var(--display); font-size: 1.5rem; margin: 0 0 8px; color: var(--white); text-transform: uppercase; }
-.team-role { font-family: var(--mono); font-size: 0.85rem; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+.mission-text { font-size: 1.06rem; line-height: 1.8; color: var(--text); text-align: center; margin-bottom: 72px; background: var(--glass-bg); padding: 40px; border-radius: 16px; border: 1px solid var(--glass-border); backdrop-filter: blur(16px); }
+.mission-text p { margin: 0; }
+.mission-text p + p { margin-top: 18px; }
 
-.tech-stack { text-align: center; margin-bottom: 80px; }
-.tech-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px; }
-.tech-tag { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+.pillars-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-bottom: 72px; }
+.pillar-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 28px 26px; backdrop-filter: blur(16px); transition: transform 0.25s ease, border-color 0.25s ease; }
+.pillar-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+.pillar-tag { font-family: var(--mono); font-size: 0.75rem; color: var(--success); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+.pillar-card h3 { font-family: var(--display); font-size: 1.55rem; margin: 0 0 10px; color: var(--white); text-transform: uppercase; letter-spacing: 0.5px; }
+.pillar-card p { font-size: 0.94rem; line-height: 1.65; color: var(--muted); margin: 0; }
 
-.cta-section { text-align: center; }
-.btn-primary { background: var(--primary); color: var(--white); border: none; border-radius: 8px; padding: 14px 32px; font-family: var(--mono); font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.3s ease, transform 0.2s; }
+.tech-stack { text-align: center; margin-bottom: 64px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 36px 28px; backdrop-filter: blur(16px); }
+.tech-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 22px; }
+.tech-tag { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-family: var(--mono); font-size: 0.82rem; color: var(--text); }
+
+.cta-section { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.cta-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; }
+.btn-primary { background: var(--primary); color: var(--white); border: none; border-radius: 8px; padding: 14px 32px; font-family: var(--mono); font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.3s ease, transform 0.2s; }
 .btn-primary:hover { background: #6f65f0; transform: scale(1.02); }
+.btn-outline { background: transparent; color: var(--text); border: 1px solid var(--glass-border); border-radius: 8px; padding: 14px 28px; font-family: var(--mono); font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none; display: inline-block; transition: border-color 0.2s, color 0.2s; }
+.btn-outline:hover { border-color: var(--success); color: var(--success); }
+.support-note { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+.support-note a { color: var(--success); text-decoration: none; }
+.support-note a:hover { text-decoration: underline; }
+
+@media (max-width: 720px) {
+  .hero h1 { font-size: 2.8rem; }
+  .pillars-grid { grid-template-columns: 1fr; }
+  .mission-text { padding: 28px 20px; }
+}
 </style>
 
   <link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
@@ -83,44 +102,61 @@ body::after {
 
 <div class="container">
   <header class="hero">
+    <div class="hero-tag">ABOUT JOBXAPPLY</div>
     <h1>Built for Job Seekers,<br>By Job Seekers</h1>
+    <p>JobXApply helps students and professionals eliminate repetitive form-filling, optimize resumes for Applicant Tracking Systems, and manage every application from one secure workspace.</p>
   </header>
 
   <div class="mission-text">
-    <p>We grew tired of re-entering the exact same experience, education, and skills across 30+ different workday and job portal clones. The modern application process is broken, redundant, and built to waste your time.</p>
-    <p style="margin-top:20px; color:var(--white); font-weight:600;">We built JobXApply to fix it.</p>
-    <p style="margin-top:20px;">By managing a centralized master profile and leveraging targeted heuristic extension maps, we collapse 20-minute application forms into a single click.</p>
+    <p>Applying for jobs should not mean re-typing the same education history, work experience, and contact details across dozens of different portals. Modern hiring platforms are fragmented and repetitive, costing candidates hours every week.</p>
+    <p style="color:var(--white); font-weight:600;">We built JobXApply to give candidates their time back.</p>
+    <p>With one centralized master profile, a Manifest V3 browser extension, real-time ATS keyword scoring, and LaTeX-backed resume and cover letter generators, JobXApply turns a 20-minute application workflow into a fast, accurate, single-click review.</p>
   </div>
 
-  <h2 class="section-title">The Squad</h2>
-  <div class="team-grid">
-    <div class="team-card">
-      <h3>Dhanush</h3>
-      <div class="team-role">Frontend & Application Developer</div>
-      <p style="font-size:0.9rem;color:var(--muted);margin:0;">Developed the core application interfaces and client-side logic for JobXApply.</p>
+  <h2 class="section-title">What JobXApply Offers</h2>
+  <p class="section-sub">A unified career toolkit engineered for speed, ATS accuracy, and local-first privacy.</p>
+  <div class="pillars-grid">
+    <div class="pillar-card">
+      <div class="pillar-tag">01 // AUTOFILL ENGINE</div>
+      <h3>1-Click Smart Autofill</h3>
+      <p>Our Manifest V3 browser extension fills personal, education, experience, and screening fields across 50+ portals — including LinkedIn, Indeed, Naukri, Workday, Greenhouse, and Lever — and attaches tailored PDF resumes automatically.</p>
     </div>
-    <div class="team-card">
-      <h3>Nikhil Reddy</h3>
-      <div class="team-role">QA Tester & Marketer</div>
-      <p style="font-size:0.9rem;color:var(--muted);margin:0;">Drives quality assurance testing, user acquisition, and marketing operations.</p>
+    <div class="pillar-card">
+      <div class="pillar-tag">02 // ATS INTELLIGENCE</div>
+      <h3>Real-Time ATS Resume Checker</h3>
+      <p>Compare your resume directly against any job description. Get instant keyword gap detection, formatting scannability checks, and quantified impact feedback before you hit submit.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-tag">03 // DOCUMENT SUITE</div>
+      <h3>LaTeX Resumes, Cover Letters &amp; Gov Tools</h3>
+      <p>Generate clean, recruiter-ready resumes and cover letters across 10 ATS-standard LaTeX templates, plus resize exam photos and signatures accurately for SSC, IBPS, and UPSC portals.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-tag">04 // PRIVACY &amp; PIPELINE</div>
+      <h3>Encrypted Sync &amp; Application Tracker</h3>
+      <p>Track every submitted role, interview stage, and follow-up date in one dashboard while keeping your master profile encrypted client-side with AES-GCM 256-bit encryption.</p>
     </div>
   </div>
 
   <div class="tech-stack">
-    <h2 class="section-title">Under The Hood</h2>
-    <p style="color:var(--muted);">Built with modern, lightweight architecture to ensure secure and rapid deployments.</p>
+    <h2 class="section-title">Architecture &amp; Standards</h2>
+    <p style="color:var(--muted); margin:0;">Designed around client-side security, lightweight execution, and transparent data ownership.</p>
     <div class="tech-tags">
-      <span class="tech-tag">Node.js</span>
-      <span class="tech-tag">MV3 Browser Extension</span>
-      <span class="tech-tag">Web Crypto API (AES-GCM)</span>
-      <span class="tech-tag">Vanilla HTML/CSS/JS</span>
-      <span class="tech-tag">SSE</span>
+      <span class="tech-tag">Manifest V3 Browser Extension</span>
+      <span class="tech-tag">Web Crypto API (AES-GCM 256-bit)</span>
+      <span class="tech-tag">Client-Side PDF Generation</span>
+      <span class="tech-tag">PostgreSQL &amp; Cloud Auth</span>
+      <span class="tech-tag">Real-Time SSE Profile Sync</span>
+      <span class="tech-tag">Razorpay Prepaid Pass</span>
     </div>
-
   </div>
 
   <div class="cta-section">
-    <a href="auth.html" class="btn-primary">Get Started Now</a>
+    <div class="cta-actions">
+      <a href="auth.html" class="btn-primary">Get Started Free</a>
+      <a href="contact.html" class="btn-outline">Contact Support</a>
+    </div>
+    <div class="support-note">Need help or have questions? Reach us at <a href="mailto:missionhousehq@gmail.com">missionhousehq@gmail.com</a></div>
   </div>
 </div>
 </body>

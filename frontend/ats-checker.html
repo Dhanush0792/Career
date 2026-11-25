@@ -916,8 +916,18 @@ mark.kw-miss {
 // Configure pdf.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-// 100% Free Public Access: No requireAuth() gate required
-renderNav(document.getElementById('main-nav'), 'ats-checker.html');
+// 100% Free Public Access: Unify public header with public-nav.js when logged out
+(function initToolNav() {
+  const navEl = document.getElementById('main-nav');
+  if (localStorage.getItem('jxa_token')) {
+    renderNav(navEl, 'ats-checker.html');
+  } else {
+    if (navEl) navEl.style.display = 'none';
+    const s = document.createElement('script');
+    s.src = 'public-nav.js';
+    document.body.appendChild(s);
+  }
+})();
 
 const runBtn = document.getElementById('run-check-btn');
 const resultsPanel = document.getElementById('results-panel');

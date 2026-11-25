@@ -3,37 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JobXApply // Contact &amp; Developer Support</title>
-<meta name="description" content="Get support, request custom job portal mappings, or report feedback directly to the JobXApply engineering team.">
+<title>JobXApply // Help, Support &amp; Feedback</title>
+<meta name="description" content="Report bugs, autofill issues, billing questions, or feature requests with screenshots directly to the JobXApply team.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://jobxapply.netlify.app/contact.html">
-
-<!-- Open Graph / Social -->
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="JobXApply">
-<meta property="og:url" content="https://jobxapply.netlify.app/contact.html">
-<meta property="og:title" content="Contact &amp; Developer Support - JobXApply">
-<meta property="og:description" content="Get support, request custom job portal mappings, or report feedback directly to the JobXApply engineering team.">
-<meta property="og:image" content="https://jobxapply.netlify.app/assets/app-logo.png">
-
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Contact Support - JobXApply">
-<meta name="twitter:description" content="Get support, request custom job portal mappings, or report feedback directly to the JobXApply engineering team.">
-<meta name="twitter:image" content="https://jobxapply.netlify.app/assets/app-logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
 <style>
 :root {
   --base: #0B1020;
   --primary: #5B4FE8;
   --success: #2FDDC4;
   --alert: #F5A623;
+  --danger: #F55A23;
   --white: #ffffff;
   --text: #f4f7ff;
-  --muted: rgba(244,247,255,0.65);
-  --dim: rgba(244,247,255,0.4);
+  --muted: rgba(244,247,255,0.68);
+  --dim: rgba(244,247,255,0.45);
   --glass-bg: rgba(255,255,255,0.05);
   --glass-border: rgba(255,255,255,0.15);
   --mono: 'JetBrains Mono', monospace;
@@ -41,88 +29,152 @@
   --body: 'Inter', sans-serif;
 }
 * { box-sizing: border-box; }
-body { 
-  background: var(--base); 
-  color: var(--text); 
-  font-family: var(--body); 
-  padding-top: 70px; 
+body {
+  background: var(--base);
+  color: var(--text);
+  font-family: var(--body);
+  padding-top: 70px;
   margin: 0;
-  min-height: 100vh; 
-  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%); 
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
 }
-body::after {
-  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.container { max-width: 1000px; margin: 0 auto; padding: 60px 24px; position: relative; z-index: 10; }
-.hero { text-align: center; margin-bottom: 60px; }
-.hero h1 { font-family: var(--display); font-size: 4rem; margin: 0 0 16px; color: var(--white); text-transform: uppercase; letter-spacing: 2px; }
+.container { max-width: 1060px; margin: 0 auto; padding: 52px 24px 80px; position: relative; z-index: 10; }
+.hero { text-align: center; margin-bottom: 44px; }
+.hero-tag { font-family: var(--mono); font-size: 0.78rem; color: var(--success); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 10px; }
+.hero h1 { font-family: var(--display); font-size: 3.8rem; margin: 0 0 12px; color: var(--white); text-transform: uppercase; letter-spacing: 2px; }
+.hero p { font-size: 1.02rem; color: var(--muted); max-width: 640px; margin: 0 auto; line-height: 1.6; }
 
-.contact-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-.contact-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 40px; backdrop-filter: blur(16px); }
-.contact-card h2 { font-family: var(--display); font-size: 2rem; color: var(--white); text-transform: uppercase; margin: 0 0 24px; }
+.contact-layout { display: grid; grid-template-columns: 1.25fr 0.85fr; gap: 32px; align-items: start; }
+.contact-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; padding: 32px; backdrop-filter: blur(16px); }
+.contact-card h2 { font-family: var(--display); font-size: 1.9rem; color: var(--white); text-transform: uppercase; margin: 0 0 18px; }
 
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; font-family: var(--mono); font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }
-.form-control { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px 16px; color: var(--white); font-family: var(--body); font-size: 1rem; transition: border-color 0.3s; }
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-family: var(--mono); font-size: 0.76rem; color: var(--muted); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.04em; }
+.form-control { width: 100%; background: rgba(0,0,0,0.28); border: 1px solid var(--glass-border); border-radius: 8px; padding: 11px 14px; color: var(--white); font-family: var(--body); font-size: 0.94rem; transition: border-color 0.25s; }
 .form-control:focus { outline: none; border-color: var(--primary); }
 textarea.form-control { resize: vertical; min-height: 120px; }
 
-.btn-primary { background: var(--primary); color: var(--white); border: none; border-radius: 8px; padding: 14px 24px; font-family: var(--mono); font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; display: inline-block; transition: background 0.3s ease; width: 100%; text-align: center; }
+.cat-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.cat-pill {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cat-pill:hover { border-color: rgba(255,255,255,0.35); color: var(--white); }
+.cat-pill.active { background: rgba(91,79,232,0.25); border-color: var(--primary); color: #fff; box-shadow: 0 0 0 1px rgba(91,79,232,0.4); }
+
+.dropzone {
+  border: 1.5px dashed rgba(255,255,255,0.22);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  background: rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.dropzone:hover, .dropzone.dragover { border-color: var(--success); background: rgba(47,221,196,0.06); }
+.dropzone-title { font-size: 13px; font-weight: 600; color: var(--white); }
+.dropzone-sub { font-size: 11px; color: var(--dim); margin-top: 4px; font-family: var(--mono); }
+
+.preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 12px; }
+.preview-item { position: relative; border: 1px solid var(--glass-border); border-radius: 8px; overflow: hidden; background: rgba(0,0,0,0.35); }
+.preview-item img { width: 100%; height: 82px; object-fit: cover; display: block; }
+.preview-rm {
+  position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
+  border: none; background: rgba(11,16,32,0.88); color: #fff; font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.preview-meta { padding: 4px 6px; font-size: 10px; font-family: var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.btn-primary { background: var(--primary); color: var(--white); border: none; border-radius: 8px; padding: 13px 22px; font-family: var(--mono); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; width: 100%; transition: background 0.25s; }
 .btn-primary:hover { background: #6f65f0; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.info-box { background: rgba(47,221,196,0.05); border: 1px solid var(--success); border-radius: 14px; padding: 30px; margin-bottom: 30px; }
-.info-box h3 { font-family: var(--display); color: var(--success); font-size: 1.5rem; text-transform: uppercase; margin: 0 0 12px; }
-.info-box p { margin: 0 0 16px; font-size: 0.95rem; line-height: 1.6; color: var(--muted); }
+.info-box { background: rgba(47,221,196,0.05); border: 1px solid var(--success); border-radius: 14px; padding: 26px; margin-bottom: 24px; }
+.info-box h3 { font-family: var(--display); color: var(--success); font-size: 1.5rem; text-transform: uppercase; margin: 0 0 10px; }
+.info-box p { margin: 0 0 14px; font-size: 0.92rem; line-height: 1.6; color: var(--muted); }
+.support-info { font-size: 0.9rem; color: var(--muted); line-height: 1.65; }
+.support-info p { margin: 0 0 10px; }
+.support-info strong { color: var(--white); font-family: var(--mono); font-size: 0.82rem; }
+.support-list { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
 
-.support-info { font-size: 0.95rem; color: var(--muted); line-height: 1.6; }
-.support-info strong { color: var(--white); font-family: var(--mono); }
-
-.status-message { margin-top: 20px; padding: 12px; border-radius: 8px; font-family: var(--mono); font-size: 0.9rem; display: none; }
+.status-message { margin-top: 14px; padding: 12px 14px; border-radius: 8px; font-family: var(--mono); font-size: 0.84rem; display: none; line-height: 1.5; }
 .status-message.success { background: rgba(47,221,196,0.1); border: 1px solid var(--success); color: var(--success); display: block; }
+.status-message.warn { background: rgba(245,166,35,0.1); border: 1px solid var(--alert); color: var(--alert); display: block; }
 
-@media(max-width: 768px) {
-  .contact-layout { grid-template-columns: 1fr; }
+@media(max-width: 860px) {
+  .hero h1 { font-size: 2.8rem; }
+  .contact-layout, .form-row-2 { grid-template-columns: 1fr; }
 }
 </style>
-
-  <link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
 </head>
 <body>
 <script src="public-nav.js"></script>
 
 <div class="container">
   <header class="hero">
-    <h1>Contact &amp; Support</h1>
+    <div class="hero-tag">HELP, SUPPORT &amp; FEEDBACK</div>
+    <h1>Help &amp; Feedback</h1>
+    <p>Report a bug, autofill issue, billing question, or feature idea with screenshots directly here — or email us anytime.</p>
   </header>
 
   <div class="contact-layout">
     <div class="contact-card">
-      <h2>Send a Message</h2>
-      <form id="contact-form">
+      <h2>Submit Feedback or Issue</h2>
+      <form id="feedback-form">
         <div class="form-group">
-          <label>Name</label>
-          <input type="text" class="form-control" required placeholder="Rahul Sharma">
+          <label>Issue / Feedback Type</label>
+          <div class="cat-pills" id="category-pills">
+            <button type="button" class="cat-pill active" data-cat="bug">Bug / Error</button>
+            <button type="button" class="cat-pill" data-cat="autofill_issue">Autofill Issue</button>
+            <button type="button" class="cat-pill" data-cat="payment_billing">Payment / Billing</button>
+            <button type="button" class="cat-pill" data-cat="ui_ux">UI / UX Problem</button>
+            <button type="button" class="cat-pill" data-cat="account_sync">Account / Sync</button>
+            <button type="button" class="cat-pill" data-cat="feature_request">Feature Request</button>
+            <button type="button" class="cat-pill" data-cat="other">Other</button>
+          </div>
+          <input type="hidden" id="fb-category" value="bug">
         </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="fb-name">Your Name</label>
+            <input type="text" id="fb-name" class="form-control" required placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label for="fb-email">Email Address</label>
+            <input type="email" id="fb-email" class="form-control" required placeholder="you@example.com">
+          </div>
+        </div>
+
         <div class="form-group">
-          <label>Email</label>
-          <input type="email" class="form-control" required placeholder="john@example.com">
+          <label for="fb-subject">Subject / Short Summary</label>
+          <input type="text" id="fb-subject" class="form-control" required minlength="3" maxlength="200" placeholder="e.g. LinkedIn Easy Apply phone field not filling">
         </div>
+
         <div class="form-group">
-          <label>Subject</label>
-          <select class="form-control" required id="subject-select">
-            <option value="General">General Inquiry</option>
-            <option value="Bug Report">Bug Report</option>
-            <option value="Portal Request">Portal Request</option>
-            <option value="Feature Request">Feature Request</option>
-            <option value="Partnership">Partnership</option>
-          </select>
+          <label for="fb-message">Detailed Description</label>
+          <textarea id="fb-message" class="form-control" required minlength="5" maxlength="5000" placeholder="Tell us what happened, steps to reproduce, or what you'd like to see improved..."></textarea>
         </div>
+
         <div class="form-group">
-          <label>Message</label>
-          <textarea class="form-control" required placeholder="Enter your message..."></textarea>
+          <label>Screenshots (Optional — up to 4 images, max 1.5 MB each)</label>
+          <div class="dropzone" id="fb-dropzone" tabindex="0" role="button" aria-label="Upload screenshots">
+            <div class="dropzone-title">Click to select screenshots or drag &amp; drop here</div>
+            <div class="dropzone-sub">PNG, JPG, or WebP &bull; Max 4 files</div>
+            <input type="file" id="fb-files" accept="image/png,image/jpeg,image/webp" multiple style="display:none;">
+          </div>
+          <div class="preview-grid" id="fb-previews"></div>
         </div>
-        <button type="submit" class="btn-primary">Send Message</button>
+
+        <button type="submit" class="btn-primary" id="fb-submit-btn">Submit Feedback</button>
         <div id="form-status" class="status-message"></div>
       </form>
     </div>
@@ -130,24 +182,31 @@ textarea.form-control { resize: vertical; min-height: 120px; }
     <div>
       <div class="info-box">
         <h3>Request a Portal</h3>
-        <p>Encountered a job board that our extension doesn't currently support? Let us know and we'll add support for it.</p>
+        <p>Encountered a job board or ATS form that our extension doesn't autofill properly yet? Submit the portal details and we will add mapping support.</p>
         <div class="form-group">
-          <label>Portal Name</label>
-          <input type="text" id="portal-name" class="form-control" placeholder="e.g. Workday Custom">
+          <label for="portal-name">Portal Name</label>
+          <input type="text" id="portal-name" class="form-control" placeholder="e.g. Workday, SmartRecruiters, Zoho Recruit">
         </div>
         <div class="form-group">
-          <label>Portal URL</label>
+          <label for="portal-url">Portal URL</label>
           <input type="url" id="portal-url" class="form-control" placeholder="https://...">
         </div>
         <button type="button" class="btn-primary" style="background: transparent; border: 1px solid var(--success); color: var(--success);" onclick="requestPortal()">Submit Portal Request</button>
-        <div id="portal-status" class="status-message" style="margin-top:10px;"></div>
+        <div id="portal-status" class="status-message"></div>
       </div>
 
-      <div class="contact-card" style="padding:30px;">
-        <h2 style="font-size:1.5rem;margin-bottom:16px;">Support Channels</h2>
+      <div class="contact-card" style="padding:26px;">
+        <h2 style="font-size:1.45rem;margin-bottom:14px;">Direct Email &amp; Support</h2>
         <div class="support-info">
-          <p><strong>Support Email:</strong> <a href="mailto:support@jobxapply.app" style="color:var(--text);">support@jobxapply.app</a></p>
-          <p><strong>Response Time:</strong> We typically respond within 24 hours for Pro and Enterprise users, and 48 hours for Free tier users.</p>
+          <p><strong>Support Email:</strong> <a href="mailto:missionhousehq@gmail.com" style="color:var(--success); text-decoration:none;">missionhousehq@gmail.com</a></p>
+          <p><strong>Response Time:</strong> Within 24 hours for Pro Pass users and 48 hours for Free tier users.</p>
+          <p><strong>What We Help With:</strong></p>
+          <ul class="support-list">
+            <li>Bug reports, autofill issues &amp; UI feedback</li>
+            <li>Razorpay Pro Pass billing &amp; duplicate charge refunds</li>
+            <li>Account access, cloud sync &amp; extension pairing</li>
+            <li>Data export or permanent account deletion requests</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -155,59 +214,198 @@ textarea.form-control { resize: vertical; min-height: 120px; }
 </div>
 
 <script>
-  document.getElementById('contact-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const btn = this.querySelector('button');
-    btn.textContent = 'Sending...';
-    btn.disabled = true;
-    
-    // Simulate network delay
-    setTimeout(() => {
-      this.reset();
-      btn.textContent = 'Send Message';
-      btn.disabled = false;
-      
-      const status = document.getElementById('form-status');
-      status.textContent = 'Message sent successfully. We will respond shortly.';
-      status.className = 'status-message success';
-      
-      setTimeout(() => {
-        status.className = 'status-message';
-      }, 5000);
-    }, 800);
+  const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:8787'
+    : 'https://jobxapply-backend.onrender.com';
+
+  // Auto-fill signed-in user details if present
+  (function prefillUser() {
+    try {
+      const email = localStorage.getItem('jxa_user_email') || '';
+      const name = localStorage.getItem('jxa_user_name') || '';
+      if (email) document.getElementById('fb-email').value = email;
+      if (name) document.getElementById('fb-name').value = name;
+    } catch (e) {}
+  })();
+
+  // Category pill selection
+  document.querySelectorAll('#category-pills .cat-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#category-pills .cat-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('fb-category').value = btn.dataset.cat;
+    });
   });
 
-  function requestPortal() {
-    const name = document.getElementById('portal-name').value;
-    const url = document.getElementById('portal-url').value;
+  // Screenshot uploader state
+  const MAX_FILES = 4;
+  const MAX_BYTES = 1.5 * 1024 * 1024;
+  const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+  let attachedScreenshots = [];
+
+  const dropzone = document.getElementById('fb-dropzone');
+  const fileInput = document.getElementById('fb-files');
+  const previewsEl = document.getElementById('fb-previews');
+  const statusEl = document.getElementById('form-status');
+
+  function renderPreviews() {
+    previewsEl.innerHTML = '';
+    attachedScreenshots.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'preview-item';
+      const img = document.createElement('img');
+      img.src = item.dataUrl;
+      img.alt = item.name;
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'preview-rm';
+      rm.textContent = '×';
+      rm.title = 'Remove screenshot';
+      rm.addEventListener('click', () => {
+        attachedScreenshots.splice(idx, 1);
+        renderPreviews();
+      });
+      const meta = document.createElement('div');
+      meta.className = 'preview-meta';
+      meta.textContent = `${item.name} (${Math.round(item.sizeBytes / 1024)}KB)`;
+      card.appendChild(img);
+      card.appendChild(rm);
+      card.appendChild(meta);
+      previewsEl.appendChild(card);
+    });
+  }
+
+  function handleFiles(fileList) {
+    const files = Array.from(fileList || []);
+    for (const f of files) {
+      if (attachedScreenshots.length >= MAX_FILES) {
+        statusEl.textContent = `Maximum ${MAX_FILES} screenshots allowed.`;
+        statusEl.className = 'status-message warn';
+        break;
+      }
+      if (!ALLOWED_TYPES.has(f.type)) {
+        statusEl.textContent = `Unsupported file "${f.name}". Please upload PNG, JPG, or WebP images.`;
+        statusEl.className = 'status-message warn';
+        continue;
+      }
+      if (f.size > MAX_BYTES) {
+        statusEl.textContent = `"${f.name}" exceeds the 1.5 MB limit.`;
+        statusEl.className = 'status-message warn';
+        continue;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        attachedScreenshots.push({
+          name: f.name,
+          mimeType: f.type,
+          sizeBytes: f.size,
+          dataUrl: String(reader.result || '')
+        });
+        renderPreviews();
+      };
+      reader.readAsDataURL(f);
+    }
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', () => {
+    handleFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  document.getElementById('feedback-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('fb-submit-btn');
+    const name = document.getElementById('fb-name').value.trim();
+    const email = document.getElementById('fb-email').value.trim();
+    const category = document.getElementById('fb-category').value;
+    const subject = document.getElementById('fb-subject').value.trim();
+    const message = document.getElementById('fb-message').value.trim();
+
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+    statusEl.className = 'status-message';
+
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('jxa_token') || '';
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      const res = await fetch(API_BASE + '/api/feedback', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          reporterName: name,
+          reporterEmail: email,
+          category,
+          subject,
+          message,
+          pageUrl: window.location.href,
+          screenshots: attachedScreenshots,
+          metadata: {
+            tier: localStorage.getItem('jxa_tier') || 'free',
+            userAgent: navigator.userAgent.slice(0, 180),
+            viewport: `${window.innerWidth}x${window.innerHeight}`
+          }
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Submission failed');
+
+      document.getElementById('fb-subject').value = '';
+      document.getElementById('fb-message').value = '';
+      attachedScreenshots = [];
+      renderPreviews();
+      statusEl.textContent = `Feedback submitted! Ticket ID: ${data.id}. Our team will review it shortly.`;
+      statusEl.className = 'status-message success';
+    } catch (err) {
+      statusEl.innerHTML = `${err.message || 'Could not reach support server.'} You can also email us at <a href="mailto:missionhousehq@gmail.com" style="color:inherit;text-decoration:underline;">missionhousehq@gmail.com</a>.`;
+      statusEl.className = 'status-message warn';
+    } finally {
+      btn.textContent = 'Submit Feedback';
+      btn.disabled = false;
+    }
+  });
+
+  async function requestPortal() {
+    const name = document.getElementById('portal-name').value.trim();
+    const url = document.getElementById('portal-url').value.trim();
     const status = document.getElementById('portal-status');
-    
-    if(!name || !url) {
-      status.textContent = '> Please provide both name and URL.';
-      status.className = 'status-message';
-      status.style.display = 'block';
-      status.style.color = 'var(--alert)';
-      status.style.borderColor = 'var(--alert)';
-      status.style.background = 'rgba(245,166,35,0.1)';
+
+    if (!name || !url) {
+      status.textContent = 'Please provide both the portal name and URL.';
+      status.className = 'status-message warn';
       return;
     }
-    
-    status.textContent = '> Processing...';
-    status.style.display = 'block';
-    
-    setTimeout(() => {
+
+    status.textContent = 'Submitting request...';
+    status.className = 'status-message success';
+
+    try {
+      const res = await fetch(API_BASE + '/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ portal: name, field: 'portal-request', selectorTried: url })
+      });
+      if (!res.ok) throw new Error('Request failed');
       document.getElementById('portal-name').value = '';
       document.getElementById('portal-url').value = '';
-      status.textContent = '> Map request logged. Our engineering team will review it.';
+      status.textContent = 'Portal request logged. We will review it for a future extension update.';
       status.className = 'status-message success';
-      status.style.color = 'var(--success)';
-      status.style.borderColor = 'var(--success)';
-      status.style.background = 'rgba(47,221,196,0.1)';
-      
-      setTimeout(() => {
-        status.style.display = 'none';
-      }, 5000);
-    }, 600);
+    } catch (err) {
+      status.innerHTML = 'Unable to log request online. Please email the URL to <a href="mailto:missionhousehq@gmail.com" style="color:inherit;text-decoration:underline;">missionhousehq@gmail.com</a>.';
+      status.className = 'status-message warn';
+    }
   }
 </script>
 </body>

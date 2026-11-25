@@ -111,7 +111,7 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
 <div class="container">
   <header class="hero">
     <h1>Clear Pricing. Zero Friction.</h1>
-    <p>Three simple tiers. Pick the plan that fits your job search.</p>
+    <p>Two simple plans. Pick the plan that fits your job search.</p>
   </header>
 
   <div class="pricing-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 380px)); justify-content: center;">
@@ -127,7 +127,7 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
         <li>Standard Cover Letter template (01)</li>
         <li>Cloud profile sync across devices</li>
       </ul>
-      <a href="auth.html" class="btn-ghost">Start Free</a>
+      <a href="auth.html?plan=free" id="btn-free-plan" class="btn-ghost">Create Free Account</a>
     </div>
 
     <div class="plan-card highlight">
@@ -143,8 +143,8 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
         <li>All 10 Cover Letter &amp; Resume templates</li>
         <li>30-day prepaid pass — no auto-renewal</li>
       </ul>
-      <button type="button" id="btn-upgrade-pro" class="btn-primary" style="cursor:pointer; border:none;">Upgrade to Pro</button>
-      <button type="button" id="btn-pricing-recover" class="btn-ghost" style="cursor:pointer; margin-top:8px; width:100%; font-size:12px;">Recover Pending Payment</button>
+      <button type="button" id="btn-upgrade-pro" class="btn-primary" style="cursor:pointer; border:none;">Sign Up &amp; Unlock Pro</button>
+      <button type="button" id="btn-pricing-recover" class="btn-ghost" style="display:none; cursor:pointer; margin-top:8px; width:100%; font-size:12px;">Recover Pending Payment</button>
     </div>
   </div>
 
@@ -219,7 +219,30 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
 <script>
 (function initRazorpayCheckout() {
   const upgradeBtn = document.getElementById('btn-upgrade-pro');
+  const freeBtn = document.getElementById('btn-free-plan');
+  const recoverBtn = document.getElementById('btn-pricing-recover');
   if (!upgradeBtn) return;
+
+  const token = (typeof getEffectiveAuthToken === 'function' ? getEffectiveAuthToken() : localStorage.getItem('jxa_token')) || '';
+  const tier = (localStorage.getItem('jxa_tier') || 'free').toLowerCase();
+  const isPro = tier === 'pro' || tier === 'paid' || tier === 'premium';
+
+  if (!token) {
+    if (freeBtn) { freeBtn.textContent = 'Create Free Account'; freeBtn.href = 'auth.html?plan=free'; }
+    upgradeBtn.textContent = 'Sign Up & Unlock Pro';
+    if (recoverBtn) recoverBtn.style.display = 'none';
+    upgradeBtn.addEventListener('click', () => {
+      window.location.href = 'auth.html?plan=pro&redirect=pricing.html';
+    });
+    return;
+  }
+
+  if (freeBtn) {
+    freeBtn.textContent = isPro ? 'Included in Pro' : 'Current Plan';
+    freeBtn.href = 'dashboard.html';
+  }
+  upgradeBtn.textContent = isPro ? 'Extend Pro (+30 Days)' : 'Upgrade to Pro — ₹199';
+  if (recoverBtn) recoverBtn.style.display = 'block';
 
   const notify = (msg, type) => {
     if (typeof showToast === 'function') {
@@ -231,7 +254,7 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
 
   function resetBtn() {
     upgradeBtn.disabled = false;
-    upgradeBtn.textContent = 'Upgrade to Pro';
+    upgradeBtn.textContent = isPro ? 'Extend Pro (+30 Days)' : 'Upgrade to Pro — ₹199';
   }
 
   upgradeBtn.addEventListener('click', () => {

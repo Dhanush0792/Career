@@ -1983,7 +1983,7 @@ footer {
           <li class="plevel__feat">2 Resume &amp; 2 Cover Letter exports / mo</li>
           <li class="plevel__feat">Cloud profile sync across devices</li>
         </ul>
-        <a href="auth.html" class="btn btn--ghost" style="width:100%;justify-content:center">START FREE</a>
+        <a href="auth.html?plan=free" id="home-free-cta" class="btn btn--ghost" style="width:100%;justify-content:center">START FREE</a>
       </div>
 
       <div class="plevel plevel--active">
@@ -2000,7 +2000,15 @@ footer {
           <li class="plevel__feat">All 10 Cover Letter &amp; Resume templates</li>
           <li class="plevel__feat">30-day prepaid pass — no auto-charge</li>
         </ul>
-        <a href="pricing.html" class="btn btn--primary" style="width:100%;justify-content:center">UPGRADE TO PRO</a>
+        <a href="auth.html?plan=pro&redirect=pricing.html" id="home-pro-cta" class="btn btn--primary" style="width:100%;justify-content:center">SIGN UP &amp; GET PRO</a>
+        <script>
+          if (localStorage.getItem('jxa_token')) {
+            const f = document.getElementById('home-free-cta');
+            const p = document.getElementById('home-pro-cta');
+            if (f) { f.href = 'dashboard.html'; f.textContent = 'OPEN WORKSPACE'; }
+            if (p) { p.href = 'pricing.html'; p.textContent = 'UPGRADE TO PRO'; }
+          }
+        </script>
       </div>
 
     </div>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Autofill Lab &amp; Portal Sandbox</title>
+<meta name="description" content="Test JobXApply's 50+ portal autofill engine, CTC/location synonym mapping, and compliance vault inside a safe sandbox before applying.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
+<style>
+:root {
+  --base: #0B1020; --primary: #5B4FE8; --success: #2FDDC4; --alert: #F5A623;
+  --white: #ffffff; --text: #f4f7ff; --muted: rgba(244,247,255,0.68);
+  --glass-bg: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.14);
+  --mono: 'JetBrains Mono', monospace; --display: 'Barlow Condensed', sans-serif; --body: 'Inter', sans-serif;
+}
+body {
+  margin: 0; background-color: var(--base); color: var(--text); font-family: var(--body);
+  padding: 104px 0 80px;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { font-family: var(--display); text-transform: uppercase; margin-top: 0; color: var(--white); }
+h1 { font-size: clamp(42px, 6vw, 64px); letter-spacing: 0.02em; margin-bottom: 16px; text-align: center; line-height: 1.05; }
+.hero-subtitle { text-align: center; font-size: 18px; color: var(--muted); max-width: 680px; margin: 0 auto 36px; line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+.hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--primary); color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700;
+  padding: 15px 28px; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s ease;
+}
+.btn-primary:hover { background: #4a3fd6; transform: translateY(-2px); }
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700;
+  padding: 15px 28px; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s ease;
+}
+.btn-ghost:hover { background: var(--glass-bg); transform: translateY(-2px); }
+.pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 64px; }
+.pillar-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 28px; }
+.pillar-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(91,79,232,0.14); border: 1px solid rgba(91,79,232,0.35); color: var(--primary); font-family: var(--mono); font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+.pillar-title { font-size: 24px; margin-bottom: 10px; }
+.pillar-desc { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0; }
+.bottom-cta {
+  text-align: center; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 40px 24px;
+}
+@media (max-width: 850px) { .pillars { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<script src="public-nav.js"></script>
+<div class="container">
+  <div style="text-align:center; font-family:var(--mono); font-size:11px; color:var(--success); letter-spacing:.12em; margin-bottom:12px;">SAFE PORTAL TESTING // AUTOFILL LAB</div>
+  <h1>TEST <span style="color:var(--primary)">50+ JOB PORTALS</span> IN THE AUTOFILL LAB</h1>
+  <p class="hero-subtitle">
+    Preview how your Master Profile maps to Workday, Greenhouse, Lever, LinkedIn, and Naukri — including Current vs Expected CTC, Preferred Locations, Notice Period, and PDF uploads — before you apply live.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="auth.html?redirect=autofill-lab.html" id="al-primary-cta" class="btn-primary">Sign Up Free to Launch Lab →</a>
+    <a href="extension-landing.html" class="btn-ghost">Explore Browser Extension</a>
+  </div>
+
+  <div class="pillars">
+    <div class="pillar-card">
+      <div class="pillar-icon">01</div>
+      <h3 class="pillar-title">Zero-Risk Sandbox</h3>
+      <p class="pillar-desc">Simulate multi-step ATS forms safely without submitting real applications to employers while tuning your profile answers.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon">02</div>
+      <h3 class="pillar-title">Smart Synonym Engine</h3>
+      <p class="pillar-desc">Automatically distinguishes Current CTC vs Expected CTC, LPA vs annual digits, and city aliases like Gurgaon/Gurugram or Bangalore/Bengaluru.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon">03</div>
+      <h3 class="pillar-title">Compliance &amp; Document Vault</h3>
+      <p class="pillar-desc">Verify work authorization, sponsorship, relocation, and automatic resume/document attachment before your next live application.</p>
+    </div>
+  </div>
+
+  <div class="bottom-cta">
+    <h2 style="font-size:34px; margin-bottom:10px;">Ready to Test Your Profile in the Lab?</h2>
+    <p style="color:var(--muted); font-size:15px; margin-bottom:24px;">Create a free account to sync your Master Profile and run live sandbox autofill tests.</p>
+    <a href="auth.html?redirect=autofill-lab.html" id="al-bottom-cta" class="btn-primary">Sign Up Free &amp; Open Lab →</a>
+  </div>
+</div>
+<script>
+if (localStorage.getItem('jxa_token')) {
+  ['al-primary-cta', 'al-bottom-cta'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.href = 'autofill-lab.html'; el.textContent = 'Launch Autofill Lab →'; }
+  });
+}
+</script>
+</body>
+</html>

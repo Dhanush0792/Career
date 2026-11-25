@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply Admin // User Feedback &amp; Reports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style-glass.css">
+<script src="../shared-shell.js?v=2"></script>
+<script src="admin-shell.js"></script>
+<link rel="icon" type="image/png" href="../assets/app-logo.png?v=6">
+<style>
+  :root {
+    --base: #0B1020; --primary: #5B4FE8; --success: #2FDDC4; --alert: #F5A623; --danger: #F55A23;
+    --white: #fff; --text: #f4f7ff; --muted: rgba(244,247,255,0.65); --dim: rgba(244,247,255,0.42);
+    --glass-bg: rgba(255,255,255,0.05); --glass-border: rgba(255,255,255,0.12);
+    --mono: 'JetBrains Mono', monospace; --display: 'Barlow Condensed', sans-serif; --body: 'Inter', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    padding-top: 70px; background: var(--base); color: var(--text); font-family: var(--body); min-height: 100vh; margin: 0;
+    background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.1) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.06) 0%, transparent 45%);
+  }
+  .container { max-width: 1420px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1 { font-family: var(--display); font-size: 36px; color: var(--alert); text-transform: uppercase; margin: 0 0 18px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .kpi { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px 16px; }
+  .kpi-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .kpi-val { font-size: 24px; font-weight: 800; color: var(--white); margin-top: 4px; }
+
+  .filter-bar {
+    background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 18px;
+  }
+  .fg { display: flex; flex-direction: column; gap: 4px; min-width: 140px; }
+  .fg label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; }
+  .fg select, .fg input {
+    background: #0d1324; border: 1px solid var(--glass-border); color: var(--white);
+    padding: 7px 10px; border-radius: 7px; font-size: 12px; font-family: var(--body);
+  }
+  .btn { background: var(--primary); color: #fff; border: none; padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-ghost { background: transparent; border: 1px solid var(--glass-border); color: var(--muted); }
+
+  .card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th { font-family: var(--display); font-size: 14px; color: var(--alert); text-transform: uppercase; padding: 12px 14px; background: rgba(0,0,0,0.25); border-bottom: 1px solid var(--glass-border); }
+  td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px; vertical-align: middle; }
+  tbody tr { cursor: pointer; transition: background 0.15s; }
+  tbody tr:hover { background: rgba(91,79,232,0.12); }
+
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+  .b-new { background: rgba(245,166,35,0.18); color: var(--alert); border: 1px solid rgba(245,166,35,0.35); }
+  .b-in_review { background: rgba(91,79,232,0.22); color: #a78bfa; border: 1px solid rgba(91,79,232,0.4); }
+  .b-resolved { background: rgba(47,221,196,0.15); color: var(--success); border: 1px solid rgba(47,221,196,0.35); }
+  .b-archived { background: rgba(255,255,255,0.08); color: var(--muted); border: 1px solid var(--glass-border); }
+  .b-cat { background: rgba(255,255,255,0.07); color: #e5e7eb; border: 1px solid var(--glass-border); }
+
+  /* Elaborated Detail Modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 9999; background: rgba(6,9,18,0.78); backdrop-filter: blur(5px);
+    display: none; align-items: center; justify-content: center; padding: 18px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    width: 100%; max-width: 780px; max-height: 90vh; overflow-y: auto;
+    background: #101628; border: 1px solid rgba(255,255,255,0.16); border-radius: 14px; padding: 24px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+  .modal-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; border-bottom: 1px solid var(--glass-border); padding-bottom: 14px; margin-bottom: 16px; }
+  .modal-close { background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: #fff; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; background: rgba(0,0,0,0.24); padding: 12px; border-radius: 10px; margin-bottom: 16px; font-size: 12px; }
+  .meta-k { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; }
+  .msg-box { background: rgba(0,0,0,0.28); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px; white-space: pre-wrap; line-height: 1.6; font-size: 13.5px; margin-bottom: 16px; }
+  .shots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .shot-card { border: 1px solid var(--glass-border); border-radius: 8px; overflow: hidden; background: #080c17; cursor: zoom-in; }
+  .shot-card img { width: 100%; height: 120px; object-fit: cover; display: block; }
+  .shot-cap { padding: 5px 8px; font-size: 10px; font-family: var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .lightbox { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 95vw; max-height: 92vh; border-radius: 8px; }
+</style>
+</head>
+<body>
+<nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
+
+<main class="container">
+  <h1>User Feedback &amp; Issue Inbox</h1>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Total Feedback</div><div class="kpi-val" id="k-total">0</div></div>
+    <div class="kpi"><div class="kpi-label">New / Unread</div><div class="kpi-val" id="k-new" style="color:var(--alert);">0</div></div>
+    <div class="kpi"><div class="kpi-label">In Review</div><div class="kpi-val" id="k-review" style="color:#a78bfa;">0</div></div>
+    <div class="kpi"><div class="kpi-label">Resolved</div><div class="kpi-val" id="k-resolved" style="color:var(--success);">0</div></div>
+    <div class="kpi"><div class="kpi-label">With Screenshots</div><div class="kpi-val" id="k-shots">0</div></div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="fg">
+      <label for="f-category">Issue Type</label>
+      <select id="f-category">
+        <option value="all">All Types</option>
+        <option value="bug">Bug / Error</option>
+        <option value="autofill_issue">Autofill Issue</option>
+        <option value="payment_billing">Payment / Billing</option>
+        <option value="ui_ux">UI / UX Problem</option>
+        <option value="account_sync">Account / Sync</option>
+        <option value="feature_request">Feature Request</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label for="f-status">Status</label>
+      <select id="f-status">
+        <option value="all">All Statuses</option>
+        <option value="new">New</option>
+        <option value="in_review">In Review</option>
+        <option value="resolved">Resolved</option>
+        <option value="archived">Archived</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label for="f-preset">Date Range</label>
+      <select id="f-preset">
+        <option value="all">All Time</option>
+        <option value="today">Today</option>
+        <option value="7d">Last 7 Days</option>
+        <option value="30d">Last 30 Days</option>
+        <option value="custom">Custom Dates</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label for="f-from">From Date</label>
+      <input type="date" id="f-from">
+    </div>
+    <div class="fg">
+      <label for="f-to">To Date</label>
+      <input type="date" id="f-to">
+    </div>
+    <div class="fg">
+      <label for="f-sort">Sort</label>
+      <select id="f-sort">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+      </select>
+    </div>
+    <div class="fg" style="flex:1; min-width:190px;">
+      <label for="f-q">Search</label>
+      <input type="text" id="f-q" placeholder="Subject, message, email, ID...">
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);padding:6px 4px;cursor:pointer;">
+      <input type="checkbox" id="f-shots"> Screenshots only
+    </label>
+    <button type="button" class="btn" id="btn-apply">Apply</button>
+    <button type="button" class="btn btn-ghost" id="btn-reset">Reset</button>
+  </div>
+
+  <div class="card">
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticket</th>
+            <th>Type</th>
+            <th>Subject &amp; Preview</th>
+            <th>Reporter</th>
+            <th>Media</th>
+            <th>Submitted</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="fb-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted);">Loading feedbacks...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- Elaborated Feedback Detail Modal -->
+<div class="modal-backdrop" id="fb-modal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div id="m-id" style="font-family:var(--mono);font-size:11px;color:var(--muted);"></div>
+        <h2 id="m-subject" style="margin:4px 0 0;font-size:20px;color:#fff;"></h2>
+      </div>
+      <button type="button" class="modal-close" id="m-close">Close</button>
+    </div>
+
+    <div class="meta-grid" id="m-meta"></div>
+
+    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Full Feedback Description</div>
+    <div class="msg-box" id="m-message"></div>
+
+    <div id="m-shots-wrap" style="display:none;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">Attached Screenshots (Click to Zoom)</div>
+      <div class="shots-grid" id="m-shots"></div>
+    </div>
+
+    <div style="border-top:1px solid var(--glass-border);padding-top:14px;margin-top:8px;">
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:12px;align-items:start;">
+        <div class="fg">
+          <label for="m-status">Update Status</label>
+          <select id="m-status">
+            <option value="new">New</option>
+            <option value="in_review">In Review</option>
+            <option value="resolved">Resolved</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label for="m-notes">Internal Admin Notes</label>
+          <textarea id="m-notes" rows="3" style="background:#0d1324;border:1px solid var(--glass-border);color:#fff;padding:8px 10px;border-radius:7px;font-size:12px;"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <span id="m-save-msg" style="font-family:var(--mono);font-size:11px;color:var(--success);"></span>
+        <button type="button" class="btn" id="m-save">Save Status &amp; Notes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox for full-size screenshot -->
+<div class="lightbox" id="fb-lightbox"><img id="fb-lightbox-img" alt="Screenshot preview"></div>
+
+<script>
+  if (typeof renderAdminNav === 'function') renderAdminNav('feedback.html');
+
+  const API_BASE = (typeof ADMIN_API_BASE !== 'undefined') ? ADMIN_API_BASE
+    : ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:8787/api' : 'https://jobxapply-backend.onrender.com/api');
+
+  const CAT_LABELS = {
+    bug: 'Bug / Error',
+    autofill_issue: 'Autofill Issue',
+    payment_billing: 'Payment / Billing',
+    ui_ux: 'UI / UX Problem',
+    account_sync: 'Account / Sync',
+    feature_request: 'Feature Request',
+    other: 'Other'
+  };
+
+  let currentFeedbacks = [];
+  let activeFeedbackId = null;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function applyPresetDates() {
+    const preset = document.getElementById('f-preset').value;
+    const fromEl = document.getElementById('f-from');
+    const toEl = document.getElementById('f-to');
+    if (preset === 'all') { fromEl.value = ''; toEl.value = ''; return; }
+    if (preset === 'custom') return;
+    const now = new Date();
+    const toIso = now.toISOString().slice(0, 10);
+    const daysBack = preset === 'today' ? 0 : (preset === '7d' ? 7 : 30);
+    const fromDate = new Date(now.getTime() - daysBack * 86400000);
+    fromEl.value = fromDate.toISOString().slice(0, 10);
+    toEl.value = toIso;
+  }
+
+  async function loadFeedbacks() {
+    const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
+    const params = new URLSearchParams();
+    params.set('category', document.getElementById('f-category').value);
+    params.set('status', document.getElementById('f-status').value);
+    params.set('sort', document.getElementById('f-sort').value);
+    const from = document.getElementById('f-from').value;
+    const to = document.getElementById('f-to').value;
+    const q = document.getElementById('f-q').value.trim();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (q) params.set('q', q);
+    if (document.getElementById('f-shots').checked) params.set('hasScreenshots', 'true');
+
+    const res = await fetch(`${API_BASE}/admin/feedback?${params.toString()}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      document.getElementById('fb-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">Admin authentication required.</td></tr>';
+      return;
+    }
+    const data = await res.json();
+    const s = data.summary || {};
+    document.getElementById('k-total').textContent = s.total || 0;
+    document.getElementById('k-new').textContent = s.newCount || 0;
+    document.getElementById('k-review').textContent = s.inReviewCount || 0;
+    document.getElementById('k-resolved').textContent = s.resolvedCount || 0;
+    document.getElementById('k-shots').textContent = s.withScreenshotsCount || 0;
+
+    currentFeedbacks = data.feedbacks || [];
+    const tbody = document.getElementById('fb-tbody');
+    if (!currentFeedbacks.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px;">No feedback matches the selected filters.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = currentFeedbacks.map(fb => {
+      const dt = new Date(fb.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const shotCount = Array.isArray(fb.screenshots) ? fb.screenshots.length : 0;
+      const preview = String(fb.message || '').slice(0, 80) + ((fb.message || '').length > 80 ? '…' : '');
+      return `
+        <tr data-id="${esc(fb.id)}">
+          <td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${esc(fb.id)}</td>
+          <td><span class="badge b-cat">${esc(CAT_LABELS[fb.category] || fb.category)}</span></td>
+          <td>
+            <div style="font-weight:600;color:#fff;">${esc(fb.subject)}</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">${esc(preview)}</div>
+          </td>
+          <td>
+            <div>${esc(fb.reporterName || 'Anonymous')}</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">${esc(fb.reporterEmail || '—')}</div>
+          </td>
+          <td style="font-family:var(--mono);font-size:11px;">${shotCount > 0 ? `${shotCount} img` : '—'}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${esc(dt)}</td>
+          <td><span class="badge b-${esc(fb.status)}">${esc(fb.status.replace('_', ' '))}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('tr[data-id]').forEach(row => {
+      row.addEventListener('click', () => openDetail(row.dataset.id));
+    });
+  }
+
+  function openDetail(id) {
+    const fb = currentFeedbacks.find(x => x.id === id);
+    if (!fb) return;
+    activeFeedbackId = fb.id;
+    document.getElementById('m-id').textContent = `${fb.id} • ${CAT_LABELS[fb.category] || fb.category}`;
+    document.getElementById('m-subject').textContent = fb.subject;
+    document.getElementById('m-message').textContent = fb.message;
+    document.getElementById('m-status').value = fb.status || 'new';
+    document.getElementById('m-notes').value = fb.adminNotes || '';
+    document.getElementById('m-save-msg').textContent = '';
+
+    const dt = new Date(fb.createdAt).toLocaleString();
+    document.getElementById('m-meta').innerHTML = `
+      <div><div class="meta-k">Reporter</div><div>${esc(fb.reporterName || 'Anonymous')}</div></div>
+      <div><div class="meta-k">Email</div><div>${esc(fb.reporterEmail || '—')}</div></div>
+      <div><div class="meta-k">User ID</div><div>${esc(fb.userId || 'Guest')}</div></div>
+      <div><div class="meta-k">Submitted</div><div>${esc(dt)}</div></div>
+      <div><div class="meta-k">Plan / Meta</div><div>${esc((fb.metadata && fb.metadata.tier) || '—')} (${esc((fb.metadata && fb.metadata.viewport) || '—')})</div></div>
+      <div><div class="meta-k">Page URL</div><div style="word-break:break-all;">${esc(fb.pageUrl || '—')}</div></div>
+    `;
+
+    const shotsWrap = document.getElementById('m-shots-wrap');
+    const shotsEl = document.getElementById('m-shots');
+    shotsEl.innerHTML = '';
+    if (Array.isArray(fb.screenshots) && fb.screenshots.length > 0) {
+      shotsWrap.style.display = 'block';
+      fb.screenshots.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'shot-card';
+        card.innerHTML = `<img src="${esc(s.dataUrl)}" alt="${esc(s.name)}"><div class="shot-cap">${esc(s.name || 'screenshot')}</div>`;
+        card.addEventListener('click', () => {
+          document.getElementById('fb-lightbox-img').src = s.dataUrl;
+          document.getElementById('fb-lightbox').classList.add('open');
+        });
+        shotsEl.appendChild(card);
+      });
+    } else {
+      shotsWrap.style.display = 'none';
+    }
+
+    document.getElementById('fb-modal').classList.add('open');
+  }
+
+  document.getElementById('m-close').addEventListener('click', () => document.getElementById('fb-modal').classList.remove('open'));
+  document.getElementById('fb-lightbox').addEventListener('click', () => document.getElementById('fb-lightbox').classList.remove('open'));
+
+  document.getElementById('m-save').addEventListener('click', async () => {
+    if (!activeFeedbackId) return;
+    const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
+    const status = document.getElementById('m-status').value;
+    const adminNotes = document.getElementById('m-notes').value;
+    const res = await fetch(`${API_BASE}/admin/feedback/${encodeURIComponent(activeFeedbackId)}/update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ status, adminNotes })
+    });
+    const msgEl = document.getElementById('m-save-msg');
+    if (res.ok) {
+      msgEl.style.color = 'var(--success)';
+      msgEl.textContent = 'Saved!';
+      await loadFeedbacks();
+    } else {
+      msgEl.style.color = 'var(--danger)';
+      msgEl.textContent = 'Failed to save.';
+    }
+  });
+
+  document.getElementById('f-preset').addEventListener('change', () => { applyPresetDates(); loadFeedbacks(); });
+  document.getElementById('f-from').addEventListener('change', () => { document.getElementById('f-preset').value = 'custom'; });
+  document.getElementById('f-to').addEventListener('change', () => { document.getElementById('f-preset').value = 'custom'; });
+  document.getElementById('btn-apply').addEventListener('click', loadFeedbacks);
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    document.getElementById('f-category').value = 'all';
+    document.getElementById('f-status').value = 'all';
+    document.getElementById('f-preset').value = 'all';
+    document.getElementById('f-from').value = '';
+    document.getElementById('f-to').value = '';
+    document.getElementById('f-sort').value = 'newest';
+    document.getElementById('f-q').value = '';
+    document.getElementById('f-shots').checked = false;
+    loadFeedbacks();
+  });
+
+  loadFeedbacks();
+</script>
+</body>
+</html>

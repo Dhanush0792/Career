@@ -225,11 +225,11 @@
           <a href="salary-calculator.html" class="ch-nav__dd-link">Salary Benchmark &amp; Counter-Offer <small style="opacity:.85;font-size:10px;margin-left:6px;padding:1px 6px;border-radius:10px;background:rgba(47,221,196,0.15);color:#2FDDC4;font-weight:700;">FREE</small></a>
           <div class="ch-nav__dd-divider"></div>
           <div class="ch-nav__dd-label">Career Tools</div>
-          <a href="resume-builder.html"    class="ch-nav__dd-link">Resume Builder</a>
-          <a href="cover-letter.html"      class="ch-nav__dd-link">Cover Letter</a>
+          <a href="resume-builder-info.html" class="ch-nav__dd-link">Resume Builder</a>
+          <a href="cover-letter-info.html"   class="ch-nav__dd-link">Cover Letter</a>
           <div class="ch-nav__dd-divider"></div>
           <div class="ch-nav__dd-label">Automation</div>
-          <a href="autofill-lab.html"      class="ch-nav__dd-link">Autofill Lab</a>
+          <a href="autofill-lab-info.html"   class="ch-nav__dd-link">Autofill Lab</a>
           <a href="extension-landing.html" class="ch-nav__dd-link">Browser Extension</a>
         </div>
       </div>
@@ -241,7 +241,7 @@
         </button>
         <div class="ch-nav__dropdown" role="menu">
           <a href="about.html"         class="ch-nav__dd-link">About Us</a>
-          <a href="contact.html"       class="ch-nav__dd-link">Contact Us</a>
+          <a href="contact.html"       class="ch-nav__dd-link">Help &amp; Feedback</a>
           <a href="mailto:missionhousehq@gmail.com" class="ch-nav__dd-link">missionhousehq@gmail.com</a>
           <div class="ch-nav__dd-divider"></div>
           <a href="privacy-terms.html" class="ch-nav__dd-link">Privacy &amp; Terms</a>
@@ -285,15 +285,15 @@
     <a href="ats-checker.html"       class="ch-nav__drawer-link">ATS Resume Checker (Free)</a>
     <a href="salary-calculator.html" class="ch-nav__drawer-link">Salary Benchmark &amp; Counter-Offer (Free)</a>
     <div class="ch-nav__drawer-title" style="margin-top:12px;">Career Tools</div>
-    <a href="resume-builder.html"    class="ch-nav__drawer-link">Resume Builder</a>
-    <a href="cover-letter.html"      class="ch-nav__drawer-link">Cover Letter</a>
-    <a href="autofill-lab.html"      class="ch-nav__drawer-link">Autofill Lab</a>
+    <a href="resume-builder-info.html" class="ch-nav__drawer-link">Resume Builder</a>
+    <a href="cover-letter-info.html"   class="ch-nav__drawer-link">Cover Letter</a>
+    <a href="autofill-lab-info.html"   class="ch-nav__drawer-link">Autofill Lab</a>
     <a href="extension-landing.html" class="ch-nav__drawer-link">Browser Extension</a>
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Company</div>
     <a href="about.html"          class="ch-nav__drawer-link">About Us</a>
-    <a href="contact.html"        class="ch-nav__drawer-link">Contact Us</a>
+    <a href="contact.html"        class="ch-nav__drawer-link">Help &amp; Feedback</a>
     <a href="mailto:missionhousehq@gmail.com" class="ch-nav__drawer-link">missionhousehq@gmail.com</a>
     <a href="privacy-terms.html"  class="ch-nav__drawer-link">Privacy &amp; Terms</a>
   </div>

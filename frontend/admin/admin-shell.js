@@ -78,6 +78,7 @@ function renderAdminNav(activePage) {
     { file: "content.html", label: "Flags" },
     { file: "access.html", label: "Access" },
     { file: "reports.html", label: "Issues" },
+    { file: "feedback.html", label: "Feedback" },
     { file: "system.html", label: "System" },
     { file: "analytics.html", label: "Analytics" }
   ];

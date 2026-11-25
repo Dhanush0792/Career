@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobXApply // Tailored Cover Letter Engine</title>
+<meta name="description" content="Generate role-specific, ATS-aligned cover letters in seconds using your Master Profile and target job descriptions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
+<style>
+:root {
+  --base: #0B1020; --primary: #5B4FE8; --success: #2FDDC4; --alert: #F5A623;
+  --white: #ffffff; --text: #f4f7ff; --muted: rgba(244,247,255,0.68);
+  --glass-bg: rgba(255,255,255,0.06); --glass-border: rgba(255,255,255,0.14);
+  --mono: 'JetBrains Mono', monospace; --display: 'Barlow Condensed', sans-serif; --body: 'Inter', sans-serif;
+}
+body {
+  margin: 0; background-color: var(--base); color: var(--text); font-family: var(--body);
+  padding: 104px 0 80px;
+  background-image: radial-gradient(circle at 15% 20%, rgba(91,79,232,0.12) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(47,221,196,0.07) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+h1, h2, h3 { font-family: var(--display); text-transform: uppercase; margin-top: 0; color: var(--white); }
+h1 { font-size: clamp(42px, 6vw, 64px); letter-spacing: 0.02em; margin-bottom: 16px; text-align: center; line-height: 1.05; }
+.hero-subtitle { text-align: center; font-size: 18px; color: var(--muted); max-width: 680px; margin: 0 auto 36px; line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+.hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--primary); color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700;
+  padding: 15px 28px; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s ease;
+}
+.btn-primary:hover { background: #4a3fd6; transform: translateY(-2px); }
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; color: var(--white); font-family: var(--mono); font-size: 13px; font-weight: 700;
+  padding: 15px 28px; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s ease;
+}
+.btn-ghost:hover { background: var(--glass-bg); transform: translateY(-2px); }
+.pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 64px; }
+.pillar-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 14px; backdrop-filter: blur(16px); padding: 28px; }
+.pillar-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(47,221,196,0.12); border: 1px solid rgba(47,221,196,0.3); color: var(--success); font-family: var(--mono); font-size: 18px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+.pillar-title { font-size: 24px; margin-bottom: 10px; }
+.pillar-desc { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0; }
+.bottom-cta {
+  text-align: center; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 40px 24px;
+}
+@media (max-width: 850px) { .pillars { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<script src="public-nav.js"></script>
+<div class="container">
+  <div style="text-align:center; font-family:var(--mono); font-size:11px; color:var(--success); letter-spacing:.12em; margin-bottom:12px;">JD-MATCHED COVER LETTERS // VECTOR PDF &amp; LATEX</div>
+  <h1>TAILORED <span style="color:var(--success)">COVER LETTERS</span> THAT MATCH THE JD</h1>
+  <p class="hero-subtitle">
+    Turn any job description and your Master Profile into a crisp, company-specific cover letter with matching LaTeX typography and live ATS keyword overlap scoring.
+  </p>
+
+  <div class="hero-ctas">
+    <a href="auth.html?redirect=cover-letter.html" id="cl-primary-cta" class="btn-primary">Sign Up Free to Draft Cover Letter →</a>
+    <a href="pricing.html" class="btn-ghost">Compare Free &amp; Pro Plans</a>
+  </div>
+
+  <div class="pillars">
+    <div class="pillar-card">
+      <div class="pillar-icon">01</div>
+      <h3 class="pillar-title">JD Context Extraction</h3>
+      <p class="pillar-desc">Paste the job description or upload a JD PDF/DOCX — JobXApply extracts required skills and weaves them naturally into your pitch.</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon">02</div>
+      <h3 class="pillar-title">10 Matching Templates</h3>
+      <p class="pillar-desc">Pair your cover letter visually with your resume using clean, recruiter-friendly LaTeX and rich-text layouts (Template 01 free, all 10 on Pro).</p>
+    </div>
+    <div class="pillar-card">
+      <div class="pillar-icon">03</div>
+      <h3 class="pillar-title">Editable &amp; Exportable</h3>
+      <p class="pillar-desc">Fine-tune every sentence inline, check your live ATS keyword match percentage, and export a clean PDF ready for Lever, Greenhouse, or Workday.</p>
+    </div>
+  </div>
+
+  <div class="bottom-cta">
+    <h2 style="font-size:34px; margin-bottom:10px;">Test the Cover Letter Studio Free</h2>
+    <p style="color:var(--muted); font-size:15px; margin-bottom:24px;">Create a free account to generate 2 tailored cover letters per month on Template 01, or unlock all 10 templates anytime.</p>
+    <a href="auth.html?redirect=cover-letter.html" id="cl-bottom-cta" class="btn-primary">Sign Up Free &amp; Open Studio →</a>
+  </div>
+</div>
+<script>
+if (localStorage.getItem('jxa_token')) {
+  ['cl-primary-cta', 'cl-bottom-cta'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.href = 'cover-letter.html'; el.textContent = 'Open Cover Letter Studio →'; }
+  });
+}
+</script>
+</body>
+</html>

@@ -302,7 +302,9 @@ body::after {
         
         // If token valid or refresh token exists within 5-day window, auto-redirect
         if (isUsable || refreshToken) {
-          const target = localStorage.getItem('jxa_role') === 'admin' ? 'admin/index.html' : 'dashboard.html';
+          const redir = params.get('redirect');
+          const safeRedir = redir && !redir.startsWith('http') && !redir.startsWith('//') ? redir : null;
+          const target = safeRedir || (localStorage.getItem('jxa_role') === 'admin' ? 'admin/index.html' : 'dashboard.html');
           window.location.replace(target);
           return;
         }
