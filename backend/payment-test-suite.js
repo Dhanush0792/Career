@@ -214,9 +214,47 @@ async function runTests() {
         razorpaySignature: signCheckout(order1.order_id, "pay_valid_1"), rzpClient: mockRzp
       });
     } catch (e) { errTestOnLive = e; }
+    const liveEntForTestUser = await paymentService.getEffectiveEntitlement(userA.id, userA);
     process.env.RAZORPAY_KEY_ID = prevKeyId;
     assert(errTestOnLive && errTestOnLive.statusCode === 404,
       "Test-mode order/payment isolated from live environment (rejected 404)");
+    assert(liveEntForTestUser.tier === "free" && liveEntForTestUser.status === "inactive_test_only",
+      "Test-mode entitlement does NOT carry over when gateway switches to Live Mode");
+
+    // Authorized test-only checkout gate (NODE_ENV=production, ENABLE_PUBLIC_CHECKOUT=false)
+    const prevNodeEnv = process.env.NODE_ENV;
+    const prevEnablePub = process.env.ENABLE_PUBLIC_CHECKOUT;
+    const prevTestEmails = process.env.TEST_CHECKOUT_EMAILS;
+    const prevReqPg = process.env.REQUIRE_PG_FOR_PAYMENTS;
+    process.env.NODE_ENV = "test"; // keep in-memory store active for test while testing gate via helper?
+    // Simulate production checkout gate with TEST_CHECKOUT_EMAILS
+    process.env.NODE_ENV = "production";
+    process.env.ENABLE_PUBLIC_CHECKOUT = "false";
+    process.env.TEST_CHECKOUT_EMAILS = userA.email;
+
+    let errNonAllowlisted = null;
+    try {
+      // Note: assertPaymentPersistenceAvailable fails closed with 503 if !usePg in production,
+      // so test non-allowlisted user first (should hit 503 gate before DB)
+      await paymentService.createOrderForUser({ user: userB, planId: "pro", rzpClient: mockRzp });
+    } catch (e) { errNonAllowlisted = e; }
+    assert(errNonAllowlisted && errNonAllowlisted.statusCode === 503 && errNonAllowlisted.message.includes("Public paid checkout is disabled"),
+      "Non-allowlisted user blocked by public checkout gate (503)");
+
+    // In live mode, even allowlisted TEST_CHECKOUT_EMAILS is blocked when public checkout is disabled
+    process.env.RAZORPAY_KEY_ID = "rzp_live_mock_key_id";
+    let errAllowlistedInLive = null;
+    try {
+      await paymentService.createOrderForUser({ user: userA, planId: "pro", rzpClient: mockRzp });
+    } catch (e) { errAllowlistedInLive = e; }
+    assert(errAllowlistedInLive && errAllowlistedInLive.statusCode === 503 && errAllowlistedInLive.message.includes("Public paid checkout is disabled"),
+      "TEST_CHECKOUT_EMAILS cannot bypass public checkout gate in Live Mode (503)");
+
+    process.env.RAZORPAY_KEY_ID = prevKeyId;
+    process.env.NODE_ENV = prevNodeEnv;
+    process.env.ENABLE_PUBLIC_CHECKOUT = prevEnablePub;
+    process.env.TEST_CHECKOUT_EMAILS = prevTestEmails;
+    if (prevReqPg !== undefined) process.env.REQUIRE_PG_FOR_PAYMENTS = prevReqPg;
 
     // ── 3. Idempotency & Concurrency Tests ────────────────────
     console.log("\n--- 3. Idempotency, Concurrency & Rollback ---");

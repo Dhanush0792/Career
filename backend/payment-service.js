@@ -51,7 +51,19 @@ async function createOrderForUser({ user, planId = "pro", clientAmount, clientCu
     throw makeHttpError(401, "Authentication required");
   }
 
-  if (process.env.NODE_ENV === "production" && process.env.ENABLE_PUBLIC_CHECKOUT !== "true") {
+  const environment = resolvePaymentEnvironmentForGateway();
+  const allowedTestEmails = new Set(
+    String(process.env.TEST_CHECKOUT_EMAILS || "")
+      .split(",")
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const isAuthorizedTestUser =
+    environment === "test" &&
+    Boolean(user.email) &&
+    allowedTestEmails.has(String(user.email).trim().toLowerCase());
+
+  if (process.env.NODE_ENV === "production" && process.env.ENABLE_PUBLIC_CHECKOUT !== "true" && !isAuthorizedTestUser) {
     throw makeHttpError(503, "Public paid checkout is disabled pending final verification.");
   }
 
@@ -70,7 +82,6 @@ async function createOrderForUser({ user, planId = "pro", clientAmount, clientCu
     throw makeHttpError(400, "Client-supplied currency does not match authoritative plan currency.");
   }
 
-  const environment = resolvePaymentEnvironmentForGateway();
   const rzp = rzpClient || getDefaultRazorpayClient();
   if (!rzp) {
     throw makeHttpError(500, "Payment gateway credentials not configured.");
@@ -345,6 +356,20 @@ async function getEffectiveEntitlement(userId, userRow = null) {
   const ent = await db.getEntitlement(userId);
 
   if (ent) {
+    const currentGatewayEnv = getPaymentEnvironment(process.env.RAZORPAY_KEY_ID);
+    if (currentGatewayEnv === "live" && ent.environment !== "live") {
+      return {
+        tier: "free",
+        planId: "free",
+        status: "inactive_test_only",
+        startedAt: null,
+        expiresAt: null,
+        daysRemaining: 0,
+        environment: currentGatewayEnv,
+        lastPaymentId: null
+      };
+    }
+
     if (ent.status === "active" && ent.expiresAt && now > Number(ent.expiresAt)) {
       // Automatically enforce expiry downgrade
       try {
