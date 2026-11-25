@@ -212,8 +212,12 @@ function triggerSessionLogout(reason = 'logged_out', navigate = true) {
     if (document.documentElement) {
       document.documentElement.style.display = 'none';
     }
-    if (reason === 'logged_out' || reason === 'unauthenticated' || !reason) {
+    if (reason === 'logged_out') {
       window.location.replace(`${prefix}index.html?logged_out=1`);
+    } else if (reason === 'unauthenticated' || !reason) {
+      const currentTarget = (window.location.pathname || '') + (window.location.search || '');
+      const redirParam = currentTarget ? `?redirect=${encodeURIComponent(currentTarget)}` : '';
+      window.location.replace(`${prefix}auth.html${redirParam}`);
     } else {
       const safeReason = encodeURIComponent(reason);
       window.location.replace(`${prefix}auth.html?reason=${safeReason}`);
@@ -288,7 +292,7 @@ function requireAuth() {
   const publicPages = [
     '', 'auth', 'auth-callback', 'reset-password', 'extension-landing',
     'index', 'about', 'features', 'pricing', 'blog', 'contact', 'how-it-works', 'privacy-terms', 'portals',
-    'tools', 'ats-checker', 'resume-builder', 'salary-calculator',
+    'tools', 'ats-checker', 'salary-calculator',
     'gov-resizer', 'roadmap-software-engineer', 'roadmap-data-scientist', 'gov-ssc-cgl', 'gov-ibps-po', 'resume-importance'
   ];
   if (publicPages.includes(page)) {
@@ -1555,9 +1559,13 @@ function renderNav(container, activePage) {
     </a>`;
   }
 
+  const hamburgerBtn = `<button type="button" class="nav__hamburger" id="jxa-nav-hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>`;
+
   const btnHtml = token
-    ? `<div class="nav__actions">${adminBadge}<button class="nav__logout" onclick="logout()">Log Out</button></div>`
-    : `<div class="nav__actions">${adminBadge}<button class="nav__login-btn" onclick="window.location.href='auth.html'">Sign In</button></div>`;
+    ? `<div class="nav__actions">${adminBadge}<button class="nav__logout" onclick="logout()">Log Out</button>${hamburgerBtn}</div>`
+    : `<div class="nav__actions">${adminBadge}<button class="nav__login-btn" onclick="window.location.href='auth.html'">Sign In</button>${hamburgerBtn}</div>`;
 
   container.innerHTML = `
     <div class="nav__inner">
@@ -1569,7 +1577,25 @@ function renderNav(container, activePage) {
       </a>
       <div class="nav__links">${links}</div>
       ${btnHtml}
-    </div>`;
+    </div>
+    <div class="nav__mobile-drawer" id="jxa-nav-drawer" role="dialog" aria-label="Mobile Navigation">${links}</div>`;
+
+  const burger = container.querySelector('#jxa-nav-hamburger');
+  const drawer = container.querySelector('#jxa-nav-drawer');
+  if (burger && drawer) {
+    burger.addEventListener('click', () => {
+      const isOpen = drawer.classList.toggle('open');
+      burger.classList.toggle('open', isOpen);
+      burger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    drawer.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        drawer.classList.remove('open');
+        burger.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
 }
 
 // ─── Admin Auth Guard ─────────────────────────────────────────────────────

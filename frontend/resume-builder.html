@@ -337,9 +337,15 @@
     }
 
     @media (max-width: 1200px) {
+      body, html { overflow-y: auto !important; height: auto !important; }
+      .main-content { height: auto !important; overflow: visible !important; padding: 10px 12px 24px !important; }
       .builder-grid {
         grid-template-columns: 1fr;
+        height: auto !important;
       }
+      .editor-col, .preview-col { min-width: 0 !important; max-width: 100% !important; height: auto !important; overflow: visible !important; }
+      .preview-col .card-header, .preview-col > div:first-child { flex-wrap: wrap; gap: 8px; }
+      .preview-scroll, #preview-viewport { max-width: 100% !important; overflow-x: auto !important; }
     }
 
     .glass-card {

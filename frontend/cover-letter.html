@@ -681,7 +681,15 @@ body::after {
   margin-right: 6px;
 }
 
-@media (max-width:850px) { .grid { grid-template-columns:1fr; } }
+@media (max-width:850px) {
+  body { overflow-y: auto !important; overflow-x: hidden !important; height: auto !important; min-height: 100vh; }
+  .container { height: auto !important; overflow: visible !important; padding: 10px 12px 24px !important; }
+  .grid { grid-template-columns: 1fr; height: auto !important; }
+  .card, #editor-card { min-width: 0 !important; max-width: 100% !important; height: auto !important; overflow: visible !important; }
+  .card > div:first-child { flex-wrap: wrap; gap: 8px; }
+  .preview-container { max-width: 100% !important; overflow-x: auto !important; }
+  .output-letter-box { width: 100% !important; max-width: 100% !important; min-width: 0 !important; padding: 20px 16px !important; box-sizing: border-box; }
+}
 
 @media print {
   /* Hide everything except the letter output box */

@@ -169,7 +169,7 @@
 .ch-nav__drawer-link:hover { background: rgba(91,79,232,0.12); color: #fff; }
 .ch-nav__drawer-cta {
   display: flex; align-items: center; justify-content: center;
-  height: 48px; margin-top: 16px;
+  flex-shrink: 0; width: 100%; height: 48px; min-height: 48px; margin-top: 16px;
   background: #5B4FE8; color: #fff; border-radius: 12px;
   font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
   text-transform: uppercase; text-decoration: none;

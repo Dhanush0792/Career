@@ -62,7 +62,7 @@
       ],
       "contactPoint": {
         "@type": "ContactPoint",
-        "email": "support@jobxapply.app",
+        "email": "missionhousehq@gmail.com",
         "contactType": "customer service"
       }
     },
@@ -1251,6 +1251,8 @@ footer {
 @media(max-width:1100px) {
   .hero__grid { grid-template-columns: 1fr; }
   .hero__globe { display: none; }
+  .sim-container { grid-template-columns: 1fr; gap: 24px; padding: 20px; }
+  .sim-controls, .sim-browser { min-width: 0; width: 100%; }
   .feat-grid { grid-template-columns: 1fr 1fr; }
   .feat-grid .tcard:nth-child(2) { border-right: none; }
   .feat-grid .tcard:nth-child(3) { border-right: 1px solid var(--border); }
@@ -1277,8 +1279,11 @@ footer {
   .hero { padding-top: 110px; }
   .hero__stats { grid-template-columns: 1fr 1fr; }
   .feat-grid { grid-template-columns: 1fr; }
-  .cta-form { flex-direction: column; }
-  .cta-form .btn { height: 48px; }
+  .cta-form { flex-direction: column; border: none; gap: 10px; }
+  .cta-input { flex: none; width: 100%; height: 48px; min-height: 48px; border: 1px solid var(--border2); }
+  .cta-form .btn { width: 100%; height: 48px; min-height: 48px; }
+  .sim-container { padding: 16px; gap: 20px; }
+  #run-sim-btn { width: 100%; justify-content: center; }
   .foot__inner { flex-direction: column; gap: 16px; }
   .two-col { grid-template-columns: 1fr !important; gap: 60px !important; }
   .sec-bg-num { display: none; }
@@ -1496,7 +1501,11 @@ footer {
         transition: all .4s ease;
       }
       .hero-portal-badge__pip { width:6px;height:6px;border-radius:50%; background:#5B4FE8; }
-      @media(max-width:640px){ .hero-ext-mock{ max-width:100%; } }
+      @media(max-width:768px){
+        .hero-ext-mock{ max-width:100%; padding-bottom: 24px; overflow: visible; }
+        .hero-pill{ bottom: 2px; right: 10px; padding: 8px 14px; font-size: 10px; }
+      }
+      @media(max-width:480px){ .hero-form-row{ grid-template-columns: 1fr; } }
       </style>
 
       <div class="hero-ext-mock reveal d3">
@@ -2009,7 +2018,7 @@ footer {
         <div class="section__num">07 &nbsp; FAQ &amp; SUPPORT</div>
         <h2 class="section__title">FREQUENTLY ASKED <em>QUESTIONS</em></h2>
         <p class="section__desc" style="margin-top:16px">
-          Questions not covered here? Contact us at <a href="mailto:support@jobxapply.app" style="color:var(--orange);text-decoration:underline;text-underline-offset:3px">support@jobxapply.app</a>
+          Questions not covered here? Contact us at <a href="mailto:missionhousehq@gmail.com" style="color:var(--orange);text-decoration:underline;text-underline-offset:3px">missionhousehq@gmail.com</a>
         </p>
       </div>
       <div class="faq reveal d2">
