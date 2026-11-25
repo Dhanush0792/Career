@@ -1942,6 +1942,17 @@ genBtn.addEventListener('click', async () => {
       }
       addLog('[SUCCESS] Tailored cover letter verified from server.', 'success');
       showToast('Cover letter tailored & verified successfully!');
+    } else if (res.status === 403) {
+      const errData = await res.json().catch(() => ({}));
+      addLog(`[PRO REQUIRED] ${errData.error || 'Upgrade to Pro to unlock this template or more exports.'}`, 'warn');
+      if (window.JobXApplyPaywall) {
+        window.JobXApplyPaywall.show({
+          title: errData.code === 'QUOTA_EXCEEDED' ? 'Monthly Cover Letter Limit Reached' : 'Pro Cover Letter Template',
+          message: errData.error || 'Upgrade to JobXApply Pro for all 10 templates and unlimited monthly exports.',
+          featureKey: 'cover_letter'
+        });
+      }
+      return;
     } else {
       updateLivePreview();
       addLog('[INFO] Generated locally via client engine.', 'info');

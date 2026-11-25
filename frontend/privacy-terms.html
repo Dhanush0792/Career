@@ -367,29 +367,36 @@ nav {
       </ul>
 
       <h3>Keys We Store in localStorage</h3>
-      <p>All keys are prefixed with <code>ch_</code> to prevent conflicts:</p>
+      <p>All keys are prefixed with <code>jxa_</code> to prevent conflicts:</p>
       <ul>
-        <li><code>ch_token</code> - session authentication token (cleared on logout)</li>
-        <li><code>ch_passcode</code> - your sync vault passcode (local device only)</li>
-        <li><code>ch_local_profile</code> - plaintext profile cache (local device only)</li>
-        <li><code>ch_user_email</code> - your account email</li>
-        <li><code>ch_role</code> - your account role (user/admin)</li>
-        <li><code>ch_applications</code> - your application pipeline data</li>
-        <li><code>ch_extension_coupled</code> - whether extension is paired</li>
+        <li><code>jxa_token</code> - session authentication token (cleared on logout)</li>
+        <li><code>jxa_passcode</code> - your sync vault passcode (local device only)</li>
+        <li><code>jxa_local_profile</code> - plaintext profile cache (local device only)</li>
+        <li><code>jxa_user_email</code> - your account email</li>
+        <li><code>jxa_role</code> - your account role (user/admin)</li>
+        <li><code>jxa_tier</code> &amp; <code>jxa_subscription</code> - cached plan status synced from server</li>
+        <li><code>jxa_applications</code> - your application pipeline data</li>
+        <li><code>jxa_extension_coupled</code> - whether extension is paired</li>
       </ul>
     </div>
 
     <div class="doc-section">
-      <h2>02 // Google Fonts</h2>
+      <h2>02 // Billing, Payments &amp; Refund Policy</h2>
+      <p>JobXApply Pro is offered as a one-time ₹199 prepaid pass valid for 30 calendar days, processed securely via Razorpay. Pro does not auto-renew and no recurring card mandates are stored by JobXApply. Authentication and cloud database persistence are powered by Supabase PostgreSQL.</p>
+      <p>Duplicate charges or failed activations where funds were debited are eligible for full resolution or refund within 5–7 business days by contacting <a href="mailto:support@jobxapply.app">support@jobxapply.app</a> with your payment ID.</p>
+    </div>
+
+    <div class="doc-section">
+      <h2>03 // Google Fonts</h2>
       <p>Our pages load fonts from Google Fonts (fonts.googleapis.com). Google may set browser cache entries and log font delivery requests. This is governed by <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a>. We do not control this behaviour.</p>
     </div>
 
     <div class="doc-section">
-      <h2>03 // Clearing Your Data</h2>
+      <h2>04 // Clearing Your Data</h2>
       <p>To remove all JobXApply data from your browser:</p>
       <ul>
         <li>Go to Settings -> Danger Zone -> Clear All Local Data</li>
-        <li>Or: Open DevTools -> Application -> Local Storage -> Delete all <code>ch_*</code> entries</li>
+        <li>Or: Open DevTools -> Application -> Local Storage -> Delete all <code>jxa_*</code> entries</li>
         <li>Or: Open DevTools -> Console -> run <code>Object.keys(localStorage).filter(k => k.startsWith('jxa_')).forEach(k => localStorage.removeItem(k))</code></li>
       </ul>
     </div>

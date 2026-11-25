@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JobXApply Admin // Payments &amp; Revenue</title>
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px; }
+    .kpi-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 16px; }
+    .kpi-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
+    .kpi-val { font-size: 24px; font-weight: 800; color: #fff; margin-top: 6px; }
+    .panel { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+    .panel h3 { margin: 0 0 12px; font-size: 14px; color: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    th { color: #9ca3af; font-weight: 600; }
+    .badge { padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; }
+    .badge-live { background: rgba(16,185,129,0.2); color: #34d399; }
+    .badge-test { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .grant-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .grant-form input, .grant-form select { background: #0d1018; border: 1px solid rgba(255,255,255,0.14); color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 12px; }
+    .grant-form button { background: #5b4fe8; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="admin-shell-root"></div>
+  <main class="admin-main" style="padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+      <h1 style="margin:0;font-size:20px;">Payments, Webhooks &amp; Revenue</h1>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="env-filter" style="background:#0d1018;color:#fff;border:1px solid rgba(255,255,255,0.14);padding:6px 10px;border-radius:8px;font-size:12px;">
+          <option value="">All Environments</option>
+          <option value="live">Live Only</option>
+          <option value="test">Test Only</option>
+        </select>
+        <button type="button" id="refresh-btn" style="background:#1f2433;color:#fff;border:1px solid rgba(255,255,255,0.14);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;">Refresh</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Live Revenue (INR)</div><div class="kpi-val" id="kpi-live-rev">₹0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Test Volume (Simulated)</div><div class="kpi-val" id="kpi-test-rev">₹0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Live / Test Payments</div><div class="kpi-val" id="kpi-counts">0 / 0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Funnel Checkouts Done</div><div class="kpi-val" id="kpi-funnel">0</div></div>
+    </div>
+
+    <div class="panel">
+      <h3>Audited Manual Entitlement Grant / Revoke</h3>
+      <form class="grant-form" id="grant-form">
+        <input type="text" id="g-user" placeholder="Target User ID" required>
+        <select id="g-action"><option value="grant">Grant Pro</option><option value="revoke">Revoke Pro</option></select>
+        <input type="number" id="g-days" value="30" min="1" max="365" style="width:80px;" title="Days">
+        <select id="g-env"><option value="test">Test Env</option><option value="live">Live Env</option></select>
+        <input type="text" id="g-reason" placeholder="Audit reason (required)" required style="min-width:220px;">
+        <button type="submit">Apply Grant</button>
+      </form>
+      <div id="grant-msg" style="margin-top:8px;font-size:12px;color:#a78bfa;"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Recent Payments</h3>
+      <div style="overflow-x:auto;">
+        <table><thead><tr><th>Env</th><th>Payment ID</th><th>Order ID</th><th>User</th><th>Amount</th><th>Status</th><th>Entitlement</th></tr></thead>
+        <tbody id="payments-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Webhook Events &amp; Audit Log</h3>
+      <div style="overflow-x:auto;">
+        <table><thead><tr><th>Env</th><th>Event Type</th><th>Event ID</th><th>Status</th><th>Attempts</th></tr></thead>
+        <tbody id="webhooks-tbody"></tbody></table>
+      </div>
+    </div>
+  </main>
+
+  <script src="admin-shell.js"></script>
+  <script>
+    if (typeof renderAdminShell === 'function') renderAdminShell('payments.html');
+
+    async function loadPaymentsDashboard() {
+      const env = document.getElementById('env-filter').value;
+      const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
+      const q = env ? `?environment=${encodeURIComponent(env)}` : '';
+      const res = await fetch(`${ADMIN_API_BASE}/admin/payments${q}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const s = data.summary || {};
+      document.getElementById('kpi-live-rev').textContent = `₹${(Number(s.liveRevenuePaise || 0) / 100).toFixed(0)}`;
+      document.getElementById('kpi-test-rev').textContent = `₹${(Number(s.testRevenuePaise || 0) / 100).toFixed(0)}`;
+      document.getElementById('kpi-counts').textContent = `${s.liveCount || 0} / ${s.testCount || 0}`;
+      document.getElementById('kpi-funnel').textContent = String((data.funnel && data.funnel.checkout_completed) || 0);
+
+      const pBody = document.getElementById('payments-tbody');
+      pBody.innerHTML = (data.payments || []).map(p => `
+        <tr>
+          <td><span class="badge ${p.environment === 'live' ? 'badge-live' : 'badge-test'}">${p.environment}</span></td>
+          <td>${p.razorpayPaymentId}</td>
+          <td>${p.razorpayOrderId}</td>
+          <td>${p.userId}</td>
+          <td>₹${(Number(p.amount || 0) / 100).toFixed(0)}</td>
+          <td>${p.paymentStatus}</td>
+          <td>${p.entitlementStatus}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="7">No payments found.</td></tr>';
+
+      const wBody = document.getElementById('webhooks-tbody');
+      wBody.innerHTML = (data.webhooks || []).map(w => `
+        <tr>
+          <td><span class="badge ${w.environment === 'live' ? 'badge-live' : 'badge-test'}">${w.environment}</span></td>
+          <td>${w.eventType}</td>
+          <td>${w.eventId}</td>
+          <td>${w.processingStatus}</td>
+          <td>${w.attempts}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5">No webhook events found.</td></tr>';
+    }
+
+    document.getElementById('refresh-btn').addEventListener('click', loadPaymentsDashboard);
+    document.getElementById('env-filter').addEventListener('change', loadPaymentsDashboard);
+    document.getElementById('grant-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
+      const res = await fetch(`${ADMIN_API_BASE}/admin/grants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          userId: document.getElementById('g-user').value.trim(),
+          action: document.getElementById('g-action').value,
+          days: Number(document.getElementById('g-days').value || 30),
+          environment: document.getElementById('g-env').value,
+          reason: document.getElementById('g-reason').value.trim()
+        })
+      });
+      const out = await res.json().catch(() => ({}));
+      document.getElementById('grant-msg').textContent = res.ok ? `Audit recorded: ${out.audit?.id}` : (out.error || 'Failed');
+      if (res.ok) loadPaymentsDashboard();
+    });
+
+    loadPaymentsDashboard();
+  </script>
+</body>
+</html>

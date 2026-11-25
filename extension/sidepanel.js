@@ -421,6 +421,21 @@ async function executeAutofill() {
       return;
     }
 
+    const authRes = await new Promise((r) =>
+      chrome.runtime.sendMessage({
+        type: "jobxapply:authorizeAutofill",
+        portal: currentPortalRule.portal,
+        portalHost: tab.url ? new URL(tab.url).hostname : ""
+      }, r)
+    );
+    if (!authRes?.ok) {
+      showToast(authRes?.error || "Monthly autofill quota reached.");
+      if (authRes?.upgradeRequired && authRes?.upgradeUrl) {
+        chrome.runtime.sendMessage({ type: "jobxapply:openUpgrade", url: authRes.upgradeUrl });
+      }
+      return;
+    }
+
     const payload = buildAutofillPayload(activeProfile, currentPortalRule);
 
     chrome.tabs.sendMessage(tab.id, {
@@ -429,9 +444,16 @@ async function executeAutofill() {
       portal: currentPortalRule.portal
     }, (res) => {
       if (chrome.runtime.lastError) {
+        chrome.runtime.sendMessage({ type: "jobxapply:releaseAutofill", operationId: authRes.operationId });
         showToast("Cannot autofill this page: " + chrome.runtime.lastError.message);
-      } else {
+      } else if ((res?.filledCount || res?.filled || 0) > 0) {
+        chrome.runtime.sendMessage({ type: "jobxapply:completeAutofill", operationId: authRes.operationId }, () => {
+          refreshSidePanelEntitlement(true);
+        });
         showToast(`Filled fields on ${currentPortalRule.portal || "portal"}!`);
+      } else {
+        chrome.runtime.sendMessage({ type: "jobxapply:releaseAutofill", operationId: authRes.operationId });
+        showToast("No matching fields found on this page.");
       }
     });
   } catch (e) {
@@ -943,14 +965,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             ? `Pro active until ${new Date(ent.expiresAt).toLocaleDateString()}`
             : "Pro Plan Active";
         } else {
-          badge.textContent = "FREE";
+          const af = ent.usage && ent.usage.autofills;
+          badge.textContent = af && af.limit !== null ? `FREE · ${af.remaining}/${af.limit}` : "FREE";
           badge.style.color = "var(--muted)";
-          badge.title = "Free Tier (10 autofills/mo)";
+          badge.title = af && af.limit !== null
+            ? `Free Tier: ${af.remaining} of ${af.limit} autofills remaining this month`
+            : "Free Tier (10 autofills/mo)";
         }
       }
     });
   }
-  refreshSidePanelEntitlement(false);
+  refreshSidePanelEntitlement(true);
   document.getElementById("spSyncBtn")?.addEventListener("click", () => refreshSidePanelEntitlement(true));
 
   // Listen to tab events to update detected portal live in the side panel

@@ -1966,20 +1966,36 @@ function injectFloatingQuickFill() {
       
       const host = window.location.hostname.toLowerCase();
       const baseDomain = getBaseDomain(host);
-      chrome.storage.local.get("portalMaps", (store) => {
-        const portalMaps = store.portalMaps || {};
-        const rawProfile = res.profile.payload ? res.profile.payload : res.profile;
-        const outcome = performAutofill(rawProfile, portalMaps[baseDomain] || {});
-
-        if (textSpan) textSpan.textContent = `Filled ${outcome.filledCount} field${outcome.filledCount === 1 ? '' : 's'}!`;
-        pill.style.borderColor = "#2fddc4";
-        setTimeout(() => {
-          if (pill) {
-            pill.style.opacity = "0";
-            pill.style.transform = "translateY(10px)";
-            setTimeout(() => pill.remove(), 400);
+      chrome.runtime.sendMessage({ type: "jobxapply:authorizeAutofill", portal: baseDomain, portalHost: host }, (authRes) => {
+        if (chrome.runtime.lastError || !authRes?.ok) {
+          if (textSpan) textSpan.textContent = authRes?.upgradeRequired ? "Limit reached — Upgrade" : (authRes?.error || "Quota unavailable");
+          pill.style.pointerEvents = "auto";
+          if (authRes?.upgradeRequired && authRes?.upgradeUrl) {
+            chrome.runtime.sendMessage({ type: "jobxapply:openUpgrade", url: authRes.upgradeUrl });
           }
-        }, 2500);
+          setTimeout(() => { if (pill) pill.remove(); }, 3000);
+          return;
+        }
+        chrome.storage.local.get("portalMaps", (store) => {
+          const portalMaps = store.portalMaps || {};
+          const rawProfile = res.profile.payload ? res.profile.payload : res.profile;
+          const outcome = performAutofill(rawProfile, portalMaps[baseDomain] || {});
+          if (outcome.filledCount > 0) {
+            chrome.runtime.sendMessage({ type: "jobxapply:completeAutofill", operationId: authRes.operationId });
+          } else {
+            chrome.runtime.sendMessage({ type: "jobxapply:releaseAutofill", operationId: authRes.operationId });
+          }
+
+          if (textSpan) textSpan.textContent = `Filled ${outcome.filledCount} field${outcome.filledCount === 1 ? '' : 's'}!`;
+          pill.style.borderColor = "#2fddc4";
+          setTimeout(() => {
+            if (pill) {
+              pill.style.opacity = "0";
+              pill.style.transform = "translateY(10px)";
+              setTimeout(() => pill.remove(), 400);
+            }
+          }, 2500);
+        });
       });
     });
   });

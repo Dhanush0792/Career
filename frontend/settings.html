@@ -262,18 +262,18 @@ body { padding-top: 76px; }
         <div class="item-row">
           <div>
             <div class="item-label">Current Allowance</div>
-            <div class="item-sub">10 Autofills/mo • LinkedIn &amp; Naukri • Basic ATS Checker • 20 Tracked Jobs</div>
+            <div class="item-sub" id="sub-free-usage-line">10 Autofills/mo • 2 Resume &amp; 2 Cover Letter exports/mo • Basic ATS • 20 Tracked Jobs</div>
           </div>
-          <span style="font-family:var(--mono); font-size:11px; color:var(--muted);">₹0 / mo</span>
+          <span style="font-family:var(--mono); font-size:11px; color:var(--muted);">₹0 forever</span>
         </div>
         <div class="sub-upgrade-banner">
           <div>
             <div style="font-size:13.5px; font-weight:700; color:var(--white); margin-bottom:4px;">
-              Unlock Unlimited Autofill &amp; All 50+ Portals
-              <span style="background:rgba(245,166,35,0.2); color:#F5A623; font-family:var(--mono); font-size:9px; padding:2px 7px; border-radius:999px; margin-left:6px;">LAUNCH OFFER -33%</span>
+              Upgrade to JobXApply Pro
+              <span style="background:rgba(91,79,232,0.22); color:#a78bfa; font-family:var(--mono); font-size:9px; padding:2px 7px; border-radius:999px; margin-left:6px;">30-DAY PREPAID PASS</span>
             </div>
             <div style="font-size:11.5px; color:var(--muted);">
-              Unlimited Workday, Greenhouse &amp; Lever autofills, unlimited PDF resume &amp; cover letter exports, and priority sync for <span style="text-decoration:line-through; opacity:0.6;">₹299</span> <strong style="color:var(--success);">₹199 / 30 days (prepaid, no auto-renewal)</strong>.
+              Unlimited autofills, unlimited tracker, full ATS breakdown &amp; all 10 templates for <strong style="color:var(--success);">₹199 / 30 days (no auto-renewal)</strong>.
             </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -289,11 +289,11 @@ body { padding-top: 76px; }
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div>
               <div style="font-size:13px; font-weight:700; color:var(--white);">JobXApply Pro Plan</div>
-              <div style="font-size:11.5px; color:var(--muted); margin-top:2px;">Unlimited Autofills • 50+ Portals • Unlimited PDF Exports • Priority Sync</div>
+              <div style="font-size:11.5px; color:var(--muted); margin-top:2px;">Unlimited Autofills • Unlimited Tracker • Full ATS Breakdown • All 10 Templates • No Auto-Renewal</div>
             </div>
             <div style="text-align:right;">
               <div style="font-family:var(--mono); font-size:14px; font-weight:800; color:var(--success);" id="sub-days-left">30 days remaining</div>
-              <div style="font-family:var(--mono); font-size:10px; color:var(--muted);" id="sub-renew-date">Active Subscription</div>
+              <div style="font-family:var(--mono); font-size:10px; color:var(--muted);" id="sub-renew-date">Prepaid Pass</div>
             </div>
           </div>
           <div class="renew-bar-bg">
@@ -301,9 +301,15 @@ body { padding-top: 76px; }
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:10px;">
             <span style="font-family:var(--mono); font-size:10px; color:var(--dim);" id="sub-payment-ref">Verified Pro Access</span>
-            <button type="button" class="btn-sm btn-sm-ghost" id="btn-settings-renew">Extend / Renew (+30 Days)</button>
+            <button type="button" class="btn-sm btn-sm-ghost" id="btn-settings-renew">Extend / Buy +30 Days (₹199)</button>
           </div>
         </div>
+      </div>
+
+      <!-- Billing & Payment History -->
+      <div id="sub-history-wrap" style="margin-top:18px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08);">
+        <div style="font-size:12px; font-weight:700; color:var(--white); margin-bottom:8px;">Payment History &amp; Receipts</div>
+        <div id="sub-history-list" style="font-size:12px; color:var(--muted);">Loading payment history...</div>
       </div>
     </div>
 
@@ -589,6 +595,7 @@ async function loadSettings() {
           localStorage.setItem('jxa_subscription', JSON.stringify(data.subscription));
         }
         renderSubscriptionCard(serverTier, data.subscription || cachedSub);
+        renderUsageAndHistory(data);
         const dispSync = document.getElementById('disp-sync');
         if (dispSync) dispSync.textContent = 'Synced';
       }
@@ -596,6 +603,66 @@ async function loadSettings() {
   } catch (err) {
     console.warn('Settings sync notice:', err);
   }
+}
+
+function renderUsageAndHistory(data) {
+  const usageLine = document.getElementById('sub-free-usage-line');
+  if (usageLine && data && data.usage) {
+    const u = data.usage;
+    const af = u.autofills || {};
+    const re = u.resumeExports || {};
+    const ce = u.coverLetterExports || {};
+    const tr = u.tracker || {};
+    usageLine.textContent = `Autofills: ${af.used || 0}/${af.limit || 10} • Resume Exports: ${re.used || 0}/${re.limit || 2} • Cover Letters: ${ce.used || 0}/${ce.limit || 2} • Tracker: ${tr.used || 0}/${tr.limit || 20}`;
+  }
+  const histEl = document.getElementById('sub-history-list');
+  if (!histEl) return;
+  const receipts = Array.isArray(data && data.receipts) ? data.receipts : [];
+  const payments = Array.isArray(data && data.payments) ? data.payments : [];
+  if (!payments.length) {
+    histEl.textContent = 'No payments recorded on this account yet.';
+    return;
+  }
+  const rcByPay = new Map(receipts.map(r => [r.razorpayPaymentId, r]));
+  histEl.innerHTML = '';
+  payments.forEach(p => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap;';
+    const dt = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    const amt = `₹${(Number(p.amount || 0) / 100).toFixed(0)} ${p.currency || 'INR'}`;
+    const envTag = p.environment === 'test' ? ' [TEST]' : '';
+    const left = document.createElement('div');
+    left.innerHTML = `<div style="color:var(--white);font-weight:600;">Pro 30-Day Pass &bull; ${amt}${envTag}</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted);">${dt} &bull; ${p.paymentId} &bull; ${p.entitlementStatus || p.status}</div>`;
+    row.appendChild(left);
+    const rc = rcByPay.get(p.paymentId) || {
+      receiptId: p.receiptId || ('RCPT-' + String(p.paymentId).slice(-6).toUpperCase()),
+      userId: 'me',
+      razorpayPaymentId: p.paymentId,
+      razorpayOrderId: p.orderId,
+      environment: p.environment || 'live',
+      planName: 'JobXApply Pro (30-Day Prepaid Pass)',
+      amount: p.amount,
+      currency: p.currency || 'INR',
+      createdAt: p.createdAt,
+      validityEnd: p.createdAt ? p.createdAt + 30 * 86400000 : null
+    };
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-sm btn-sm-ghost';
+    btn.textContent = 'View Receipt';
+    btn.addEventListener('click', () => {
+      const openRcpt = () => window.JobXApplyReceipt && window.JobXApplyReceipt.show(rc, { instant: true });
+      if (window.JobXApplyReceipt) openRcpt();
+      else {
+        const s = document.createElement('script');
+        s.src = 'payment-receipt.js';
+        s.onload = openRcpt;
+        document.head.appendChild(s);
+      }
+    });
+    row.appendChild(btn);
+    histEl.appendChild(row);
+  });
 }
 
 async function savePasscode() {

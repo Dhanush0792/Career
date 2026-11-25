@@ -114,48 +114,37 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
     <p>Three simple tiers. Pick the plan that fits your job search.</p>
   </header>
 
-  <div class="pricing-grid">
+  <div class="pricing-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 380px)); justify-content: center;">
     <div class="plan-card">
-      <div class="plan-name">Free Tier</div>
-      <h2 class="plan-price">₹0<span> /mo</span></h2>
-      <p class="plan-desc">For starters. Basic tools to manage and track your job search.</p>
+      <div class="plan-name">Free</div>
+      <h2 class="plan-price">₹0<span> forever</span></h2>
+      <p class="plan-desc">Core tools to start tracking applications and autofilling job forms.</p>
       <ul class="plan-features">
-        <li>Profile builder (3 experience entries)</li>
-        <li>10 Autofills per month</li>
-        <li>Basic ATS Checker</li>
-        <li>App Tracker (20 entries)</li>
-        <li>LinkedIn + Naukri maps only</li>
+        <li>10 Smart Autofills per month</li>
+        <li>Up to 20 saved jobs in Tracker</li>
+        <li>Basic ATS score &amp; top 3 keyword gaps</li>
+        <li>2 Resume &amp; 2 Cover Letter exports / mo</li>
+        <li>Standard Cover Letter template (01)</li>
+        <li>Cloud profile sync across devices</li>
       </ul>
-      <a href="auth.html" class="btn-ghost">Get Started Free</a>
+      <a href="auth.html" class="btn-ghost">Start Free</a>
     </div>
-    
+
     <div class="plan-card highlight">
       <div class="plan-badge">RECOMMENDED</div>
-      <div class="plan-name">Pro Tier</div>
+      <div class="plan-name">Pro</div>
       <h2 class="plan-price">₹199<span> / 30 days</span></h2>
-      <p class="plan-desc">30-day prepaid access with no automatic renewal. Full-throttle job hunt automation.</p>
+      <p class="plan-desc">30-day prepaid pass with no automatic renewal. Unlimited applications and full ATS insights.</p>
       <ul class="plan-features">
-        <li>Unlimited Autofills</li>
-        <li>All 50+ portal maps</li>
-        <li>Full Cover Letter Engine</li>
-        <li>Unlimited App Tracker</li>
-        <li>Priority Sync & Resume Export</li>
+        <li>Unlimited Smart Autofills</li>
+        <li>Unlimited Application Tracker entries</li>
+        <li>Full ATS keyword &amp; section breakdown</li>
+        <li>Unlimited Resume &amp; Cover Letter exports</li>
+        <li>All 10 Cover Letter &amp; Resume templates</li>
+        <li>30-day prepaid pass — no auto-renewal</li>
       </ul>
       <button type="button" id="btn-upgrade-pro" class="btn-primary" style="cursor:pointer; border:none;">Upgrade to Pro</button>
-    </div>
-    
-    <div class="plan-card">
-      <div class="plan-name">Enterprise Tier</div>
-      <h2 class="plan-price">Custom</h2>
-      <p class="plan-desc">For recruitment agencies and teams managing multiple candidates.</p>
-      <ul class="plan-features">
-        <li>Everything in Pro</li>
-        <li>Multi-candidate dashboards</li>
-        <li>Centralized map configurations</li>
-        <li>Bulk resume exports</li>
-        <li>Dedicated support channel</li>
-      </ul>
-      <a href="contact.html" class="btn-ghost">Contact Sales</a>
+      <button type="button" id="btn-pricing-recover" class="btn-ghost" style="cursor:pointer; margin-top:8px; width:100%; font-size:12px;">Recover Pending Payment</button>
     </div>
   </div>
 
@@ -165,47 +154,40 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
       <thead>
         <tr>
           <th>Feature</th>
-          <th>Free Tier</th>
-          <th>Pro Tier</th>
-          <th>Enterprise</th>
+          <th>Free</th>
+          <th>Pro (₹199 / 30 days)</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Autofill Capacity</td>
-          <td>10 / mo</td>
+          <td>Smart Autofill</td>
+          <td>10 / calendar month</td>
           <td>Unlimited</td>
-          <td>Unlimited</td>
-        </tr>
-        <tr>
-          <td>Portal Maps</td>
-          <td>LinkedIn, Naukri</td>
-          <td>All 50+ Portals</td>
-          <td>Custom Centralised</td>
-        </tr>
-        <tr>
-          <td>Resume Builder</td>
-          <td>Basic (No Export)</td>
-          <td>Full + PDF Export</td>
-          <td>Bulk Generation</td>
-        </tr>
-        <tr>
-          <td>Cover Letter Engine</td>
-          <td class="cross">--</td>
-          <td class="check">[OK]</td>
-          <td class="check">[OK]</td>
         </tr>
         <tr>
           <td>Application Tracker</td>
-          <td>20 Entries</td>
+          <td>Up to 20 saved jobs</td>
           <td>Unlimited</td>
-          <td>Team Dashboard</td>
         </tr>
         <tr>
-          <td>Support Level</td>
-          <td>Community</td>
-          <td>Priority</td>
-          <td>Dedicated Support</td>
+          <td>ATS Resume Checker</td>
+          <td>Basic score + top 3 gaps</td>
+          <td>Full breakdown &amp; all gaps</td>
+        </tr>
+        <tr>
+          <td>Resume Builder Exports</td>
+          <td>2 / calendar month</td>
+          <td>Unlimited</td>
+        </tr>
+        <tr>
+          <td>Cover Letter Exports &amp; Templates</td>
+          <td>2 / month (Standard template)</td>
+          <td>Unlimited (All 10 templates)</td>
+        </tr>
+        <tr>
+          <td>Billing Model</td>
+          <td>Free forever</td>
+          <td>One-time 30-day prepaid pass</td>
         </tr>
       </tbody>
     </table>
@@ -214,16 +196,16 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
   <section class="faq-section">
     <h2>Frequently Asked Questions</h2>
     <details>
-      <summary>Can I upgrade or downgrade at any time?</summary>
-      <p>Yes. Subscriptions are flexible. You can upgrade or downgrade your plan from your dashboard at any time. Prorated credits apply automatically.</p>
+      <summary>Does Pro auto-renew or charge me automatically?</summary>
+      <p>No. Pro is a one-time ₹199 prepaid pass valid for 30 days. You will never be auto-charged; when your pass expires, your account returns cleanly to Free without deleting any saved jobs or profile data.</p>
     </details>
     <details>
-      <summary>What happens if I hit my 10 autofills on the Free plan?</summary>
-      <p>Your autofills will pause until your next monthly cycle. You can continue using the Application Tracker and ATS Checker within limits, or upgrade to Pro for unlimited autofills.</p>
+      <summary>What happens if I hit my 10 autofills or 2 exports on the Free plan?</summary>
+      <p>Your monthly counters reset automatically on the 1st of each UTC month. You can continue viewing and editing your saved applications and profile anytime, or upgrade to Pro for immediate unlimited access.</p>
     </details>
     <details>
-      <summary>Do you offer a refund if I get a job fast?</summary>
-      <p>If you secure a role within your first 14 days on the Pro plan, we'll refund that month's charge. Getting you hired is our primary goal.</p>
+      <summary>What happens to my saved tracker jobs if Pro expires?</summary>
+      <p>All your saved applications and profile data remain intact. You can still view, edit, delete, and export your existing tracker items; adding new entries above 20 requires Pro or freeing space.</p>
     </details>
   </section>
 
@@ -282,13 +264,34 @@ details p { padding: 0 20px 20px; margin: 0; color: var(--muted); line-height: 1
           return;
         }
         if (meta.recoverable) {
-          notify(errMsg + ' Click Upgrade again or check Settings to recover your payment.', 'info');
+          notify(errMsg + ' Click "Recover Pending Payment" below or check Settings.', 'info');
         } else {
           notify(errMsg, meta.cancelled ? 'info' : 'error');
         }
       }
     });
   });
+
+  const recoverBtn = document.getElementById('btn-pricing-recover');
+  if (recoverBtn) {
+    recoverBtn.addEventListener('click', () => {
+      if (typeof JobXApplyCheckout === 'undefined') return;
+      recoverBtn.disabled = true;
+      recoverBtn.textContent = 'Checking Razorpay...';
+      JobXApplyCheckout.recoverPendingPayment(null, {
+        onSuccess: () => {
+          recoverBtn.disabled = false;
+          recoverBtn.textContent = 'Recover Pending Payment';
+          notify('Pro entitlement verified and synced!', 'success');
+        },
+        onError: (msg) => {
+          recoverBtn.disabled = false;
+          recoverBtn.textContent = 'Recover Pending Payment';
+          notify(msg, 'info');
+        }
+      });
+    });
+  }
 })();
 </script>
 </body>

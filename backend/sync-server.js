@@ -12,8 +12,10 @@ try {
 } catch (e) {}
 
 const Razorpay = require("razorpay");
-const { validatePaymentEnv } = require("./plan-catalog");
+const planCatalog = require("./plan-catalog");
+const { validatePaymentEnv } = planCatalog;
 const paymentService = require("./payment-service");
+const entitlementService = require("./entitlement-service");
 
 const paymentEnvCheck = validatePaymentEnv();
 if (paymentEnvCheck.warnings.length > 0) {
@@ -745,7 +747,10 @@ async function getRequestUser(req) {
         await db.updateUserRole(user.id, "admin");
         user.role = "admin";
       }
-      if (user) return user;
+      if (user) {
+        user.emailVerified = isEmailConfirmed;
+        return user;
+      }
     }
   } catch (e) {
     // Secret mismatch or non-local token; check if it's a Supabase token verified remotely
@@ -779,7 +784,10 @@ async function getRequestUser(req) {
         await db.updateUserRole(user.id, "admin");
         user.role = "admin";
       }
-      if (user) return user;
+      if (user) {
+        user.emailVerified = isEmailConfirmed;
+        return user;
+      }
     }
   } catch (err) {
     // Remote verification fallback failed
@@ -789,7 +797,13 @@ async function getRequestUser(req) {
   const decodedLocal = auth.verifyToken(req);
   if (decodedLocal) {
     const localId = decodedLocal.id || decodedLocal.userId;
-    if (localId) return await db.getUserById(localId);
+    if (localId) {
+      const localUser = await db.getUserById(localId);
+      if (localUser) {
+        localUser.emailVerified = Boolean(decodedLocal.emailVerified || localUser.emailVerified);
+        return localUser;
+      }
+    }
   }
 
   // 4. Sync passcode hash check (for browser extension / automation clients)
@@ -928,6 +942,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // GET /api/plans -- public authoritative plan catalog
+  if (req.method === "GET" && urlObj.pathname === "/api/plans") {
+    sendJson(res, 200, planCatalog.getPublicPlansPayload());
+    return;
+  }
+
   // POST Telemetry Hit
   if (req.method === "POST" && urlObj.pathname === "/api/telemetry/hit") {
     // Limit telemetry hits to 30 per minute per IP to prevent storage & memory flooding
@@ -982,6 +1002,11 @@ const server = http.createServer(async (req, res) => {
 
   // GET / HEAD /health, /api/health, / (Public Health & Root check)
   if ((req.method === "GET" || req.method === "HEAD") && (urlObj.pathname === "/health" || urlObj.pathname === "/api/health" || urlObj.pathname === "/")) {
+    const prodDbMissing = process.env.NODE_ENV === "production" && Boolean(process.env.DATABASE_URL) && !db.isPgAvailable();
+    if (prodDbMissing && (urlObj.pathname === "/health" || urlObj.pathname === "/api/health")) {
+      sendJson(res, 503, { ok: false, status: "unhealthy", dbError: db.getPgInitError() || "PostgreSQL unavailable", timestamp: Date.now() });
+      return;
+    }
     sendJson(res, 200, { ok: true, status: "healthy", timestamp: Date.now() });
     return;
   }
@@ -1000,6 +1025,7 @@ const server = http.createServer(async (req, res) => {
         webhookConfigured: pHealth.webhookConfigured,
         environment: pHealth.environment,
         pgPersistence: db.isPgAvailable(),
+        pgInitError: db.getPgInitError(),
         publicCheckoutEnabled: process.env.NODE_ENV !== "production" || process.env.ENABLE_PUBLIC_CHECKOUT === "true"
       }
     });
@@ -1318,28 +1344,188 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // GET /api/subscription (Authoritative Entitlement & Payment History)
+  // GET /api/subscription (Authoritative Entitlement, Capabilities, Usage & Payment History)
   if (req.method === "GET" && urlObj.pathname === "/api/subscription") {
     if (!activeUser) {
-      return sendJson(res, 401, { ok: false, error: "Authentication required" });
+      return sendJson(res, 401, { ok: false, code: "AUTH_REQUIRED", error: "Authentication required" });
     }
-    const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
+    const capabilities = await entitlementService.getUserCapabilities(activeUser.id, activeUser);
+    const usage = await entitlementService.getUsageStatus(activeUser.id, activeUser);
     const payments = await db.getPaymentsByUser(activeUser.id);
+    const receipts = await db.getReceiptsByUser(activeUser.id, capabilities.environment);
+    const receiptByPayId = new Map(receipts.map(r => [r.razorpayPaymentId, r]));
+
+    // Safe historical receipt fallback for pre-migration fulfilled payments (no fabricated fields)
+    const enrichedReceipts = [...receipts];
+    for (const p of payments) {
+      if (p.environment === capabilities.environment && p.entitlementStatus === "fulfilled" && !receiptByPayId.has(p.razorpayPaymentId)) {
+        const fallbackRcpt = {
+          receiptId: `HIST-${String(p.razorpayPaymentId || p.internalPaymentId).slice(-8).toUpperCase()}`,
+          userId: activeUser.id,
+          razorpayPaymentId: p.razorpayPaymentId,
+          razorpayOrderId: p.razorpayOrderId,
+          environment: p.environment,
+          planId: "pro",
+          planName: "JobXApply Pro (Historical Record)",
+          amount: p.amount,
+          currency: p.currency,
+          customerEmail: activeUser.email || null,
+          paymentMethod: p.method || null,
+          validityStart: p.createdAt,
+          validityEnd: null,
+          isHistoricalFallback: true,
+          animationSeenAt: p.createdAt,
+          createdAt: p.createdAt
+        };
+        enrichedReceipts.push(fallbackRcpt);
+        receiptByPayId.set(p.razorpayPaymentId, fallbackRcpt);
+      }
+    }
+
     return sendJson(res, 200, {
       ok: true,
-      tier: effectiveEnt.tier,
-      subscription: effectiveEnt,
-      payments: payments.map(p => ({
-        orderId: p.razorpayOrderId,
-        paymentId: p.razorpayPaymentId,
-        amount: p.amount,
-        currency: p.currency,
-        status: p.paymentStatus,
-        entitlementStatus: p.entitlementStatus,
-        environment: p.environment,
-        createdAt: p.createdAt
-      }))
+      tier: capabilities.tier,
+      subscription: capabilities,
+      usage,
+      receipts: enrichedReceipts,
+      payments: payments.map(p => {
+        const rc = receiptByPayId.get(p.razorpayPaymentId);
+        return {
+          orderId: p.razorpayOrderId,
+          paymentId: p.razorpayPaymentId,
+          receiptId: rc ? rc.receiptId : null,
+          amount: p.amount,
+          currency: p.currency,
+          status: p.paymentStatus,
+          entitlementStatus: p.entitlementStatus,
+          environment: p.environment,
+          createdAt: p.createdAt
+        };
+      })
     });
+  }
+
+  // GET /api/usage (Authoritative Monthly Usage & Limits)
+  if (req.method === "GET" && urlObj.pathname === "/api/usage") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, code: "AUTH_REQUIRED", error: "Authentication required" });
+    }
+    const capabilities = await entitlementService.getUserCapabilities(activeUser.id, activeUser);
+    const usage = await entitlementService.getUsageStatus(activeUser.id, activeUser);
+    return sendJson(res, 200, { ok: true, tier: capabilities.tier, capabilities, usage });
+  }
+
+  // POST /api/usage/autofill/authorize
+  if (req.method === "POST" && urlObj.pathname === "/api/usage/autofill/authorize") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, code: "AUTH_REQUIRED", error: "Authentication required" });
+    }
+    try {
+      const body = await readBody(req, 8192);
+      const payload = JSON.parse(body || "{}");
+      const resAuth = await entitlementService.reserveUsage({
+        user: activeUser,
+        metricKey: "autofill",
+        operationId: payload.operationId,
+        metadata: { portal: payload.portal || "unknown", urlHost: payload.urlHost || "" }
+      });
+      return sendJson(res, resAuth.ok ? 200 : (resAuth.statusCode || 403), resAuth);
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || "Invalid request" });
+    }
+  }
+
+  // POST /api/usage/autofill/complete
+  if (req.method === "POST" && urlObj.pathname === "/api/usage/autofill/complete") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, code: "AUTH_REQUIRED", error: "Authentication required" });
+    }
+    try {
+      const body = await readBody(req, 4096);
+      const payload = JSON.parse(body || "{}");
+      const result = await entitlementService.finalizeUsage({ user: activeUser, operationId: payload.operationId });
+      return sendJson(res, result.ok ? 200 : (result.statusCode || 400), result);
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || "Invalid request" });
+    }
+  }
+
+  // POST /api/usage/autofill/release
+  if (req.method === "POST" && urlObj.pathname === "/api/usage/autofill/release") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, code: "AUTH_REQUIRED", error: "Authentication required" });
+    }
+    try {
+      const body = await readBody(req, 4096);
+      const payload = JSON.parse(body || "{}");
+      const result = await entitlementService.releaseUsage({ user: activeUser, operationId: payload.operationId });
+      return sendJson(res, result.ok ? 200 : (result.statusCode || 400), result);
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || "Invalid request" });
+    }
+  }
+
+  // POST /api/receipts/seen (Record account-scoped animated receipt seen state)
+  if (req.method === "POST" && urlObj.pathname === "/api/receipts/seen") {
+    if (!activeUser) {
+      return sendJson(res, 401, { ok: false, code: "AUTH_REQUIRED", error: "Authentication required" });
+    }
+    try {
+      const body = await readBody(req, 4096);
+      const payload = JSON.parse(body || "{}");
+      if (!payload.receiptId) return sendJson(res, 400, { ok: false, error: "receiptId is required" });
+      const seenAt = await db.markReceiptAnimationSeen(String(payload.receiptId), activeUser.id);
+      return sendJson(res, 200, { ok: true, animationSeenAt: seenAt });
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: e.message || "Invalid request" });
+    }
+  }
+
+  // POST /api/analytics/event (Privacy-safe funnel tracking)
+  if (req.method === "POST" && urlObj.pathname === "/api/analytics/event") {
+    if (isRateLimited(clientIp + ":analytics", 60, 60000, ipRateLimits)) {
+      return sendJson(res, 429, { ok: false, error: "Too many analytics events" });
+    }
+    const ALLOWED_FUNNEL_EVENTS = new Set([
+      "pricing_viewed",
+      "paywall_shown",
+      "paywall_upgrade_clicked",
+      "checkout_opened",
+      "checkout_completed",
+      "checkout_failed",
+      "checkout_dismissed",
+      "receipt_viewed",
+      "receipt_downloaded",
+      "quota_limit_reached",
+      "onboarding_skipped_to_free"
+    ]);
+    try {
+      const body = await readBody(req, 4096);
+      const payload = JSON.parse(body || "{}");
+      const eventName = String(payload.eventName || "");
+      if (!ALLOWED_FUNNEL_EVENTS.has(eventName)) {
+        return sendJson(res, 400, { ok: false, error: "Unsupported eventName" });
+      }
+      const envName = planCatalog.getPaymentEnvironment(process.env.RAZORPAY_KEY_ID);
+      const actorKey = `${activeUser ? activeUser.id : clientIp}:${eventName}:${envName}`;
+      const nowEvt = Date.now();
+      if (!global.__jxaFunnelDedupe) global.__jxaFunnelDedupe = new Map();
+      const lastEvtAt = global.__jxaFunnelDedupe.get(actorKey) || 0;
+      if (nowEvt - lastEvtAt < 60000) {
+        return sendJson(res, 200, { ok: true, deduplicated: true });
+      }
+      global.__jxaFunnelDedupe.set(actorKey, nowEvt);
+      await db.recordAnalyticsEvent({
+        eventName,
+        userId: activeUser ? activeUser.id : null,
+        environment: envName,
+        source: payload.source || "web",
+        metadata: payload.metadata && typeof payload.metadata === "object" ? payload.metadata : {}
+      });
+      return sendJson(res, 200, { ok: true });
+    } catch (e) {
+      return sendJson(res, 400, { ok: false, error: "Bad request" });
+    }
   }
 
   // POST Update Profile
@@ -1451,7 +1637,10 @@ const server = http.createServer(async (req, res) => {
       if (!Array.isArray(payload.applications)) {
         return sendJson(res, 400, { ok: false, error: "applications must be an array" });
       }
-      await db.saveApplications(activeUser.id, payload.applications);
+      const trackerSave = await entitlementService.saveTrackerApplicationsAtomic(activeUser, payload.applications);
+      if (!trackerSave.ok) {
+        return sendJson(res, trackerSave.statusCode || 403, trackerSave);
+      }
       logAdminActivity(`Tracker synced (${payload.applications.length} apps) for ${activeUser.email}`);
       recordToolUsage("trackerSync");
       broadcast(activeUser.id, payload.applications, "tracker");
@@ -2134,6 +2323,150 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ── ADMIN PAYMENTS, WEBHOOKS, AUDITED GRANTS & FUNNEL ANALYTICS ───
+  // GET /api/admin/payments
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/payments") {
+    const envFilter = urlObj.searchParams.get("environment") || null;
+    const allPayments = await db.getAdminPayments({ environment: envFilter, limit: 150 });
+    const allRefunds = await db.getAdminRefunds({ environment: envFilter, limit: 100 });
+    const webhooks = await db.getAdminWebhooks({ environment: envFilter, limit: 100 });
+    const auditLogs = await db.getAdminAuditLogs(50);
+    const funnel = await db.getAnalyticsSummary(envFilter);
+
+    let liveGrossRevenuePaise = 0;
+    let testGrossRevenuePaise = 0;
+    let liveConfirmedRefundsPaise = 0;
+    let testConfirmedRefundsPaise = 0;
+    let liveCount = 0;
+    let testCount = 0;
+    for (const p of allPayments) {
+      if ((p.entitlementStatus === "fulfilled" || p.paymentStatus === "captured") && !String(p.razorpayPaymentId || "").startsWith("admin_grant_")) {
+        if (p.environment === "live") {
+          liveGrossRevenuePaise += Number(p.amount || 0);
+          liveCount += 1;
+        } else {
+          testGrossRevenuePaise += Number(p.amount || 0);
+          testCount += 1;
+        }
+      }
+    }
+    for (const r of allRefunds) {
+      if (r.refundStatus === "processed") {
+        if (r.environment === "live") liveConfirmedRefundsPaise += Number(r.amount || 0);
+        else testConfirmedRefundsPaise += Number(r.amount || 0);
+      }
+    }
+    const liveRevenuePaise = Math.max(0, liveGrossRevenuePaise - liveConfirmedRefundsPaise);
+    const testRevenuePaise = Math.max(0, testGrossRevenuePaise - testConfirmedRefundsPaise);
+
+    sendJson(res, 200, {
+      ok: true,
+      currentEnvironment: planCatalog.getPaymentEnvironment(process.env.RAZORPAY_KEY_ID),
+      summary: {
+        liveRevenuePaise,
+        liveGrossRevenuePaise,
+        liveConfirmedRefundsPaise,
+        testRevenuePaise,
+        testGrossRevenuePaise,
+        testConfirmedRefundsPaise,
+        liveCount,
+        testCount
+      },
+      payments: allPayments,
+      refunds: allRefunds,
+      webhooks,
+      auditLogs,
+      funnel
+    });
+    return;
+  }
+
+  // POST /api/admin/grants — audited manual Pro grant or revoke
+  if (req.method === "POST" && urlObj.pathname === "/api/admin/grants") {
+    let body;
+    try {
+      body = await readBody(req, 16384);
+    } catch (e) {
+      return sendJson(res, 413, { ok: false, error: "Request body too large" });
+    }
+    try {
+      const payload = JSON.parse(body || "{}");
+      const targetUserId = String(payload.userId || "").trim();
+      const action = String(payload.action || "grant").trim().toLowerCase();
+      const reason = String(payload.reason || "").trim();
+      const days = Math.max(1, Math.min(365, Number(payload.days || 30)));
+      const activeEnv = planCatalog.getPaymentEnvironment(process.env.RAZORPAY_KEY_ID);
+      const targetEnv = (payload.environment === "test" || payload.environment === "live")
+        ? payload.environment
+        : (activeEnv === "test" ? "test" : "live");
+
+      if (!targetUserId || !reason) {
+        return sendJson(res, 400, { ok: false, error: "userId and reason are required for audited grants." });
+      }
+      const targetUser = await db.getUserById(targetUserId);
+      if (!targetUser) {
+        return sendJson(res, 404, { ok: false, error: "Target user not found." });
+      }
+
+      const now = Date.now();
+      await db.withPaymentTransaction(async (tx) => {
+        const existing = await tx.getEntitlementForUpdate(targetUserId, targetEnv);
+        if (action === "revoke") {
+          await tx.upsertEntitlement({
+            userId: targetUserId,
+            planId: "free",
+            status: "revoked_admin",
+            startedAt: existing ? existing.startedAt : now,
+            expiresAt: now,
+            sourcePaymentId: existing ? existing.sourcePaymentId : "admin_grant",
+            environment: targetEnv,
+            createdAt: existing ? existing.createdAt : now,
+            updatedAt: now
+          });
+          if (targetEnv === activeEnv) await tx.updateUserTier(targetUserId, "free");
+        } else {
+          const baseExp = existing && existing.status === "active" && existing.expiresAt ? Number(existing.expiresAt) : 0;
+          const newExp = Math.max(now, baseExp) + days * 86400000;
+          await tx.upsertEntitlement({
+            userId: targetUserId,
+            planId: "pro",
+            status: "active",
+            startedAt: existing && existing.startedAt ? existing.startedAt : now,
+            expiresAt: newExp,
+            sourcePaymentId: `admin_grant_${now}`,
+            environment: targetEnv,
+            createdAt: existing ? existing.createdAt : now,
+            updatedAt: now
+          });
+          if (targetEnv === activeEnv) await tx.updateUserTier(targetUserId, "pro");
+        }
+      });
+
+      const auditEntry = await db.recordAdminAuditLog({
+        adminUserId: activeUser.id,
+        adminEmail: activeUser.email,
+        action: action === "revoke" ? "admin_revoke_pro" : "admin_grant_pro",
+        targetUserId,
+        environment: targetEnv,
+        reason,
+        metadata: { days }
+      });
+      logAdminActivity(`Admin ${action} Pro (${targetEnv}) for ${targetUser.email}: ${reason}`);
+      sendJson(res, 200, { ok: true, audit: auditEntry });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: e.message || "Grant operation failed" });
+    }
+    return;
+  }
+
+  // GET /api/admin/funnel
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/funnel") {
+    const envFilter = urlObj.searchParams.get("environment") || null;
+    const funnel = await db.getAnalyticsSummary(envFilter);
+    sendJson(res, 200, { ok: true, funnel });
+    return;
+  }
+
   // POST /api/ats/analyze — Rate limited to protect backend from DoS / automated scraping
   if (req.method === "POST" && urlObj.pathname === "/api/ats/analyze") {
     // Authenticated users: 30 scans per hour
@@ -2271,13 +2604,42 @@ const server = http.createServer(async (req, res) => {
 
         logAdminActivity(`ATS analysis run (${role}) for ${activeUser ? activeUser.email : "anonymous"} - Score: ${finalScore}%`);
         recordToolUsage("atsChecker");
-        sendJson(res, 200, {
-          ok: true,
-          score: finalScore,
-          matchedKeywords: matchedKeywords,
-          missingKeywords: missingKeywords,
-          suggestions: suggestions
-        });
+
+        const atsCap = activeUser
+          ? await entitlementService.canAccessFeature(activeUser.id, activeUser, "ats_full_breakdown")
+          : { allowed: false };
+        const isFullAts = Boolean(atsCap.allowed);
+
+        if (isFullAts) {
+          sendJson(res, 200, {
+            ok: true,
+            tier: "pro",
+            detailLevel: "full",
+            score: finalScore,
+            matchedKeywords: matchedKeywords,
+            missingKeywords: missingKeywords,
+            suggestions: suggestions,
+            upgradeRequired: false
+          });
+        } else {
+          sendJson(res, 200, {
+            ok: true,
+            tier: "free",
+            detailLevel: "basic",
+            score: finalScore,
+            matchedCount: matchedKeywords.length,
+            matchedKeywords: matchedKeywords.slice(0, 3),
+            missingKeywords: missingKeywords.slice(0, 3),
+            totalMissingKeywords: missingKeywords.length,
+            suggestions: suggestions.slice(0, 1),
+            summary: finalScore >= 80
+              ? "Strong baseline match. Upgrade to Pro for full keyword gap & section breakdown."
+              : (finalScore >= 50
+                ? "Moderate match. Top 3 missing keywords shown; upgrade to Pro for the complete keyword & JD breakdown."
+                : "Low match. Upgrade to Pro to unlock all missing keywords and section-level optimization guidance."),
+            upgradeRequired: true
+          });
+        }
       } catch (err) {
         sendJson(res, 500, { ok: false, error: "Analysis failed. Please try again." });
       }
@@ -2307,7 +2669,7 @@ const server = http.createServer(async (req, res) => {
     if (activeUser) {
       const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
       const limit = effectiveEnt.tier === "pro" ? 50 : 5;
-      if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
+      if (isRateLimited(activeUser.id + ":resume", limit, 3600000, userRateLimits)) {
         sendJson(res, 429, { ok: false, error: `Too many resume generation attempts. Limit is ${limit} per hour.` });
         return;
       }
@@ -2323,11 +2685,24 @@ const server = http.createServer(async (req, res) => {
     } catch (e) {
       return sendJson(res, 413, { ok: false, error: "Request body too large" });
     }
+    let resumeQuotaOpId = null;
     try {
       const payload = JSON.parse(body || "{}");
       const templateId = String(payload.templateId || "01");
       if (templateId.includes("..") || templateId.includes("/") || templateId.includes("\\")) {
         return sendJson(res, 400, { ok: false, error: "Invalid template ID format" });
+      }
+      if (activeUser && payload.preview !== true) {
+        const qRes = await entitlementService.reserveUsage({
+          user: activeUser,
+          metricKey: "resume_export",
+          operationId: payload.operationId,
+          metadata: { templateId }
+        });
+        if (!qRes.ok) {
+          return sendJson(res, qRes.statusCode || 403, qRes);
+        }
+        resumeQuotaOpId = qRes.operationId;
       }
       const data = payload.data || {};
 
@@ -2531,9 +2906,15 @@ const server = http.createServer(async (req, res) => {
 
         logAdminActivity(`Resume PDF generated (template ${templateId}) for ${activeUser ? activeUser.email : "anonymous"}`);
         recordToolUsage("resumeBuilder");
+        if (activeUser && resumeQuotaOpId) {
+          await entitlementService.finalizeUsage({ user: activeUser, operationId: resumeQuotaOpId });
+        }
         res.writeHead(200, { "Content-Type": "text/plain" });
         res.end(content);
       } catch (err) {
+        if (activeUser && resumeQuotaOpId) {
+          try { await entitlementService.releaseUsage({ user: activeUser, operationId: resumeQuotaOpId }); } catch (e) {}
+        }
         sendJson(res, 500, { ok: false, error: err.message });
       }
       return;
@@ -2543,7 +2924,7 @@ const server = http.createServer(async (req, res) => {
     if (activeUser) {
       const effectiveEnt = await paymentService.getEffectiveEntitlement(activeUser.id, activeUser);
       const limit = effectiveEnt.tier === "pro" ? 50 : 5;
-      if (isRateLimited(activeUser.id, limit, 3600000, userRateLimits)) {
+      if (isRateLimited(activeUser.id + ":cover-letter", limit, 3600000, userRateLimits)) {
         sendJson(res, 429, { ok: false, error: `Too many cover letter generation attempts. Limit is ${limit} per hour.` });
         return;
       }
@@ -2559,11 +2940,44 @@ const server = http.createServer(async (req, res) => {
     } catch (e) {
       return sendJson(res, 413, { ok: false, error: "Request body too large" });
     }
+    let coverQuotaOpId = null;
     try {
       const payload = JSON.parse(body || "{}");
       const templateId = String(payload.templateId || "01");
       if (templateId.includes("..") || templateId.includes("/") || templateId.includes("\\")) {
         return sendJson(res, 400, { ok: false, error: "Invalid template ID format" });
+      }
+      if (activeUser) {
+        const tplCheck = await entitlementService.canAccessFeature(activeUser.id, activeUser, "cover_letter_template", { templateId });
+        if (!tplCheck.allowed) {
+          return sendJson(res, 403, {
+            ok: false,
+            code: entitlementService.ERROR_CODES.FEATURE_REQUIRES_PRO,
+            upgradeRequired: true,
+            templateId,
+            error: "Free plan includes the Standard Cover Letter template (01). Upgrade to Pro for all 10 templates."
+          });
+        }
+        if (payload.preview !== true) {
+          const qRes = await entitlementService.reserveUsage({
+            user: activeUser,
+            metricKey: "cover_letter_export",
+            operationId: payload.operationId,
+            metadata: { templateId }
+          });
+          if (!qRes.ok) {
+            return sendJson(res, qRes.statusCode || 403, qRes);
+          }
+          coverQuotaOpId = qRes.operationId;
+        }
+      } else if (templateId !== "01") {
+        return sendJson(res, 403, {
+          ok: false,
+          code: entitlementService.ERROR_CODES.FEATURE_REQUIRES_PRO,
+          upgradeRequired: true,
+          templateId,
+          error: "Sign in and upgrade to Pro to use premium cover letter templates."
+        });
       }
       const data = payload.data || {};
 
@@ -2634,9 +3048,15 @@ const server = http.createServer(async (req, res) => {
 
       logAdminActivity(`Cover letter generated (template ${templateId}) for ${activeUser ? activeUser.email : "anonymous"}`);
       recordToolUsage("coverLetter");
+      if (activeUser && coverQuotaOpId) {
+        await entitlementService.finalizeUsage({ user: activeUser, operationId: coverQuotaOpId });
+      }
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true, latex: content }));
     } catch (err) {
+      if (activeUser && coverQuotaOpId) {
+        try { await entitlementService.releaseUsage({ user: activeUser, operationId: coverQuotaOpId }); } catch (e) {}
+      }
       sendJson(res, 500, { ok: false, error: err.message });
     }
     return;

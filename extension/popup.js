@@ -599,7 +599,17 @@ async function doAutofill() {
     return;
   }
 
-  setStatus("Running autofill…");
+  setStatus("Checking quota & running autofill…");
+  const authRes = await new Promise((r) =>
+    chrome.runtime.sendMessage({ type: "jobxapply:authorizeAutofill", portal: rule.portal, portalHost: tab.url ? new URL(tab.url).hostname : "" }, r)
+  );
+  if (!authRes?.ok) {
+    setStatus(authRes?.error || "Autofill quota reached — upgrade to Pro.", "error");
+    if (authRes?.upgradeRequired && authRes?.upgradeUrl) {
+      chrome.runtime.sendMessage({ type: "jobxapply:openUpgrade", url: authRes.upgradeUrl });
+    }
+    return;
+  }
   const payload = buildAutofillPayload(profile, Object.keys(profile).filter(k => profile[k]));
 
   const mapData = await new Promise((r) => chrome.storage.local.get(["jobxapplyMaps", "jobxapplyCustomMaps"], r));
@@ -624,12 +634,17 @@ async function doAutofill() {
 
   chrome.tabs.sendMessage(tab.id, { type: "jobxapply:applyAutofill", profile: payload, portalMap: map }, (res) => {
     if (chrome.runtime.lastError) {
+      chrome.runtime.sendMessage({ type: "jobxapply:releaseAutofill", operationId: authRes.operationId });
       setStatus("Error: " + chrome.runtime.lastError.message, "error");
       return;
     }
     if (res?.filled > 0) {
+      chrome.runtime.sendMessage({ type: "jobxapply:completeAutofill", operationId: authRes.operationId }, () => {
+        refreshPopupEntitlement(true);
+      });
       setStatus(`Filled ${res.filled} field(s)`, "success");
     } else {
+      chrome.runtime.sendMessage({ type: "jobxapply:releaseAutofill", operationId: authRes.operationId });
       setStatus("No matching fields found on this page", "warn");
     }
   });
@@ -965,13 +980,17 @@ function handlePopupDownloadCoverLetter() {
           badge.style.color = ent.tier === "pro" ? "var(--teal)" : "var(--text-muted)";
         }
         if (sub) {
-          sub.textContent = ent.tier === "pro" && ent.daysRemaining
-            ? `Pro · ${ent.daysRemaining}d left`
-            : "Free Tier";
+          if (ent.tier === "pro" && ent.daysRemaining) {
+            sub.textContent = `Pro · ${ent.daysRemaining}d left`;
+          } else if (ent.usage && ent.usage.autofills && ent.usage.autofills.limit !== null) {
+            sub.textContent = `Free · ${ent.usage.autofills.remaining}/${ent.usage.autofills.limit} autofills left`;
+          } else {
+            sub.textContent = "Free · 10/mo";
+          }
         }
       });
     }
-    refreshPopupEntitlement(false);
+    refreshPopupEntitlement(true);
   } catch (globalErr) {
     console.error("Popup init failed:", globalErr);
     const loginView = document.getElementById("loginView");

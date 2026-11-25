@@ -73,6 +73,7 @@ function renderAdminNav(activePage) {
     { file: "cms.html", label: "Live CMS" },
     { file: "seo.html", label: "SEO & AI" },
     { file: "users.html", label: "Users" },
+    { file: "payments.html", label: "Payments" },
     { file: "tools.html", label: "Tools" },
     { file: "content.html", label: "Flags" },
     { file: "access.html", label: "Access" },

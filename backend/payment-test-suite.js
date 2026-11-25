@@ -242,10 +242,10 @@ async function runTests() {
     // Whitespace & uppercase normalization on TEST_CHECKOUT_EMAILS
     process.env.TEST_CHECKOUT_EMAILS = `  ${userA.email.toUpperCase()}  , other@example.com `;
 
-    // Allowlisted user passes the public checkout gate (hits DB fail-closed check since !usePg locally)
+    // Allowlisted user with verified email passes the public checkout gate (hits DB fail-closed check since !usePg locally)
     let errAllowlistedPassGate = null;
     try {
-      await paymentService.createOrderForUser({ user: userA, planId: "pro", rzpClient: mockRzp });
+      await paymentService.createOrderForUser({ user: { ...userA, emailVerified: true }, planId: "pro", rzpClient: mockRzp });
     } catch (e) { errAllowlistedPassGate = e; }
     assert(errAllowlistedPassGate && errAllowlistedPassGate.message.includes("PostgreSQL database is unavailable"),
       "Allowlisted test account passes checkout gate (email normalized) while public checkout stays disabled");

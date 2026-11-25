@@ -1424,11 +1424,21 @@ async function syncApplications(localApps = null) {
     if (localApps === null) {
       localApps = loadApplications();
     }
-    await fetch(`${SYNC_API}/tracker`, {
+    const res = await fetch(`${SYNC_API}/tracker`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ applications: localApps })
     });
+    if (res.status === 403) {
+      const errData = await res.json().catch(() => ({}));
+      if (window.JobXApplyPaywall) {
+        window.JobXApplyPaywall.show({
+          title: 'Application Tracker Limit Reached (20/20)',
+          message: errData.error || 'Free plan supports up to 20 saved applications. Upgrade to Pro for unlimited tracking.',
+          featureKey: 'tracker'
+        });
+      }
+    }
   } catch (e) {
     console.error("Tracker sync failed:", e);
   }
@@ -3272,6 +3282,9 @@ const JobXApplyCheckout = {
         }
         window.dispatchEvent(new CustomEvent('jobxapply:refreshEntitlement'));
         onState('success', 'Pro entitlement verified and synced!');
+        if (!callbacks.suppressReceipt && data.receipt && window.JobXApplyReceipt) {
+          window.JobXApplyReceipt.show(data.receipt);
+        }
         onSuccess(data);
       } else {
         onState('entitlement_pending', 'Payment not yet captured. If amount was deducted, wait a moment and retry recovery.');
@@ -3346,8 +3359,8 @@ const JobXApplyCheckout = {
         modal: {
           ondismiss: function () {
             release();
-            onState('cancelled', 'Checkout closed before payment completion.');
-            onError('Payment cancelled.', { cancelled: true, orderId: orderData.order_id });
+            onState('cancelled', 'Checkout closed. If funds were debited, use Recover Payment before retrying.');
+            onError('Checkout closed. If funds were debited, use Recover Payment before trying again.', { cancelled: true, recoverable: true, orderId: orderData.order_id });
           }
         },
         handler: async function (response) {
@@ -3378,6 +3391,14 @@ const JobXApplyCheckout = {
               window.dispatchEvent(new CustomEvent('jobxapply:refreshEntitlement'));
               release();
               onState('success', 'Payment verified! Pro access is now active.');
+              JobXApplyTrackFunnel('checkout_completed', { orderId: orderData.order_id });
+              if (!callbacks.suppressReceipt && verifyData.receipt) {
+                ensureReceiptComponent().then(() => {
+                  if (window.JobXApplyReceipt) {
+                    window.JobXApplyReceipt.show(verifyData.receipt);
+                  }
+                });
+              }
               onSuccess(verifyData);
             } else if (verifyRes.status === 402) {
               release();
@@ -3412,9 +3433,126 @@ const JobXApplyCheckout = {
   }
 };
 
+function ensureReceiptComponent() {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.JobXApplyReceipt) return Promise.resolve();
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'payment-receipt.js';
+    script.onload = () => resolve();
+    script.onerror = () => resolve();
+    document.head.appendChild(script);
+  });
+}
+
+function JobXApplyTrackFunnel(eventName, metadata = {}) {
+  try {
+    const token = getEffectiveAuthToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch(`${SYNC_API}/analytics/event`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ eventName, source: window.location.pathname, metadata })
+    }).catch(() => {});
+  } catch (e) {}
+}
+
+const JobXApplyPaywall = {
+  show(opts = {}) {
+    const title = opts.title || 'Upgrade to JobXApply Pro';
+    const message = opts.message || 'You have reached a Free plan limit. Upgrade for unlimited access for 30 days.';
+    const featureKey = opts.featureKey || 'general';
+    JobXApplyTrackFunnel('paywall_shown', { featureKey });
+
+    const prev = document.getElementById('jxa-paywall-modal');
+    if (prev) prev.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'jxa-paywall-modal';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99990;background:rgba(10,12,18,.75);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:16px;';
+
+    overlay.innerHTML = `
+      <div style="background:#131620;border:1px solid rgba(255,255,255,.12);border-radius:16px;max-width:440px;width:100%;padding:24px;color:#f3f4f6;box-shadow:0 24px 60px rgba(0,0,0,.5);">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#a78bfa;text-transform:uppercase;margin-bottom:6px;">JobXApply Pro &bull; ₹199 / 30 days</div>
+        <h3 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff;">${String(title).replace(/</g, '&lt;')}</h3>
+        <p style="margin:0 0 14px;font-size:13px;line-height:1.5;color:#9ca3af;">${String(message).replace(/</g, '&lt;')}</p>
+        <ul style="margin:0 0 18px;padding-left:18px;font-size:13px;color:#d1d5db;line-height:1.7;">
+          <li>Unlimited Smart Autofills &amp; Application Tracker</li>
+          <li>Full ATS keyword &amp; section breakdown</li>
+          <li>Unlimited Resume &amp; all 10 Cover Letter templates</li>
+          <li>One-time prepaid 30-day pass &mdash; no auto-renewal</li>
+        </ul>
+        <div id="jxa-pw-status" style="display:none;font-size:12px;margin-bottom:12px;padding:8px 10px;border-radius:8px;background:rgba(91,79,232,.15);color:#c4b5fd;"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" id="jxa-pw-upgrade" style="flex:1;min-width:170px;padding:10px 14px;border-radius:10px;border:none;background:#5b4fe8;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">Upgrade to Pro &mdash; ₹199</button>
+          <button type="button" id="jxa-pw-close" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:transparent;color:#d1d5db;font-weight:600;font-size:13px;cursor:pointer;">Keep Free</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.querySelector('#jxa-pw-close').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    const upBtn = overlay.querySelector('#jxa-pw-upgrade');
+    const stBox = overlay.querySelector('#jxa-pw-status');
+    upBtn.addEventListener('click', () => {
+      JobXApplyTrackFunnel('paywall_upgrade_clicked', { featureKey });
+      if (!getEffectiveAuthToken()) {
+        window.location.href = `auth.html?next=${encodeURIComponent(window.location.pathname.split('/').pop() || 'dashboard.html')}`;
+        return;
+      }
+      upBtn.disabled = true;
+      stBox.style.display = 'block';
+      stBox.textContent = 'Opening secure checkout...';
+      JobXApplyCheckout.startProCheckout({
+        onState: (_, msg) => { stBox.textContent = msg; },
+        onSuccess: (data) => {
+          close();
+          if (typeof opts.onSuccess === 'function') opts.onSuccess(data);
+        },
+        onError: (errMsg) => {
+          upBtn.disabled = false;
+          stBox.textContent = errMsg;
+        }
+      });
+    });
+  }
+};
+
+function clearAccountEntitlementCache() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.removeItem('jxa_tier');
+    localStorage.removeItem('jxa_subscription');
+    Object.keys(localStorage).forEach((k) => {
+      if (k.startsWith('jxa_receipt_seen_')) localStorage.removeItem(k);
+    });
+  } catch (e) {}
+}
+
+(function guardAccountSwitchCache() {
+  if (typeof localStorage === 'undefined' || typeof sessionStorage === 'undefined') return;
+  try {
+    const currentEmail = (localStorage.getItem('jxa_user_email') || '').trim().toLowerCase();
+    const prevEmail = (localStorage.getItem('jxa_last_entitlement_email') || '').trim().toLowerCase();
+    if (prevEmail && currentEmail && prevEmail !== currentEmail) {
+      clearAccountEntitlementCache();
+    }
+    if (currentEmail) localStorage.setItem('jxa_last_entitlement_email', currentEmail);
+  } catch (e) {}
+})();
+
 if (typeof window !== 'undefined') {
   window.ensureRazorpaySDK = ensureRazorpaySDK;
   window.JobXApplyCheckout = JobXApplyCheckout;
+  window.JobXApplyPaywall = JobXApplyPaywall;
+  window.JobXApplyTrackFunnel = JobXApplyTrackFunnel;
+  window.clearAccountEntitlementCache = clearAccountEntitlementCache;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

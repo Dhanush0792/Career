@@ -54,6 +54,7 @@ async function fetchAuthoritativeEntitlement() {
           environment: sub.environment || "live",
           expiresAt: sub.expiresAt || null,
           daysRemaining: typeof sub.daysRemaining === "number" ? sub.daysRemaining : 0,
+          usage: data.usage || null,
           fetchedAt: Date.now()
         };
         // Invalidate/replace cache whenever environment or entitlement changes
@@ -69,6 +70,31 @@ async function fetchAuthoritativeEntitlement() {
 chrome.runtime.onStartup.addListener(() => {
   fetchAuthoritativeEntitlement().catch(() => {});
 });
+
+try {
+  if (chrome.alarms) {
+    chrome.alarms.create("jobxapplyEntitlementSync", { periodInMinutes: 15 });
+    chrome.alarms.onAlarm.addListener((alarm) => {
+      if (alarm?.name === "jobxapplyEntitlementSync") {
+        fetchAuthoritativeEntitlement().catch(() => {});
+      }
+    });
+  }
+} catch (e) {}
+
+let _lastFocusEntSync = 0;
+function triggerDebouncedEntRefresh() {
+  const now = Date.now();
+  if (now - _lastFocusEntSync < 120000) return;
+  _lastFocusEntSync = now;
+  fetchAuthoritativeEntitlement().catch(() => {});
+}
+try {
+  chrome.tabs?.onActivated?.addListener(triggerDebouncedEntRefresh);
+  chrome.windows?.onFocusChanged?.addListener((winId) => {
+    if (winId !== chrome.windows.WINDOW_ID_NONE) triggerDebouncedEntRefresh();
+  });
+} catch (e) {}
 
 async function authenticatedFetch(url, options = {}) {
   return new Promise((resolve, reject) => {
@@ -245,6 +271,120 @@ function getBaseDomain(hostname) {
   return parts.join(".");
 }
 
+function resolveOfflineAutofillFallback(rawEntitlement, operationId) {
+  const cached = resolveEffectiveCachedEntitlement(rawEntitlement);
+  const cacheFresh = rawEntitlement && rawEntitlement.fetchedAt &&
+    (Date.now() - Number(rawEntitlement.fetchedAt) < 24 * 60 * 60 * 1000);
+  if (cacheFresh && cached.tier === "pro") {
+    return { ok: true, operationId, tier: "pro", offlineCached: true };
+  }
+  if (cacheFresh && cached.usage && cached.usage.autofills && cached.usage.autofills.remaining > 0) {
+    cached.usage.autofills.remaining = Math.max(0, cached.usage.autofills.remaining - 1);
+    cached.usage.autofills.used = Number(cached.usage.autofills.used || 0) + 1;
+    chrome.storage.local.set({ jobxapplyEntitlement: cached });
+    return { ok: true, operationId, tier: "free", offlineCached: true, remaining: cached.usage.autofills.remaining };
+  }
+  return {
+    ok: false,
+    code: "ENTITLEMENT_UNAVAILABLE",
+    error: "Reconnect to the internet to verify your monthly autofill quota.",
+    upgradeUrl: "https://jobxapply.netlify.app/pricing.html?source=extension_offline"
+  };
+}
+
+function authorizeAutofillRequest({ portal = "unknown", portalHost = "", operationId: customOpId = "" }) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["jobxapplyToken", "jobxapplyEntitlement"], async (res) => {
+      const token = res.jobxapplyToken;
+      const operationId = customOpId || `ext_af_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      if (!token) {
+        resolve({
+          ok: false,
+          code: "AUTH_REQUIRED",
+          error: "Please sign in to JobXApply to use Smart Autofill.",
+          upgradeUrl: "https://jobxapply.netlify.app/auth.html?source=extension"
+        });
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${SYNC_API}/usage/autofill/authorize`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            operationId,
+            portal: portal || "unknown",
+            urlHost: portalHost || ""
+          })
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.ok) {
+          resolve({
+            ok: true,
+            operationId: data.operationId || operationId,
+            tier: data.tier || "free",
+            remaining: data.remaining
+          });
+          return;
+        }
+        if (resp.status === 401) {
+          resolve({
+            ok: false,
+            code: "AUTH_REQUIRED",
+            error: data.error || "Session expired. Please sign in to JobXApply again.",
+            upgradeUrl: "https://jobxapply.netlify.app/auth.html?source=extension"
+          });
+          return;
+        }
+        // Fall back to bounded local entitlement cache on 404 or 5xx transient server/deploy errors
+        if (resp.status === 404 || resp.status >= 500) {
+          resolve(resolveOfflineAutofillFallback(res.jobxapplyEntitlement, operationId));
+          return;
+        }
+        fetchAuthoritativeEntitlement().catch(() => {});
+        resolve({
+          ok: false,
+          code: data.code || "QUOTA_EXCEEDED",
+          upgradeRequired: Boolean(data.upgradeRequired || resp.status === 403),
+          error: data.error || "Monthly autofill quota reached. Upgrade to Pro for unlimited autofills.",
+          upgradeUrl: "https://jobxapply.netlify.app/pricing.html?source=extension_quota"
+        });
+      } catch (err) {
+        resolve(resolveOfflineAutofillFallback(res.jobxapplyEntitlement, operationId));
+      }
+    });
+  });
+}
+
+function settleAutofillRequest(endpoint, operationId) {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["jobxapplyToken"], async (res) => {
+      if (!res.jobxapplyToken || !operationId) {
+        resolve({ ok: true });
+        return;
+      }
+      try {
+        await fetch(`${SYNC_API}/usage/autofill/${endpoint}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${res.jobxapplyToken}`
+          },
+          body: JSON.stringify({ operationId })
+        });
+        if (endpoint === "complete") {
+          await fetchAuthoritativeEntitlement();
+        }
+      } catch (e) {}
+      resolve({ ok: true });
+    });
+  });
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Security: reject messages from any context other than our own extension
   // (content scripts, popup, options page all share the same extension ID)
@@ -290,6 +430,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ ok: true, entitlement: resolveEffectiveCachedEntitlement(cached) });
       }
     });
+    return true;
+  }
+  if (message?.type === "jobxapply:authorizeAutofill") {
+    authorizeAutofillRequest({
+      portal: message.portal,
+      portalHost: message.portalHost,
+      operationId: message.operationId
+    }).then(sendResponse);
+    return true;
+  }
+  if (message?.type === "jobxapply:completeAutofill") {
+    settleAutofillRequest("complete", message.operationId).then(sendResponse);
+    return true;
+  }
+  if (message?.type === "jobxapply:releaseAutofill") {
+    settleAutofillRequest("release", message.operationId).then(sendResponse);
+    return true;
+  }
+  if (message?.type === "jobxapply:openUpgrade") {
+    chrome.tabs.create({ url: message.url || "https://jobxapply.netlify.app/pricing.html?source=extension" });
+    sendResponse({ ok: true });
     return true;
   }
   if (message?.type === "jobxapply:getPortalMap") {
@@ -709,11 +870,28 @@ if (chrome.contextMenus && chrome.contextMenus.onClicked) {
   chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (!tab || !tab.id) return;
     if (info.menuItemId === "jxa_autofill") {
-      chrome.storage.local.get(["jobxapplyProfile"], (res) => {
-        const profile = res.jobxapplyProfile || {};
-        chrome.tabs.sendMessage(tab.id, {
-          type: "jobxapply:autofill",
-          payload: profile
+      chrome.storage.local.get(["jobxapplyProfile", "jobxapplyProfiles", "jobxapplyActiveProfileId"], async (res) => {
+        const profiles = res.jobxapplyProfiles || {};
+        const activeId = res.jobxapplyActiveProfileId || Object.keys(profiles)[0] || "default";
+        const profile = profiles[activeId] || res.jobxapplyProfile || {};
+        const rule = getPortalRule(tab.url || "");
+        let portalHost = "";
+        try { portalHost = tab.url ? new URL(tab.url).hostname : ""; } catch (e) {}
+
+        const authRes = await authorizeAutofillRequest({ portal: rule.portal, portalHost });
+        if (!authRes.ok) {
+          if ((authRes.code === "AUTH_REQUIRED" || authRes.upgradeRequired) && authRes.upgradeUrl) {
+            chrome.tabs.create({ url: authRes.upgradeUrl });
+          }
+          return;
+        }
+
+        chrome.tabs.sendMessage(tab.id, { type: "jobxapply:autofill", payload: profile }, (outcome) => {
+          if (chrome.runtime.lastError || !outcome || !(outcome.filledCount > 0)) {
+            settleAutofillRequest("release", authRes.operationId);
+            return;
+          }
+          settleAutofillRequest("complete", authRes.operationId);
         });
       });
     } else if (info.menuItemId === "jxa_track") {

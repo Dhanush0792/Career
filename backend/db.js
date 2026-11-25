@@ -14,6 +14,8 @@ if (!fs.existsSync(USERS_DIR)) {
 
 // Supabase PostgreSQL Pool Initialization
 let usePg = false;
+let pgInitialized = false;
+let pgInitError = null;
 let pool = null;
 
 async function initializeDatabase(p) {
@@ -185,6 +187,106 @@ async function initializeDatabase(p) {
   `);
   await p.query(`CREATE INDEX IF NOT EXISTS idx_refunds_payment ON refunds (environment, razorpay_payment_id)`);
 
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS usage_counters (
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      period_key VARCHAR(16) NOT NULL,
+      metric_key VARCHAR(64) NOT NULL,
+      environment VARCHAR(16) NOT NULL DEFAULT 'live',
+      used_count INT NOT NULL DEFAULT 0,
+      reserved_count INT NOT NULL DEFAULT 0,
+      updated_at BIGINT NOT NULL,
+      PRIMARY KEY (user_id, period_key, metric_key, environment)
+    )
+  `);
+  try {
+    await p.query(`ALTER TABLE usage_counters ADD COLUMN IF NOT EXISTS environment VARCHAR(16) NOT NULL DEFAULT 'live'`);
+    await p.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conrelid = 'usage_counters'::regclass AND contype = 'p'
+          AND pg_get_constraintdef(oid) NOT LIKE '%environment%'
+        ) THEN
+          ALTER TABLE usage_counters DROP CONSTRAINT usage_counters_pkey;
+          ALTER TABLE usage_counters ADD PRIMARY KEY (user_id, period_key, metric_key, environment);
+        END IF;
+      END $$;
+    `);
+  } catch (e) {}
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS usage_operations (
+      operation_id VARCHAR(128) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      period_key VARCHAR(16) NOT NULL,
+      metric_key VARCHAR(64) NOT NULL,
+      environment VARCHAR(16) NOT NULL DEFAULT 'live',
+      status VARCHAR(32) NOT NULL,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      expires_at BIGINT NOT NULL,
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL
+    )
+  `);
+  try {
+    await p.query(`ALTER TABLE usage_operations ADD COLUMN IF NOT EXISTS environment VARCHAR(16) NOT NULL DEFAULT 'live'`);
+  } catch (e) {}
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_usage_ops_user ON usage_operations (user_id, period_key, environment, status)`);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS payment_receipts (
+      receipt_id VARCHAR(128) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      razorpay_payment_id VARCHAR(128) NOT NULL,
+      razorpay_order_id VARCHAR(128) NOT NULL,
+      environment VARCHAR(16) NOT NULL,
+      plan_id VARCHAR(32) NOT NULL,
+      plan_name VARCHAR(64) NOT NULL,
+      amount INT NOT NULL,
+      currency VARCHAR(16) NOT NULL,
+      customer_name VARCHAR(255),
+      customer_email VARCHAR(255),
+      payment_method VARCHAR(64),
+      validity_start BIGINT NOT NULL,
+      validity_end BIGINT NOT NULL,
+      snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+      animation_seen_at BIGINT,
+      created_at BIGINT NOT NULL,
+      UNIQUE (environment, razorpay_payment_id)
+    )
+  `);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_receipts_user ON payment_receipts (user_id, created_at DESC)`);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS admin_audit_logs (
+      id VARCHAR(64) PRIMARY KEY,
+      admin_user_id VARCHAR(255) NOT NULL,
+      admin_email VARCHAR(255),
+      action VARCHAR(128) NOT NULL,
+      target_user_id VARCHAR(255),
+      environment VARCHAR(16),
+      reason TEXT,
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at BIGINT NOT NULL
+    )
+  `);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit_logs (created_at DESC)`);
+
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id VARCHAR(64) PRIMARY KEY,
+      event_name VARCHAR(64) NOT NULL,
+      user_id VARCHAR(255),
+      environment VARCHAR(16),
+      source VARCHAR(64),
+      metadata JSONB DEFAULT '{}'::jsonb,
+      created_at BIGINT NOT NULL
+    )
+  `);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_analytics_event_time ON analytics_events (event_name, created_at DESC)`);
+
   // Enable Row Level Security (RLS) on all tables (SEC-RLS)
   try {
     await p.query(`
@@ -197,7 +299,12 @@ async function initializeDatabase(p) {
       ALTER TABLE webhook_events ENABLE ROW LEVEL SECURITY;
       ALTER TABLE subscription_entitlements ENABLE ROW LEVEL SECURITY;
       ALTER TABLE refunds ENABLE ROW LEVEL SECURITY;
-      REVOKE ALL ON payment_orders, payments, webhook_events, subscription_entitlements, refunds FROM anon, authenticated;
+      ALTER TABLE usage_counters ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE usage_operations ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE payment_receipts ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+      REVOKE ALL ON payment_orders, payments, webhook_events, subscription_entitlements, refunds, usage_counters, usage_operations, payment_receipts, admin_audit_logs, analytics_events FROM anon, authenticated;
     `);
   } catch (e) {
     // Non-fatal if DB role lacks superuser/owner privileges in dev
@@ -244,19 +351,30 @@ if (DATABASE_URL) {
     });
     pool.query("SELECT NOW()")
       .then(async () => {
-        usePg = true;
-        console.log("[DB] Connection established: Supabase PostgreSQL Cloud DB is ACTIVE.");
         try {
           await initializeDatabase(pool);
+          usePg = true;
+          pgInitialized = true;
+          pgInitError = null;
+          console.log("[DB] Connection established: Supabase PostgreSQL Cloud DB is ACTIVE.");
         } catch (e) {
-          console.error("[DB] Database schema initialization failed:", e);
+          usePg = false;
+          pgInitialized = false;
+          pgInitError = e.message || "Schema initialization failed";
+          console.error("[DB] Database schema initialization failed (fail-closed):", pgInitError);
         }
       })
       .catch(err => {
-        console.error("[DB] Supabase connection failed. Falling back to local files.", err.message || "Connection error");
+        usePg = false;
+        pgInitialized = false;
+        pgInitError = err.message || "Connection error";
+        console.error("[DB] PostgreSQL connection failed:", pgInitError);
       });
   } catch (err) {
-    console.error("[DB] Failed to construct pg Pool. Falling back to local files.", err.message || "Construction error");
+    usePg = false;
+    pgInitialized = false;
+    pgInitError = err.message || "Construction error";
+    console.error("[DB] Failed to construct pg Pool:", pgInitError);
   }
 }
 
@@ -783,6 +901,62 @@ module.exports = {
     saveUserData(userId, data);
   },
 
+  async saveApplicationsAtomic({ userId, applications, maxLimit = null }) {
+    if (usePg && pool) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          "INSERT INTO userdata (user_id, applications) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING",
+          [userId, JSON.stringify([])]
+        );
+        const res = await client.query(
+          "SELECT applications FROM userdata WHERE user_id = $1 FOR UPDATE",
+          [userId]
+        );
+        const existingRaw = res.rows[0]?.applications;
+        const existingApps = existingRaw
+          ? (typeof existingRaw === "string" ? JSON.parse(existingRaw) : existingRaw)
+          : [];
+        const existingCount = Array.isArray(existingApps) ? existingApps.length : 0;
+        const incomingCount = Array.isArray(applications) ? applications.length : 0;
+
+        if (maxLimit !== null && incomingCount > maxLimit && incomingCount > existingCount) {
+          await client.query("COMMIT");
+          return { ok: false, existingCount, attemptedCount: incomingCount, limit: maxLimit };
+        }
+        await client.query(
+          "UPDATE userdata SET applications = $1 WHERE user_id = $2",
+          [JSON.stringify(applications), userId]
+        );
+        await client.query("COMMIT");
+        return { ok: true, syncedCount: incomingCount };
+      } catch (err) {
+        try { await client.query("ROLLBACK"); } catch (e) {}
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+
+    // Non-PG serialized atomic check-and-save via memTxQueue
+    const run = async () => {
+      const data = loadUserData(userId);
+      const existingApps = Array.isArray(data.applications) ? data.applications : [];
+      const existingCount = existingApps.length;
+      const incomingCount = Array.isArray(applications) ? applications.length : 0;
+      if (maxLimit !== null && incomingCount > maxLimit && incomingCount > existingCount) {
+        return { ok: false, existingCount, attemptedCount: incomingCount, limit: maxLimit };
+      }
+      data.applications = applications;
+      await saveUserData(userId, data);
+      return { ok: true, syncedCount: incomingCount };
+    };
+    const next = memTxQueue.then(run, run);
+    memTxQueue = next.catch(() => {});
+    return next;
+  },
+
   // Reports Queue
   async createReport(report) {
     if (usePg) {
@@ -1103,11 +1277,15 @@ module.exports = {
 
   // ── Transactional Payment, Webhook, Entitlement & Refund Repository ──
   isPgAvailable() {
-    return usePg && Boolean(pool);
+    return usePg && Boolean(pool) && pgInitialized;
+  },
+
+  getPgInitError() {
+    return pgInitError;
   },
 
   assertPaymentPersistenceAvailable() {
-    if (!usePg && (process.env.NODE_ENV === "production" || process.env.REQUIRE_PG_FOR_PAYMENTS === "true")) {
+    if (!this.isPgAvailable() && (process.env.NODE_ENV === "production" || process.env.REQUIRE_PG_FOR_PAYMENTS === "true")) {
       const err = new Error("PostgreSQL database is unavailable. Financial operations are disabled (fail-closed).");
       err.statusCode = 503;
       throw err;
@@ -1182,6 +1360,466 @@ module.exports = {
     memPaymentStore.webhooks.clear();
     memPaymentStore.entitlements.clear();
     memPaymentStore.refunds.clear();
+    memPaymentStore.usageCounters.clear();
+    memPaymentStore.usageOperations.clear();
+    memPaymentStore.receipts.clear();
+    memPaymentStore.adminAuditLogs.length = 0;
+    memPaymentStore.analyticsEvents.length = 0;
+  },
+
+  // ── Usage Counters & Atomic Reservation/Finalization ──
+  async getUsageCounters(userId, periodKey, environment = "live") {
+    if (usePg && pool) {
+      const res = await pool.query(
+        "SELECT metric_key, used_count, reserved_count, updated_at FROM usage_counters WHERE user_id = $1 AND period_key = $2 AND environment = $3",
+        [userId, periodKey, environment]
+      );
+      const map = {};
+      for (const row of res.rows) {
+        map[row.metric_key] = {
+          used: Number(row.used_count || 0),
+          reserved: Number(row.reserved_count || 0),
+          updatedAt: Number(row.updated_at || 0)
+        };
+      }
+      return map;
+    }
+    const map = {};
+    const prefix = `${userId}:${periodKey}:${environment}:`;
+    for (const [k, v] of memPaymentStore.usageCounters.entries()) {
+      if (k.startsWith(prefix)) {
+        const metricKey = k.slice(prefix.length);
+        map[metricKey] = { used: v.usedCount, reserved: v.reservedCount, updatedAt: v.updatedAt };
+      }
+    }
+    return map;
+  },
+
+  async reserveUsageOperation({ operationId, userId, periodKey, metricKey, environment = "live", limit, metadata = {}, ttlMs = 120000 }) {
+    const now = Date.now();
+    const expiresAt = now + ttlMs;
+
+    if (usePg && pool) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        // Clean up expired reservations for this user/period/metric/environment
+        const expRes = await client.query(
+          "UPDATE usage_operations SET status = 'expired', updated_at = $1 WHERE user_id = $2 AND period_key = $3 AND metric_key = $4 AND environment = $5 AND status = 'reserved' AND expires_at <= $1 RETURNING operation_id",
+          [now, userId, periodKey, metricKey, environment]
+        );
+        if (expRes.rows.length > 0) {
+          await client.query(
+            "UPDATE usage_counters SET reserved_count = GREATEST(0, reserved_count - $1), updated_at = $2 WHERE user_id = $3 AND period_key = $4 AND metric_key = $5 AND environment = $6",
+            [expRes.rows.length, now, userId, periodKey, metricKey, environment]
+          );
+        }
+
+        // Check idempotency / cross-account safety if operationId already exists
+        const existingOp = await client.query(
+          "SELECT * FROM usage_operations WHERE operation_id = $1 FOR UPDATE",
+          [operationId]
+        );
+        if (existingOp.rows.length > 0) {
+          const row = existingOp.rows[0];
+          if (row.user_id !== userId) {
+            await client.query("COMMIT");
+            return { ok: false, reason: "CROSS_ACCOUNT_OPERATION" };
+          }
+          const cRes = await client.query(
+            "SELECT used_count, reserved_count FROM usage_counters WHERE user_id = $1 AND period_key = $2 AND metric_key = $3 AND environment = $4",
+            [userId, periodKey, metricKey, environment]
+          );
+          const ctr = cRes.rows[0] || { used_count: 0, reserved_count: 0 };
+          await client.query("COMMIT");
+          return {
+            ok: row.status === "reserved" || row.status === "finalized",
+            idempotent: true,
+            operationId,
+            status: row.status,
+            used: Number(ctr.used_count || 0),
+            reserved: Number(ctr.reserved_count || 0)
+          };
+        }
+
+        await client.query(
+          `INSERT INTO usage_counters (user_id, period_key, metric_key, environment, used_count, reserved_count, updated_at)
+           VALUES ($1, $2, $3, $4, 0, 0, $5)
+           ON CONFLICT (user_id, period_key, metric_key, environment) DO NOTHING`,
+          [userId, periodKey, metricKey, environment, now]
+        );
+        const cRes = await client.query(
+          "SELECT used_count, reserved_count FROM usage_counters WHERE user_id = $1 AND period_key = $2 AND metric_key = $3 AND environment = $4 FOR UPDATE",
+          [userId, periodKey, metricKey, environment]
+        );
+        const used = Number(cRes.rows[0]?.used_count || 0);
+        const reserved = Number(cRes.rows[0]?.reserved_count || 0);
+
+        if (limit !== null && limit !== undefined && (used + reserved) >= limit) {
+          await client.query("COMMIT");
+          return { ok: false, reason: "QUOTA_EXCEEDED", used, reserved, limit };
+        }
+
+        await client.query(
+          "UPDATE usage_counters SET reserved_count = reserved_count + 1, updated_at = $1 WHERE user_id = $2 AND period_key = $3 AND metric_key = $4 AND environment = $5",
+          [now, userId, periodKey, metricKey, environment]
+        );
+        await client.query(
+          `INSERT INTO usage_operations (operation_id, user_id, period_key, metric_key, environment, status, metadata, expires_at, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, 'reserved', $6, $7, $8, $8)`,
+          [operationId, userId, periodKey, metricKey, environment, JSON.stringify(metadata || {}), expiresAt, now]
+        );
+        await client.query("COMMIT");
+        return { ok: true, operationId, status: "reserved", used, reserved: reserved + 1, limit };
+      } catch (err) {
+        try { await client.query("ROLLBACK"); } catch (e) {}
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+
+    // In-memory serialized path via memTxQueue
+    const run = async () => {
+      const key = `${userId}:${periodKey}:${environment}:${metricKey}`;
+      let ctr = memPaymentStore.usageCounters.get(key);
+      if (!ctr) {
+        ctr = { userId, periodKey, metricKey, environment, usedCount: 0, reservedCount: 0, updatedAt: now };
+        memPaymentStore.usageCounters.set(key, ctr);
+      }
+      for (const op of memPaymentStore.usageOperations.values()) {
+        if (op.userId === userId && op.periodKey === periodKey && op.metricKey === metricKey && op.environment === environment && op.status === "reserved" && op.expiresAt <= now) {
+          op.status = "expired";
+          op.updatedAt = now;
+          ctr.reservedCount = Math.max(0, ctr.reservedCount - 1);
+        }
+      }
+      const existing = memPaymentStore.usageOperations.get(operationId);
+      if (existing) {
+        if (existing.userId !== userId) {
+          return { ok: false, reason: "CROSS_ACCOUNT_OPERATION" };
+        }
+        return {
+          ok: existing.status === "reserved" || existing.status === "finalized",
+          idempotent: true,
+          operationId,
+          status: existing.status,
+          used: ctr.usedCount,
+          reserved: ctr.reservedCount
+        };
+      }
+      if (limit !== null && limit !== undefined && (ctr.usedCount + ctr.reservedCount) >= limit) {
+        return { ok: false, reason: "QUOTA_EXCEEDED", used: ctr.usedCount, reserved: ctr.reservedCount, limit };
+      }
+      ctr.reservedCount += 1;
+      ctr.updatedAt = now;
+      memPaymentStore.usageOperations.set(operationId, {
+        operationId, userId, periodKey, metricKey, environment, status: "reserved", metadata, expiresAt, createdAt: now, updatedAt: now
+      });
+      return { ok: true, operationId, status: "reserved", used: ctr.usedCount, reserved: ctr.reservedCount, limit };
+    };
+    const next = memTxQueue.then(run, run);
+    memTxQueue = next.catch(() => {});
+    return next;
+  },
+
+  async finalizeUsageOperation(operationId, userId) {
+    const now = Date.now();
+    if (usePg && pool) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const res = await client.query(
+          "SELECT * FROM usage_operations WHERE operation_id = $1 AND user_id = $2 FOR UPDATE",
+          [operationId, userId]
+        );
+        if (!res.rows.length) {
+          await client.query("COMMIT");
+          return { ok: false, error: "Operation not found" };
+        }
+        const op = res.rows[0];
+        if (op.status === "finalized") {
+          await client.query("COMMIT");
+          return { ok: true, idempotent: true, status: "finalized" };
+        }
+        if (op.status === "released") {
+          await client.query("COMMIT");
+          return { ok: false, error: "Operation already released" };
+        }
+        await client.query(
+          "UPDATE usage_operations SET status = 'finalized', updated_at = $1 WHERE operation_id = $2",
+          [now, operationId]
+        );
+        if (op.status === "reserved") {
+          await client.query(
+            `UPDATE usage_counters
+             SET used_count = used_count + 1,
+                 reserved_count = GREATEST(0, reserved_count - 1),
+                 updated_at = $1
+             WHERE user_id = $2 AND period_key = $3 AND metric_key = $4 AND environment = $5`,
+            [now, op.user_id, op.period_key, op.metric_key, op.environment || "live"]
+          );
+        } else {
+          await client.query(
+            `UPDATE usage_counters SET used_count = used_count + 1, updated_at = $1
+             WHERE user_id = $2 AND period_key = $3 AND metric_key = $4 AND environment = $5`,
+            [now, op.user_id, op.period_key, op.metric_key, op.environment || "live"]
+          );
+        }
+        await client.query("COMMIT");
+        return { ok: true, status: "finalized" };
+      } catch (err) {
+        try { await client.query("ROLLBACK"); } catch (e) {}
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+
+    const op = memPaymentStore.usageOperations.get(operationId);
+    if (!op || op.userId !== userId) return { ok: false, error: "Operation not found" };
+    if (op.status === "finalized") return { ok: true, idempotent: true, status: "finalized" };
+    if (op.status === "released") return { ok: false, error: "Operation already released" };
+    const ctr = memPaymentStore.usageCounters.get(`${op.userId}:${op.periodKey}:${op.environment || "live"}:${op.metricKey}`);
+    if (ctr) {
+      if (op.status === "reserved") ctr.reservedCount = Math.max(0, ctr.reservedCount - 1);
+      ctr.usedCount += 1;
+      ctr.updatedAt = now;
+    }
+    op.status = "finalized";
+    op.updatedAt = now;
+    return { ok: true, status: "finalized" };
+  },
+
+  async releaseUsageOperation(operationId, userId) {
+    const now = Date.now();
+    if (usePg && pool) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const res = await client.query(
+          "SELECT * FROM usage_operations WHERE operation_id = $1 AND user_id = $2 FOR UPDATE",
+          [operationId, userId]
+        );
+        if (!res.rows.length) {
+          await client.query("COMMIT");
+          return { ok: false, error: "Operation not found" };
+        }
+        const op = res.rows[0];
+        if (op.status === "released") {
+          await client.query("COMMIT");
+          return { ok: true, idempotent: true, status: "released" };
+        }
+        if (op.status === "finalized") {
+          await client.query("COMMIT");
+          return { ok: false, error: "Operation already finalized" };
+        }
+        await client.query(
+          "UPDATE usage_operations SET status = 'released', updated_at = $1 WHERE operation_id = $2",
+          [now, operationId]
+        );
+        if (op.status === "reserved") {
+          await client.query(
+            `UPDATE usage_counters SET reserved_count = GREATEST(0, reserved_count - 1), updated_at = $1
+             WHERE user_id = $2 AND period_key = $3 AND metric_key = $4 AND environment = $5`,
+            [now, op.user_id, op.period_key, op.metric_key, op.environment || "live"]
+          );
+        }
+        await client.query("COMMIT");
+        return { ok: true, status: "released" };
+      } catch (err) {
+        try { await client.query("ROLLBACK"); } catch (e) {}
+        throw err;
+      } finally {
+        client.release();
+      }
+    }
+
+    const op = memPaymentStore.usageOperations.get(operationId);
+    if (!op || op.userId !== userId) return { ok: false, error: "Operation not found" };
+    if (op.status === "released") return { ok: true, idempotent: true, status: "released" };
+    if (op.status === "finalized") return { ok: false, error: "Operation already finalized" };
+    const ctr = memPaymentStore.usageCounters.get(`${op.userId}:${op.periodKey}:${op.environment || "live"}:${op.metricKey}`);
+    if (ctr && op.status === "reserved") {
+      ctr.reservedCount = Math.max(0, ctr.reservedCount - 1);
+      ctr.updatedAt = now;
+    }
+    op.status = "released";
+    op.updatedAt = now;
+    return { ok: true, status: "released" };
+  },
+
+  // ── Receipts, Admin Audit Logs, Admin Queries & Funnel Analytics ──
+  async getReceiptsByUser(userId, environment = null) {
+    if (usePg && pool) {
+      const q = environment
+        ? "SELECT * FROM payment_receipts WHERE user_id = $1 AND environment = $2 ORDER BY created_at DESC LIMIT 50"
+        : "SELECT * FROM payment_receipts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50";
+      const params = environment ? [userId, environment] : [userId];
+      const res = await pool.query(q, params);
+      return res.rows.map(mapPgReceipt);
+    }
+    return Array.from(memPaymentStore.receipts.values())
+      .filter(r => r.userId === userId && (!environment || r.environment === environment))
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 50);
+  },
+
+  async getReceiptByPaymentIdForUser(razorpayPaymentId, userId, environment = null) {
+    if (usePg && pool) {
+      const q = environment
+        ? "SELECT * FROM payment_receipts WHERE razorpay_payment_id = $1 AND user_id = $2 AND environment = $3 LIMIT 1"
+        : "SELECT * FROM payment_receipts WHERE razorpay_payment_id = $1 AND user_id = $2 ORDER BY created_at DESC LIMIT 1";
+      const params = environment ? [razorpayPaymentId, userId, environment] : [razorpayPaymentId, userId];
+      const res = await pool.query(q, params);
+      return res.rows.length ? mapPgReceipt(res.rows[0]) : null;
+    }
+    return Array.from(memPaymentStore.receipts.values()).find(
+      r => r.razorpayPaymentId === razorpayPaymentId && r.userId === userId && (!environment || r.environment === environment)
+    ) || null;
+  },
+
+  async markReceiptAnimationSeen(receiptId, userId) {
+    const now = Date.now();
+    if (usePg && pool) {
+      const res = await pool.query(
+        "UPDATE payment_receipts SET animation_seen_at = COALESCE(animation_seen_at, $1) WHERE receipt_id = $2 AND user_id = $3 RETURNING animation_seen_at",
+        [now, receiptId, userId]
+      );
+      return res.rows.length ? Number(res.rows[0].animation_seen_at) : null;
+    }
+    const r = memPaymentStore.receipts.get(receiptId);
+    if (!r || r.userId !== userId) return null;
+    if (!r.animationSeenAt) r.animationSeenAt = now;
+    return r.animationSeenAt;
+  },
+
+  async recordAdminAuditLog(entry) {
+    const id = entry.id || `aud_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const row = {
+      id,
+      adminUserId: String(entry.adminUserId || "admin"),
+      adminEmail: entry.adminEmail || null,
+      action: String(entry.action || "unknown"),
+      targetUserId: entry.targetUserId || null,
+      environment: entry.environment || null,
+      reason: entry.reason || null,
+      metadata: entry.metadata || {},
+      createdAt: entry.createdAt || Date.now()
+    };
+    if (usePg && pool) {
+      await pool.query(
+        `INSERT INTO admin_audit_logs (id, admin_user_id, admin_email, action, target_user_id, environment, reason, metadata, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [row.id, row.adminUserId, row.adminEmail, row.action, row.targetUserId, row.environment, row.reason, JSON.stringify(row.metadata), row.createdAt]
+      );
+      return row;
+    }
+    memPaymentStore.adminAuditLogs.unshift(row);
+    if (memPaymentStore.adminAuditLogs.length > 500) memPaymentStore.adminAuditLogs.length = 500;
+    return row;
+  },
+
+  async getAdminAuditLogs(limit = 50) {
+    if (usePg && pool) {
+      const res = await pool.query("SELECT * FROM admin_audit_logs ORDER BY created_at DESC LIMIT $1", [limit]);
+      return res.rows.map(r => ({
+        id: r.id,
+        adminUserId: r.admin_user_id,
+        adminEmail: r.admin_email,
+        action: r.action,
+        targetUserId: r.target_user_id,
+        environment: r.environment,
+        reason: r.reason,
+        metadata: r.metadata || {},
+        createdAt: Number(r.created_at)
+      }));
+    }
+    return memPaymentStore.adminAuditLogs.slice(0, limit);
+  },
+
+  async recordAnalyticsEvent(evt) {
+    const id = `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const row = {
+      id,
+      eventName: String(evt.eventName || "unknown").slice(0, 64),
+      userId: evt.userId || null,
+      environment: evt.environment || null,
+      source: evt.source ? String(evt.source).slice(0, 64) : null,
+      metadata: evt.metadata || {},
+      createdAt: evt.createdAt || Date.now()
+    };
+    if (usePg && pool) {
+      await pool.query(
+        `INSERT INTO analytics_events (id, event_name, user_id, environment, source, metadata, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [row.id, row.eventName, row.userId, row.environment, row.source, JSON.stringify(row.metadata), row.createdAt]
+      );
+      return row;
+    }
+    memPaymentStore.analyticsEvents.unshift(row);
+    if (memPaymentStore.analyticsEvents.length > 2000) memPaymentStore.analyticsEvents.length = 2000;
+    return row;
+  },
+
+  async getAnalyticsSummary(environment = null) {
+    const counts = {};
+    if (usePg && pool) {
+      const q = environment
+        ? "SELECT event_name, COUNT(*)::int AS cnt FROM analytics_events WHERE environment = $1 GROUP BY event_name"
+        : "SELECT event_name, COUNT(*)::int AS cnt FROM analytics_events GROUP BY event_name";
+      const res = await pool.query(q, environment ? [environment] : []);
+      for (const r of res.rows) counts[r.event_name] = Number(r.cnt || 0);
+      return counts;
+    }
+    for (const e of memPaymentStore.analyticsEvents) {
+      if (!environment || e.environment === environment) {
+        counts[e.eventName] = (counts[e.eventName] || 0) + 1;
+      }
+    }
+    return counts;
+  },
+
+  async getAdminPayments({ environment = null, limit = 100 } = {}) {
+    if (usePg && pool) {
+      const q = environment
+        ? "SELECT * FROM payments WHERE environment = $1 ORDER BY created_at DESC LIMIT $2"
+        : "SELECT * FROM payments ORDER BY created_at DESC LIMIT $1";
+      const res = await pool.query(q, environment ? [environment, limit] : [limit]);
+      return res.rows.map(mapPgPayment);
+    }
+    return Array.from(memPaymentStore.payments.values())
+      .filter(p => !environment || p.environment === environment)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit);
+  },
+
+  async getAdminWebhooks({ environment = null, limit = 100 } = {}) {
+    if (usePg && pool) {
+      const q = environment
+        ? "SELECT * FROM webhook_events WHERE environment = $1 ORDER BY received_at DESC LIMIT $2"
+        : "SELECT * FROM webhook_events ORDER BY received_at DESC LIMIT $1";
+      const res = await pool.query(q, environment ? [environment, limit] : [limit]);
+      return res.rows.map(mapPgWebhook);
+    }
+    return Array.from(memPaymentStore.webhooks.values())
+      .filter(w => !environment || w.environment === environment)
+      .sort((a, b) => b.receivedAt - a.receivedAt)
+      .slice(0, limit);
+  },
+
+  async getAdminRefunds({ environment = null, limit = 100 } = {}) {
+    if (usePg && pool) {
+      const q = environment
+        ? "SELECT * FROM refunds WHERE environment = $1 ORDER BY created_at DESC LIMIT $2"
+        : "SELECT * FROM refunds ORDER BY created_at DESC LIMIT $1";
+      const res = await pool.query(q, environment ? [environment, limit] : [limit]);
+      return res.rows.map(mapPgRefund);
+    }
+    return Array.from(memPaymentStore.refunds.values())
+      .filter(r => !environment || r.environment === environment)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, limit);
   }
 };
 
@@ -1378,7 +2016,23 @@ function createPgPaymentTx(client) {
         "SELECT COALESCE(SUM(amount), 0) AS total FROM refunds WHERE environment = $1 AND razorpay_payment_id = $2 AND refund_status IN ('processed', 'created')",
         [environment, razorpayPaymentId]
       );
-      return Number(res.rows[0].total || 0);
+      return Number(res.rows[0]?.total || 0);
+    },
+    async getPaymentReceiptByPaymentId(environment, razorpayPaymentId) {
+      const res = await client.query(
+        "SELECT * FROM payment_receipts WHERE environment = $1 AND razorpay_payment_id = $2",
+        [environment, razorpayPaymentId]
+      );
+      return res.rows.length ? mapPgReceipt(res.rows[0]) : null;
+    },
+    async upsertPaymentReceipt(rc) {
+      await client.query(
+        `INSERT INTO payment_receipts (receipt_id, user_id, razorpay_payment_id, razorpay_order_id, environment, plan_id, plan_name, amount, currency, customer_name, customer_email, payment_method, validity_start, validity_end, snapshot, animation_seen_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+         ON CONFLICT (environment, razorpay_payment_id) DO NOTHING`,
+        [rc.receiptId, rc.userId, rc.razorpayPaymentId, rc.razorpayOrderId, rc.environment, rc.planId, rc.planName, rc.amount, rc.currency, rc.customerName || null, rc.customerEmail || null, rc.paymentMethod || null, rc.validityStart, rc.validityEnd, JSON.stringify(rc.snapshot || {}), rc.animationSeenAt || null, rc.createdAt]
+      );
+      return rc;
     },
     async getActiveFulfilledPaymentsForUser(environment, userId) {
       const res = await client.query(
@@ -1390,13 +2044,40 @@ function createPgPaymentTx(client) {
   };
 }
 
+function mapPgReceipt(r) {
+  return {
+    receiptId: r.receipt_id,
+    userId: r.user_id,
+    razorpayPaymentId: r.razorpay_payment_id,
+    razorpayOrderId: r.razorpay_order_id,
+    environment: r.environment,
+    planId: r.plan_id,
+    planName: r.plan_name,
+    amount: Number(r.amount),
+    currency: r.currency,
+    customerName: r.customer_name || null,
+    customerEmail: r.customer_email || null,
+    paymentMethod: r.payment_method || null,
+    validityStart: Number(r.validity_start),
+    validityEnd: Number(r.validity_end),
+    snapshot: r.snapshot || {},
+    animationSeenAt: r.animation_seen_at ? Number(r.animation_seen_at) : null,
+    createdAt: Number(r.created_at)
+  };
+}
+
 // ── Non-Production In-Memory Transactional Store (for automated tests without PG) ──
 const memPaymentStore = {
   orders: new Map(),
   payments: new Map(),
   webhooks: new Map(),
   entitlements: new Map(),
-  refunds: new Map()
+  refunds: new Map(),
+  usageCounters: new Map(),
+  usageOperations: new Map(),
+  receipts: new Map(),
+  adminAuditLogs: [],
+  analyticsEvents: []
 };
 
 let memTxQueue = Promise.resolve();
@@ -1408,7 +2089,8 @@ async function runInMemoryTx(fn, dbApi) {
       payments: new Map(Array.from(memPaymentStore.payments.entries()).map(([k, v]) => [k, { ...v }])),
       webhooks: new Map(Array.from(memPaymentStore.webhooks.entries()).map(([k, v]) => [k, { ...v }])),
       entitlements: new Map(Array.from(memPaymentStore.entitlements.entries()).map(([k, v]) => [k, { ...v }])),
-      refunds: new Map(Array.from(memPaymentStore.refunds.entries()).map(([k, v]) => [k, { ...v }]))
+      refunds: new Map(Array.from(memPaymentStore.refunds.entries()).map(([k, v]) => [k, { ...v }])),
+      receipts: new Map(Array.from(memPaymentStore.receipts.entries()).map(([k, v]) => [k, { ...v }]))
     };
 
     const tx = {
@@ -1486,6 +2168,21 @@ async function runInMemoryTx(fn, dbApi) {
         return Array.from(memPaymentStore.payments.values())
           .filter(p => p.environment === environment && p.userId === userId && p.entitlementStatus === "fulfilled")
           .sort((a, b) => b.createdAt - a.createdAt);
+      },
+      async getPaymentReceiptByPaymentId(environment, razorpayPaymentId) {
+        for (const r of memPaymentStore.receipts.values()) {
+          if (r.environment === environment && r.razorpayPaymentId === razorpayPaymentId) return { ...r };
+        }
+        return null;
+      },
+      async upsertPaymentReceipt(rc) {
+        const existing = Array.from(memPaymentStore.receipts.values()).find(
+          r => r.environment === rc.environment && r.razorpayPaymentId === rc.razorpayPaymentId
+        );
+        if (!existing) {
+          memPaymentStore.receipts.set(rc.receiptId, { ...rc });
+        }
+        return { ...rc };
       }
     };
 
@@ -1497,6 +2194,7 @@ async function runInMemoryTx(fn, dbApi) {
       memPaymentStore.webhooks = snap.webhooks;
       memPaymentStore.entitlements = snap.entitlements;
       memPaymentStore.refunds = snap.refunds;
+      memPaymentStore.receipts = snap.receipts;
       throw err;
     }
   };

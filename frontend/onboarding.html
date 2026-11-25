@@ -525,32 +525,31 @@
           </p>
           <ul class="plan-list">
             <li>Auto-fill up to <strong>10 job applications / month</strong></li>
-            <li>Check your <strong>ATS Resume Score</strong> before applying</li>
-            <li>Works on <strong>LinkedIn &amp; Naukri</strong> portals</li>
+            <li>Basic <strong>ATS Resume Score</strong> &amp; top 3 keyword gaps</li>
             <li>Track up to <strong>20 job applications</strong> in one place</li>
+            <li><strong>2 Resume &amp; 2 Cover Letter</strong> exports / month</li>
           </ul>
           <button type="button" class="btn-secondary-ghost" id="btn-choose-free" style="width:100%;">Continue with Free &rarr;</button>
         </div>
 
-        <!-- Pro Launch Offer Plan -->
+        <!-- Pro Plan -->
         <div class="plan-box pro">
-          <div class="offer-badge">LAUNCH OFFER • SAVE 33%</div>
+          <div class="offer-badge">RECOMMENDED &bull; 30-DAY PASS</div>
           <div class="plan-tag">Pro Plan</div>
           <div class="price-row">
-            <span class="price-old">₹299</span>
             <span class="price-now">₹199</span>
             <span class="price-unit">/ 30 days (prepaid, no auto-renewal)</span>
           </div>
           <p class="plan-usecase">
-            <strong>Best for:</strong> Active job seekers applying daily who want to save hours and get more interviews.
+            <strong>Best for:</strong> Active job seekers applying daily who want unlimited autofills and full ATS insights.
           </p>
           <ul class="plan-list">
-            <li><strong>Unlimited 1-click autofills</strong> across <strong>50+ portals</strong> (Workday, Greenhouse, Lever, Indeed &amp; more)</li>
-            <li><strong>Unlimited ATS Resume &amp; Cover Letter PDF exports</strong> tailored to each job</li>
-            <li><strong>Unlimited Application Tracker</strong> with visual submission proof</li>
-            <li><strong>Priority instant sync</strong> between Web Dashboard &amp; Chrome Extension</li>
+            <li><strong>Unlimited 1-click autofills</strong> across supported job portals</li>
+            <li><strong>Unlimited Resume &amp; Cover Letter</strong> exports (all 10 templates)</li>
+            <li><strong>Unlimited Application Tracker</strong> &amp; full ATS keyword breakdown</li>
+            <li><strong>One-time ₹199 prepaid pass</strong> &mdash; no automatic renewal</li>
           </ul>
-          <button type="button" class="btn-main" id="btn-choose-pro" style="width:100%;">Upgrade to Pro — ₹199/mo &rarr;</button>
+          <button type="button" class="btn-main" id="btn-choose-pro" style="width:100%;">Upgrade to Pro &mdash; ₹199 / 30 days &rarr;</button>
         </div>
       </div>
     </section>
@@ -567,6 +566,7 @@
 
         <div class="actions-row" id="pay-fallback-actions" style="display:none; justify-content:center;">
           <button type="button" class="btn-main" id="btn-retry-payment">Retry Payment (₹199)</button>
+          <button type="button" class="btn-secondary-ghost" id="btn-recover-payment">Recover Payment</button>
           <button type="button" class="btn-secondary-ghost" id="btn-switch-free">Continue with Free Instead</button>
         </div>
       </div>
@@ -821,7 +821,7 @@ requireAuth();
   function showPaymentError(msg) {
     if (paySpinner) paySpinner.style.display = 'none';
     if (payTitle) payTitle.textContent = 'PAYMENT NOT COMPLETED';
-    if (payMsg) payMsg.textContent = 'No charges were made. You can retry payment or continue with Free.';
+    if (payMsg) payMsg.textContent = 'If funds were debited, click Recover Payment before trying again. Otherwise you can retry or continue with Free.';
     if (payErrorBox) {
       payErrorBox.textContent = msg;
       payErrorBox.style.display = 'block';
@@ -875,6 +875,17 @@ requireAuth();
 
   document.getElementById('btn-choose-pro').addEventListener('click', startRazorpayProFlow);
   document.getElementById('btn-retry-payment').addEventListener('click', startRazorpayProFlow);
+  document.getElementById('btn-recover-payment').addEventListener('click', () => {
+    if (typeof JobXApplyCheckout === 'undefined') return;
+    JobXApplyCheckout.recoverPendingPayment(null, {
+      onState: (_, msg) => { if (payMsg) payMsg.textContent = msg; },
+      onSuccess: async () => {
+        await persistOnboardingChoice('pro');
+        setTimeout(() => window.location.replace('profile-setup.html?onboarding=1&welcome=pro'), 1000);
+      },
+      onError: (errMsg) => showPaymentError(errMsg)
+    });
+  });
   document.getElementById('btn-switch-free').addEventListener('click', completeWithFree);
 })();
 </script>

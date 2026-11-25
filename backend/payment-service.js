@@ -58,14 +58,45 @@ async function createOrderForUser({ user, planId = "pro", clientAmount, clientCu
       .map(e => e.trim().toLowerCase())
       .filter(Boolean)
   );
+  const allowedLiveEmails = new Set(
+    String(process.env.LIVE_CHECKOUT_EMAILS || "")
+      .split(",")
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const normalizedUserEmail = String(user.email || "").trim().toLowerCase();
   const isAuthorizedTestUser =
     environment === "test" &&
-    Boolean(user.email) &&
-    user.emailVerified !== false &&
-    allowedTestEmails.has(String(user.email).trim().toLowerCase());
+    Boolean(normalizedUserEmail) &&
+    user.emailVerified === true &&
+    allowedTestEmails.has(normalizedUserEmail);
+  const isAuthorizedControlledLiveUser =
+    environment === "live" &&
+    Boolean(normalizedUserEmail) &&
+    user.emailVerified === true &&
+    allowedLiveEmails.has(normalizedUserEmail);
 
-  if (process.env.NODE_ENV === "production" && process.env.ENABLE_PUBLIC_CHECKOUT !== "true" && !isAuthorizedTestUser) {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.ENABLE_PUBLIC_CHECKOUT !== "true" &&
+    !isAuthorizedTestUser &&
+    !isAuthorizedControlledLiveUser
+  ) {
     throw makeHttpError(503, "Public paid checkout is disabled pending final verification.");
+  }
+
+  if (isAuthorizedControlledLiveUser && process.env.ENABLE_PUBLIC_CHECKOUT !== "true") {
+    try {
+      await db.recordAdminAuditLog({
+        adminUserId: user.id,
+        adminEmail: normalizedUserEmail,
+        action: "controlled_live_checkout_authorized",
+        targetUserId: user.id,
+        environment: "live",
+        reason: "LIVE_CHECKOUT_EMAILS controlled live verification",
+        metadata: { planId }
+      });
+    } catch (e) {}
   }
 
   db.assertPaymentPersistenceAvailable();
@@ -157,12 +188,16 @@ async function fulfillCapturedPaymentTx(tx, { environment, order, rzpPayment, so
   const existingPayment = await tx.getPaymentByRazorpayIdForUpdate(environment, rzpPaymentId);
   if (existingPayment && existingPayment.entitlementStatus === "fulfilled") {
     const currentEnt = await tx.getEntitlementForUpdate(existingPayment.userId, environment);
+    const existingReceipt = tx.getPaymentReceiptByPaymentId
+      ? await tx.getPaymentReceiptByPaymentId(environment, rzpPaymentId)
+      : null;
     const daysRemaining = currentEnt && currentEnt.expiresAt
       ? Math.max(0, Math.ceil((currentEnt.expiresAt - now) / 86400000))
       : 0;
     return {
       ok: true,
       alreadyProcessed: true,
+      receipt: existingReceipt,
       tier: currentEnt && currentEnt.status === "active" && (!currentEnt.expiresAt || currentEnt.expiresAt > now) ? "pro" : "free",
       subscription: currentEnt ? {
         tier: currentEnt.status === "active" ? "pro" : "free",
@@ -239,10 +274,50 @@ async function fulfillCapturedPaymentTx(tx, { environment, order, rzpPayment, so
     await tx.updateUserTier(order.userId, "pro");
   }
 
+  const receiptId = `RCPT-JXA-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+  const receiptRecord = {
+    receiptId,
+    userId: order.userId,
+    razorpayPaymentId: rzpPaymentId,
+    razorpayOrderId: order.razorpayOrderId,
+    environment,
+    planId: order.planId || "pro",
+    planName: "JobXApply Pro (30-Day Prepaid Pass)",
+    amount: Number(rzpPayment.amount),
+    currency: String(rzpPayment.currency).toUpperCase(),
+    customerName: (rzpPayment.notes && rzpPayment.notes.customerName) || null,
+    customerEmail: rzpPayment.email || (rzpPayment.notes && rzpPayment.notes.userEmail) || null,
+    paymentMethod: rzpPayment.method || "razorpay",
+    validityStart: startedAt,
+    validityEnd: newExpiresAt,
+    snapshot: {
+      receiptId,
+      merchantName: "JobXApply",
+      planName: "JobXApply Pro (30-Day Prepaid Pass)",
+      billingModel: "one_time_prepaid",
+      autoRenew: false,
+      durationDays: Number(order.durationDays || 30),
+      amountPaise: Number(rzpPayment.amount),
+      currency: String(rzpPayment.currency).toUpperCase(),
+      paymentId: rzpPaymentId,
+      orderId: order.razorpayOrderId,
+      environment,
+      validityStart: startedAt,
+      validityEnd: newExpiresAt,
+      issuedAt: now
+    },
+    animationSeenAt: null,
+    createdAt: now
+  };
+  if (tx.upsertPaymentReceipt) {
+    await tx.upsertPaymentReceipt(receiptRecord);
+  }
+
   return {
     ok: true,
     alreadyProcessed: false,
     source,
+    receipt: receiptRecord,
     tier: "pro",
     subscription: {
       tier: "pro",
@@ -348,6 +423,7 @@ async function verifyCheckoutAndFulfill({ user, razorpayOrderId, razorpayPayment
     order_id: orderPrecheck.razorpayOrderId,
     payment_id: razorpayPaymentId,
     subscription: result.subscription,
+    receipt: result.receipt || null,
     message: result.alreadyProcessed
       ? "Payment was already verified and Pro access is active."
       : "Payment verified and Pro tier activated."

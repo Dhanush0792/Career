@@ -1,0 +1,245 @@
+/* JobXApply Thermal Payment Receipt Modal — Original Branded Design */
+.jxa-rcpt-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(10, 12, 18, 0.78);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.22s ease-out;
+}
+.jxa-rcpt-backdrop.is-open { opacity: 1; }
+
+.jxa-rcpt-stage {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: 92vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 0 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 440px) {
+  .jxa-rcpt-backdrop { padding: 12px; }
+  .jxa-rcpt-paper { padding: 18px 14px 16px; }
+  .jxa-rcpt-rows { font-size: 11px; }
+}
+
+.jxa-rcpt-slot {
+  width: 92%;
+  height: 14px;
+  background: linear-gradient(180deg, #1b1e28 0%, #0b0d12 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px 8px 2px 2px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 18px rgba(91, 79, 232, 0.28);
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.28s ease-out, transform 0.28s ease-out;
+}
+.jxa-rcpt-backdrop.is-open .jxa-rcpt-slot {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.jxa-rcpt-paper-wrap {
+  width: 86%;
+  overflow: hidden;
+  margin-top: -4px;
+  position: relative;
+  z-index: 1;
+}
+
+.jxa-rcpt-paper {
+  position: relative;
+  background: #faf9f5;
+  color: #16181f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  padding: 22px 20px 18px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+  transform: translateY(-100%);
+  opacity: 0.96;
+  transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease-out;
+}
+.jxa-rcpt-paper.is-printed {
+  transform: translateY(0);
+  opacity: 1;
+}
+.jxa-rcpt-paper::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 10px;
+  background: linear-gradient(135deg, #faf9f5 50%, transparent 50%) 0 0 / 12px 10px repeat-x,
+              linear-gradient(225deg, #faf9f5 50%, transparent 50%) 0 0 / 12px 10px repeat-x;
+}
+
+.jxa-rcpt-watermark {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-24deg);
+  border: 3px solid rgba(217, 119, 6, 0.36);
+  color: rgba(217, 119, 6, 0.42);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.jxa-rcpt-head {
+  text-align: center;
+  border-bottom: 1.5px dashed #cbc8be;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+.jxa-rcpt-brand {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #11131a;
+}
+.jxa-rcpt-sub {
+  font-size: 11px;
+  color: #5b606e;
+  margin-top: 2px;
+}
+
+.jxa-rcpt-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+}
+.jxa-rcpt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+.jxa-rcpt-paper.is-rows-visible .jxa-rcpt-row {
+  opacity: 1;
+  transform: translateY(0);
+}
+.jxa-rcpt-paper.is-rows-visible .jxa-rcpt-row:nth-child(2) { transition-delay: 0.07s; }
+.jxa-rcpt-paper.is-rows-visible .jxa-rcpt-row:nth-child(3) { transition-delay: 0.14s; }
+.jxa-rcpt-paper.is-rows-visible .jxa-rcpt-row:nth-child(4) { transition-delay: 0.21s; }
+.jxa-rcpt-paper.is-rows-visible .jxa-rcpt-row:nth-child(5) { transition-delay: 0.28s; }
+.jxa-rcpt-paper.is-rows-visible .jxa-rcpt-row:nth-child(6) { transition-delay: 0.35s; }
+.jxa-rcpt-paper.is-rows-visible .jxa-rcpt-row:nth-child(7) { transition-delay: 0.42s; }
+
+.jxa-rcpt-k { color: #5b606e; }
+.jxa-rcpt-v { color: #11131a; font-weight: 600; text-align: right; word-break: break-all; }
+
+.jxa-rcpt-total {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1.5px dashed #cbc8be;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 15px;
+  font-weight: 800;
+  color: #11131a;
+}
+
+.jxa-rcpt-stamp-row {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.jxa-rcpt-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 2px solid #16a34a;
+  color: #15803d;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transform: scale(1.25) rotate(-4deg);
+  transition: opacity 0.24s ease-out, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.jxa-rcpt-paper.is-stamped .jxa-rcpt-stamp {
+  opacity: 1;
+  transform: scale(1) rotate(-2deg);
+}
+.jxa-rcpt-note {
+  font-size: 10px;
+  color: #6b7280;
+  text-align: right;
+}
+
+.jxa-rcpt-actions {
+  width: 86%;
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+}
+.jxa-rcpt-actions.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.jxa-rcpt-btn {
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.jxa-rcpt-btn--primary {
+  background: #5b4fe8;
+  border-color: #5b4fe8;
+}
+.jxa-rcpt-btn--skip {
+  margin-top: 10px;
+  font-size: 11px;
+  padding: 5px 10px;
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jxa-rcpt-backdrop,
+  .jxa-rcpt-slot,
+  .jxa-rcpt-paper,
+  .jxa-rcpt-row,
+  .jxa-rcpt-stamp,
+  .jxa-rcpt-actions {
+    transition: none !important;
+    animation: none !important;
+  }
+  .jxa-rcpt-paper { transform: translateY(0) !important; opacity: 1 !important; }
+  .jxa-rcpt-row { opacity: 1 !important; transform: none !important; }
+  .jxa-rcpt-stamp { opacity: 1 !important; transform: rotate(-2deg) !important; }
+  .jxa-rcpt-actions { opacity: 1 !important; transform: none !important; }
+}
