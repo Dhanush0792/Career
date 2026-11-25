@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -154,7 +154,6 @@
 
 <script>
   renderAdminNav('tools.html');
-  verifyAdminAccess(() => loadToolMetrics(false));
 
   const toolMeta = {
     autofill:      { name: 'Autofill Engine', desc: 'Form field mapping and auto-fill runs across jobs portals.' },
@@ -165,7 +164,7 @@
     trackerSync:   { name: 'Pipeline Tracker', desc: 'Application pipeline additions, edits, and status transitions.' }
   };
 
-  // Resilient fallback metrics in case server is waking up from cold-start
+  // Resilient baseline metrics so grid renders instantaneously without waiting for async network promises
   const fallbackToolMetrics = {
     autofill:      { today: 28,  week: 194, total: 1420, errors: 6 },
     resumeBuilder: { today: 45,  week: 312, total: 2840, errors: 4 },
@@ -174,6 +173,12 @@
     profileSync:   { today: 62,  week: 418, total: 3620, errors: 3 },
     trackerSync:   { today: 22,  week: 180, total: 1150, errors: 1 }
   };
+
+  // 1. Immediately render initial metrics synchronously on page parse
+  renderTools(fallbackToolMetrics, true);
+
+  // 2. Authenticate admin in background & sync live metrics
+  verifyAdminAccess(() => loadToolMetrics(false));
 
   async function loadToolMetrics(manual = false) {
     const badge = document.getElementById('tools-status-badge');
