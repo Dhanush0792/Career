@@ -137,8 +137,11 @@ async function processSession(token, userEmail = "", refreshToken = "") {
           isAdmin = true;
         }
 
-        // Check if user has an existing completed profile
+        // Check if user has an existing completed profile or completed onboarding
         const profile = stateData?.profile || {};
+        if (profile.onboardingCompleted) {
+          localStorage.setItem("jxa_onboarding_done", "1");
+        }
         if (profile.fullName && String(profile.fullName).trim().length > 0) {
           isExistingUser = true;
           localStorage.setItem("jxa_local_profile", JSON.stringify(profile));
@@ -149,6 +152,8 @@ async function processSession(token, userEmail = "", refreshToken = "") {
       console.warn("Backend sync check warning:", fetchErr);
     }
 
+    const onboardingDone = localStorage.getItem("jxa_onboarding_done") === "1";
+
     // Check if login was initiated from the extension
     const urlParams = new URLSearchParams(window.location.search);
     const source = urlParams.get("source") || urlParams.get("origin") || "";
@@ -158,7 +163,8 @@ async function processSession(token, userEmail = "", refreshToken = "") {
       setTimeout(() => {
         if (isAdmin) window.location.replace("admin/index.html?welcome=admin");
         else if (isExistingUser) window.location.replace("dashboard.html?welcome=back");
-        else window.location.replace("profile-setup.html?onboarding=1&welcome=new");
+        else if (onboardingDone) window.location.replace("profile-setup.html?onboarding=1&welcome=new");
+        else window.location.replace("onboarding.html");
       }, 1500);
       return;
     }
@@ -184,17 +190,23 @@ async function processSession(token, userEmail = "", refreshToken = "") {
       statusText.textContent = "Welcome back! Redirecting to dashboard...";
       sessionStorage.setItem("jxa_welcome_type", "back");
       window.location.replace("dashboard.html?welcome=back");
-    } else {
-      statusText.textContent = "New account detected! Opening Master Profile Setup...";
+    } else if (onboardingDone) {
+      statusText.textContent = "Opening Master Profile Setup...";
       sessionStorage.setItem("jxa_welcome_type", "new");
       window.location.replace("profile-setup.html?onboarding=1&welcome=new");
+    } else {
+      statusText.textContent = "New account detected! Personalizing your experience...";
+      sessionStorage.setItem("jxa_welcome_type", "new");
+      window.location.replace("onboarding.html");
     }
   } catch (err) {
     console.error("Callback processing error:", err);
     if (localStorage.getItem("jxa_role") === "admin") {
       window.location.replace("admin/index.html");
-    } else {
+    } else if (localStorage.getItem("jxa_onboarding_done") === "1") {
       window.location.replace("profile-setup.html?onboarding=1");
+    } else {
+      window.location.replace("onboarding.html");
     }
   }
 }

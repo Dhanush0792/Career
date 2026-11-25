@@ -1191,7 +1191,11 @@ if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav
     const rawName = (localStorage.getItem('jxa_user_name') || email.split('@')[0] || 'User').trim();
     const cleanName = rawName ? (rawName.charAt(0).toUpperCase() + rawName.slice(1)) : 'User';
     
-    if (welcomeType === 'new') {
+    if (welcomeType === 'pro') {
+      if (typeof showToast === 'function') {
+        showToast(`🚀 JobXApply Pro Active! Let's complete your master profile.`, 'success');
+      }
+    } else if (welcomeType === 'new') {
       if (typeof showToast === 'function') {
         showToast(`🎉 Welcome to JobXApply, ${cleanName}! Let's build your master profile.`, 'success');
       }
@@ -1200,6 +1204,18 @@ if (typeof renderNav === 'function') renderNav(document.getElementById('main-nav
         showToast(`👋 Welcome back, ${cleanName}! Your profile details are loaded.`, 'success');
       }
     }
+    // Pre-fill employmentStatus from onboarding answers if not set yet
+    try {
+      const rawGoals = localStorage.getItem('jxa_onboarding_goals');
+      if (rawGoals) {
+        const goals = JSON.parse(rawGoals);
+        const empEl = document.getElementById('f-employmentStatus');
+        if (empEl && !empEl.value && goals.experienceLevel) {
+          empEl.value = goals.experienceLevel === 'Fresher' ? 'Fresher' : 'Experienced';
+          if (typeof toggleEmploymentFields === 'function') toggleEmploymentFields();
+        }
+      }
+    } catch (e) {}
     if (urlParams.has('welcome')) {
       const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]welcome=[^&]+/, '').replace(/^&/, '?');
       window.history.replaceState({}, document.title, cleanUrl || window.location.pathname);
