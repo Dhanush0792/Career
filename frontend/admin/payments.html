@@ -4,43 +4,66 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JobXApply Admin // Payments &amp; Revenue</title>
-  <link rel="stylesheet" href="admin.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style-glass.css">
+  <script src="../shared-shell.js?v=2"></script>
+  <script src="admin-shell.js"></script>
+  <link rel="icon" type="image/png" href="../assets/app-logo.png?v=6">
   <style>
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px; }
-    .kpi-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09); border-radius: 12px; padding: 16px; }
-    .kpi-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.06em; }
-    .kpi-val { font-size: 24px; font-weight: 800; color: #fff; margin-top: 6px; }
-    .panel { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
-    .panel h3 { margin: 0 0 12px; font-size: 14px; color: #fff; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-    th { color: #9ca3af; font-weight: 600; }
-    .badge { padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; }
-    .badge-live { background: rgba(16,185,129,0.2); color: #34d399; }
-    .badge-test { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    :root {
+      --base: #0B1020; --primary: #5B4FE8; --success: #2FDDC4; --alert: #F5A623; --danger: #F55A23;
+      --white: #fff; --text: #f4f7ff; --muted: rgba(244,247,255,0.65); --dim: rgba(244,247,255,0.42);
+      --glass-bg: rgba(255,255,255,0.05); --glass-border: rgba(255,255,255,0.12);
+      --mono: 'JetBrains Mono', monospace; --display: 'Barlow Condensed', sans-serif; --body: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      padding-top: 70px; background: var(--base); color: var(--text); font-family: var(--body); min-height: 100vh; margin: 0;
+      background-image: radial-gradient(circle at 15% 20%, rgba(245,166,35,0.09) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(91,79,232,0.08) 0%, transparent 45%);
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px 60px; }
+    h1 { font-family: var(--display); font-size: 36px; color: var(--alert); text-transform: uppercase; margin: 0; letter-spacing: 0.02em; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin: 18px 0 22px; }
+    .kpi-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px; backdrop-filter: blur(16px); }
+    .kpi-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .kpi-val { font-size: 26px; font-weight: 800; color: var(--white); margin-top: 6px; }
+    .panel { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(16px); }
+    .panel h3 { margin: 0 0 14px; font-family: var(--display); font-size: 20px; color: var(--alert); text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    th { font-family: var(--display); font-size: 14px; color: var(--alert); text-transform: uppercase; background: rgba(0,0,0,0.22); }
+    .badge { padding: 3px 8px; border-radius: 999px; font-family: var(--mono); font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .badge-live { background: rgba(47,221,196,0.15); color: var(--success); border: 1px solid rgba(47,221,196,0.35); }
+    .badge-test { background: rgba(245,166,35,0.18); color: var(--alert); border: 1px solid rgba(245,166,35,0.35); }
     .grant-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .grant-form input, .grant-form select { background: #0d1018; border: 1px solid rgba(255,255,255,0.14); color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 12px; }
-    .grant-form button { background: #5b4fe8; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .grant-form input, .grant-form select, .ctrl-select {
+      background: #0d1324; border: 1px solid var(--glass-border); color: var(--white); padding: 8px 12px; border-radius: 8px; font-size: 12px; font-family: var(--body);
+    }
+    .btn { background: var(--primary); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .btn-ghost { background: transparent; border: 1px solid var(--glass-border); color: var(--text); }
   </style>
 </head>
 <body>
-  <div id="admin-shell-root"></div>
-  <main class="admin-main" style="padding:24px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
-      <h1 style="margin:0;font-size:20px;">Payments, Webhooks &amp; Revenue</h1>
+  <nav id="admin-nav" style="position:fixed;top:0;left:0;right:0;height:56px;background:rgba(11,16,32,0.92);border-bottom:1px solid rgba(245,166,35,0.3);backdrop-filter:blur(16px);z-index:1000;display:flex;align-items:center;"></nav>
+
+  <main class="container">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <h1>Payments, Webhooks &amp; Revenue</h1>
       <div style="display:flex;gap:8px;align-items:center;">
-        <select id="env-filter" style="background:#0d1018;color:#fff;border:1px solid rgba(255,255,255,0.14);padding:6px 10px;border-radius:8px;font-size:12px;">
+        <select id="env-filter" class="ctrl-select">
           <option value="">All Environments</option>
           <option value="live">Live Only</option>
           <option value="test">Test Only</option>
         </select>
-        <button type="button" id="refresh-btn" style="background:#1f2433;color:#fff;border:1px solid rgba(255,255,255,0.14);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;">Refresh</button>
+        <button type="button" id="refresh-btn" class="btn btn-ghost">Refresh</button>
       </div>
     </div>
 
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Live Revenue (INR)</div><div class="kpi-val" id="kpi-live-rev">₹0</div></div>
-      <div class="kpi-card"><div class="kpi-label">Test Volume (Simulated)</div><div class="kpi-val" id="kpi-test-rev">₹0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Live Net Revenue (INR)</div><div class="kpi-val" id="kpi-live-rev" style="color:var(--success);">₹0</div></div>
+      <div class="kpi-card"><div class="kpi-label">Test Volume (Simulated)</div><div class="kpi-val" id="kpi-test-rev" style="color:var(--alert);">₹0</div></div>
       <div class="kpi-card"><div class="kpi-label">Live / Test Payments</div><div class="kpi-val" id="kpi-counts">0 / 0</div></div>
       <div class="kpi-card"><div class="kpi-label">Funnel Checkouts Done</div><div class="kpi-val" id="kpi-funnel">0</div></div>
     </div>
@@ -52,81 +75,90 @@
         <select id="g-action"><option value="grant">Grant Pro</option><option value="revoke">Revoke Pro</option></select>
         <input type="number" id="g-days" value="30" min="1" max="365" style="width:80px;" title="Days">
         <select id="g-env"><option value="test">Test Env</option><option value="live">Live Env</option></select>
-        <input type="text" id="g-reason" placeholder="Audit reason (required)" required style="min-width:220px;">
-        <button type="submit">Apply Grant</button>
+        <input type="text" id="g-reason" placeholder="Audit reason (required)" required style="min-width:240px;flex:1;">
+        <button type="submit" class="btn">Apply Grant</button>
       </form>
-      <div id="grant-msg" style="margin-top:8px;font-size:12px;color:#a78bfa;"></div>
+      <div id="grant-msg" style="margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--success);"></div>
     </div>
 
     <div class="panel">
       <h3>Recent Payments</h3>
       <div style="overflow-x:auto;">
-        <table><thead><tr><th>Env</th><th>Payment ID</th><th>Order ID</th><th>User</th><th>Amount</th><th>Status</th><th>Entitlement</th></tr></thead>
-        <tbody id="payments-tbody"></tbody></table>
+        <table>
+          <thead><tr><th>Env</th><th>Payment ID</th><th>Order ID</th><th>User</th><th>Amount</th><th>Status</th><th>Entitlement</th></tr></thead>
+          <tbody id="payments-tbody"><tr><td colspan="7" style="color:var(--muted);">Loading payments...</td></tr></tbody>
+        </table>
       </div>
     </div>
 
     <div class="panel">
-      <h3>Webhook Events &amp; Audit Log</h3>
+      <h3>Webhook Events</h3>
       <div style="overflow-x:auto;">
-        <table><thead><tr><th>Env</th><th>Event Type</th><th>Event ID</th><th>Status</th><th>Attempts</th></tr></thead>
-        <tbody id="webhooks-tbody"></tbody></table>
+        <table>
+          <thead><tr><th>Env</th><th>Event Type</th><th>Event ID</th><th>Status</th><th>Attempts</th></tr></thead>
+          <tbody id="webhooks-tbody"><tr><td colspan="5" style="color:var(--muted);">Loading webhooks...</td></tr></tbody>
+        </table>
       </div>
     </div>
   </main>
 
-  <script src="admin-shell.js"></script>
   <script>
-    if (typeof renderAdminShell === 'function') renderAdminShell('payments.html');
+    renderAdminNav('payments.html');
+    verifyAdminAccess(loadPaymentsDashboard);
 
     async function loadPaymentsDashboard() {
       const env = document.getElementById('env-filter').value;
-      const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
       const q = env ? `?environment=${encodeURIComponent(env)}` : '';
-      const res = await fetch(`${ADMIN_API_BASE}/admin/payments${q}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      const s = data.summary || {};
-      document.getElementById('kpi-live-rev').textContent = `₹${(Number(s.liveRevenuePaise || 0) / 100).toFixed(0)}`;
-      document.getElementById('kpi-test-rev').textContent = `₹${(Number(s.testRevenuePaise || 0) / 100).toFixed(0)}`;
-      document.getElementById('kpi-counts').textContent = `${s.liveCount || 0} / ${s.testCount || 0}`;
-      document.getElementById('kpi-funnel').textContent = String((data.funnel && data.funnel.checkout_completed) || 0);
-
       const pBody = document.getElementById('payments-tbody');
-      pBody.innerHTML = (data.payments || []).map(p => `
-        <tr>
-          <td><span class="badge ${p.environment === 'live' ? 'badge-live' : 'badge-test'}">${p.environment}</span></td>
-          <td>${p.razorpayPaymentId}</td>
-          <td>${p.razorpayOrderId}</td>
-          <td>${p.userId}</td>
-          <td>₹${(Number(p.amount || 0) / 100).toFixed(0)}</td>
-          <td>${p.paymentStatus}</td>
-          <td>${p.entitlementStatus}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="7">No payments found.</td></tr>';
-
       const wBody = document.getElementById('webhooks-tbody');
-      wBody.innerHTML = (data.webhooks || []).map(w => `
-        <tr>
-          <td><span class="badge ${w.environment === 'live' ? 'badge-live' : 'badge-test'}">${w.environment}</span></td>
-          <td>${w.eventType}</td>
-          <td>${w.eventId}</td>
-          <td>${w.processingStatus}</td>
-          <td>${w.attempts}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="5">No webhook events found.</td></tr>';
+      try {
+        const res = await adminFetch(`/admin/payments${q}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          const msg = err.error || `Request failed (${res.status})`;
+          pBody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);">${escHtml(msg)}</td></tr>`;
+          wBody.innerHTML = `<tr><td colspan="5" style="color:var(--danger);">${escHtml(msg)}</td></tr>`;
+          return;
+        }
+        const data = await res.json();
+        const s = data.summary || {};
+        document.getElementById('kpi-live-rev').textContent = `₹${(Number(s.liveRevenuePaise || 0) / 100).toFixed(0)}`;
+        document.getElementById('kpi-test-rev').textContent = `₹${(Number(s.testRevenuePaise || 0) / 100).toFixed(0)}`;
+        document.getElementById('kpi-counts').textContent = `${s.liveCount || 0} / ${s.testCount || 0}`;
+        document.getElementById('kpi-funnel').textContent = String((data.funnel && data.funnel.checkout_completed) || 0);
+
+        pBody.innerHTML = (data.payments || []).map(p => `
+          <tr>
+            <td><span class="badge ${p.environment === 'live' ? 'badge-live' : 'badge-test'}">${escHtml(p.environment)}</span></td>
+            <td style="font-family:var(--mono);font-size:11px;">${escHtml(p.razorpayPaymentId)}</td>
+            <td style="font-family:var(--mono);font-size:11px;">${escHtml(p.razorpayOrderId)}</td>
+            <td style="font-family:var(--mono);font-size:11px;">${escHtml(p.userId)}</td>
+            <td>₹${(Number(p.amount || 0) / 100).toFixed(0)}</td>
+            <td>${escHtml(p.paymentStatus)}</td>
+            <td>${escHtml(p.entitlementStatus)}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="7" style="color:var(--muted);">No payments recorded yet.</td></tr>';
+
+        wBody.innerHTML = (data.webhooks || []).map(w => `
+          <tr>
+            <td><span class="badge ${w.environment === 'live' ? 'badge-live' : 'badge-test'}">${escHtml(w.environment)}</span></td>
+            <td>${escHtml(w.eventType)}</td>
+            <td style="font-family:var(--mono);font-size:11px;">${escHtml(w.eventId)}</td>
+            <td>${escHtml(w.processingStatus)}</td>
+            <td>${escHtml(w.attempts)}</td>
+          </tr>
+        `).join('') || '<tr><td colspan="5" style="color:var(--muted);">No webhook events recorded yet.</td></tr>';
+      } catch (e) {
+        pBody.innerHTML = '<tr><td colspan="7" style="color:var(--danger);">Unable to reach backend server.</td></tr>';
+      }
     }
 
     document.getElementById('refresh-btn').addEventListener('click', loadPaymentsDashboard);
     document.getElementById('env-filter').addEventListener('change', loadPaymentsDashboard);
     document.getElementById('grant-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
-      const res = await fetch(`${ADMIN_API_BASE}/admin/grants`, {
+      const res = await adminFetch('/admin/grants', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
           userId: document.getElementById('g-user').value.trim(),
           action: document.getElementById('g-action').value,
@@ -136,11 +168,11 @@
         })
       });
       const out = await res.json().catch(() => ({}));
-      document.getElementById('grant-msg').textContent = res.ok ? `Audit recorded: ${out.audit?.id}` : (out.error || 'Failed');
+      const msgEl = document.getElementById('grant-msg');
+      msgEl.style.color = res.ok ? 'var(--success)' : 'var(--danger)';
+      msgEl.textContent = res.ok ? `Audit recorded: ${out.audit?.id}` : (out.error || `Failed (${res.status})`);
       if (res.ok) loadPaymentsDashboard();
     });
-
-    loadPaymentsDashboard();
   </script>
 </body>
 </html>

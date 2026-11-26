@@ -230,9 +230,7 @@
 
 <script>
   if (typeof renderAdminNav === 'function') renderAdminNav('feedback.html');
-
-  const API_BASE = (typeof ADMIN_API_BASE !== 'undefined') ? ADMIN_API_BASE
-    : ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:8787/api' : 'https://jobxapply-backend.onrender.com/api');
+  if (typeof verifyAdminAccess === 'function') verifyAdminAccess(loadFeedbacks);
 
   const CAT_LABELS = {
     bug: 'Bug / Error',
@@ -266,7 +264,6 @@
   }
 
   async function loadFeedbacks() {
-    const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
     const params = new URLSearchParams();
     params.set('category', document.getElementById('f-category').value);
     params.set('status', document.getElementById('f-status').value);
@@ -279,11 +276,20 @@
     if (q) params.set('q', q);
     if (document.getElementById('f-shots').checked) params.set('hasScreenshots', 'true');
 
-    const res = await fetch(`${API_BASE}/admin/feedback?${params.toString()}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    const tbody = document.getElementById('fb-tbody');
+    let res;
+    try {
+      res = await adminFetch(`/admin/feedback?${params.toString()}`);
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">Unable to reach backend server.</td></tr>';
+      return;
+    }
     if (!res.ok) {
-      document.getElementById('fb-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">Admin authentication required.</td></tr>';
+      const errData = await res.json().catch(() => ({}));
+      const msg = res.status === 404
+        ? 'Feedback API endpoint not deployed on backend yet (404).'
+        : (errData.error || `Request failed (${res.status})`);
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px;">${esc(msg)}</td></tr>`;
       return;
     }
     const data = await res.json();
@@ -377,12 +383,10 @@
 
   document.getElementById('m-save').addEventListener('click', async () => {
     if (!activeFeedbackId) return;
-    const token = localStorage.getItem('jxa_admin_token') || localStorage.getItem('jxa_token') || '';
     const status = document.getElementById('m-status').value;
     const adminNotes = document.getElementById('m-notes').value;
-    const res = await fetch(`${API_BASE}/admin/feedback/${encodeURIComponent(activeFeedbackId)}/update`, {
+    const res = await adminFetch(`/admin/feedback/${encodeURIComponent(activeFeedbackId)}/update`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ status, adminNotes })
     });
     const msgEl = document.getElementById('m-save-msg');
@@ -411,8 +415,6 @@
     document.getElementById('f-shots').checked = false;
     loadFeedbacks();
   });
-
-  loadFeedbacks();
 </script>
 </body>
 </html>

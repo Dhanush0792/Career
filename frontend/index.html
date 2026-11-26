@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="https://jobxapply.netlify.app/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="512x512" href="https://jobxapply.netlify.app/assets/app-logo.png">
+<link rel="apple-touch-icon" href="https://jobxapply.netlify.app/assets/app-logo.png">
 <title>JobXApply - Best AI Job Application Autofill, Free ATS Resume Checker & Tailored Builder (2026)</title>
 <meta name="description" content="JobXApply automates job applications across 50+ portals (LinkedIn, Indeed, Naukri, Workday). Includes free real-time ATS resume checker, AI cover letter generator, and universal browser autofill extension.">
 <meta name="keywords" content="AI job application autofill, free ATS resume checker, ATS resume score, job autofill extension, resume builder online, tailored cover letter generator, autofill LinkedIn jobs, autofill Naukri jobs, autofill Indeed, CareerBridge, JobXApply, applicant tracking system optimizer, job application tracker">
@@ -1047,7 +1050,8 @@ body.on-interactive #cur-ring {
    PRICING (access levels)
 ••••••••••••••••••••••••••••••••••••••••••••••••••••••••••• */
 .price-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  max-width: 920px; margin: 0 auto;
   gap: 0; border: 1px solid var(--border);
 }
 .plevel {
@@ -1057,18 +1061,20 @@ body.on-interactive #cur-ring {
   position: relative;
 }
 .plevel:last-child { border-right: none; }
+.plevel .btn { margin-top: auto; }
 .plevel--active {
   background: var(--s1);
   border-left: 2px solid var(--orange);
   margin-left: -1px;
 }
 .plevel__badge {
+  position: absolute; top: 36px; right: 32px;
   font-family: var(--mono); font-size: 9px; font-weight: 700;
   letter-spacing: .14em; text-transform: uppercase;
   color: #000; background: var(--orange);
-  padding: 3px 10px;
+  padding: 4px 10px;
   display: inline-flex; width: fit-content;
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 .plevel__tier {
   font-family: var(--mono); font-size: 10px; font-weight: 700;
@@ -1294,7 +1300,6 @@ footer {
 }
 </style>
 
-  <link rel="icon" type="image/png" href="assets/app-logo.png?v=6">
 </head>
 <body>
 

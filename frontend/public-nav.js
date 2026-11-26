@@ -250,15 +250,19 @@
 
     </div><!-- end groups -->
 
-    <!-- ④ GET STARTED (CTA dropdown) -->
+    <!-- ④ GET STARTED / DASHBOARD (CTA dropdown) -->
     <div class="ch-nav__cta" role="menuitem">
       <button class="ch-nav__cta-btn" aria-haspopup="true" aria-expanded="false" id="ch-cta-btn">
-        Get Started ${CARET_SVG}
+        ${isLoggedInSession() ? 'Dashboard' : 'Get Started'} ${CARET_SVG}
       </button>
       <div class="ch-nav__dropdown" role="menu">
         <div class="ch-nav__dd-label">Account</div>
-        <a href="auth.html"             class="ch-nav__dd-link ch-nav__dd-link--accent">Sign In</a>
-        <a href="auth.html#signup"      class="ch-nav__dd-link">Create Account</a>
+        ${isLoggedInSession()
+          ? `<a href="dashboard.html" class="ch-nav__dd-link ch-nav__dd-link--accent">Open Dashboard</a>
+             <a href="settings.html" class="ch-nav__dd-link">Settings &amp; Billing</a>
+             <a href="#" id="ch-nav-signout" class="ch-nav__dd-link">Sign Out</a>`
+          : `<a href="auth.html" class="ch-nav__dd-link ch-nav__dd-link--accent">Sign In</a>
+             <a href="auth.html#signup" class="ch-nav__dd-link">Create Account</a>`}
       </div>
     </div>
 
@@ -299,12 +303,28 @@
   </div>
   <div class="ch-nav__drawer-section">
     <div class="ch-nav__drawer-title">Account</div>
-    <a href="auth.html"            class="ch-nav__drawer-link">Sign In</a>
-    <a href="auth.html#signup"     class="ch-nav__drawer-link">Create Account</a>
+    ${isLoggedInSession()
+      ? `<a href="dashboard.html" class="ch-nav__drawer-link">Open Dashboard</a>
+         <a href="settings.html"  class="ch-nav__drawer-link">Settings &amp; Billing</a>`
+      : `<a href="auth.html"        class="ch-nav__drawer-link">Sign In</a>
+         <a href="auth.html#signup" class="ch-nav__drawer-link">Create Account</a>`}
   </div>
-  <a href="auth.html" class="ch-nav__drawer-cta">GET STARTED</a>
+  <a href="${isLoggedInSession() ? 'dashboard.html' : 'auth.html'}" class="ch-nav__drawer-cta">${isLoggedInSession() ? 'GO TO DASHBOARD' : 'GET STARTED'}</a>
 </div>
 `;
+
+  function isLoggedInSession() {
+    try {
+      const token = localStorage.getItem('jxa_token') || localStorage.getItem('jxa_refresh_token');
+      if (!token) return false;
+      const lastActive = Number(localStorage.getItem('jxa_last_active') || 0);
+      const FIVE_DAYS_MS = 5 * 24 * 60 * 60 * 1000;
+      if (lastActive && (Date.now() - lastActive >= FIVE_DAYS_MS)) return false;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   function injectPublicNav() {
     // 1) Inject CSS
@@ -353,6 +373,19 @@
 
     // 5) Ensure body padding accounts for nav height
     document.body.style.paddingTop = '62px';
+
+    // 6) Wire Sign Out link if logged in
+    const signoutEl = document.getElementById('ch-nav-signout');
+    if (signoutEl) {
+      signoutEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        try {
+          Object.keys(localStorage).filter(k => k.startsWith('jxa_')).forEach(k => localStorage.removeItem(k));
+          sessionStorage.setItem('jxa_logged_out', '1');
+        } catch (err) {}
+        window.location.replace('index.html?logged_out=1');
+      });
+    }
   }
 
   // Auto-run

@@ -893,6 +893,13 @@ function broadcastMaps(maps) {
 const server = http.createServer(async (req, res) => {
   writeCorsHeaders(req, res);
 
+  // Preflight must not consume rate-limit quota
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   const clientIp = getClientIp(req);
 
   // Global DDoS / flood protection: limit any single IP to 120 requests per minute
@@ -904,13 +911,6 @@ const server = http.createServer(async (req, res) => {
   // Increment apiRequests telemetry
   if (req.url && req.url.startsWith("/api/")) {
     db.recordTelemetryHit("apiRequests").catch(() => {});
-  }
-
-  // Preflight
-  if (req.method === "OPTIONS") {
-    res.writeHead(204);
-    res.end();
-    return;
   }
 
   // Parse URL
@@ -1222,6 +1222,80 @@ const server = http.createServer(async (req, res) => {
       sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: "Bad request" });
     }
     return;
+  }
+
+  // POST /api/feedback — Rich user Help & Feedback submission with screenshot uploads
+  if (req.method === "POST" && urlObj.pathname === "/api/feedback") {
+    if (isRateLimited(clientIp + ":feedback", 10, 600000, ipRateLimits)) {
+      return sendJson(res, 429, { ok: false, error: "Too many feedback submissions. Please wait a few minutes." });
+    }
+    const ALLOWED_CATEGORIES = new Set([
+      "bug", "autofill_issue", "payment_billing", "ui_ux", "account_sync", "feature_request", "other"
+    ]);
+    try {
+      const body = await readBody(req, 8 * 1024 * 1024); // 8MB max for up to 4 screenshots
+      const payload = JSON.parse(body || "{}");
+      const reqUser = await getRequestUser(req).catch(() => null);
+
+      const category = String(payload.category || "other").trim().toLowerCase();
+      if (!ALLOWED_CATEGORIES.has(category)) {
+        return sendJson(res, 400, { ok: false, error: "Invalid feedback category." });
+      }
+      const subject = typeof payload.subject === "string" ? payload.subject.trim().slice(0, 200) : "";
+      const message = typeof payload.message === "string" ? payload.message.trim().slice(0, 5000) : "";
+      if (subject.length < 3 || message.length < 5) {
+        return sendJson(res, 400, { ok: false, error: "Subject (min 3 chars) and message (min 5 chars) are required." });
+      }
+
+      const rawScreenshots = Array.isArray(payload.screenshots) ? payload.screenshots : [];
+      if (rawScreenshots.length > 4) {
+        return sendJson(res, 400, { ok: false, error: "Maximum 4 screenshots allowed per submission." });
+      }
+      const screenshots = [];
+      for (const item of rawScreenshots) {
+        if (!item || typeof item.dataUrl !== "string") {
+          return sendJson(res, 400, { ok: false, error: "Invalid screenshot payload." });
+        }
+        const m = item.dataUrl.match(/^data:(image\/(?:png|jpeg|jpg|webp));base64,([A-Za-z0-9+/=]+)$/);
+        if (!m) {
+          return sendJson(res, 400, { ok: false, error: "Screenshots must be PNG, JPEG, or WebP images." });
+        }
+        const decodedBytes = Math.floor((m[2].length * 3) / 4);
+        if (decodedBytes > 1.5 * 1024 * 1024) {
+          return sendJson(res, 400, { ok: false, error: "Each screenshot must be 1.5 MB or smaller." });
+        }
+        screenshots.push({
+          name: typeof item.name === "string" ? item.name.slice(0, 120) : `screenshot_${screenshots.length + 1}.png`,
+          mimeType: m[1],
+          sizeBytes: decodedBytes,
+          dataUrl: item.dataUrl
+        });
+      }
+
+      const reporterEmail = (typeof payload.reporterEmail === "string" && payload.reporterEmail.trim())
+        ? payload.reporterEmail.trim().slice(0, 255)
+        : (reqUser && reqUser.email ? reqUser.email : "");
+      const reporterName = (typeof payload.reporterName === "string" && payload.reporterName.trim())
+        ? payload.reporterName.trim().slice(0, 255)
+        : (reqUser && reqUser.name ? reqUser.name : "");
+
+      const fb = await db.createFeedback({
+        userId: reqUser ? reqUser.id : null,
+        reporterName,
+        reporterEmail,
+        category,
+        subject,
+        message,
+        pageUrl: typeof payload.pageUrl === "string" ? payload.pageUrl.slice(0, 512) : "",
+        screenshots,
+        metadata: payload.metadata && typeof payload.metadata === "object" ? payload.metadata : {}
+      });
+
+      logAdminActivity(`Feedback submitted (${fb.category}) by ${fb.reporterEmail || "anonymous"} [${fb.id}]`);
+      return sendJson(res, 201, { ok: true, id: fb.id, status: fb.status, createdAt: fb.createdAt });
+    } catch (e) {
+      return sendJson(res, e.message === "Request body too large" ? 413 : 400, { ok: false, error: e.message || "Bad request" });
+    }
   }
 
   // ── Protected Authenticated Routes ────────────────────────────────────────
@@ -1999,10 +2073,23 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && urlObj.pathname === "/api/admin/rate-limits") {
     const activeIps = [];
     const now = Date.now();
+    const BUCKET_LIMITS = {
+      ":global": 120,
+      ":auth": 10,
+      ":admin-auth": 5,
+      ":feedback": 10,
+      ":telemetry": 30,
+      ":analytics": 60,
+      ":ats-anon": 10,
+      ":resume-anon": 10,
+      ":cover-letter-anon": 10
+    };
     for (const [ip, timestamps] of ipRateLimits.entries()) {
       const recent = timestamps.filter(t => now - t < 60000);
       if (recent.length > 0) {
-        activeIps.push({ ip, attempts: recent.length, isBlocked: recent.length >= 5 });
+        const suffix = Object.keys(BUCKET_LIMITS).find(s => ip.endsWith(s));
+        const limit = suffix ? BUCKET_LIMITS[suffix] : 20;
+        activeIps.push({ ip, attempts: recent.length, limit, isBlocked: recent.length >= limit });
       }
     }
     const lockedAccounts = [];
@@ -2491,6 +2578,73 @@ const server = http.createServer(async (req, res) => {
     const envFilter = urlObj.searchParams.get("environment") || null;
     const funnel = await db.getAnalyticsSummary(envFilter);
     sendJson(res, 200, { ok: true, funnel });
+    return;
+  }
+
+  // GET /api/admin/feedback — list & filter user feedbacks
+  if (req.method === "GET" && urlObj.pathname === "/api/admin/feedback") {
+    const category = urlObj.searchParams.get("category") || "all";
+    const status = urlObj.searchParams.get("status") || "all";
+    const fromParam = urlObj.searchParams.get("from");
+    const toParam = urlObj.searchParams.get("to");
+    const hasScreenshotsParam = urlObj.searchParams.get("hasScreenshots");
+    const q = urlObj.searchParams.get("q") || "";
+    const sort = urlObj.searchParams.get("sort") === "oldest" ? "oldest" : "newest";
+
+    const parseDateMs = (val, endOfDay = false) => {
+      if (!val) return null;
+      if (/^\d+$/.test(val)) return Number(val);
+      const iso = endOfDay ? `${val}T23:59:59.999Z` : `${val}T00:00:00.000Z`;
+      const t = Date.parse(iso);
+      return Number.isFinite(t) ? t : null;
+    };
+
+    const result = await db.getFeedbacks({
+      category,
+      status,
+      fromMs: parseDateMs(fromParam, false),
+      toMs: parseDateMs(toParam, true),
+      hasScreenshots: hasScreenshotsParam === "true" ? true : null,
+      q,
+      sort
+    });
+    sendJson(res, 200, { ok: true, ...result });
+    return;
+  }
+
+  // POST / PATCH /api/admin/feedback/:id(/update) — update status & internal notes
+  if ((req.method === "POST" || req.method === "PATCH") && urlObj.pathname.startsWith("/api/admin/feedback/")) {
+    const ALLOWED_STATUSES = new Set(["new", "in_review", "resolved", "archived"]);
+    const rawPart = urlObj.pathname.slice("/api/admin/feedback/".length).replace(/\/update$/, "");
+    const fbId = decodeURIComponent(rawPart || "").trim();
+    if (!fbId) {
+      return sendJson(res, 400, { ok: false, error: "Feedback ID is required." });
+    }
+    try {
+      const body = await readBody(req, 16384);
+      const payload = JSON.parse(body || "{}");
+      const nextStatus = payload.status ? String(payload.status).trim().toLowerCase() : null;
+      if (nextStatus && !ALLOWED_STATUSES.has(nextStatus)) {
+        return sendJson(res, 400, { ok: false, error: "Invalid feedback status." });
+      }
+      const adminNotes = payload.adminNotes !== undefined ? String(payload.adminNotes).slice(0, 2000) : null;
+      const updated = await db.updateFeedback(fbId, { status: nextStatus, adminNotes });
+      if (!updated) {
+        return sendJson(res, 404, { ok: false, error: "Feedback not found." });
+      }
+      await db.recordAdminAuditLog({
+        adminUserId: activeUser.id,
+        adminEmail: activeUser.email,
+        action: "admin_feedback_updated",
+        targetUserId: updated.userId || updated.reporterEmail || fbId,
+        reason: `Status: ${updated.status}`,
+        metadata: { feedbackId: fbId, status: updated.status }
+      });
+      logAdminActivity(`Feedback ${fbId} updated to '${updated.status}' by ${activeUser.email}`);
+      sendJson(res, 200, { ok: true, feedback: updated });
+    } catch (e) {
+      sendJson(res, 400, { ok: false, error: e.message || "Bad request" });
+    }
     return;
   }
 

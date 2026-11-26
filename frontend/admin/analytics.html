@@ -153,6 +153,11 @@
   async function loadAnalytics() {
     try {
       const res = await adminFetch('/admin/analytics');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || `Analytics error (${res.status})`, 'error');
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         const s = data.stats || {};

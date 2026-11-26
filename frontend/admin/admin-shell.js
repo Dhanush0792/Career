@@ -30,12 +30,21 @@ function safeHref(url) {
 }
 
 function adminToken() {
+  if (typeof getEffectiveAuthToken === "function") {
+    return getEffectiveAuthToken() || localStorage.getItem("jxa_token") || "";
+  }
   return localStorage.getItem("jxa_token") || "";
 }
 
 async function adminFetch(path, options) {
   if (!options) options = {};
   var token = adminToken();
+  if (typeof ensureFreshAuthToken === "function") {
+    try {
+      var fresh = await ensureFreshAuthToken();
+      if (fresh) token = fresh;
+    } catch (e) {}
+  }
   var headers = Object.assign({ "Authorization": "Bearer " + token, "Content-Type": "application/json" }, options.headers || {});
   var res = await fetch(ADMIN_API + path, Object.assign({}, options, { headers: headers }));
   return res;

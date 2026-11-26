@@ -161,9 +161,25 @@ async function run() {
     assert(atsFree.status === 200 && atsFree.body.detailLevel === "basic" && atsFree.body.missingKeywords.length <= 3 && atsFree.body.upgradeRequired === true,
       "Free ATS analysis returns basic summary + max 3 missing keywords");
 
-    // 7. Funnel Analytics Event
+    // 7. Funnel Analytics Event + Deduplication
     const evtRes = await reqJson("POST", "/analytics/event", { eventName: "paywall_shown", metadata: { featureKey: "tracker" } }, freeToken);
+    const evtDup = await reqJson("POST", "/analytics/event", { eventName: "paywall_shown", metadata: { featureKey: "tracker" } }, freeToken);
     assert(evtRes.status === 200 && evtRes.body.ok === true, "Funnel analytics event accepted");
+    assert(evtDup.status === 200 && evtDup.body.deduplicated === true, "Duplicate funnel event within 60s is deduplicated");
+
+    // 7b. Cross-account operationId & malicious release on finalized op
+    const crossOp = await reqJson("POST", "/usage/autofill/authorize", { operationId: "op_af_1" }, free2Token);
+    assert(crossOp.status === 403, "Cross-account operationId rejected (403)");
+    const malRel = await reqJson("POST", "/usage/autofill/release", { operationId: "op_af_1" }, freeToken);
+    assert(malRel.status === 400, "Release on already-finalized operation rejected (400)");
+
+    // 7c. Concurrent tracker capacity atomicity (20 allowed, 21 rejected)
+    const [conc20, conc21] = await Promise.all([
+      reqJson("POST", "/tracker", { applications: apps20 }, free2Token),
+      reqJson("POST", "/tracker", { applications: apps21 }, free2Token)
+    ]);
+    assert(conc20.status === 200 && conc21.status === 403 && conc21.body.code === "TRACKER_CAPACITY_REACHED",
+      "Concurrent tracker requests enforce 20-entry Free cap atomically");
 
     // 8. Admin RBAC & Audited Grant -> Pro Unlocks Everything
     const nonAdminDenied = await reqJson("GET", "/admin/payments", null, freeToken);

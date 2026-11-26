@@ -61,12 +61,14 @@ const INACTIVITY_TIMEOUT_MS = 5 * 24 * 60 * 60 * 1000;
 let _activeSSE = null;
 let _lastActivityUpdate = 0;
 let _isRefreshingToken = false;
+let _refreshPromise = null;
 
 // Silent background or foreground token refresh using Supabase refresh_token
 async function triggerSilentTokenRefresh() {
-  if (_isRefreshingToken) return null;
+  if (_refreshPromise) return _refreshPromise;
   _isRefreshingToken = true;
-  try {
+  _refreshPromise = (async () => {
+    try {
     let refreshToken = "";
     let storageKey = "";
     if (typeof localStorage !== 'undefined') {
@@ -123,15 +125,32 @@ async function triggerSilentTokenRefresh() {
     // Non-blocking; tolerates offline/cold-start state
   } finally {
     _isRefreshingToken = false;
+    _refreshPromise = null;
   }
   return null;
+  })();
+  return _refreshPromise;
 }
 
-function recordUserActivity() {
+async function ensureFreshAuthToken() {
+  let token = getEffectiveAuthToken();
+  if (!token) {
+    const refreshed = await triggerSilentTokenRefresh();
+    return refreshed || "";
+  }
+  const payload = parseJwtPayload(token);
+  if (payload && payload.exp && (payload.exp * 1000 <= Date.now() + 60000)) {
+    const refreshed = await triggerSilentTokenRefresh();
+    if (refreshed) return refreshed;
+  }
+  return token;
+}
+
+function recordUserActivity(force = false) {
   const now = Date.now();
-  if (now - _lastActivityUpdate > 60000) { // Throttle writes to at most once per minute
+  if (force || (now - _lastActivityUpdate > 60000)) { // Throttle normal writes to 1/min; force on tab/browser close
     _lastActivityUpdate = now;
-    if (localStorage.getItem('jxa_token')) {
+    if (localStorage.getItem('jxa_token') || localStorage.getItem('jxa_refresh_token')) {
       localStorage.setItem('jxa_last_active', String(now));
     }
   }
@@ -139,9 +158,11 @@ function recordUserActivity() {
 
 // Attach user activity listeners & lifecycle events
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-  ['mousedown', 'keydown', 'scroll', 'touchstart', 'visibilitychange'].forEach(evt => {
-    window.addEventListener(evt, recordUserActivity, { passive: true });
+  ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(evt => {
+    window.addEventListener(evt, () => recordUserActivity(false), { passive: true });
   });
+  window.addEventListener('pagehide', () => recordUserActivity(true), { passive: true });
+  document.addEventListener('visibilitychange', () => recordUserActivity(true), { passive: true });
 
   // Cross-tab synchronization listener: instantly catch logout in another tab
   window.addEventListener('storage', (e) => {
@@ -304,11 +325,12 @@ function requireAuth() {
   }
 
   const token = getEffectiveAuthToken();
+  const hasRefreshToken = typeof localStorage !== 'undefined' && Boolean(localStorage.getItem('jxa_refresh_token'));
   let isValidToken = false;
   let tokenRole = 'user';
   let invalidReason = 'expired';
 
-  if (token) {
+  if (token || hasRefreshToken) {
     let lastActive = Number((typeof localStorage !== 'undefined' && localStorage.getItem('jxa_last_active')) || 0);
     const now = Date.now();
 
@@ -318,10 +340,15 @@ function requireAuth() {
       if (typeof localStorage !== 'undefined') localStorage.setItem('jxa_last_active', String(now));
     }
 
-    // Check Case 1: Inactivity >= 3 consecutive days (72h)
+    // Check Case 1: Inactivity >= 5 consecutive days (120h)
     if (now - lastActive >= INACTIVITY_TIMEOUT_MS) {
       isValidToken = false;
       invalidReason = 'inactivity';
+    } else if (!token && hasRefreshToken) {
+      isValidToken = true;
+      tokenRole = (typeof localStorage !== 'undefined' && localStorage.getItem('jxa_role')) || 'user';
+      triggerSilentTokenRefresh();
+      recordUserActivity(true);
     } else {
       const payload = parseJwtPayload(token);
       if (payload) {
@@ -3576,6 +3603,7 @@ function clearAccountEntitlementCache() {
 
 if (typeof window !== 'undefined') {
   window.ensureRazorpaySDK = ensureRazorpaySDK;
+  window.ensureFreshAuthToken = ensureFreshAuthToken;
   window.JobXApplyCheckout = JobXApplyCheckout;
   window.JobXApplyPaywall = JobXApplyPaywall;
   window.JobXApplyTrackFunnel = JobXApplyTrackFunnel;

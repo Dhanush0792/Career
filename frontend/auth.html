@@ -331,7 +331,9 @@ function showStatus(msg) {
 // Initialize Supabase Client
 try {
   if (typeof supabase !== 'undefined') {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
   }
 } catch(e) {
   console.error('Supabase init error:', e);

@@ -275,6 +275,23 @@ async function runTests() {
     assert(errAllowlistedInLive && errAllowlistedInLive.statusCode === 503 && errAllowlistedInLive.message.includes("Public paid checkout is disabled"),
       "TEST_CHECKOUT_EMAILS cannot bypass public checkout gate in Live Mode (503)");
 
+    // Controlled Live Checkout Gate (LIVE_CHECKOUT_EMAILS) separate from TEST_CHECKOUT_EMAILS
+    process.env.LIVE_CHECKOUT_EMAILS = "founder_live@jobxapply.app";
+    let errLiveGateOk = null;
+    try {
+      await paymentService.createOrderForUser({ user: { id: userA.id, email: "founder_live@jobxapply.app", emailVerified: true }, planId: "pro", rzpClient: mockRzp });
+    } catch (e) { errLiveGateOk = e; }
+    assert(errLiveGateOk && errLiveGateOk.message.includes("PostgreSQL database is unavailable"),
+      "Verified LIVE_CHECKOUT_EMAILS account passes controlled Live checkout gate while public checkout stays disabled");
+
+    let errLiveUnverified = null;
+    try {
+      await paymentService.createOrderForUser({ user: { id: userA.id, email: "founder_live@jobxapply.app", emailVerified: false }, planId: "pro", rzpClient: mockRzp });
+    } catch (e) { errLiveUnverified = e; }
+    assert(errLiveUnverified && errLiveUnverified.statusCode === 503,
+      "Unverified LIVE_CHECKOUT_EMAILS account rejected (503)");
+    delete process.env.LIVE_CHECKOUT_EMAILS;
+
     process.env.RAZORPAY_KEY_ID = prevKeyId;
     process.env.NODE_ENV = prevNodeEnv;
     process.env.ENABLE_PUBLIC_CHECKOUT = prevEnablePub;

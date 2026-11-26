@@ -6,6 +6,7 @@ const USERS_DIR = path.join(__dirname, "..", "database", "users");
 const REPORTS_FILE = path.join(__dirname, "..", "database", "map-reports.json");
 const USER_INDEX_FILE = path.join(__dirname, "..", "database", "user-registry.json");
 const TELEMETRY_FILE = path.join(__dirname, "..", "database", "telemetry.json");
+const FEEDBACKS_FILE = path.join(__dirname, "..", "database", "feedbacks.json");
 
 // Ensure directories exist
 if (!fs.existsSync(USERS_DIR)) {
@@ -287,6 +288,28 @@ async function initializeDatabase(p) {
   `);
   await p.query(`CREATE INDEX IF NOT EXISTS idx_analytics_event_time ON analytics_events (event_name, created_at DESC)`);
 
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS feedbacks (
+      id VARCHAR(64) PRIMARY KEY,
+      user_id VARCHAR(255),
+      reporter_name VARCHAR(255),
+      reporter_email VARCHAR(255),
+      category VARCHAR(64) NOT NULL,
+      subject VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      page_url VARCHAR(512),
+      screenshots JSONB NOT NULL DEFAULT '[]'::jsonb,
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      status VARCHAR(32) NOT NULL DEFAULT 'new',
+      admin_notes TEXT DEFAULT '',
+      resolved_at BIGINT,
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL
+    )
+  `);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_feedbacks_created ON feedbacks (created_at DESC)`);
+  await p.query(`CREATE INDEX IF NOT EXISTS idx_feedbacks_cat_status ON feedbacks (category, status, created_at DESC)`);
+
   // Enable Row Level Security (RLS) on all tables (SEC-RLS)
   try {
     await p.query(`
@@ -304,7 +327,8 @@ async function initializeDatabase(p) {
       ALTER TABLE payment_receipts ENABLE ROW LEVEL SECURITY;
       ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
       ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
-      REVOKE ALL ON payment_orders, payments, webhook_events, subscription_entitlements, refunds, usage_counters, usage_operations, payment_receipts, admin_audit_logs, analytics_events FROM anon, authenticated;
+      ALTER TABLE feedbacks ENABLE ROW LEVEL SECURITY;
+      REVOKE ALL ON payment_orders, payments, webhook_events, subscription_entitlements, refunds, usage_counters, usage_operations, payment_receipts, admin_audit_logs, analytics_events, feedbacks FROM anon, authenticated;
     `);
   } catch (e) {
     // Non-fatal if DB role lacks superuser/owner privileges in dev
@@ -1140,7 +1164,10 @@ module.exports = {
       let profilesCount = 0;
       userdataRes.rows.forEach(d => {
         if (d.profile) profilesCount++;
-        const apps = typeof d.applications === "string" ? JSON.parse(d.applications) : d.applications;
+        let apps = [];
+        try {
+          apps = typeof d.applications === "string" ? (d.applications.trim() ? JSON.parse(d.applications) : []) : d.applications;
+        } catch (e) {}
         if (Array.isArray(apps)) totalApps += apps.length;
       });
 
@@ -1820,8 +1847,145 @@ module.exports = {
       .filter(r => !environment || r.environment === environment)
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, limit);
+  },
+
+  // ── Help & Feedback Repository ────────────────────────────────────
+  async createFeedback(fb) {
+    const now = Date.now();
+    const row = {
+      id: fb.id || `fb_${now}_${Math.random().toString(36).slice(2, 8)}`,
+      userId: fb.userId || null,
+      reporterName: fb.reporterName || "",
+      reporterEmail: fb.reporterEmail || "",
+      category: String(fb.category || "other"),
+      subject: String(fb.subject || ""),
+      message: String(fb.message || ""),
+      pageUrl: fb.pageUrl || "",
+      screenshots: Array.isArray(fb.screenshots) ? fb.screenshots : [],
+      metadata: fb.metadata && typeof fb.metadata === "object" ? fb.metadata : {},
+      status: "new",
+      adminNotes: "",
+      resolvedAt: null,
+      createdAt: now,
+      updatedAt: now
+    };
+    if (usePg && pool) {
+      await pool.query(
+        `INSERT INTO feedbacks (id, user_id, reporter_name, reporter_email, category, subject, message, page_url, screenshots, metadata, status, admin_notes, resolved_at, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+        [
+          row.id, row.userId, row.reporterName, row.reporterEmail, row.category,
+          row.subject, row.message, row.pageUrl, JSON.stringify(row.screenshots),
+          JSON.stringify(row.metadata), row.status, row.adminNotes, row.resolvedAt,
+          row.createdAt, row.updatedAt
+        ]
+      );
+      return row;
+    }
+    const list = loadFeedbacksFile();
+    list.unshift(row);
+    await saveFeedbacksFile(list);
+    return row;
+  },
+
+  async getFeedbacks({ category = null, status = null, fromMs = null, toMs = null, hasScreenshots = null, q = null, sort = "newest", limit = 200 } = {}) {
+    let rows = [];
+    if (usePg && pool) {
+      const res = await pool.query("SELECT * FROM feedbacks ORDER BY created_at DESC LIMIT 500");
+      rows = res.rows.map(mapPgFeedback);
+    } else {
+      rows = loadFeedbacksFile();
+    }
+
+    const summary = {
+      total: rows.length,
+      newCount: rows.filter(r => r.status === "new").length,
+      inReviewCount: rows.filter(r => r.status === "in_review").length,
+      resolvedCount: rows.filter(r => r.status === "resolved").length,
+      archivedCount: rows.filter(r => r.status === "archived").length,
+      withScreenshotsCount: rows.filter(r => Array.isArray(r.screenshots) && r.screenshots.length > 0).length
+    };
+
+    const queryLower = q ? String(q).trim().toLowerCase() : "";
+    let filtered = rows.filter(r => {
+      if (category && category !== "all" && r.category !== category) return false;
+      if (status && status !== "all" && r.status !== status) return false;
+      if (fromMs !== null && Number.isFinite(fromMs) && r.createdAt < fromMs) return false;
+      if (toMs !== null && Number.isFinite(toMs) && r.createdAt > toMs) return false;
+      if (hasScreenshots === true && (!Array.isArray(r.screenshots) || r.screenshots.length === 0)) return false;
+      if (queryLower) {
+        const hay = `${r.id} ${r.subject} ${r.message} ${r.reporterEmail} ${r.reporterName} ${r.category}`.toLowerCase();
+        if (!hay.includes(queryLower)) return false;
+      }
+      return true;
+    });
+
+    filtered.sort((a, b) => sort === "oldest" ? (a.createdAt - b.createdAt) : (b.createdAt - a.createdAt));
+    return { summary, feedbacks: filtered.slice(0, limit) };
+  },
+
+  async updateFeedback(id, { status = null, adminNotes = null } = {}) {
+    const now = Date.now();
+    if (usePg && pool) {
+      const existing = await pool.query("SELECT * FROM feedbacks WHERE id = $1", [id]);
+      if (!existing.rows.length) return null;
+      const cur = mapPgFeedback(existing.rows[0]);
+      const nextStatus = status || cur.status;
+      const nextNotes = adminNotes !== null ? String(adminNotes) : cur.adminNotes;
+      const resolvedAt = nextStatus === "resolved" ? (cur.resolvedAt || now) : (nextStatus === "new" ? null : cur.resolvedAt);
+      await pool.query(
+        "UPDATE feedbacks SET status = $1, admin_notes = $2, resolved_at = $3, updated_at = $4 WHERE id = $5",
+        [nextStatus, nextNotes, resolvedAt, now, id]
+      );
+      return { ...cur, status: nextStatus, adminNotes: nextNotes, resolvedAt, updatedAt: now };
+    }
+    const list = loadFeedbacksFile();
+    const idx = list.findIndex(f => f.id === id);
+    if (idx === -1) return null;
+    const cur = list[idx];
+    const nextStatus = status || cur.status;
+    const nextNotes = adminNotes !== null ? String(adminNotes) : cur.adminNotes;
+    const resolvedAt = nextStatus === "resolved" ? (cur.resolvedAt || now) : (nextStatus === "new" ? null : cur.resolvedAt);
+    list[idx] = { ...cur, status: nextStatus, adminNotes: nextNotes, resolvedAt, updatedAt: now };
+    await saveFeedbacksFile(list);
+    return list[idx];
   }
 };
+
+function loadFeedbacksFile() {
+  try {
+    if (fs.existsSync(FEEDBACKS_FILE)) {
+      const raw = fs.readFileSync(FEEDBACKS_FILE, "utf8");
+      const parsed = raw.trim() ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveFeedbacksFile(list) {
+  return safeWriteFile(FEEDBACKS_FILE, Array.isArray(list) ? list : []);
+}
+
+function mapPgFeedback(r) {
+  return {
+    id: r.id,
+    userId: r.user_id || null,
+    reporterName: r.reporter_name || "",
+    reporterEmail: r.reporter_email || "",
+    category: r.category,
+    subject: r.subject,
+    message: r.message,
+    pageUrl: r.page_url || "",
+    screenshots: Array.isArray(r.screenshots) ? r.screenshots : [],
+    metadata: r.metadata || {},
+    status: r.status || "new",
+    adminNotes: r.admin_notes || "",
+    resolvedAt: r.resolved_at ? Number(r.resolved_at) : null,
+    createdAt: Number(r.created_at),
+    updatedAt: Number(r.updated_at)
+  };
+}
 
 // ── PostgreSQL Row Mappers & Transaction Adapter ──
 function mapPgOrder(r) {
